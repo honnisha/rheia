@@ -7,6 +7,7 @@
 use godot::prelude::*;
 
 mod main_scene;
+mod client_scripts;
 
 struct HonnyCraft;
 

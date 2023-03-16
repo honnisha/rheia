@@ -2,11 +2,14 @@ use godot::engine::packed_scene::GenEditState;
 use godot::engine::RichTextLabel;
 use godot::prelude::*;
 
+use crate::client_scripts::ScriptsManager;
+
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct Main {
     #[base]
     base: Base<Node>,
+    scripts_manager: ScriptsManager,
     camera: Option<Gd<Camera3D>>,
     debug_text: Option<Gd<RichTextLabel>>,
 }
@@ -24,6 +27,7 @@ impl GodotExt for Main {
     fn init(base: Base<Node>) -> Self {
         Main {
             base,
+            scripts_manager: ScriptsManager::new(),
             camera: None,
             debug_text: None,
         }
@@ -36,6 +40,7 @@ impl GodotExt for Main {
         let camera = self.camera.as_deref_mut().unwrap();
         camera.set_position(Vector3::new(10.0, 0.0, 10.0));
 
+        self.scripts_manager.rescan_scripts();
         godot_print!("Ready");
     }
 

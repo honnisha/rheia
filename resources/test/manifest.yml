@@ -1,0 +1,6 @@
+title: Test
+autor: Test autor
+version: 1.0
+
+client_scripts:
+  - 'test.js'
