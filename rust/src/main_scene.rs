@@ -1,5 +1,5 @@
-use godot::engine::RichTextLabel;
 use godot::engine::packed_scene::GenEditState;
+use godot::engine::RichTextLabel;
 use godot::prelude::*;
 
 #[derive(GodotClass)]
@@ -44,8 +44,14 @@ impl GodotExt for Main {
         let camera = self.camera.as_deref_mut().unwrap();
 
         let camera_pos = camera.get_position();
-        let text = format!("Camera position: {} {} {}", camera_pos.x, camera_pos.y, camera_pos.z);
-        self.debug_text.as_deref_mut().unwrap().set_text(GodotString::from(text));
+        let text = format!(
+            "Camera position: {} {} {}",
+            camera_pos.x, camera_pos.y, camera_pos.z
+        );
+        self.debug_text
+            .as_deref_mut()
+            .unwrap()
+            .set_text(GodotString::from(text));
     }
 }
 

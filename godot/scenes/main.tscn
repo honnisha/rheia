@@ -10,7 +10,6 @@ current = true
 [node name="DebugText" type="RichTextLabel" parent="Camera"]
 offset_right = 1152.0
 offset_bottom = 648.0
-text = "test"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.664347, -6.51892)
