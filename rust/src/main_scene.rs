@@ -2,7 +2,7 @@ use godot::engine::packed_scene::GenEditState;
 use godot::engine::RichTextLabel;
 use godot::prelude::*;
 
-use crate::client_scripts::ScriptsManager;
+use crate::client_scripts::scripts_manager::ScriptsManager;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -41,7 +41,7 @@ impl GodotExt for Main {
         camera.set_position(Vector3::new(10.0, 0.0, 10.0));
 
         self.scripts_manager.rescan_scripts();
-        godot_print!("Ready");
+        godot_print!("All loaded;");
     }
 
     #[allow(unused_variables)]

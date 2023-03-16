@@ -14,3 +14,6 @@ offset_bottom = 648.0
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.664347, -6.51892)
 mesh = SubResource("BoxMesh_63dbw")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.788387, -0.0925537, 0.608178, -0.61518, -0.118613, 0.779413, 0, -0.988618, -0.15045, 0, 0, -2.84113)
