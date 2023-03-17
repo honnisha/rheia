@@ -22,5 +22,4 @@ transform = Transform3D(0.788387, -0.0925537, 0.608178, -0.61518, -0.118613, 0.7
 [node name="World" type="World" parent="."]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-visible = false
 mesh = SubResource("BoxMesh_8fa2y")

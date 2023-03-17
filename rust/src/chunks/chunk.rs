@@ -1,7 +1,7 @@
 use block_mesh::{OrientedBlockFace, RIGHT_HANDED_Y_UP_CONFIG};
 use godot::engine::*;
 use godot::obj::EngineEnum;
-use godot::prelude::{Array, Gd, VariantArray, Vector3};
+use godot::prelude::{Array, Gd, VariantArray, Vector3, godot_print};
 use godot::prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant};
 
 use crate::mesh::mesh_generator::generate_buffer;
@@ -29,11 +29,11 @@ impl Chunk {
 
         let buffer = generate_buffer();
 
-        // let num_indices = buffer.num_quads() * 6;
-        // let num_vertices = buffer.num_quads() * 4;
-        // let mut indices = Vec::with_capacity(num_indices);
-        // let mut positions = Vec::with_capacity(num_vertices);
-        // let mut normals = Vec::with_capacity(num_vertices);
+        let num_indices = buffer.num_quads() * 6;
+        let num_vertices = buffer.num_quads() * 4;
+        let mut _indices = Vec::with_capacity(num_indices);
+        let mut _positions = Vec::with_capacity(num_vertices);
+        let mut _normals = Vec::with_capacity(num_vertices);
 
         let mut verts = PackedVector3Array::new();
         let mut uvs = PackedVector2Array::new();
@@ -45,32 +45,43 @@ impl Chunk {
             // face is OrientedBlockFace
             for quad in group.into_iter() {
 
-                // indices.extend_from_slice(&face.quad_mesh_indices(positions.len() as u32));
-                // positions.extend_from_slice(&face.quad_mesh_positions(&quad.into(), 1.0));
-                // normals.extend_from_slice(&face.quad_mesh_normals());
+                //&face.quad_mesh_indices(positions.len() as u32);
+                //&face.quad_mesh_positions(&quad.into(), 1.0);
+                //&face.quad_corners()
+                godot_print!("d: {:?}", &face.quad_mesh_positions(&quad.into(), 1.0));
+
+                for i in &face.quad_mesh_positions(&quad.into(), 1.0) {
+                    verts.push(Vector3::new(i[0], i[1], i[2]));
+                }
+
+                for i in &face.quad_mesh_indices(_positions.len() as u32) {
+                    indices.push(i.to_owned() as i32);
+                }
+
+                _indices.extend_from_slice(&face.quad_mesh_indices(_positions.len() as u32));
+                _positions.extend_from_slice(&face.quad_mesh_positions(&quad.into(), 1.0));
+                _normals.extend_from_slice(&face.quad_mesh_normals());
             }
         }
 
-        verts.push(Vector3::new(0.0, 1.0, 0.0));
-        verts.push(Vector3::new(1.0, 0.0, 0.0));
-        verts.push(Vector3::new(0.0, 0.0, 1.0));
-
-        arrays.insert(
+        arrays.set(
             mesh::ArrayType::ARRAY_VERTEX.ord() as usize,
             Variant::from(verts),
         );
-        arrays.insert(
-            mesh::ArrayType::ARRAY_TEX_UV.ord() as usize,
-            Variant::from(uvs),
-        );
-        arrays.insert(
-            mesh::ArrayType::ARRAY_NORMAL.ord() as usize,
-            Variant::from(normals),
-        );
-        arrays.insert(
-            mesh::ArrayType::ARRAY_INDEX.ord() as usize,
-            Variant::from(indices),
-        );
+        //arrays.set(
+        //    mesh::ArrayType::ARRAY_TEX_UV.ord() as usize,
+        //    Variant::from(uvs),
+        //);
+        //arrays.set(
+        //    mesh::ArrayType::ARRAY_NORMAL.ord() as usize,
+        //    Variant::from(normals),
+        //);
+        //arrays.set(
+        //    mesh::ArrayType::ARRAY_INDEX.ord() as usize,
+        //    Variant::from(indices),
+        //);
+
+        // godot_print!("ARRAY_MAX:{} arrays.len():{}", mesh::ArrayType::ARRAY_MAX.ord(), arrays.len());
 
         let mut mesh_ist = ArrayMesh::new();
         mesh_ist.add_surface_from_arrays(

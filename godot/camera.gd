@@ -1,9 +1,8 @@
 class_name FreeLookCamera extends Camera3D
 
 # Modifier keys' speed multiplier
-const SHIFT_MULTIPLIER = 2.5
-const ALT_MULTIPLIER = 1.0 / SHIFT_MULTIPLIER
-
+const ALT_MULTIPLIER = 2.5
+const VERTICAL_SPEED = 0.1
 
 @export_range(0.0, 1.0) var sensitivity: float = 0.25
 
@@ -26,7 +25,8 @@ var _d = false
 var _q = false
 var _e = false
 var _shift = false
-var _alt = false
+var _ctrl = false
+var _space = false
 
 func _input(event):
 	# Receives mouse motion
@@ -60,8 +60,10 @@ func _input(event):
 				_e = event.pressed
 			KEY_SHIFT:
 				_shift = event.pressed
-			KEY_ALT:
-				_alt = event.pressed
+			KEY_CTRL:
+				_ctrl = event.pressed
+			KEY_SPACE:
+				_space = event.pressed
 
 # Updates mouselook and movement every frame
 func _process(delta):
@@ -77,6 +79,11 @@ func _update_movement(delta):
 		(_s as float) - (_w as float)
 	)
 	
+	if _shift:
+		_direction.y -= VERTICAL_SPEED
+	elif _space:
+		_direction.y += VERTICAL_SPEED
+
 	# Computes the change in velocity due to desired direction and "drag"
 	# The "drag" is a constant acceleration on the camera to bring it's velocity to 0
 	var offset = _direction.normalized() * _acceleration * _vel_multiplier * delta \
@@ -84,8 +91,7 @@ func _update_movement(delta):
 	
 	# Compute modifiers' speed multiplier
 	var speed_multi = 1
-	if _shift: speed_multi *= SHIFT_MULTIPLIER
-	if _alt: speed_multi *= ALT_MULTIPLIER
+	if _ctrl: speed_multi *= ALT_MULTIPLIER
 	
 	# Checks if we should bother translating the camera
 	if _direction == Vector3.ZERO and offset.length_squared() > _velocity.length_squared():
