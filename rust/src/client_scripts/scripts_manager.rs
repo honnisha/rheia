@@ -79,7 +79,7 @@ impl ScriptsManager {
         match script_instance.try_to_load(&mut self.rhai_engine, &manifest.client_scripts) {
             Ok(()) => (),
             Err(e) => {
-                godot_error!("- Error: {}", e);
+                godot_print!("- Error: {}", e);
                 return ();
             }
         };

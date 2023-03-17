@@ -45,7 +45,7 @@ pub fn generate_buffer() -> UnitQuadBuffer {
 
     for i in 0u32..(ChunkShape::SIZE) {
         let p = into_domain(16, ChunkShape::delinearize(i));
-        voxels[i as usize] = BoolVoxel(p.length() < 0.9);
+        voxels[i as usize] = BoolVoxel(p.length() < 0.7);
     }
 
     let mut buffer = UnitQuadBuffer::new();

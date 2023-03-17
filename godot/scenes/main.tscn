@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_8fa2y"]
+lightmap_size_hint = Vector2i(14, 21)
 
 [node name="Main" type="Main"]
 
@@ -14,7 +15,7 @@ script = ExtResource("1_pyknb")
 [node name="DebugText" type="RichTextLabel" parent="Camera"]
 offset_right = 1152.0
 offset_bottom = 648.0
-text = "Camera position: 0 0 5"
+text = "Camera position: 0.00 0.00 5.00"
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.788387, -0.0925537, 0.608178, -0.61518, -0.118613, 0.779413, 0, -0.988618, -0.15045, 0, 0, -2.84113)

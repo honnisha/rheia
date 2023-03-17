@@ -46,7 +46,7 @@ impl GodotExt for Main {
 
         let camera_pos = camera.get_position();
         let text = format!(
-            "Camera position: {} {} {}",
+            "Camera position: {:.2} {:.2} {:.2}",
             camera_pos.x, camera_pos.y, camera_pos.z
         );
         self.debug_text
