@@ -8,6 +8,9 @@ use godot::prelude::*;
 
 mod main_scene;
 mod client_scripts;
+mod mesh;
+mod chunks;
+mod world;
 
 struct HonnyCraft;
 

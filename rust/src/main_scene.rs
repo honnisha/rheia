@@ -18,7 +18,6 @@ pub struct Main {
 impl Main {
     #[func]
     pub fn new_game(&mut self) {
-        godot_print!("New game");
     }
 }
 
@@ -38,10 +37,10 @@ impl GodotExt for Main {
         self.debug_text = Some(self.base.get_node_as("Camera/DebugText"));
 
         let camera = self.camera.as_deref_mut().unwrap();
-        camera.set_position(Vector3::new(10.0, 0.0, 10.0));
+        camera.set_position(Vector3::new(0.0, 0.0, 5.0));
 
         self.scripts_manager.rescan_scripts();
-        godot_print!("All loaded;");
+        godot_print!("Main scene loaded;");
     }
 
     #[allow(unused_variables)]
@@ -58,16 +57,4 @@ impl GodotExt for Main {
             .unwrap()
             .set_text(GodotString::from(text));
     }
-}
-
-#[allow(dead_code)]
-fn instantiate_scene<Root>(scene: &PackedScene) -> Gd<Root>
-where
-    Root: GodotClass + Inherits<Node>,
-{
-    let s = scene
-        .instantiate(GenEditState::GEN_EDIT_STATE_DISABLED)
-        .expect("scene instantiated");
-
-    s.cast::<Root>()
 }
