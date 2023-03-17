@@ -16,9 +16,6 @@ pub struct Main {
 
 #[godot_api]
 impl Main {
-    #[func]
-    pub fn new_game(&mut self) {
-    }
 }
 
 #[godot_api]

@@ -50,8 +50,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 [[package]]
 name = "block-mesh"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c0345520b5aa77d7d154bd578a18e7a974350931b5f41f641a7844e951b978f"
+source = "git+https://github.com/bonsairobo/block-mesh-rs?branch=main#793c53e82c12b3f7e9502006664c6e81f8b1c78a"
 dependencies = [
  "ilattice",
  "ndcopy",

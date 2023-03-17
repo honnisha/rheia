@@ -48,10 +48,12 @@ impl Chunk {
                 //&face.quad_mesh_indices(positions.len() as u32);
                 //&face.quad_mesh_positions(&quad.into(), 1.0);
                 //&face.quad_corners()
-                godot_print!("d: {:?}", &face.quad_mesh_positions(&quad.into(), 1.0));
+                // godot_print!("d: {:?}", &face.quad_mesh_positions(&quad.into(), 1.0));
+                godot_print!("d: {:?}", &face.quad_mesh_normals());
 
                 for i in &face.quad_mesh_positions(&quad.into(), 1.0) {
                     verts.push(Vector3::new(i[0], i[1], i[2]));
+                    normals.push(Vector3::new(i[0], i[1], i[2]).normalized());
                 }
 
                 for i in &face.quad_mesh_indices(_positions.len() as u32) {
@@ -72,10 +74,10 @@ impl Chunk {
         //    mesh::ArrayType::ARRAY_TEX_UV.ord() as usize,
         //    Variant::from(uvs),
         //);
-        //arrays.set(
-        //    mesh::ArrayType::ARRAY_NORMAL.ord() as usize,
-        //    Variant::from(normals),
-        //);
+        arrays.set(
+            mesh::ArrayType::ARRAY_NORMAL.ord() as usize,
+            Variant::from(normals),
+        );
         //arrays.set(
         //    mesh::ArrayType::ARRAY_INDEX.ord() as usize,
         //    Variant::from(indices),
@@ -98,12 +100,15 @@ impl Chunk {
         let mut mesh_instance = MeshInstance3D::new_alloc();
 
         mesh_instance.set_mesh(Chunk::generate_geometry().upcast());
-        let position = Vector3::new(
-            self.position[0] as f32 * 16.0,
-            self.position[1] as f32 * 16.0,
-            self.position[2] as f32 * 16.0,
-        );
-        mesh_instance.set_position(position);
+        mesh_instance.set_position(self.get_chunk_position());
         mesh_instance
+    }
+
+    pub fn get_chunk_position(&self) -> Vector3 {
+        Vector3::new(
+            self.position[0] as f32 * 16.0 - 8.0,
+            self.position[1] as f32 * 16.0 - 8.0,
+            self.position[2] as f32 * 16.0 - 8.0,
+        )
     }
 }

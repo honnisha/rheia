@@ -7,14 +7,14 @@
 [node name="Main" type="Main"]
 
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.67063)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 current = true
 script = ExtResource("1_pyknb")
 
 [node name="DebugText" type="RichTextLabel" parent="Camera"]
 offset_right = 1152.0
 offset_bottom = 648.0
-text = "Camera position: 0 0 2.6706314"
+text = "Camera position: 0 0 5"
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.788387, -0.0925537, 0.608178, -0.61518, -0.118613, 0.779413, 0, -0.988618, -0.15045, 0, 0, -2.84113)
