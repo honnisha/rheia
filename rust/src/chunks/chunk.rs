@@ -78,10 +78,10 @@ impl Chunk {
             mesh::ArrayType::ARRAY_NORMAL.ord() as usize,
             Variant::from(normals),
         );
-        //arrays.set(
-        //    mesh::ArrayType::ARRAY_INDEX.ord() as usize,
-        //    Variant::from(indices),
-        //);
+        arrays.set(
+            mesh::ArrayType::ARRAY_INDEX.ord() as usize,
+            Variant::from(indices),
+        );
 
         // godot_print!("ARRAY_MAX:{} arrays.len():{}", mesh::ArrayType::ARRAY_MAX.ord(), arrays.len());
 
