@@ -15,6 +15,7 @@ impl ChunksManager {
         }
     }
 
+    #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
         let chunk_position = [0, 0, 0];
         if !self.chunks.contains_key(&chunk_position) {

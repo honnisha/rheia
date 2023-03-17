@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use godot::prelude::*;
 
 use crate::chunks::chunks_manager::ChunksManager;
@@ -31,6 +29,7 @@ impl GodotExt for World {
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
         //let camera = self.camera.as_deref_mut().unwrap();
-        self.chunks_manager.update_camera_position(&mut self.base, Vector3::default());
+        self.chunks_manager
+            .update_camera_position(&mut self.base, Vector3::default());
     }
 }

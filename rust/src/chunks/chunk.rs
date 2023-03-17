@@ -1,7 +1,7 @@
-use block_mesh::{OrientedBlockFace, RIGHT_HANDED_Y_UP_CONFIG};
+use block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
 use godot::engine::*;
 use godot::obj::EngineEnum;
-use godot::prelude::{Array, Gd, VariantArray, Vector3, godot_print, Vector2};
+use godot::prelude::{Array, Gd, Vector3};
 use godot::prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant};
 
 use crate::mesh::mesh_generator::generate_buffer;
@@ -38,13 +38,12 @@ impl Chunk {
         let mut indices = PackedInt32Array::new();
         let mut verts = PackedVector3Array::new();
         let mut normals = PackedVector3Array::new();
-        let mut uvs = PackedVector2Array::new();
+        let mut _uvs = PackedVector2Array::new();
 
         let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
         for (group, face) in buffer.groups.into_iter().zip(faces.into_iter()) {
             // face is OrientedBlockFace
             for quad in group.into_iter() {
-
                 for i in &face.quad_mesh_indices(verts.len() as u32) {
                     indices.push(i.to_owned() as i32);
                 }
