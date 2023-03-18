@@ -1,0 +1,54 @@
+[gd_scene load_steps=8 format=3 uid="uid://cs2fptc2k4veq"]
+
+[ext_resource type="Shader" path="res://assets/sky/sky.gdshader" id="1_36bfg"]
+[ext_resource type="Texture2D" uid="uid://l3b78x3f7thl" path="res://assets/sky/moon.png" id="2_ybt3j"]
+[ext_resource type="Script" path="res://assets/sky/sky.gd" id="4_cuqt8"]
+[ext_resource type="Texture2D" uid="uid://cvsial8n2kljl" path="res://assets/sky/starfield.png" id="4_wugfe"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tksbq"]
+shader = ExtResource("1_36bfg")
+shader_parameter/moon_tint = Color(1, 0.643137, 0.152941, 1)
+shader_parameter/clouds_tint = Color(1, 1, 1, 1)
+shader_parameter/SCATERRING = false
+shader_parameter/SUN_POS = Vector3(0, 0.941588, 0.336767)
+shader_parameter/MOON_POS = Vector3(0, -0.941588, -0.336767)
+shader_parameter/MOON_TEX_POS = Vector3(0, -0.985289, -0.170897)
+shader_parameter/LIGHTING_POS = Vector3(0, 1, 0)
+shader_parameter/lighting_strength = 0.0
+shader_parameter/MOON_PHASE = 1.0
+shader_parameter/moon_size = 0.05
+shader_parameter/attenuation = 0.75
+shader_parameter/WIND = Vector3(0.1, 0, 0)
+shader_parameter/SIZE = 2.0
+shader_parameter/SOFTNESS = 2.0
+shader_parameter/COVERAGE = 0.5
+shader_parameter/HEIGHT = 0.5
+shader_parameter/THICKNESS = 15.0
+shader_parameter/ABSORPTION = 1.25
+shader_parameter/STEPS = 20
+shader_parameter/star_sky = ExtResource("4_wugfe")
+shader_parameter/moon = ExtResource("2_ybt3j")
+
+[sub_resource type="Sky" id="Sky_jusdg"]
+sky_material = SubResource("ShaderMaterial_tksbq")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_h6yc6"]
+background_mode = 2
+sky = SubResource("Sky_jusdg")
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_sky_contribution = 0.0
+ambient_light_energy = 0.75
+fog_light_color = Color(1, 1, 1, 1)
+adjustment_enabled = true
+adjustment_saturation = 0.75
+
+[node name="sky" type="WorldEnvironment"]
+environment = SubResource("Environment_h6yc6")
+script = ExtResource("4_cuqt8")
+time_of_day_setup = 0.638
+moon_tint = Color(1, 0.643137, 0.152941, 1)
+
+[node name="sun_moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.336767, 0.941589, 0, -0.941589, 0.336767, 0, 0.941588, 0.336767)
+light_energy = 0.75
