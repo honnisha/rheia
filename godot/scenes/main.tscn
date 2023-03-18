@@ -23,4 +23,4 @@ text = "Camera position: 0.00 0.00 5.00"
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_8fa2y")
 
-[node name="sky" parent="." instance=ExtResource("2_eyb06")]
+[node name="Sky" parent="." instance=ExtResource("2_eyb06")]

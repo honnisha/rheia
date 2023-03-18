@@ -1,14 +1,15 @@
-use block_mesh::{
+use crate::utils::block_mesh::{
+    ilattice::prelude::Vec3A,
     ndshape::{ConstShape, ConstShape3u32},
     visible_block_faces, MergeVoxel, UnitQuadBuffer, Voxel, VoxelVisibility,
-    RIGHT_HANDED_Y_UP_CONFIG, ilattice::prelude::Vec3A,
+    RIGHT_HANDED_Y_UP_CONFIG,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct BoolVoxel(bool);
 
 const EMPTY: BoolVoxel = BoolVoxel(false);
-const FULL: BoolVoxel = BoolVoxel(true);
+// const FULL: BoolVoxel = BoolVoxel(true);
 
 impl Voxel for BoolVoxel {
     fn get_visibility(&self) -> VoxelVisibility {

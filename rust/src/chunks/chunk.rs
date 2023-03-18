@@ -1,10 +1,10 @@
-use block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
 use godot::engine::*;
 use godot::obj::EngineEnum;
 use godot::prelude::{Array, Gd, Vector3};
 use godot::prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant};
 
 use crate::mesh::mesh_generator::generate_buffer;
+use crate::utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
 
 pub struct Chunk {
     position: [i32; 3],

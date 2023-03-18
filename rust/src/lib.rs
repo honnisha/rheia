@@ -11,6 +11,7 @@ mod client_scripts;
 mod mesh;
 mod chunks;
 mod world;
+pub mod utils;
 
 struct HonnyCraft;
 
