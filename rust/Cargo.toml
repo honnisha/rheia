@@ -21,3 +21,7 @@ serde_yaml = "0.9"
 ilattice = "0.1"
 ndshape = "0.3"
 ndcopy = "0.3"
+
+bracket-lib = "~0.8"
+bracket-noise = "~0.8"
+bracket-random = "~0.8"

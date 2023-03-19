@@ -1,16 +1,17 @@
-use crate::utils::block_mesh::{
-    ilattice::prelude::Vec3A,
-    ndshape::{ConstShape, ConstShape3u32},
-    visible_block_faces, MergeVoxel, UnitQuadBuffer, Voxel, VoxelVisibility,
-    RIGHT_HANDED_Y_UP_CONFIG, UnorientedQuad,
+use crate::{
+    chunks::block_info::BlockInfo,
+    utils::block_mesh::{
+        ndshape::ConstShape3u32, visible_block_faces, MergeVoxel, UnitQuadBuffer, UnorientedQuad,
+        Voxel, VoxelVisibility, RIGHT_HANDED_Y_UP_CONFIG,
+    },
 };
-use godot::{obj::EngineEnum, prelude::{godot_print, Vector2}};
 use godot::prelude::{Array, Gd, Vector3};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
+use godot::{obj::EngineEnum, prelude::Vector2};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct BoolVoxel(bool);
@@ -42,25 +43,14 @@ impl MergeVoxel for BoolVoxel {
 }
 
 // A 16^3 chunk with 1-voxel boundary padding.
-type ChunkShape = ConstShape3u32<19, 19, 19>;
+pub type ChunkShape = ConstShape3u32<16, 16, 16>;
+pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
 
-fn into_domain(array_dim: u32, [x, y, z]: [u32; 3]) -> Vec3A {
-    (2.0 / array_dim as f32) * Vec3A::new(x as f32, y as f32, z as f32) - 1.0
-}
-
-pub fn generate_buffer() -> UnitQuadBuffer {
-    let mut voxels = [EMPTY; ChunkShape::SIZE as usize];
-
-    for i in 0u32..(ChunkShape::SIZE) {
-        let pos = ChunkShape::delinearize(i);
-        let p = into_domain(16, pos);
-        voxels[i as usize] = BoolVoxel(pos[1] > 3_u32);
-    }
-
+pub fn generate_buffer(chunk_data: &[BlockInfo; 5832]) -> UnitQuadBuffer {
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        &voxels,
-        &ChunkShape {},
+        chunk_data,
+        &ChunkBordersShape {},
         [0; 3],
         [17; 3],
         &RIGHT_HANDED_Y_UP_CONFIG.faces,
@@ -69,11 +59,11 @@ pub fn generate_buffer() -> UnitQuadBuffer {
     buffer
 }
 
-pub fn generate_chunk_geometry() -> Gd<ArrayMesh> {
+pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<ArrayMesh>> {
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
 
-    let buffer = generate_buffer();
+    let buffer = generate_buffer(chunk_data);
 
     let mut indices = PackedInt32Array::new();
     let mut verts = PackedVector3Array::new();
@@ -97,10 +87,15 @@ pub fn generate_chunk_geometry() -> Gd<ArrayMesh> {
             }
 
             let unoriented_quad = UnorientedQuad::from(quad);
-            for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, true, &unoriented_quad) {
+            for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, true, &unoriented_quad)
+            {
                 uvs.push(Vector2::new(i[0], i[1]))
             }
         }
+    }
+
+    if &indices.len() == &(0 as usize) {
+        return None;
     }
 
     arrays.set(
@@ -128,5 +123,5 @@ pub fn generate_chunk_geometry() -> Gd<ArrayMesh> {
         Default::default(),
         mesh::ArrayFormat::ARRAY_FORMAT_VERTEX,
     );
-    mesh_ist
+    Some(mesh_ist)
 }

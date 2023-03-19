@@ -12,6 +12,7 @@ mod mesh;
 mod chunks;
 mod world;
 pub mod utils;
+pub mod world_generator;
 
 struct HonnyCraft;
 

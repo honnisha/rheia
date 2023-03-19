@@ -31,6 +31,11 @@ mesh = SubResource("BoxMesh_8fa2y")
 surface_material_override/0 = ExtResource("2_ta74y")
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
+clouds_coverage = 0.39
+clouds_height = 0.4
+clouds_size = 0.52
+clouds_quality = 100
+wind_strength = 0.05
 
 [node name="human" parent="." instance=ExtResource("4_tj33o")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 0, 0)
