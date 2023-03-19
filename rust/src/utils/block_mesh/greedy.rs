@@ -307,6 +307,9 @@ mod tests {
                 VoxelVisibility::Opaque
             }
         }
+        fn get_id(&self) -> &i32 {
+            &0_i32
+        }
     }
 
     impl MergeVoxel for BoolVoxel {

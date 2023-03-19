@@ -27,7 +27,7 @@ impl ChunksManager {
 
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let chunks_distance = 1;
+        let chunks_distance = 3;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
         let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
@@ -37,8 +37,7 @@ impl ChunksManager {
         for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
                 if (Vector2::new(x as real, z as real) - p2).length() < chunks_distance as f32 {
-
-                    for y in 0_i32..1_i32 {
+                    for y in 0_i32..3_i32 {
                         self.load_chunk(base, &[x, y, z]);
                     }
                 }
@@ -69,7 +68,10 @@ impl ChunksManager {
                 }
 
                 let p = chunk.get_position();
-                mesh.set_name(GodotString::from(format!("chunk_{}_{}_{}", p[0], p[1], p[2])));
+                mesh.set_name(GodotString::from(format!(
+                    "chunk_{}_{}_{}",
+                    p[0], p[1], p[2]
+                )));
                 mesh.create_trimesh_collision();
                 base.add_child(mesh.upcast(), false, InternalMode::INTERNAL_MODE_BACK);
             }

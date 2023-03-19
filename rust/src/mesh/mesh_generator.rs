@@ -1,8 +1,8 @@
 use crate::{
     chunks::{block_info::BlockInfo, block_type::get_block_type_by_id},
     utils::block_mesh::{
-        ndshape::ConstShape3u32, visible_block_faces, MergeVoxel, UnitQuadBuffer, UnorientedQuad,
-        Voxel, VoxelVisibility, RIGHT_HANDED_Y_UP_CONFIG,
+        ndshape::ConstShape3u32, visible_block_faces, UnitQuadBuffer, UnorientedQuad,
+        RIGHT_HANDED_Y_UP_CONFIG,
     },
 };
 use godot::prelude::{Array, Gd, Vector3, godot_print};
@@ -45,12 +45,13 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
     let uv_scale = Vector2::new(steep, steep);
 
     let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
-    for (side_index, (group, face)) in buffer.groups.into_iter().zip(faces.into_iter()).enumerate() {
+
+    for (side_index, (group, face)) in buffer.groups.into_iter().zip(faces.into_iter()).enumerate()
+    {
         // visible_block_faces_with_voxel_view
         // face is OrientedBlockFace
         // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
-
             let block_type = get_block_type_by_id(quad.id);
 
             for i in &face.quad_mesh_indices(verts.len() as u32) {
@@ -72,8 +73,10 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
                     Some(o) => o,
                     _ => 0,
                 };
-                let ui_offset = Vector2::new(steep * ((offset % 32) as i32) as f32, steep * ((offset / 32) as f32).floor());
-                godot_print!("ui_offset: {:?}", ui_offset);
+                let ui_offset = Vector2::new(
+                    steep * ((offset % 32) as i32) as f32,
+                    steep * ((offset / 32) as f32).floor(),
+                );
                 uvs.push(Vector2::new(i[0], i[1]) * uv_scale + ui_offset)
             }
         }
@@ -106,7 +109,8 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
         arrays,
         Default::default(),
         Default::default(),
-        mesh::ArrayFormat::ARRAY_FORMAT_VERTEX,
+        Default::default(),
     );
+    mesh_ist.regen_normal_maps();
     Some(mesh_ist)
 }

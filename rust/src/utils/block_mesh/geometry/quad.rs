@@ -1,5 +1,3 @@
-use crate::utils::block_mesh::Voxel;
-
 /// The minimum voxel and size of a quad, without an orientation. To get the
 /// actual corners of the quad, combine with an [`OrientedBlockFace`].
 ///
