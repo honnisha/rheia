@@ -17,5 +17,4 @@ config/icon="res://icon.svg"
 
 [rendering]
 
-renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="gl_compatibility"

@@ -36,9 +36,9 @@ impl ChunksManager {
 
         for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
-                if (Vector2::new(x as real, z as real) - p2).length() <= chunks_distance as f32 {
+                if (Vector2::new(x as real, z as real) - p2).length() < chunks_distance as f32 {
 
-                    for y in 0_i32..4_i32 {
+                    for y in 0_i32..1_i32 {
                         self.load_chunk(base, &[x, y, z]);
                     }
                 }
@@ -70,6 +70,7 @@ impl ChunksManager {
 
                 let p = chunk.get_position();
                 mesh.set_name(GodotString::from(format!("chunk_{}_{}_{}", p[0], p[1], p[2])));
+                mesh.create_trimesh_collision();
                 base.add_child(mesh.upcast(), false, InternalMode::INTERNAL_MODE_BACK);
             }
 

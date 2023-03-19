@@ -1,39 +1,38 @@
-use crate::utils::block_mesh::{Voxel, VoxelVisibility};
+use crate::utils::block_mesh::{MergeVoxel, Voxel, VoxelVisibility};
+
+use super::block_type::get_block_type_by_id;
 
 #[derive(Copy)]
 pub struct BlockInfo {
-    id: i32,
+    type_id: i32,
 }
 
 impl BlockInfo {
     pub fn new(id: i32) -> BlockInfo {
-        BlockInfo {
-            id: id,
-        }
-    }
-
-    pub fn is_solid(&self) -> bool {
-        match self.id {
-            0 => false,
-            _ => true,
-        }
+        BlockInfo { type_id: id }
     }
 }
 
 impl Clone for BlockInfo {
     fn clone(&self) -> BlockInfo {
         BlockInfo {
-            id: self.id,
+            type_id: self.type_id,
         }
     }
 }
 
 impl Voxel for BlockInfo {
     fn get_visibility(&self) -> VoxelVisibility {
-        if self.is_solid() {
-            VoxelVisibility::Empty
-        } else {
-            VoxelVisibility::Opaque
-        }
+        get_block_type_by_id(self.type_id).voxel_visibility
+    }
+    fn get_id(&self) -> &i32 {
+        return &self.type_id
     }
 }
+
+impl PartialEq for BlockInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.type_id == other.type_id
+    }
+}
+impl Eq for BlockInfo {}

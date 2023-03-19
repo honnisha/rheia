@@ -1,46 +1,17 @@
 use crate::{
-    chunks::block_info::BlockInfo,
+    chunks::{block_info::BlockInfo, block_type::get_block_type_by_id},
     utils::block_mesh::{
         ndshape::ConstShape3u32, visible_block_faces, MergeVoxel, UnitQuadBuffer, UnorientedQuad,
         Voxel, VoxelVisibility, RIGHT_HANDED_Y_UP_CONFIG,
     },
 };
-use godot::prelude::{godot_print, Array, Gd, Vector3};
+use godot::prelude::{Array, Gd, Vector3, godot_print};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
-
-#[derive(Clone, Copy, Eq, PartialEq)]
-struct BoolVoxel(bool);
-
-const EMPTY: BoolVoxel = BoolVoxel(false);
-// const FULL: BoolVoxel = BoolVoxel(true);
-
-impl Voxel for BoolVoxel {
-    fn get_visibility(&self) -> VoxelVisibility {
-        if *self == EMPTY {
-            VoxelVisibility::Empty
-        } else {
-            VoxelVisibility::Opaque
-        }
-    }
-}
-
-impl MergeVoxel for BoolVoxel {
-    type MergeValue = Self;
-    type MergeValueFacingNeighbour = Self;
-
-    fn merge_value(&self) -> Self::MergeValue {
-        *self
-    }
-
-    fn merge_value_facing_neighbour(&self) -> Self::MergeValueFacingNeighbour {
-        *self
-    }
-}
 
 // A 16^3 chunk with 1-voxel boundary padding.
 pub type ChunkShape = ConstShape3u32<16, 16, 16>;
@@ -70,12 +41,18 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
     let mut normals = PackedVector3Array::new();
     let mut uvs = PackedVector2Array::new();
 
-    let uv_scale = Vector2::new(0.03125, 0.03125);
+    let steep = 0.03125;
+    let uv_scale = Vector2::new(steep, steep);
 
     let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
-    for (group, face) in buffer.groups.into_iter().zip(faces.into_iter()) {
+    for (side_index, (group, face)) in buffer.groups.into_iter().zip(faces.into_iter()).enumerate() {
+        // visible_block_faces_with_voxel_view
         // face is OrientedBlockFace
+        // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
+
+            let block_type = get_block_type_by_id(quad.id);
+
             for i in &face.quad_mesh_indices(verts.len() as u32) {
                 indices.push(i.to_owned() as i32);
             }
@@ -91,7 +68,13 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
             let unoriented_quad = UnorientedQuad::from(quad);
             for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, true, &unoriented_quad)
             {
-                uvs.push(Vector2::new(i[0], i[1]) * uv_scale)
+                let offset = match block_type.get_uv_offset(side_index as i8) {
+                    Some(o) => o,
+                    _ => 0,
+                };
+                let ui_offset = Vector2::new(steep * ((offset % 32) as i32) as f32, steep * ((offset / 32) as f32).floor());
+                godot_print!("ui_offset: {:?}", ui_offset);
+                uvs.push(Vector2::new(i[0], i[1]) * uv_scale + ui_offset)
             }
         }
     }

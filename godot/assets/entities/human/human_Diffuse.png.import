@@ -3,21 +3,20 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bmsxps3tg4h64"
-path.s3tc="res://.godot/imported/human_Diffuse.png-8c381a93b7fad49b2f824785a35b335a.s3tc.ctex"
+path="res://.godot/imported/human_Diffuse.png-8c381a93b7fad49b2f824785a35b335a.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 generator_parameters={}
 
 [deps]
 
 source_file="res://assets/entities/human/human_Diffuse.png"
-dest_files=["res://.godot/imported/human_Diffuse.png-8c381a93b7fad49b2f824785a35b335a.s3tc.ctex"]
+dest_files=["res://.godot/imported/human_Diffuse.png-8c381a93b7fad49b2f824785a35b335a.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=3
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1

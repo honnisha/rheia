@@ -2,6 +2,7 @@ use super::{
     bounds::assert_in_bounds, IdentityVoxel, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad,
     Voxel, VoxelVisibility,
 };
+use godot::prelude::godot_print;
 use ilattice::glam::UVec3;
 use ilattice::prelude::Extent;
 use ndshape::Shape;
@@ -79,7 +80,7 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
             };
 
             if face_needs_mesh {
-                output.groups[face_index].push(UnorientedUnitQuad { minimum: p_array });
+                output.groups[face_index].push(UnorientedUnitQuad { minimum: p_array, id: p_voxel.get_id().clone() });
             }
         }
     }

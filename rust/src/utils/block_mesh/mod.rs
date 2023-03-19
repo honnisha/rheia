@@ -107,6 +107,7 @@ pub enum VoxelVisibility {
 /// how to generate geometry for this voxel.
 pub trait Voxel {
     fn get_visibility(&self) -> VoxelVisibility;
+    fn get_id(&self) -> &i32;
 }
 
 /// Used as a dummy for functions that must wrap a voxel
@@ -117,6 +118,9 @@ impl<'a, T: Voxel> Voxel for IdentityVoxel<'a, T> {
     #[inline]
     fn get_visibility(&self) -> VoxelVisibility {
         self.0.get_visibility()
+    }
+    fn get_id(&self) -> &i32 {
+        self.0.get_id()
     }
 }
 

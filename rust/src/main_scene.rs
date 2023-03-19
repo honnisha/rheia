@@ -33,7 +33,7 @@ impl GodotExt for Main {
         self.debug_text = Some(self.base.get_node_as("Camera/DebugText"));
 
         let camera = self.camera.as_deref_mut().unwrap();
-        camera.set_position(Vector3::new(0.0, 0.0, 5.0));
+        camera.set_position(Vector3::new(0.0, 15.0, 0.0));
 
         self.scripts_manager.rescan_scripts();
         godot_print!("Main scene loaded;");
