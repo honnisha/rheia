@@ -27,10 +27,10 @@ impl ChunksManager {
 
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let chunks_distance = 8;
+        let chunks_distance = 1;
 
-        let chunk_x = (camera_position.x as f32 / 16_f32) as i32;
-        let chunk_z = (camera_position.z as f32 / 16_f32) as i32;
+        let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
+        let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
 
         let p2 = Vector2::new(chunk_x as real, chunk_z as real);
 
@@ -38,7 +38,7 @@ impl ChunksManager {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
                 if (Vector2::new(x as real, z as real) - p2).length() <= chunks_distance as f32 {
 
-                    for y in 0_i32..16_i32 {
+                    for y in 0_i32..4_i32 {
                         self.load_chunk(base, &[x, y, z]);
                     }
                 }

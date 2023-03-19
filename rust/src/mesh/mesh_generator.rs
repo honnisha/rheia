@@ -5,7 +5,7 @@ use crate::{
         Voxel, VoxelVisibility, RIGHT_HANDED_Y_UP_CONFIG,
     },
 };
-use godot::prelude::{Array, Gd, Vector3};
+use godot::prelude::{godot_print, Array, Gd, Vector3};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
@@ -70,6 +70,8 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
     let mut normals = PackedVector3Array::new();
     let mut uvs = PackedVector2Array::new();
 
+    let uv_scale = Vector2::new(0.03125, 0.03125);
+
     let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
     for (group, face) in buffer.groups.into_iter().zip(faces.into_iter()) {
         // face is OrientedBlockFace
@@ -89,7 +91,7 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
             let unoriented_quad = UnorientedQuad::from(quad);
             for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, true, &unoriented_quad)
             {
-                uvs.push(Vector2::new(i[0], i[1]))
+                uvs.push(Vector2::new(i[0], i[1]) * uv_scale)
             }
         }
     }
