@@ -2,7 +2,6 @@ use super::{
     bounds::assert_in_bounds, IdentityVoxel, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad,
     Voxel, VoxelVisibility,
 };
-use godot::prelude::godot_print;
 use ilattice::glam::UVec3;
 use ilattice::prelude::Extent;
 use ndshape::Shape;
