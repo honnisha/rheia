@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://cx0wve30173ae"]
+[gd_scene load_steps=8 format=3 uid="uid://cx0wve30173ae"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
@@ -8,6 +8,9 @@
 
 [sub_resource type="BoxMesh" id="BoxMesh_cmld6"]
 material = ExtResource("4_btdcq")
+
+[sub_resource type="BoxMesh" id="BoxMesh_d4x23"]
+size = Vector3(10, 0.5, 20)
 
 [node name="Main" type="Main"]
 
@@ -34,7 +37,7 @@ wind_strength = 0.05
 [node name="human" parent="." instance=ExtResource("4_tj33o")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 7.09302, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="box" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.20759, 0)
 mesh = SubResource("BoxMesh_cmld6")
 
@@ -42,3 +45,7 @@ mesh = SubResource("BoxMesh_cmld6")
 position = Vector2(1045, 103)
 scale = Vector2(0.255859, 0.255859)
 texture = ExtResource("5_7e755")
+
+[node name="floor" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.1588, 16.9041)
+mesh = SubResource("BoxMesh_d4x23")

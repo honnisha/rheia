@@ -32,7 +32,7 @@ impl ChunksManager {
 
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let chunks_distance = 1;
+        let chunks_distance = 3;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
         let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
