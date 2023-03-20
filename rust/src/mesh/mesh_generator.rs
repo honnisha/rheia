@@ -52,7 +52,7 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
         // face is OrientedBlockFace
         // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
-            let block_type = get_block_type_by_id(quad.id);
+            let block_type = get_block_type_by_id(&quad.id);
 
             for i in &face.quad_mesh_indices(verts.len() as u32) {
                 indices.push(i.to_owned() as i32);
@@ -63,8 +63,7 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
             }
 
             for i in &face.quad_mesh_normals() {
-                //normals.push(Vector3::new(i[0], i[1], i[2]));
-                normals.push(Vector3::new(100.0, 100.0, 100.0));
+                normals.push(Vector3::new(i[0], i[1], i[2]));
             }
 
             let unoriented_quad = UnorientedQuad::from(quad);
@@ -110,8 +109,7 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
         arrays,
         Default::default(),
         Default::default(),
-        mesh::ArrayFormat::ARRAY_FORMAT_NORMAL,
+        Default::default(),
     );
-    mesh_ist.regen_normal_maps();
     Some(mesh_ist)
 }

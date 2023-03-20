@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://cx0wve30173ae"]
+[gd_scene load_steps=7 format=3 uid="uid://cx0wve30173ae"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="Material" uid="uid://c5giprarijmmn" path="res://assets/world/material.tres" id="4_btdcq"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
+[ext_resource type="Texture2D" uid="uid://l3b78x3f7thl" path="res://assets/sky/moon.png" id="5_7e755"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_cmld6"]
 material = ExtResource("4_btdcq")
@@ -23,6 +24,7 @@ text = "Camera position: 0.00 15.00 0.00"
 [node name="World" type="World" parent="."]
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
+time_of_day_setup = 0.762
 clouds_coverage = 0.39
 clouds_height = 0.4
 clouds_size = 0.52
@@ -35,3 +37,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 7.09302, 0)
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.20759, 0)
 mesh = SubResource("BoxMesh_cmld6")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(1045, 103)
+scale = Vector2(0.255859, 0.255859)
+texture = ExtResource("5_7e755")

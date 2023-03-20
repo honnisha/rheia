@@ -19,7 +19,7 @@ static BLOCKS_TYPE: &'static [BlockType] = &[
 
 #[derive(Copy, Clone)]
 pub struct BlockType {
-    pub voxel_visibility: VoxelVisibility,
+    voxel_visibility: VoxelVisibility,
 
     pub top_texture_offset: Option<i16>,
     pub side_texture_offset: Option<i16>,
@@ -37,8 +37,12 @@ impl BlockType {
             _ => self.side_texture_offset,
         }
     }
+
+    pub fn get_voxel_visibility(&self) -> &VoxelVisibility {
+        &self.voxel_visibility
+    }
 }
 
-pub fn get_block_type_by_id(id: i32) -> BlockType {
-    return BLOCKS_TYPE[id as usize]
+pub fn get_block_type_by_id(id: &i32) -> BlockType {
+    return BLOCKS_TYPE[*id as usize]
 }

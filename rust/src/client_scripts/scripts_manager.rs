@@ -39,7 +39,7 @@ impl ScriptsManager {
         path.pop();
         path.push("resources");
         let path_str = path.into_os_string().into_string().unwrap();
-        godot_print!("▼ Rescan script folders inside: {}", path_str);
+        godot_print!("▼ Rescan resources folders inside: {}", path_str);
 
         let paths = match fs::read_dir(path_str) {
             Ok(p) => p,

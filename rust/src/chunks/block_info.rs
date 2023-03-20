@@ -1,6 +1,6 @@
 use crate::utils::block_mesh::{MergeVoxel, Voxel, VoxelVisibility};
 
-use super::block_type::get_block_type_by_id;
+use super::block_type::{get_block_type_by_id, BlockType};
 
 #[derive(Copy)]
 pub struct BlockInfo {
@@ -10,6 +10,10 @@ pub struct BlockInfo {
 impl BlockInfo {
     pub fn new(id: i32) -> BlockInfo {
         BlockInfo { type_id: id }
+    }
+
+    pub fn get_block_type(&self) -> BlockType {
+        get_block_type_by_id(self.get_id())
     }
 }
 
@@ -23,7 +27,7 @@ impl Clone for BlockInfo {
 
 impl Voxel for BlockInfo {
     fn get_visibility(&self) -> VoxelVisibility {
-        get_block_type_by_id(self.type_id).voxel_visibility
+        *get_block_type_by_id(&self.type_id).get_voxel_visibility()
     }
     fn get_id(&self) -> &i32 {
         return &self.type_id
