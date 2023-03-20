@@ -822,7 +822,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#6bfe53e712797f64314cb3c9ca1492cfa9d2151d"
+source = "git+https://github.com/godot-rust/gdext?branch=master#ed172723f9f55c73c548a4f575d2642d9cabb630"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -831,7 +831,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#6bfe53e712797f64314cb3c9ca1492cfa9d2151d"
+source = "git+https://github.com/godot-rust/gdext?branch=master#ed172723f9f55c73c548a4f575d2642d9cabb630"
 dependencies = [
  "heck",
  "nanoserde",
@@ -844,7 +844,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#6bfe53e712797f64314cb3c9ca1492cfa9d2151d"
+source = "git+https://github.com/godot-rust/gdext?branch=master#ed172723f9f55c73c548a4f575d2642d9cabb630"
 dependencies = [
  "glam 0.22.0",
  "godot-codegen",
@@ -855,7 +855,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#6bfe53e712797f64314cb3c9ca1492cfa9d2151d"
+source = "git+https://github.com/godot-rust/gdext?branch=master#ed172723f9f55c73c548a4f575d2642d9cabb630"
 dependencies = [
  "bindgen",
  "godot-codegen",
@@ -865,7 +865,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#6bfe53e712797f64314cb3c9ca1492cfa9d2151d"
+source = "git+https://github.com/godot-rust/gdext?branch=master#ed172723f9f55c73c548a4f575d2642d9cabb630"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1939,9 +1939,9 @@ dependencies = [
 
 [[package]]
 name = "ultraviolet"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf2728f3858937f50df6d92b741f53ef8fd5b5ae23b03b73fb9ac891e980df3b"
+checksum = "ca0b28b9a6ce66d47e3c5666aa738c5ec5223fcdd4c263f3edc98ab6fef618b3"
 dependencies = [
  "wide",
 ]

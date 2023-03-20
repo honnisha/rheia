@@ -2,7 +2,7 @@ use godot::engine::*;
 use godot::prelude::{Gd, Vector3};
 use ndshape::ConstShape;
 
-use crate::mesh::mesh_generator::{generate_chunk_geometry, ChunkShape, ChunkBordersShape};
+use crate::mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape};
 
 use super::block_info::BlockInfo;
 
@@ -48,26 +48,37 @@ impl Chunk {
         Some(mesh_instance)
     }
 
+    #[allow(dead_code)]
     pub fn get_block_info(&self, position: [u32; 3]) -> Result<BlockInfo, String> {
         let chunk_data = match self.chunk_data {
             Some(m) => m,
-            None => return Err("Chunk data is not initialized.".into())
+            None => return Err("Chunk data is not initialized.".into()),
         };
 
         return Ok(chunk_data[ChunkShape::linearize(position) as usize]);
     }
 
-    pub fn format_chunk_data_with_boundaries(&self, chunk_data: &[BlockInfo; 4096]) -> [BlockInfo; 5832] {
+    pub fn format_chunk_data_with_boundaries(
+        &self,
+        chunk_data: &[BlockInfo; 4096],
+    ) -> [BlockInfo; 5832] {
         let mut chunk_boundaries_data = [BlockInfo::new(0); 5832];
 
         for x in 0_u32..16_u32 {
             for y in 0_u32..16_u32 {
                 for z in 0_u32..16_u32 {
                     let i = ChunkShape::linearize([x, y, z]);
-                    assert!(i < ChunkShape::SIZE, "Generate chunk data overflow array length; dimentions:{:?} current:{:?}", ChunkShape::ARRAY, [x, y, z]);
+                    assert!(
+                        i < ChunkShape::SIZE,
+                        "Generate chunk data overflow array length; dimentions:{:?} current:{:?}",
+                        ChunkShape::ARRAY,
+                        [x, y, z]
+                    );
 
-                    let chunk_boundaries_position = ChunkBordersShape::linearize([x+1, y+1, z+1]);
-                    chunk_boundaries_data[chunk_boundaries_position as usize] = chunk_data[i as usize]
+                    let chunk_boundaries_position =
+                        ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
+                    chunk_boundaries_data[chunk_boundaries_position as usize] =
+                        chunk_data[i as usize]
                 }
             }
         }

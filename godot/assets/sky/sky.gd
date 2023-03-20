@@ -111,7 +111,7 @@ var lighting_time: float=0.0;
 		if is_inside_tree():
 			sky_shader.set_shader_parameter("LIGHTING_POS",lighting_pos);
 @export var lighting_strike: bool = false:
-	set(value):
+	set(_value):
 		if (!is_inside_tree()):
 			return
 		await get_tree().create_timer(0.3).timeout;

@@ -1,6 +1,6 @@
 fn onKeyPress() {
-    print("onKeyPress fired");
+    godot_print("onKeyPress fired");
 }
 
+godot_print("test register");
 registerEvent("onKeyPress", onKeyPress);
-print("test register");

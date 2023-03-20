@@ -5,7 +5,7 @@ use crate::{
         RIGHT_HANDED_Y_UP_CONFIG,
     },
 };
-use godot::prelude::{Array, Gd, Vector3, godot_print};
+use godot::prelude::{Array, Gd, Vector3};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,

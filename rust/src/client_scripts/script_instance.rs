@@ -1,6 +1,6 @@
 use super::scripts_manager::Manifest;
 use godot::prelude::godot_print;
-use rhai::{Engine, Scope};
+use rhai::{Engine, Scope, ImmutableString};
 use std::fs;
 
 pub struct ScriptInstance {
@@ -55,17 +55,24 @@ impl ScriptInstance {
             let data = match fs::read_to_string(path.clone()) {
                 Ok(d) => d,
                 Err(e) => {
-                    return Err(format!("Resource {} rhai \"{}\" load error: {}", self.get_slug(), client_script, e).into());
+                    return Err(format!("○ Script {} rhai \"{}\" load error: {}", self.get_slug(), client_script, e).into());
                 }
             };
 
-            match rhai_engine.run_with_scope(&mut scope, &data) {
-                Ok(()) => (),
+            let mut ast = match rhai_engine.compile(&data) {
+                Ok(a) => a,
                 Err(e) => {
-                    return Err(format!("Resource {} rhai \"{}\" syntax error: {}", self.get_slug(), client_script, e).into());
+                    return Err(format!("○ Script {} rhai \"{}\" syntax error: {}", self.get_slug(), client_script, e).into());
                 }
             };
-            godot_print!("- Resource {} rhai \"{}\" loaded: {}", self.get_slug(), client_script, path);
+            ast.set_source(ImmutableString::from(&self.slug));
+            match rhai_engine.run_ast_with_scope(&mut scope, &ast) {
+                Ok(()) => (),
+                Err(e) => {
+                    return Err(format!("○ Script \"{}\" rhai \"{}\" syntax error: {}", ast.source().unwrap(), client_script, e).into());
+                }
+            };
+            godot_print!("● Script \"{}\" rhai \"{}\" loaded: {}", ast.source().unwrap(), client_script, path);
         }
         Ok(())
     }

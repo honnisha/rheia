@@ -39,7 +39,7 @@ impl ScriptsManager {
         path.pop();
         path.push("resources");
         let path_str = path.into_os_string().into_string().unwrap();
-        godot_print!("Rescan script folders inside: {}", path_str);
+        godot_print!("▼ Rescan script folders inside: {}", path_str);
 
         let paths = match fs::read_dir(path_str) {
             Ok(p) => p,
@@ -57,7 +57,7 @@ impl ScriptsManager {
             let data = match fs::read_to_string(manifest_path.clone()) {
                 Ok(d) => d,
                 Err(e) => {
-                    godot_print!("- error with manifest file {}: {}", manifest_path, e);
+                    godot_print!("□ error with manifest file {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -66,7 +66,7 @@ impl ScriptsManager {
             let manifest = match manifest_result {
                 Ok(m) => m,
                 Err(e) => {
-                    godot_print!("- error with parse manifest yaml {}: {}", manifest_path, e);
+                    godot_print!("□ error with parse manifest yaml {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -79,14 +79,14 @@ impl ScriptsManager {
         match script_instance.try_to_load(&mut self.rhai_engine, &manifest.client_scripts) {
             Ok(()) => (),
             Err(e) => {
-                godot_print!("- Error: {}", e);
+                godot_print!("□ Error with manifest: {}", e);
                 return ();
             }
         };
 
         self.scripts.insert(manifest.slug, script_instance);
         godot_print!(
-            "- loaded script \"{}\" author:\"{}\" version:{}",
+            "■ loaded resource \"{}\" author:\"{}\" version:{}",
             manifest.title,
             manifest.autor,
             manifest.version

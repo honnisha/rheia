@@ -18,7 +18,7 @@ impl Main {
 }
 
 #[godot_api]
-impl GodotExt for Main {
+impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
         Main {
             base,

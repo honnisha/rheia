@@ -12,7 +12,7 @@ pub struct World {
 }
 
 #[godot_api]
-impl GodotExt for World {
+impl NodeVirtual for World {
     fn init(base: Base<Node>) -> Self {
         World {
             base,
