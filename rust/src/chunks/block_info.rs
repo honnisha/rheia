@@ -1,4 +1,4 @@
-use crate::utils::block_mesh::{MergeVoxel, Voxel, VoxelVisibility};
+use crate::utils::block_mesh::{Voxel, VoxelVisibility};
 
 use super::block_type::{get_block_type_by_id, BlockType};
 
@@ -40,16 +40,3 @@ impl PartialEq for BlockInfo {
     }
 }
 impl Eq for BlockInfo {}
-
-impl MergeVoxel for BlockInfo {
-    type MergeValue = Self;
-    type MergeValueFacingNeighbour = Self;
-
-    fn merge_value(&self) -> Self::MergeValue {
-        *self
-    }
-
-    fn merge_value_facing_neighbour(&self) -> Self::MergeValueFacingNeighbour {
-        *self
-    }
-}

@@ -15,6 +15,20 @@ static BLOCKS_TYPE: &'static [BlockType] = &[
         side_texture_offset: Some(3),
         bottom_texture_offset: Some(4),
     },
+    // Stone
+    BlockType {
+        voxel_visibility: VoxelVisibility::Opaque,
+        top_texture_offset: Some(5),
+        side_texture_offset: Some(5),
+        bottom_texture_offset: Some(5),
+    },
+    // Water
+    BlockType {
+        voxel_visibility: VoxelVisibility::Translucent,
+        top_texture_offset: Some(6),
+        side_texture_offset: Some(6),
+        bottom_texture_offset: Some(6),
+    },
 ];
 
 #[derive(Copy, Clone)]
@@ -30,9 +44,9 @@ impl BlockType {
     pub fn get_uv_offset(&self, side_index: i8) -> Option<i16> {
         match side_index {
             // Topside
-            4 => self.top_texture_offset,
+            1 => self.top_texture_offset,
             // Bottom
-            1 => self.bottom_texture_offset,
+            4 => self.bottom_texture_offset,
             // Sides
             _ => self.side_texture_offset,
         }

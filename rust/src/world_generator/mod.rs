@@ -1,4 +1,5 @@
 use bracket_noise::prelude::*;
+use godot::prelude::godot_print;
 use ndshape::ConstShape;
 
 use crate::{chunks::block_info::BlockInfo, mesh::mesh_generator::ChunkShape};
@@ -37,9 +38,15 @@ impl WorldGenerator {
                     assert!(i < ChunkShape::SIZE, "Generate chunk data overflow array length; dimentions:{:?} current:{:?}", ChunkShape::ARRAY, [x, y, z]);
 
                     let y_global = y as f32 + (chunk_position[1] as f32 * 16_f32);
-                    if height > y_global {
+                    if height < y_global {
                         chunk_data[i as usize] = BlockInfo::new(1);
                     }
+                    //else if y_global < 13_f32 {
+                    //    chunk_data[i as usize] = BlockInfo::new(2);
+                    //}
+                    //if y_global == 25_f32 {
+                    //    chunk_data[i as usize] = BlockInfo::new(3);
+                    //}
                 }
             }
         }

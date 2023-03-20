@@ -12,15 +12,32 @@ use godot::{
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
+use ndshape::ConstShape;
 
 // A 16^3 chunk with 1-voxel boundary padding.
 pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
 
+#[allow(dead_code)]
+pub fn get_test_sphere() -> [BlockInfo; 5832] {
+    let mut b_chunk = [BlockInfo::new(0); 5832];
+
+    for i in 0u32..5832 {
+        let [x, y, z] = ChunkBordersShape::delinearize(i);
+        b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < 7.0 {
+            true => BlockInfo::new(1),
+            _ => BlockInfo::new(0),
+        };
+    }
+    b_chunk
+}
+
 pub fn generate_buffer(chunk_data: &[BlockInfo; 5832]) -> UnitQuadBuffer {
+    //let b_chunk = get_test_sphere();
+
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        chunk_data,
+        chunk_data, //&b_chunk,
         &ChunkBordersShape {},
         [0; 3],
         [17; 3],

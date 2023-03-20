@@ -108,14 +108,14 @@ impl ChunksManager {
 
         // fill boundaries
         if has_any_mesh {
-            godot_print!("chunk:{:?}", chunk_position);
+            //godot_print!("chunk:{:?}", chunk_position);
 
             for axis in 0_i8..3_i8 {
                 for value in (-1_i32..2_i32).step_by(2) {
                     let mut pos = chunk_position.clone();
 
                     pos[axis as usize] += value;
-                    godot_print!("load:{:?}", pos);
+                    //godot_print!("load:{:?}", pos);
 
                     self.load_chunk(&pos);
                     let border_chunk = &self.get_chunk(&pos);
