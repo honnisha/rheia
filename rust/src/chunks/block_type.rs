@@ -30,9 +30,9 @@ impl BlockType {
     pub fn get_uv_offset(&self, side_index: i8) -> Option<i16> {
         match side_index {
             // Topside
-            1 => self.top_texture_offset,
+            4 => self.top_texture_offset,
             // Bottom
-            4 => self.bottom_texture_offset,
+            1 => self.bottom_texture_offset,
             // Sides
             _ => self.side_texture_offset,
         }

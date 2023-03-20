@@ -4,9 +4,9 @@
 
 [resource]
 transparency = 1
+cull_mode = 1
 depth_draw_mode = 2
-shading_mode = 0
-specular_mode = 2
+diffuse_mode = 3
 albedo_texture = ExtResource("1_fel2k")
 texture_filter = 0
 texture_repeat = false
