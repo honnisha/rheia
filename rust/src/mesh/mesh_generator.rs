@@ -1,11 +1,11 @@
 use crate::{
     chunks::{block_info::BlockInfo, block_type::get_block_type_by_id},
     utils::block_mesh::{
-        ndshape::ConstShape3u32, visible_block_faces, UnitQuadBuffer, UnorientedQuad,
-        RIGHT_HANDED_Y_UP_CONFIG,
+        ndshape::ConstShape3u32, visible_block_faces, Axis, AxisPermutation, OrientedBlockFace,
+        QuadCoordinateConfig, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
     },
 };
-use godot::prelude::{Array, Gd, Vector3};
+use godot::prelude::{godot_print, Array, Gd, Vector3};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
@@ -33,11 +33,11 @@ pub fn get_test_sphere() -> [BlockInfo; 5832] {
 }
 
 pub fn generate_buffer(chunk_data: &[BlockInfo; 5832]) -> UnitQuadBuffer {
-    let b_chunk = get_test_sphere();
+    //let b_chunk = get_test_sphere();
 
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        &b_chunk,
+        chunk_data, //&b_chunk,
         &ChunkBordersShape {},
         [0; 3],
         [17; 3],
@@ -61,9 +61,27 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
     let steep = 0.03125;
     let uv_scale = Vector2::new(steep, steep);
 
-    let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
+    // let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
 
-    for (side_index, (group, face)) in buffer.groups.into_iter().zip(faces.into_iter()).enumerate()
+    let s = QuadCoordinateConfig {
+        // Y is always in the V direction when it's not the normal. When Y is the
+        // normal, right-handedness determines that we must use Yzx permutations.
+        faces: [
+            OrientedBlockFace::new(-1, AxisPermutation::Xzy),
+            OrientedBlockFace::new(-1, AxisPermutation::Yzx),
+            OrientedBlockFace::new(-1, AxisPermutation::Zxy),
+            OrientedBlockFace::new(1, AxisPermutation::Xzy),
+            OrientedBlockFace::new(1, AxisPermutation::Yzx),
+            OrientedBlockFace::new(1, AxisPermutation::Zxy),
+        ],
+        u_flip_face: Axis::Y,
+    };
+
+    for (side_index, (group, face)) in buffer
+        .groups
+        .into_iter()
+        .zip(s.faces.into_iter())
+        .enumerate()
     {
         // visible_block_faces_with_voxel_view
         // face is OrientedBlockFace
@@ -71,21 +89,12 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
         for quad in group.into_iter() {
             let block_type = get_block_type_by_id(&quad.id);
 
-            for i in &face.quad_mesh_indices(verts.len() as u32) {
-                indices.push(i.to_owned() as i32);
-            }
-
-            for i in &face.quad_mesh_positions(&quad.into(), 1.0) {
-                verts.push(Vector3::new(i[0], i[1], i[2]));
-            }
-
-            for i in &face.quad_mesh_normals() {
-                normals.push(Vector3::new(i[0], i[1], i[2]));
-            }
+            indices.extend(face.quad_mesh_indices(verts.len() as i32));
+            verts.extend(face.quad_mesh_positions(&quad.into(), 1.0));
+            normals.extend(face.quad_mesh_normals());
 
             let unoriented_quad = UnorientedQuad::from(quad);
-            for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, true, &unoriented_quad)
-            {
+            for i in &face.tex_coords(s.u_flip_face, false, &unoriented_quad) {
                 let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
                     _ => 0,
@@ -94,7 +103,7 @@ pub fn generate_chunk_geometry(chunk_data: &[BlockInfo; 5832]) -> Option<Gd<Arra
                     steep * ((offset % 32) as i32) as f32,
                     steep * ((offset / 32) as f32).floor(),
                 );
-                uvs.push(Vector2::new(i[0], i[1]) * uv_scale + ui_offset)
+                uvs.push(*i * uv_scale + ui_offset)
             }
         }
     }

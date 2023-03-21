@@ -4,7 +4,7 @@
 
 [resource]
 transparency = 2
-alpha_scissor_threshold = 1.0
+alpha_scissor_threshold = 0.076
 alpha_antialiasing_mode = 0
 albedo_texture = ExtResource("1_fel2k")
 metallic_specular = 0.0
