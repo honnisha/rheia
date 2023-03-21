@@ -32,7 +32,7 @@ impl ChunksManager {
 
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let chunks_distance = 3;
+        let chunks_distance = 1;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
         let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
@@ -159,6 +159,7 @@ impl ChunksManager {
 
         let mut mesh_instance = MeshInstance3D::new_alloc();
         mesh_instance.set_mesh(mesh.upcast());
+        mesh_instance.create_trimesh_collision();
         Some(mesh_instance)
     }
 
@@ -191,7 +192,6 @@ impl ChunksManager {
                 "chunk_{}_{}_{}",
                 p[0], p[1], p[2]
             )));
-            mesh.create_trimesh_collision();
             mesh.set_position(Chunk::get_chunk_position_from_position(chunk_position));
             base.add_child(mesh.upcast(), false, InternalMode::INTERNAL_MODE_BACK);
         }

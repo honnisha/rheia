@@ -33,11 +33,11 @@ pub fn get_test_sphere() -> [BlockInfo; 5832] {
 }
 
 pub fn generate_buffer(chunk_data: &[BlockInfo; 5832]) -> UnitQuadBuffer {
-    //let b_chunk = get_test_sphere();
+    let b_chunk = get_test_sphere();
 
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        chunk_data, //&b_chunk,
+        &b_chunk,
         &ChunkBordersShape {},
         [0; 3],
         [17; 3],

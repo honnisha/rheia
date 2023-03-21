@@ -33,19 +33,22 @@ impl WorldGenerator {
                 let z_map = (z as f32 + (chunk_position[2] as f32 * 16_f32)) / 100.0;
                 let height = self.noise.get_noise(x_map, z_map) * 15_f32 + 10_f32;
 
+                godot_print!("x{} z:{} height:{}", x, z, height);
                 for y in 0_u32..16_u32 {
                     let i = ChunkShape::linearize([x, y, z]);
                     assert!(i < ChunkShape::SIZE, "Generate chunk data overflow array length; dimentions:{:?} current:{:?}", ChunkShape::ARRAY, [x, y, z]);
 
                     let y_global = y as f32 + (chunk_position[1] as f32 * 16_f32);
-                    if height < y_global {
+
+                    if y_global == 5_f32 {
                         chunk_data[i as usize] = BlockInfo::new(1);
                     }
-                    //else if y_global < 13_f32 {
+                    //else if y_global < 10_f32 {
                     //    chunk_data[i as usize] = BlockInfo::new(2);
+                    //    godot_print!("Block 2: {:?}", [x, y, z]);
                     //}
                     //if y_global == 25_f32 {
-                    //    chunk_data[i as usize] = BlockInfo::new(3);
+                    //    chunk_data[i as usize] = BlockInfo::new(2);
                     //}
                 }
             }

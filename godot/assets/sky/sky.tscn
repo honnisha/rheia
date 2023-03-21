@@ -10,9 +10,9 @@ shader = ExtResource("1_36bfg")
 shader_parameter/moon_tint = Color(1, 0.643137, 0.152941, 1)
 shader_parameter/clouds_tint = Color(1, 1, 1, 1)
 shader_parameter/SCATERRING = false
-shader_parameter/SUN_POS = Vector3(0, 0.941588, 0.336767)
-shader_parameter/MOON_POS = Vector3(0, -0.941588, -0.336767)
-shader_parameter/MOON_TEX_POS = Vector3(0, -0.985289, -0.170897)
+shader_parameter/SUN_POS = Vector3(0, 0.980683, -0.195604)
+shader_parameter/MOON_POS = Vector3(0, -0.980683, 0.195604)
+shader_parameter/MOON_TEX_POS = Vector3(0, -0.995159, 0.0982776)
 shader_parameter/LIGHTING_POS = Vector3(0, 1, 0)
 shader_parameter/lighting_strength = 0.0
 shader_parameter/MOON_PHASE = 1.0
@@ -38,19 +38,24 @@ background_mode = 2
 sky = SubResource("Sky_jusdg")
 ambient_light_color = Color(1, 1, 1, 1)
 ambient_light_sky_contribution = 0.0
-ambient_light_energy = 0.75
 ssao_enabled = true
-ssil_enabled = true
+ssao_radius = 2.34
+ssao_intensity = 5.0
+ssao_power = 1.5529
+ssao_detail = 2.0
+ssao_horizon = 0.22
+ssao_sharpness = 0.28
+ssao_light_affect = 0.31
+ssao_ao_channel_affect = 0.33
 fog_light_color = Color(1, 1, 1, 1)
-adjustment_enabled = true
 adjustment_saturation = 0.75
 
 [node name="sky" type="WorldEnvironment"]
 environment = SubResource("Environment_h6yc6")
 script = ExtResource("4_cuqt8")
-time_of_day_setup = 0.638
+time_of_day_setup = 0.552
 moon_tint = Color(1, 0.643137, 0.152941, 1)
 
 [node name="sun_moon" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.336767, 0.941589, 0, -0.941589, 0.336767, 0, 0.941588, 0.336767)
+transform = Transform3D(-1, 8.57341e-08, -1.71002e-08, 0, 0.195604, 0.980684, 8.74228e-08, 0.980684, -0.195604, 0, 0.980683, -0.195604)
 light_energy = 0.75
