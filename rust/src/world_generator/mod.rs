@@ -47,9 +47,6 @@ impl WorldGenerator {
                     else if y_global < 8_f32 {
                         chunk_data[i as usize] = BlockInfo::new(3);
                     }
-                    if y_global == 25_f32 {
-                        chunk_data[i as usize] = BlockInfo::new(2);
-                    }
                 }
             }
         }

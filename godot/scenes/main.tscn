@@ -1,20 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://cx0wve30173ae"]
+[gd_scene load_steps=5 format=3 uid="uid://cx0wve30173ae"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
-[ext_resource type="Material" uid="uid://c5giprarijmmn" path="res://assets/world/material.tres" id="4_btdcq"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
 [ext_resource type="Texture2D" uid="uid://l3b78x3f7thl" path="res://assets/sky/moon.png" id="5_7e755"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_cmld6"]
-material = ExtResource("4_btdcq")
-
-[sub_resource type="BoxMesh" id="BoxMesh_d4x23"]
-material = ExtResource("4_btdcq")
-size = Vector3(10, 0.5, 20)
-
-[sub_resource type="BoxMesh" id="BoxMesh_gpkeu"]
-size = Vector3(10, 1, 10)
 
 [node name="Main" type="Main"]
 
@@ -41,19 +30,7 @@ wind_strength = 0.05
 [node name="human" parent="." instance=ExtResource("4_tj33o")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 7.09302, 0)
 
-[node name="box" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.20759, 0)
-mesh = SubResource("BoxMesh_cmld6")
-
 [node name="Sprite2D" type="Sprite2D" parent="."]
 position = Vector2(1045, 103)
 scale = Vector2(0.255859, 0.255859)
 texture = ExtResource("5_7e755")
-
-[node name="floor" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2386, 20.304)
-mesh = SubResource("BoxMesh_d4x23")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.0891, 10.5605, 21.9706)
-mesh = SubResource("BoxMesh_gpkeu")

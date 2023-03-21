@@ -24,7 +24,7 @@ impl ChunksManager {
     pub fn new() -> Self {
         let mut rng = RandomNumberGenerator::new();
 
-        let seed = 1_u64;//rng.next_u64();
+        let seed = rng.next_u64();
         ChunksManager {
             chunks: HashMap::new(),
             world_generator: WorldGenerator::new(seed),
