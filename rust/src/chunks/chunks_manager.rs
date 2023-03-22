@@ -1,8 +1,14 @@
-use std::{collections::HashMap, ops::DerefMut, io::Read};
+use std::{collections::HashMap, io::Read, ops::DerefMut};
 
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D, OrmMaterial3D, Texture2D, base_material_3d::{TextureParam, ShadingMode, TextureFilter, TextureChannel, AlphaAntiAliasing, DepthDrawMode}, Image, ImageTexture, BaseMaterial3D},
+    engine::{
+        base_material_3d::{
+            AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam,
+        },
+        node::InternalMode,
+        Image, ImageTexture, Material, MeshInstance3D, StandardMaterial3D,
+    },
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -41,7 +47,10 @@ impl ChunksManager {
         material.set_depth_draw_mode(DepthDrawMode::DEPTH_DRAW_OPAQUE_ONLY);
         material.set_refraction(0.27_f64);
 
-        let mut f = std::fs::File::open("/home/honnisha/godot/honny-craft/godot/assets/world/block_textures.png").unwrap();
+        let mut f = std::fs::File::open(
+            "/home/honnisha/godot/honny-craft/godot/assets/world/block_textures.png",
+        )
+        .unwrap();
         let mut buffer = Vec::new();
         f.read_to_end(&mut buffer).unwrap();
         let mut pba = PackedByteArray::new();
@@ -82,10 +91,8 @@ impl ChunksManager {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
                 if (Vector2::new(x as real, z as real) - p2).length() < chunks_distance as f32 {
                     for y in 0_i32..2_i32 {
-
                         let chunk_position = &[x, y, z];
                         if !self.is_chunk_loaded(chunk_position) {
-
                             self.spawn_chunk(base, chunk_position);
                         }
                     }
@@ -211,11 +218,12 @@ impl ChunksManager {
     }
 
     pub fn spawn_chunk(&mut self, base: &mut Base<Node>, chunk_position: &[i32; 3]) {
-
         self.load_chunk(&chunk_position);
         let chunk_data = self.get_chunk_data(chunk_position);
 
-        let bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position).1;
+        let bordered_chunk_data = self
+            .format_chunk_data_with_boundaries(&chunk_data, &chunk_position)
+            .1;
         let mesh_option = self.get_mesh(&bordered_chunk_data);
 
         if mesh_option.is_some() {
