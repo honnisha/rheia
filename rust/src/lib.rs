@@ -13,6 +13,7 @@ mod chunks;
 mod world;
 pub mod utils;
 pub mod world_generator;
+pub mod schematics;
 
 struct HonnyCraft;
 

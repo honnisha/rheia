@@ -25,3 +25,6 @@ ndcopy = "0.3"
 bracket-lib = "~0.8"
 bracket-noise = "~0.8"
 bracket-random = "~0.8"
+
+flate2 = "1.0"
+fastnbt = "2"
