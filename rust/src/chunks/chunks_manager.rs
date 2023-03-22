@@ -1,8 +1,8 @@
-use std::{collections::HashMap, ops::DerefMut};
+use std::{collections::HashMap, ops::DerefMut, io::Read};
 
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D, OrmMaterial3D, Texture2D, base_material_3d::{TextureParam, ShadingMode}, Image, ImageTexture},
+    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D, OrmMaterial3D, Texture2D, base_material_3d::{TextureParam, ShadingMode, TextureFilter, TextureChannel, AlphaAntiAliasing, DepthDrawMode}, Image, ImageTexture, BaseMaterial3D},
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -18,16 +18,37 @@ use super::{block_info::BlockInfo, chunk::Chunk};
 pub struct ChunksManager {
     chunks: HashMap<[i32; 3], Chunk>,
     world_generator: WorldGenerator,
-    material: Gd<OrmMaterial3D>,
+    material: Gd<StandardMaterial3D>,
 }
 
 impl ChunksManager {
     pub fn new() -> Self {
-        let mut material = OrmMaterial3D::new();
-        material.set_shading_mode(ShadingMode::SHADING_MODE_PER_PIXEL);
-        material.set_metallic(0_f64);
+        let mut material = StandardMaterial3D::new();
+        material.set_alpha_scissor_threshold(0_f64);
+        material.set_alpha_antialiasing(AlphaAntiAliasing::ALPHA_ANTIALIASING_OFF);
 
-        let image = Image::load_from_file(GodotString::from("res://assets/world/block_textures.png")).unwrap();
+        material.set_shading_mode(ShadingMode::SHADING_MODE_PER_PIXEL);
+
+        material.set_metallic(0_f64);
+        material.set_specular(0_f64);
+
+        material.set_roughness(0_f64);
+        material.set_clearcoat(0.23_f64);
+
+        material.set_texture_filter(TextureFilter::TEXTURE_FILTER_NEAREST);
+        material.set_ao_light_affect(0.6_f64);
+        //material.set_ao_enabled(true);
+        material.set_depth_draw_mode(DepthDrawMode::DEPTH_DRAW_OPAQUE_ONLY);
+        material.set_refraction(0.27_f64);
+
+        let mut f = std::fs::File::open("/home/honnisha/godot/honny-craft/godot/assets/world/block_textures.png").unwrap();
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer).unwrap();
+        let mut pba = PackedByteArray::new();
+        pba.extend(buffer);
+
+        let mut image = Image::new();
+        image.load_png_from_buffer(pba);
         let mut texture = ImageTexture::new();
         texture.set_image(image);
         material.set_texture(TextureParam::TEXTURE_ALBEDO, texture.upcast());
@@ -44,6 +65,8 @@ impl ChunksManager {
     pub fn duplicate_material(&self) -> Gd<Material> {
         let material = self.material.duplicate(true).unwrap();
         material.cast::<Material>()
+        //let m: Gd<Material> = load("res://assets/world/material.tres");
+        //m
     }
 
     #[allow(unused_variables)]

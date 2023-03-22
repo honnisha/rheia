@@ -2,34 +2,33 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cgqr8k31gh3vh"
-path.bptc="res://.godot/imported/block_textures.png-22390819b12d6a65f5b0a4d6a41da26d.bptc.ctex"
+uid="uid://d3nrlf60o6x6i"
+path="res://.godot/imported/block_textures.png-22390819b12d6a65f5b0a4d6a41da26d.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
 source_file="res://assets/world/block_textures.png"
-dest_files=["res://.godot/imported/block_textures.png-22390819b12d6a65f5b0a4d6a41da26d.bptc.ctex"]
+dest_files=["res://.godot/imported/block_textures.png-22390819b12d6a65f5b0a4d6a41da26d.ctex"]
 
 [params]
 
-compress/mode=2
-compress/high_quality=true
-compress/lossy_quality=1.0
-compress/hdr_compression=0
-compress/normal_map=0
+compress/mode=3
+compress/high_quality=false
+compress/lossy_quality=0.0
+compress/hdr_compression=1
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=5
+roughness/mode=0
 roughness/src_normal=""
 process/fix_alpha_border=false
 process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
-process/size_limit=512
+process/size_limit=0
 detect_3d/compress_to=0

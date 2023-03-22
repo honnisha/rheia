@@ -10,9 +10,9 @@ shader = ExtResource("1_36bfg")
 shader_parameter/moon_tint = Color(1, 0.643137, 0.152941, 1)
 shader_parameter/clouds_tint = Color(1, 1, 1, 1)
 shader_parameter/SCATERRING = false
-shader_parameter/SUN_POS = Vector3(0, 0.406737, -0.913545)
-shader_parameter/MOON_POS = Vector3(0, -0.406737, 0.913545)
-shader_parameter/MOON_TEX_POS = Vector3(0, -0.838671, 0.544639)
+shader_parameter/SUN_POS = Vector3(0, 0.72176, 0.692143)
+shader_parameter/MOON_POS = Vector3(0, -0.72176, -0.692143)
+shader_parameter/MOON_TEX_POS = Vector3(0, -0.927836, -0.372988)
 shader_parameter/LIGHTING_POS = Vector3(0, 1, 0)
 shader_parameter/lighting_strength = 0.0
 shader_parameter/MOON_PHASE = 1.0
@@ -54,9 +54,9 @@ adjustment_saturation = 0.75
 [node name="sky" type="WorldEnvironment"]
 environment = SubResource("Environment_h6yc6")
 script = ExtResource("4_cuqt8")
-time_of_day_setup = 0.4
+time_of_day_setup = 0.705
 moon_tint = Color(1, 0.643137, 0.152941, 1)
 
 [node name="sun_moon" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-1, 3.55581e-08, -7.98648e-08, 0, 0.913546, 0.406737, 8.74228e-08, 0.406737, -0.913546, 0, 0.406737, -0.913545)
+transform = Transform3D(1, 0, 0, 0, 0.692144, 0.721761, 0, -0.721761, 0.692144, 0, 0.72176, 0.692143)
 light_energy = 0.75

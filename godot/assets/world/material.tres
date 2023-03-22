@@ -1,8 +1,11 @@
 [gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://c5giprarijmmn"]
 
-[ext_resource type="Texture2D" uid="uid://cgqr8k31gh3vh" path="res://assets/world/block_textures.png" id="1_fel2k"]
+[ext_resource type="Texture2D" uid="uid://d3nrlf60o6x6i" path="res://assets/world/block_textures.png" id="1_fel2k"]
 
 [resource]
+transparency = 2
+alpha_scissor_threshold = 0.0
+alpha_antialiasing_mode = 0
 albedo_texture = ExtResource("1_fel2k")
 metallic_specular = 0.0
 roughness = 0.0
