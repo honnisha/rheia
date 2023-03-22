@@ -3,9 +3,6 @@
 [ext_resource type="Texture2D" uid="uid://cgqr8k31gh3vh" path="res://assets/world/block_textures.png" id="1_fel2k"]
 
 [resource]
-transparency = 2
-alpha_scissor_threshold = 0.076
-alpha_antialiasing_mode = 0
 albedo_texture = ExtResource("1_fel2k")
 metallic_specular = 0.0
 roughness = 0.0

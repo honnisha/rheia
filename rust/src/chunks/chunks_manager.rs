@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::DerefMut};
 
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D},
+    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D, OrmMaterial3D, Texture2D, base_material_3d::{TextureParam, ShadingMode}, Image, ImageTexture},
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -18,17 +18,32 @@ use super::{block_info::BlockInfo, chunk::Chunk};
 pub struct ChunksManager {
     chunks: HashMap<[i32; 3], Chunk>,
     world_generator: WorldGenerator,
+    material: Gd<OrmMaterial3D>,
 }
 
 impl ChunksManager {
     pub fn new() -> Self {
-        let mut rng = RandomNumberGenerator::new();
+        let mut material = OrmMaterial3D::new();
+        material.set_shading_mode(ShadingMode::SHADING_MODE_PER_PIXEL);
+        material.set_metallic(0_f64);
 
+        let image = Image::load_from_file(GodotString::from("res://assets/world/block_textures.png")).unwrap();
+        let mut texture = ImageTexture::new();
+        texture.set_image(image);
+        material.set_texture(TextureParam::TEXTURE_ALBEDO, texture.upcast());
+
+        let mut rng = RandomNumberGenerator::new();
         let seed = rng.next_u64();
         ChunksManager {
             chunks: HashMap::new(),
             world_generator: WorldGenerator::new(seed),
+            material: material,
         }
+    }
+
+    pub fn duplicate_material(&self) -> Gd<Material> {
+        let material = self.material.duplicate(true).unwrap();
+        material.cast::<Material>()
     }
 
     #[allow(unused_variables)]
@@ -182,11 +197,8 @@ impl ChunksManager {
 
         if mesh_option.is_some() {
             let mut mesh = mesh_option.unwrap();
-            let material: Option<Gd<Material>> = try_load("res://assets/world/material.tres");
-            match material {
-                Some(m) => mesh.set_material_overlay(m),
-                None => godot_error!("Material for world not found!"),
-            }
+            let material = self.duplicate_material();
+            mesh.set_material_overlay(material);
 
             let p = chunk_position;
             mesh.set_name(GodotString::from(format!(

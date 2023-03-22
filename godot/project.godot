@@ -15,6 +15,15 @@ run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.0", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[importer_defaults]
+
+texture={
+"compress/mode": 3,
+"detect_3d/compress_to": 0,
+"process/fix_alpha_border": false,
+"roughness/mode": 5
+}
+
 [rendering]
 
 renderer/rendering_method.mobile="gl_compatibility"

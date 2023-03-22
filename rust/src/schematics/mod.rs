@@ -3,6 +3,8 @@ use flate2::read::GzDecoder;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
+// https://github.com/SpongePowered/Schematic-Specification
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BlockEntity {
