@@ -7,7 +7,9 @@ use godot::{
     },
     prelude::{Gd, PackedByteArray, StringName, ToVariant},
 };
-use image::{imageops, ImageBuffer, RgbaImage};
+use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
+
+use std::{fs::File, io::Cursor};
 
 fn generate_texture() -> Vec<u8> {
     let size = 16 * 32;
@@ -15,22 +17,22 @@ fn generate_texture() -> Vec<u8> {
 
     let grass =
         image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_top.png").unwrap();
-    imageops::overlay(&mut img, &grass, 32, 0);
+    imageops::overlay(&mut img, &grass, 16, 0);
 
     let grass =
         image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_block_side.png")
             .unwrap();
-    imageops::overlay(&mut img, &grass, 32 * 2, 0);
+    imageops::overlay(&mut img, &grass, 16 * 2, 0);
 
     let grass =
         image::open("/home/honnisha/godot/honny-craft/godot/assets/block/dirt.png").unwrap();
-    imageops::overlay(&mut img, &grass, 32 * 3, 0);
+    imageops::overlay(&mut img, &grass, 16 * 3, 0);
 
+    let mut b: Vec<u8> = Vec::new();
+    img.write_to(&mut Cursor::new(&mut b), ImageFormat::Png)
+        .unwrap();
 
-    let fout = &mut File::create(&Path::new("/home/honnisha/godot/honny-craft/godot/assets/test.png")).unwrap();
-    im.write_to(fout, ImageFormat::Png).unwrap();
-
-    img.as_raw().to_vec()
+    b.to_vec()
 }
 
 pub fn get_blocks_material() -> Gd<StandardMaterial3D> {
