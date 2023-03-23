@@ -11,9 +11,9 @@ static BLOCKS_TYPE: &'static [BlockType] = &[
     // Grass
     BlockType {
         voxel_visibility: VoxelVisibility::Opaque,
-        top_texture_offset: Some(2),
-        side_texture_offset: Some(3),
-        bottom_texture_offset: Some(4),
+        top_texture_offset: Some(1),
+        side_texture_offset: Some(2),
+        bottom_texture_offset: Some(3),
     },
     // Stone
     BlockType {

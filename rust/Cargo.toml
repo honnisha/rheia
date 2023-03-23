@@ -26,5 +26,8 @@ bracket-lib = "~0.8"
 bracket-noise = "~0.8"
 bracket-random = "~0.8"
 
+# Schematics
 flate2 = "1.0"
 fastnbt = "2"
+
+image = "0.24.5"
