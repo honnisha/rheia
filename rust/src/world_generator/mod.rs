@@ -1,7 +1,10 @@
 use bracket_noise::prelude::*;
 use ndshape::ConstShape;
 
-use crate::{chunks::block_info::BlockInfo, mesh::mesh_generator::ChunkShape, blocks::block_type::BlockType};
+use crate::{
+    blocks::blocks_storage::BlockType, chunks::block_info::BlockInfo,
+    mesh::mesh_generator::ChunkShape,
+};
 
 pub struct WorldGenerator {
     noise: FastNoise,
@@ -27,7 +30,6 @@ impl WorldGenerator {
     ) {
         for x in 0_u32..16_u32 {
             for z in 0_u32..16_u32 {
-
                 let x_map = (x as f32 + (chunk_position[0] as f32 * 16_f32)) / 100.0;
                 let z_map = (z as f32 + (chunk_position[2] as f32 * 16_f32)) / 100.0;
                 let height = self.noise.get_noise(x_map, z_map) * 15_f32 + 10_f32;
@@ -36,15 +38,17 @@ impl WorldGenerator {
                 for y in 0_u32..16_u32 {
                     let pos = [x, y, z];
                     let i = ChunkShape::linearize(pos);
-                    assert!(i < ChunkShape::SIZE, "Generate chunk data overflow array length; dimentions:{:?} current:{:?}", ChunkShape::ARRAY, pos);
+                    assert!(
+                        i < ChunkShape::SIZE,
+                        "Generate chunk data overflow array length; dimentions:{:?} current:{:?}",
+                        ChunkShape::ARRAY,
+                        pos
+                    );
 
                     let y_global = y as f32 + (chunk_position[1] as f32 * 16_f32);
 
                     if height > y_global {
                         chunk_data[i as usize] = BlockInfo::new(BlockType::GrassBlock);
-                    }
-                    else if y_global < 8_f32 {
-                        chunk_data[i as usize] = BlockInfo::new(BlockType::Water);
                     }
                 }
             }

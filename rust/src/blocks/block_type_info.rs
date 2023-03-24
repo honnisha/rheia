@@ -9,6 +9,23 @@ pub struct BlockTypeInfo {
 }
 
 impl BlockTypeInfo {
+    pub const fn new_empty() -> Self {
+        BlockTypeInfo {
+            voxel_visibility: VoxelVisibility::Empty,
+            top_texture: None,
+            side_texture: None,
+            bottom_texture: None,
+        }
+    }
+    pub const fn new_opaque_mono_side(texture: &'static str) -> Self {
+        BlockTypeInfo {
+            voxel_visibility: VoxelVisibility::Opaque,
+            top_texture: Some(texture),
+            side_texture: Some(texture),
+            bottom_texture: Some(texture),
+        }
+    }
+
     pub fn get_voxel_visibility(&self) -> &VoxelVisibility {
         &self.voxel_visibility
     }

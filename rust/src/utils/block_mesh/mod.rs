@@ -92,7 +92,7 @@ pub use simple::*;
 pub use ilattice;
 pub use ndshape;
 
-use crate::blocks::block_type::BlockType;
+use crate::blocks::blocks_storage::BlockType;
 
 /// Describes how this voxel influences mesh generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

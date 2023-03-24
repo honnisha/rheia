@@ -8,7 +8,7 @@ use godot::{
 use ndshape::ConstShape;
 
 use crate::{
-    blocks::block_type::BlockType,
+    blocks::blocks_storage::BlockType,
     mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape},
     textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
     utils::block_mesh::VoxelVisibility,
