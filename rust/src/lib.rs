@@ -14,6 +14,8 @@ mod world;
 pub mod utils;
 pub mod world_generator;
 pub mod schematics;
+pub mod blocks;
+pub mod textures;
 
 struct HonnyCraft;
 

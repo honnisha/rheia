@@ -11,6 +11,9 @@ crate-type = ["cdylib"]
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master"}
 rand = "0.8"
 
+strum = "0.24.1"
+strum_macros = "0.24.3"
+
 tokio = { version = "1.26.0", features = ["rt"] }
 
 rhai = { version = "1.13.0", features = ["internals"] }

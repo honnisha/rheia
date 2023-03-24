@@ -8,8 +8,10 @@ use godot::{
 use ndshape::ConstShape;
 
 use crate::{
+    blocks::block_type::BlockType,
     mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape},
-    utils::{block_mesh::VoxelVisibility, material_builder::get_blocks_material},
+    textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
+    utils::block_mesh::VoxelVisibility,
     world_generator::WorldGenerator,
 };
 
@@ -19,16 +21,19 @@ pub struct ChunksManager {
     chunks: HashMap<[i32; 3], Chunk>,
     world_generator: WorldGenerator,
     material: Gd<StandardMaterial3D>,
+    texture_mapper: TextureMapper,
 }
 
 impl ChunksManager {
     pub fn new() -> Self {
         let mut rng = RandomNumberGenerator::new();
         let seed = rng.next_u64();
+        let mut texture_mapper = TextureMapper::new()
         ChunksManager {
             chunks: HashMap::new(),
             world_generator: WorldGenerator::new(seed),
-            material: get_blocks_material(),
+            material: build_blocks_material(texture_mapper),
+            rexture_mapper: texture_mapper,
         }
     }
 
@@ -72,7 +77,7 @@ impl ChunksManager {
             return;
         }
 
-        let mut chunk_data = [BlockInfo::new(0); 4096];
+        let mut chunk_data = [BlockInfo::new(BlockType::Air); 4096];
         self.world_generator
             .generate_chunk_data(&mut chunk_data, chunk_position);
 
@@ -84,8 +89,8 @@ impl ChunksManager {
         &'a mut self,
         chunk_data: &[BlockInfo; 4096],
         chunk_position: &[i32; 3],
-    ) -> (&'a mut Self, [BlockInfo; 5832]) {
-        let mut b_chunk = [BlockInfo::new(0); 5832];
+    ) -> (&'a mut Self, [BlockType; 5832]) {
+        let mut b_chunk = [BlockType::Air; 5832];
 
         let mut has_any_mesh = false;
 
@@ -102,9 +107,15 @@ impl ChunksManager {
 
                     let b_chunk_position = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
                     let data = chunk_data[i as usize];
-                    b_chunk[b_chunk_position as usize] = data;
+                    b_chunk[b_chunk_position as usize] = data.get_block_type().clone();
 
-                    if *data.get_block_type().get_voxel_visibility() != VoxelVisibility::Empty {
+                    if *data
+                        .get_block_type()
+                        .get_block_type_info()
+                        .unwrap()
+                        .get_voxel_visibility()
+                        != VoxelVisibility::Empty
+                    {
                         has_any_mesh = true;
                     }
                 }
@@ -145,8 +156,9 @@ impl ChunksManager {
                             //    pos_inside,
                             //    pos_outside
                             //);
-                            b_chunk[pos_i as usize] =
-                                border_chunk.chunk_data[pos_o as usize].clone();
+                            b_chunk[pos_i as usize] = border_chunk.chunk_data[pos_o as usize]
+                                .get_block_type()
+                                .clone();
                         }
                     }
                 }
@@ -156,7 +168,7 @@ impl ChunksManager {
         return (self, b_chunk);
     }
 
-    pub fn get_mesh(&self, bordered_chunk_data: &[BlockInfo; 5832]) -> Option<Gd<MeshInstance3D>> {
+    pub fn get_mesh(&self, bordered_chunk_data: &[BlockType; 5832]) -> Option<Gd<MeshInstance3D>> {
         let mesh = match generate_chunk_geometry(&bordered_chunk_data) {
             Some(m) => m,
             None => return None,

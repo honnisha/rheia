@@ -92,6 +92,8 @@ pub use simple::*;
 pub use ilattice;
 pub use ndshape;
 
+use crate::blocks::block_type::BlockType;
+
 /// Describes how this voxel influences mesh generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VoxelVisibility {
@@ -107,7 +109,7 @@ pub enum VoxelVisibility {
 /// how to generate geometry for this voxel.
 pub trait Voxel {
     fn get_visibility(&self) -> VoxelVisibility;
-    fn get_id(&self) -> &i32;
+    fn get_type(&self) -> &BlockType;
 }
 
 /// Used as a dummy for functions that must wrap a voxel
@@ -119,8 +121,8 @@ impl<'a, T: Voxel> Voxel for IdentityVoxel<'a, T> {
     fn get_visibility(&self) -> VoxelVisibility {
         self.0.get_visibility()
     }
-    fn get_id(&self) -> &i32 {
-        self.0.get_id()
+    fn get_type(&self) -> &BlockType {
+        self.0.get_type()
     }
 }
 

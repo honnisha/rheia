@@ -5,28 +5,39 @@ use godot::{
         },
         Image, ImageTexture, StandardMaterial3D,
     },
-    prelude::{Gd, PackedByteArray, StringName, ToVariant},
+    prelude::{Gd, PackedByteArray, StringName, ToVariant, try_load},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
+use std::io::Cursor;
+use strum::IntoEnumIterator;
 
-use std::{fs::File, io::Cursor};
+use crate::blocks::block_type::BlockType;
 
-fn generate_texture() -> Vec<u8> {
+use super::texture_mapper::TextureMapper;
+
+fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     let size = 16 * 32;
     let mut img: RgbaImage = ImageBuffer::new(size, size);
 
-    let grass =
-        image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_top.png").unwrap();
-    imageops::overlay(&mut img, &grass, 16, 0);
+    for block_type in BlockType::iter() {
+        let block_type_data = match block_type.get_block_type_info() {
+            Some(d) => d,
+            None => continue
+        };
 
-    let grass =
-        image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_block_side.png")
-            .unwrap();
-    imageops::overlay(&mut img, &grass, 16 * 2, 0);
+        match block_type_data.top_texture {
+            Some(t) => {
+                let try_load(format!("res://assets/block/{}", t));
+                imageops::overlay(&mut img, &grass, 16, 0);
+            }
+            None => ()
+        }
+    }
 
-    let grass =
-        image::open("/home/honnisha/godot/honny-craft/godot/assets/block/dirt.png").unwrap();
-    imageops::overlay(&mut img, &grass, 16 * 3, 0);
+//    let grass =
+//        image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_block_side.png")
+//            .unwrap();
+//    imageops::overlay(&mut img, &grass, 16 * 2, 0);
 
     let mut b: Vec<u8> = Vec::new();
     img.write_to(&mut Cursor::new(&mut b), ImageFormat::Png)
@@ -35,7 +46,7 @@ fn generate_texture() -> Vec<u8> {
     b.to_vec()
 }
 
-pub fn get_blocks_material() -> Gd<StandardMaterial3D> {
+pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardMaterial3D> {
     let mut material = StandardMaterial3D::new();
     material.set_alpha_scissor_threshold(0_f64);
     material.set_alpha_antialiasing(AlphaAntiAliasing::ALPHA_ANTIALIASING_OFF);
@@ -55,7 +66,7 @@ pub fn get_blocks_material() -> Gd<StandardMaterial3D> {
     material.set_refraction(0.27_f64);
 
     let mut pba = PackedByteArray::new();
-    pba.extend(generate_texture());
+    pba.extend(generate_texture(texture_mapper));
 
     let mut image = Image::new();
     image.load_png_from_buffer(pba);

@@ -1,8 +1,7 @@
 use bracket_noise::prelude::*;
-use godot::prelude::godot_print;
 use ndshape::ConstShape;
 
-use crate::{chunks::block_info::BlockInfo, mesh::mesh_generator::ChunkShape};
+use crate::{chunks::block_info::BlockInfo, mesh::mesh_generator::ChunkShape, blocks::block_type::BlockType};
 
 pub struct WorldGenerator {
     noise: FastNoise,
@@ -42,10 +41,10 @@ impl WorldGenerator {
                     let y_global = y as f32 + (chunk_position[1] as f32 * 16_f32);
 
                     if height > y_global {
-                        chunk_data[i as usize] = BlockInfo::new(1);
+                        chunk_data[i as usize] = BlockInfo::new(BlockType::GrassBlock);
                     }
                     else if y_global < 8_f32 {
-                        chunk_data[i as usize] = BlockInfo::new(3);
+                        chunk_data[i as usize] = BlockInfo::new(BlockType::Water);
                     }
                 }
             }

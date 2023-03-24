@@ -79,7 +79,10 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
             };
 
             if face_needs_mesh {
-                output.groups[face_index].push(UnorientedUnitQuad { minimum: p_array, id: p_voxel.get_id().clone() });
+                output.groups[face_index].push(UnorientedUnitQuad {
+                    minimum: p_array,
+                    block_type: *p_voxel.get_type(),
+                });
             }
         }
     }
@@ -87,7 +90,7 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
+    use crate::{blocks::block_type::BlockType, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};
@@ -138,8 +141,8 @@ mod tests {
                 VoxelVisibility::Opaque
             }
         }
-        fn get_id(&self) -> &i32 {
-            &0_i32
+        fn get_type(&self) -> &BlockType {
+            &BlockType::Air
         }
     }
 }

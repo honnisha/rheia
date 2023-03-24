@@ -1,42 +1,30 @@
-use crate::utils::block_mesh::{Voxel, VoxelVisibility};
-
-use super::block_type::{get_block_type_by_id, BlockType};
+use crate::blocks::{block_type::BlockType, block_type_info::BlockTypeInfo};
 
 #[derive(Copy)]
 pub struct BlockInfo {
-    type_id: i32,
+    block_type: BlockType,
 }
 
 impl BlockInfo {
-    pub fn new(id: i32) -> BlockInfo {
-        BlockInfo { type_id: id }
+    pub fn new(block_type: BlockType) -> BlockInfo {
+        BlockInfo {
+            block_type: block_type,
+        }
     }
 
-    pub fn get_block_type(&self) -> BlockType {
-        get_block_type_by_id(self.get_id())
+    pub fn get_block_type_info(&self) -> &'static BlockTypeInfo {
+        self.block_type.get_block_type_info().unwrap()
+    }
+
+    pub fn get_block_type(&self) -> &BlockType {
+        &self.block_type
     }
 }
 
 impl Clone for BlockInfo {
     fn clone(&self) -> BlockInfo {
         BlockInfo {
-            type_id: self.type_id,
+            block_type: self.block_type,
         }
     }
 }
-
-impl Voxel for BlockInfo {
-    fn get_visibility(&self) -> VoxelVisibility {
-        *get_block_type_by_id(&self.type_id).get_voxel_visibility()
-    }
-    fn get_id(&self) -> &i32 {
-        return &self.type_id
-    }
-}
-
-impl PartialEq for BlockInfo {
-    fn eq(&self, other: &Self) -> bool {
-        self.type_id == other.type_id
-    }
-}
-impl Eq for BlockInfo {}

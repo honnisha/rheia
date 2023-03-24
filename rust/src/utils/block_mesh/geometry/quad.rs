@@ -1,3 +1,5 @@
+use crate::blocks::block_type::BlockType;
+
 /// The minimum voxel and size of a quad, without an orientation. To get the
 /// actual corners of the quad, combine with an [`OrientedBlockFace`].
 ///
@@ -32,5 +34,5 @@ impl From<UnorientedUnitQuad> for UnorientedQuad {
 pub struct UnorientedUnitQuad {
     /// The minimum voxel in the quad.
     pub minimum: [u32; 3],
-    pub id: i32,
+    pub block_type: BlockType,
 }

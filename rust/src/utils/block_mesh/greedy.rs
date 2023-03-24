@@ -256,7 +256,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
+    use crate::{utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG, blocks::block_type::BlockType};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};
@@ -307,8 +307,8 @@ mod tests {
                 VoxelVisibility::Opaque
             }
         }
-        fn get_id(&self) -> &i32 {
-            &0_i32
+        fn get_type(&self) -> &BlockType {
+            &BlockType::Air
         }
     }
 
