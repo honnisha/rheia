@@ -28,12 +28,12 @@ impl ChunksManager {
     pub fn new() -> Self {
         let mut rng = RandomNumberGenerator::new();
         let seed = rng.next_u64();
-        let mut texture_mapper = TextureMapper::new()
+        let mut texture_mapper = TextureMapper::new();
         ChunksManager {
             chunks: HashMap::new(),
             world_generator: WorldGenerator::new(seed),
-            material: build_blocks_material(texture_mapper),
-            rexture_mapper: texture_mapper,
+            material: build_blocks_material(&mut texture_mapper),
+            texture_mapper: texture_mapper,
         }
     }
 
@@ -169,7 +169,7 @@ impl ChunksManager {
     }
 
     pub fn get_mesh(&self, bordered_chunk_data: &[BlockType; 5832]) -> Option<Gd<MeshInstance3D>> {
-        let mesh = match generate_chunk_geometry(&bordered_chunk_data) {
+        let mesh = match generate_chunk_geometry(&self.texture_mapper, &bordered_chunk_data) {
             Some(m) => m,
             None => return None,
         };

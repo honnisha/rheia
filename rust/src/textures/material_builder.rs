@@ -5,7 +5,7 @@ use godot::{
         },
         Image, ImageTexture, StandardMaterial3D,
     },
-    prelude::{Gd, PackedByteArray, StringName, ToVariant, try_load},
+    prelude::{Gd, GodotString, PackedByteArray, StringName, ToVariant, godot_print, godot_error},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
@@ -15,6 +15,41 @@ use crate::blocks::block_type::BlockType;
 
 use super::texture_mapper::TextureMapper;
 
+fn load_image(
+    texture_mapper: &mut TextureMapper,
+    img: &mut RgbaImage,
+    texture_option: Option<&'static str>,
+) {
+    let texture = match texture_option {
+        Some(t) => t,
+        None => {
+            return;
+        }
+    };
+
+    let image = match Image::load_from_file(GodotString::from(format!("res://assets/block/{}", texture))) {
+        Some(t) => t,
+        None => {
+            godot_error!("Can't load texture \"{}\"; not found;", texture);
+            return;
+        }
+    };
+    let image_bytes = &image.get_data().to_vec();
+    let image_png = match image::load_from_memory_with_format(&image_bytes, ImageFormat::Png) {
+        Ok(t) => t,
+        Err(e) => {
+            godot_error!("Can't load texture \"{}\"; error: {:?}", texture, e);
+            return;
+        }
+    };
+    let index = texture_mapper.add_texture(texture.to_string());
+
+    let offset_x = 16 * (index % 32_i64);
+    let offset_y = 16 * (index as f64 / 32_f64).floor() as i64;
+
+    imageops::overlay(img, &image_png, offset_x, offset_y);
+}
+
 fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     let size = 16 * 32;
     let mut img: RgbaImage = ImageBuffer::new(size, size);
@@ -22,22 +57,13 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     for block_type in BlockType::iter() {
         let block_type_data = match block_type.get_block_type_info() {
             Some(d) => d,
-            None => continue
+            None => continue,
         };
 
-        match block_type_data.top_texture {
-            Some(t) => {
-                let try_load(format!("res://assets/block/{}", t));
-                imageops::overlay(&mut img, &grass, 16, 0);
-            }
-            None => ()
-        }
+        load_image(texture_mapper, &mut img, block_type_data.top_texture);
+        load_image(texture_mapper, &mut img, block_type_data.side_texture);
+        load_image(texture_mapper, &mut img, block_type_data.bottom_texture);
     }
-
-//    let grass =
-//        image::open("/home/honnisha/godot/honny-craft/godot/assets/block/grass_block_side.png")
-//            .unwrap();
-//    imageops::overlay(&mut img, &grass, 16 * 2, 0);
 
     let mut b: Vec<u8> = Vec::new();
     img.write_to(&mut Cursor::new(&mut b), ImageFormat::Png)

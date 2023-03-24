@@ -68,6 +68,5 @@ fn get_block_type_info(block_type: &BlockType) -> Option<&'static BlockTypeInfo>
         BlockType::GrassBlock => Some(&BLOCK_GRASS_BLOCK),
         BlockType::Stone => Some(&BLOCK_STONE),
         BlockType::Water => Some(&BLOCK_WATER),
-        _ => None,
     }
 }
