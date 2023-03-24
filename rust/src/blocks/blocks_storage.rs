@@ -75,22 +75,6 @@ pub enum BlockType {
     ChiseledSandstone,
     CutSandstone,
     NoteBlock,
-    WhiteBed,
-    OrangeBed,
-    MagentaBed,
-    LightBlueBed,
-    YellowBed,
-    LimeBed,
-    PinkBed,
-    GrayBed,
-    LightGrayBed,
-    CyanBed,
-    PurpleBed,
-    BlueBed,
-    BrownBed,
-    GreenBed,
-    RedBed,
-    BlackBed,
     StickyPiston,
     Piston,
     PistonHead,
@@ -599,6 +583,261 @@ const BLOCK_GRASS_BLOCK: BlockTypeInfo = BlockTypeInfo {
     bottom_texture: Some("dirt.png"),
 };
 
+const BLOCK_PODZOL: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("podzol_top.png"),
+    side_texture: Some("podzol_side.png"),
+    bottom_texture: Some("dirt.png"),
+};
+
+const BLOCK_DISPENSER: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("dispenser_front_vertical.png"),
+    side_texture: Some("dispenser_front.png"),
+    bottom_texture: Some("dispenser_front_vertical.png"),
+};
+
+const BLOCK_STICKY_PISTON: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("piston_top_sticky.png"),
+    side_texture: Some("piston_side.png"),
+    bottom_texture: Some("piston_bottom.png"),
+};
+
+const BLOCK_PISTON: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("piston_top.png"),
+    side_texture: Some("piston_side.png"),
+    bottom_texture: Some("piston_bottom.png"),
+};
+
+const BLOCK_PISTON_HEAD: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("piston_top.png"),
+    side_texture: Some("piston_side.png"),
+    bottom_texture: Some("piston_bottom.png"),
+};
+
+const BLOCK_TNT: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("tnt_top.png"),
+    side_texture: Some("tnt_side.png"),
+    bottom_texture: Some("tnt_bottom.png"),
+};
+
+const BLOCK_CRAFTING_TABLE: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("crafting_table_top.png"),
+    side_texture: Some("crafting_table_front.png"),
+    bottom_texture: Some("crafting_table_top.png"),
+};
+
+const BLOCK_FURNACE: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("furnace_top.png"),
+    side_texture: Some("furnace_front.png"),
+    bottom_texture: Some("furnace_top.png"),
+};
+
+const BLOCK_BLAST_FURNACE: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("furnace_top.png"),
+    side_texture: Some("furnace_front.png"),
+    bottom_texture: Some("furnace_vent.png"),
+};
+
+const BLOCK_CAKE: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("cake_top.png"),
+    side_texture: Some("cake_side.png"),
+    bottom_texture: Some("cake_bottom.png"),
+};
+
+const BLOCK_MELON: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("melon_top.png"),
+    side_texture: Some("melon_side.png"),
+    bottom_texture: Some("melon_top.png"),
+};
+
+const BLOCK_MYCELIUM: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("mycelium_top.png"),
+    side_texture: Some("mycelium_side.png"),
+    bottom_texture: Some("mycelium_top.png"),
+};
+
+const BLOCK_ENCHANTING_TABLE: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("enchanting_table_top.png"),
+    side_texture: Some("enchanting_table_side.png"),
+    bottom_texture: Some("enchanting_table_bottom.png"),
+};
+
+const BLOCK_CAULDRON: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("cauldron_top.png"),
+    side_texture: Some("cauldron_side.png"),
+    bottom_texture: Some("cauldron_bottom.png"),
+};
+
+const BLOCK_END_PORTAL_FRAME: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("end_portal_frame_top.png"),
+    side_texture: Some("end_portal_frame_side.png"),
+    bottom_texture: Some("end_stone_bricks.png"),
+};
+
+const BLOCK_CACTUS: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("cactus_top.png"),
+    side_texture: Some("cactus_side.png"),
+    bottom_texture: Some("cactus_bottom.png"),
+};
+
+const BLOCK_HOPPER: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("hopper_bottom.png"),
+    side_texture: Some("hopper_side.png"),
+    bottom_texture: Some("hopper_bottom.png"),
+};
+
+const BLOCK_QUARTZ_BLOCK: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("quartz_block_top.png"),
+    side_texture: Some("quartz_block_side.png"),
+    bottom_texture: Some("quartz_block_bottom.png"),
+};
+
+const BLOCK_DROPPER: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Opaque,
+    top_texture: Some("dropper_front_vertical.png"),
+    side_texture: Some("dropper_front.png"),
+    bottom_texture: Some("stone.png"),
+};
+
+const BLOCK_BARRIER: BlockTypeInfo = BlockTypeInfo {
+    voxel_visibility: VoxelVisibility::Translucent,
+    top_texture: None,
+    side_texture: None,
+    bottom_texture: None,
+};
+
+const BLOCK_COMMAND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+
+const BLOCK_COCOA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cocoa_stage2.png");
+
+const BLOCK_POTTED_FERN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fern.png");
+const BLOCK_POTTED_DANDELION: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dandelion.png");
+const BLOCK_POTTED_POPPY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("poppy.png");
+const BLOCK_POTTED_BLUE_ORCHID: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blue_orchid.png");
+const BLOCK_POTTED_ALLIUM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("allium.png");
+const BLOCK_POTTED_AZURE_BLUET: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("azure_bluet.png");
+const BLOCK_POTTED_RED_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_tulip.png");
+const BLOCK_POTTED_ORANGE_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_tulip.png");
+const BLOCK_POTTED_WHITE_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_tulip.png");
+const BLOCK_POTTED_PINK_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("pink_tulip.png");
+const BLOCK_POTTED_OXEYE_DAISY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oxeye_daisy.png");
+const BLOCK_POTTED_CORNFLOWER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cornflower.png");
+const BLOCK_POTTED_LILY_OF_THE_VALLEY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lily_of_the_valley.png");
+const BLOCK_POTTED_WITHER_ROSE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("wither_rose.png");
+const BLOCK_POTTED_RED_MUSHROOM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_mushroom.png");
+const BLOCK_POTTED_BROWN_MUSHROOM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brown_mushroom.png");
+const BLOCK_POTTED_DEAD_BUSH: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dead_bush.png");
+const BLOCK_POTTED_CACTUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cactus_side.png");
+const BLOCK_POTTED_BAMBOO: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bamboo.png");
+const BLOCK_POTTED_CRIMSON_FUNGUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_fungus.png");
+const BLOCK_POTTED_WARPED_FUNGUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_fungus.png");
+const BLOCK_POTTED_CRIMSON_ROOTS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_roots.png");
+const BLOCK_POTTED_WARPED_ROOTS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_roots.png");
+
+const BLOCK_POTTED_OAK_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_sapling.png");
+const BLOCK_POTTED_SPRUCE_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_sapling.png");
+const BLOCK_POTTED_BIRCH_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_sapling.png");
+const BLOCK_POTTED_JUNGLE_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_sapling.png");
+const BLOCK_POTTED_ACACIA_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_sapling.png");
+const BLOCK_POTTED_DARK_OAK_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_sapling.png");
+
+const BLOCK_OAK_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_oak.png");
+const BLOCK_SPRUCE_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_spruce.png");
+const BLOCK_BIRCH_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_birch.png");
+const BLOCK_JUNGLE_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_jungle.png");
+const BLOCK_ACACIA_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_acacia.png");
+const BLOCK_DARK_OAK_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_fence_oak.png");
+const BLOCK_CRIMSON_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_crimson.png");
+const BLOCK_WARPED_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fence_warped.png");
+
+const BLOCK_OAK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_planks.png");
+const BLOCK_NETHER_BRICK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_bricks.png");
+const BLOCK_SPRUCE_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_planks.png");
+const BLOCK_BIRCH_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_planks.png");
+const BLOCK_JUNGLE_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_planks.png");
+const BLOCK_ACACIA_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_planks.png");
+const BLOCK_DARK_OAK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_planks.png");
+const BLOCK_CRIMSON_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_planks.png");
+const BLOCK_WARPED_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_planks.png");
+
+const BLOCK_PRISMARINE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_brick_double_slab.png");
+const BLOCK_PRISMARINE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_brick_double_slab.png");
+const BLOCK_DARK_PRISMARINE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_prismarine_planks.png");
+const BLOCK_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_planks.png");
+const BLOCK_SPRUCE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_planks.png");
+const BLOCK_BIRCH_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_planks.png");
+const BLOCK_JUNGLE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_planks.png");
+const BLOCK_ACACIA_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_planks.png");
+const BLOCK_DARK_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_planks.png");
+const BLOCK_STONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
+const BLOCK_SMOOTH_STONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
+const BLOCK_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone.png");
+const BLOCK_CUT_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone.png");
+const BLOCK_PETRIFIED_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_planks.png");
+const BLOCK_COBBLESTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone.png");
+const BLOCK_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brick_top.png");
+const BLOCK_STONE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
+const BLOCK_NETHER_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_brick_slab.png");
+const BLOCK_QUARTZ_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_slab.png");
+const BLOCK_RED_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone.png");
+const BLOCK_CUT_RED_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cut_red_sandstone.png");
+const BLOCK_PURPUR_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_block.png");
+
+const BLOCK_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("beacon_glass.png");
+const BLOCK_WHITE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("white_stained_glass.png");
+const BLOCK_ORANGE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("orange_stained_glass.png");
+const BLOCK_MAGENTA_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("magenta_stained_glass.png");
+const BLOCK_LIGHT_BLUE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("light_blue_stained_glass.png");
+const BLOCK_YELLOW_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("yellow_stained_glass.png");
+const BLOCK_LIME_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("lime_stained_glass.png");
+const BLOCK_PINK_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("pink_stained_glass.png");
+const BLOCK_GRAY_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("gray_stained_glass.png");
+const BLOCK_LIGHT_GRAY_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("light_gray_stained_glass.png");
+const BLOCK_CYAN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("cyan_stained_glass.png");
+const BLOCK_PURPLE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("purple_stained_glass.png");
+const BLOCK_BLUE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("blue_stained_glass.png");
+const BLOCK_BROWN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("brown_stained_glass.png");
+const BLOCK_GREEN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("green_stained_glass.png");
+const BLOCK_RED_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("red_stained_glass.png");
+const BLOCK_BLACK_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("black_stained_glass.png");
+
+const BLOCK_OAK_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_door_top.png");
+const BLOCK_IRON_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_door_top.png");
+const BLOCK_SPRUCE_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_door_top.png");
+const BLOCK_BIRCH_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_door_top.png");
+const BLOCK_JUNGLE_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_door_top.png");
+const BLOCK_ACACIA_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_door_top.png");
+const BLOCK_DARK_OAK_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_door_top.png");
+const BLOCK_CRIMSON_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_door_top.png");
+const BLOCK_WARPED_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_door_top.png");
+
+const BLOCK_OAK_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_trapdoor.png");
+const BLOCK_SPRUCE_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_trapdoor.png");
+const BLOCK_BIRCH_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_trapdoor.png");
+const BLOCK_JUNGLE_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_trapdoor.png");
+const BLOCK_ACACIA_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_trapdoor.png");
+const BLOCK_DARK_OAK_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_trapdoor.png");
+const BLOCK_IRON_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_trapdoor.png");
+const BLOCK_CRIMSON_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_trapdoor.png");
+const BLOCK_WARPED_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_trapdoor.png");
+
 const BLOCK_STONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
 const BLOCK_GRANITE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("granite.png");
 const BLOCK_POLISHED_GRANITE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_granite.png");
@@ -608,7 +847,6 @@ const BLOCK_ANDESITE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("andes
 const BLOCK_POLISHED_ANDESITE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_andesite.png");
 const BLOCK_DIRT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dirt.png");
 const BLOCK_COARSE_DIRT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("coarse_dirt.png");
-const BLOCK_PODZOL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("podzol.png");
 const BLOCK_COBBLESTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone.png");
 const BLOCK_OAK_PLANKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_planks.png");
 const BLOCK_SPRUCE_PLANKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_planks.png");
@@ -636,18 +874,44 @@ const BLOCK_STRIPPED_JUNGLE_LOG: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_
 const BLOCK_STRIPPED_ACACIA_LOG: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_acacia_log.png");
 const BLOCK_STRIPPED_DARK_OAK_LOG: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_dark_oak_log.png");
 const BLOCK_STRIPPED_OAK_LOG: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_oak_log.png");
-const BLOCK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_wood.png");
-const BLOCK_SPRUCE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_wood.png");
-const BLOCK_BIRCH_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_wood.png");
-const BLOCK_JUNGLE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_wood.png");
-const BLOCK_ACACIA_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_wood.png");
-const BLOCK_DARK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_wood.png");
-const BLOCK_STRIPPED_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_oak_wood.png");
-const BLOCK_STRIPPED_SPRUCE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_spruce_wood.png");
-const BLOCK_STRIPPED_BIRCH_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_birch_wood.png");
-const BLOCK_STRIPPED_JUNGLE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_jungle_wood.png");
-const BLOCK_STRIPPED_ACACIA_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_acacia_wood.png");
-const BLOCK_STRIPPED_DARK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_dark_oak_wood.png");
+
+const BLOCK_SKELETON_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_SKELETON_WALL_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_WITHER_SKELETON_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_WITHER_SKELETON_WALL_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+
+const BLOCK_ZOMBIE_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_ZOMBIE_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_PLAYER_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_PLAYER_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_CREEPER_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_CREEPER_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_DRAGON_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_DRAGON_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+
+const BLOCK_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("anvil_top.png");
+const BLOCK_CHIPPED_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("anvil_top.png");
+const BLOCK_DAMAGED_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("anvil_top.png");
+
+const BLOCK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_log.png");
+const BLOCK_SPRUCE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_log.png");
+const BLOCK_BIRCH_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_log.png");
+const BLOCK_JUNGLE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_log.png");
+const BLOCK_ACACIA_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_log.png");
+const BLOCK_DARK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_log.png");
+const BLOCK_STRIPPED_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_oak_log.png");
+const BLOCK_STRIPPED_SPRUCE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_spruce_log.png");
+const BLOCK_STRIPPED_BIRCH_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_birch_log.png");
+const BLOCK_STRIPPED_JUNGLE_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_jungle_log.png");
+const BLOCK_STRIPPED_ACACIA_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_acacia_log.png");
+const BLOCK_STRIPPED_DARK_OAK_WOOD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stripped_dark_oak_log.png");
+
+const BLOCK_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_ENDER_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+const BLOCK_TRAPPED_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+
+const BLOCK_DAYLIGHT_DETECTOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
+
 const BLOCK_OAK_LEAVES: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_leaves.png");
 const BLOCK_SPRUCE_LEAVES: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_leaves.png");
 const BLOCK_BIRCH_LEAVES: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_leaves.png");
@@ -659,30 +923,12 @@ const BLOCK_WET_SPONGE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("wet
 const BLOCK_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("glass.png");
 const BLOCK_LAPIS_ORE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lapis_ore.png");
 const BLOCK_LAPIS_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lapis_block.png");
-const BLOCK_DISPENSER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dispenser.png");
+
 const BLOCK_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone.png");
 const BLOCK_CHISELED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_sandstone.png");
 const BLOCK_CUT_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cut_sandstone.png");
 const BLOCK_NOTE_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("note_block.png");
-const BLOCK_WHITE_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_bed.png");
-const BLOCK_ORANGE_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_bed.png");
-const BLOCK_MAGENTA_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("magenta_bed.png");
-const BLOCK_LIGHT_BLUE_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("light_blue_bed.png");
-const BLOCK_YELLOW_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("yellow_bed.png");
-const BLOCK_LIME_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lime_bed.png");
-const BLOCK_PINK_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("pink_bed.png");
-const BLOCK_GRAY_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("gray_bed.png");
-const BLOCK_LIGHT_GRAY_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("light_gray_bed.png");
-const BLOCK_CYAN_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cyan_bed.png");
-const BLOCK_PURPLE_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purple_bed.png");
-const BLOCK_BLUE_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blue_bed.png");
-const BLOCK_BROWN_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brown_bed.png");
-const BLOCK_GREEN_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("green_bed.png");
-const BLOCK_RED_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_bed.png");
-const BLOCK_BLACK_BED: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("black_bed.png");
-const BLOCK_STICKY_PISTON: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sticky_piston.png");
-const BLOCK_PISTON: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("piston.png");
-const BLOCK_PISTON_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("piston_head.png");
+
 const BLOCK_WHITE_WOOL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_wool.png");
 const BLOCK_ORANGE_WOOL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_wool.png");
 const BLOCK_MAGENTA_WOOL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("magenta_wool.png");
@@ -702,30 +948,22 @@ const BLOCK_BLACK_WOOL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bla
 const BLOCK_GOLD_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("gold_block.png");
 const BLOCK_IRON_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_block.png");
 const BLOCK_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bricks.png");
-const BLOCK_TNT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("tnt.png");
 const BLOCK_BOOKSHELF: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bookshelf.png");
 const BLOCK_MOSSY_COBBLESTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_cobblestone.png");
 const BLOCK_OBSIDIAN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("obsidian.png");
 const BLOCK_SPAWNER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spawner.png");
-const BLOCK_OAK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_stairs.png");
-const BLOCK_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chest.png");
+const BLOCK_OAK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_planks.png");
 const BLOCK_DIAMOND_ORE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("diamond_ore.png");
 const BLOCK_DIAMOND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("diamond_block.png");
-const BLOCK_CRAFTING_TABLE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crafting_table.png");
 const BLOCK_FARMLAND: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("farmland.png");
-const BLOCK_FURNACE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("furnace.png");
-const BLOCK_OAK_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_door.png");
 const BLOCK_LADDER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("ladder.png");
-const BLOCK_COBBLESTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone_stairs.png");
-const BLOCK_IRON_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_door.png");
+const BLOCK_COBBLESTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone_planks.png");
 const BLOCK_REDSTONE_ORE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("redstone_ore.png");
 const BLOCK_SNOW: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("snow.png");
 const BLOCK_ICE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("ice.png");
 const BLOCK_SNOW_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("snow_block.png");
-const BLOCK_CACTUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cactus.png");
 const BLOCK_CLAY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("clay.png");
 const BLOCK_JUKEBOX: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jukebox.png");
-const BLOCK_OAK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_fence.png");
 const BLOCK_PUMPKIN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("pumpkin.png");
 const BLOCK_NETHERRACK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("netherrack.png");
 const BLOCK_SOUL_SAND: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("soul_sand.png");
@@ -735,7 +973,6 @@ const BLOCK_POLISHED_BASALT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side
 const BLOCK_GLOWSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("glowstone.png");
 const BLOCK_CARVED_PUMPKIN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("carved_pumpkin.png");
 const BLOCK_JACK_O_LANTERN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jack_o_lantern.png");
-const BLOCK_CAKE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cake.png");
 const BLOCK_REPEATER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("repeater.png");
 const BLOCK_WHITE_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_stained_glass.png");
 const BLOCK_ORANGE_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_stained_glass.png");
@@ -753,107 +990,46 @@ const BLOCK_BROWN_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_
 const BLOCK_GREEN_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("green_stained_glass.png");
 const BLOCK_RED_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_stained_glass.png");
 const BLOCK_BLACK_STAINED_GLASS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("black_stained_glass.png");
-const BLOCK_OAK_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_trapdoor.png");
-const BLOCK_SPRUCE_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_trapdoor.png");
-const BLOCK_BIRCH_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_trapdoor.png");
-const BLOCK_JUNGLE_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_trapdoor.png");
-const BLOCK_ACACIA_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_trapdoor.png");
-const BLOCK_DARK_OAK_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_trapdoor.png");
 const BLOCK_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_bricks.png");
 const BLOCK_MOSSY_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_stone_bricks.png");
 const BLOCK_CRACKED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cracked_stone_bricks.png");
 const BLOCK_CHISELED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_stone_bricks.png");
-const BLOCK_INFESTED_STONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_stone.png");
-const BLOCK_INFESTED_COBBLESTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_cobblestone.png");
-const BLOCK_INFESTED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_stone_bricks.png");
-const BLOCK_INFESTED_MOSSY_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_mossy_stone_bricks.png");
-const BLOCK_INFESTED_CRACKED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_cracked_stone_bricks.png");
-const BLOCK_INFESTED_CHISELED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("infested_chiseled_stone_bricks.png");
+const BLOCK_INFESTED_STONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
+const BLOCK_INFESTED_COBBLESTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone.png");
+const BLOCK_INFESTED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_bricks.png");
+const BLOCK_INFESTED_MOSSY_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_stone_bricks.png");
+const BLOCK_INFESTED_CRACKED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cracked_stone_bricks.png");
+const BLOCK_INFESTED_CHISELED_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_stone_bricks.png");
 const BLOCK_BROWN_MUSHROOM_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brown_mushroom_block.png");
 const BLOCK_RED_MUSHROOM_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_mushroom_block.png");
 const BLOCK_MUSHROOM_STEM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mushroom_stem.png");
 const BLOCK_IRON_BARS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_bars.png");
 const BLOCK_CHAIN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chain.png");
-const BLOCK_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("glass_pane.png");
-const BLOCK_MELON: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("melon.png");
-const BLOCK_OAK_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_fence_gate.png");
 const BLOCK_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brick_stairs.png");
-const BLOCK_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_brick_stairs.png");
-const BLOCK_MYCELIUM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mycelium.png");
+const BLOCK_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone.png");
 const BLOCK_LILY_PAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lily_pad.png");
 const BLOCK_NETHER_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_bricks.png");
-const BLOCK_NETHER_BRICK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_brick_fence.png");
-const BLOCK_NETHER_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_brick_stairs.png");
-const BLOCK_ENCHANTING_TABLE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("enchanting_table.png");
+const BLOCK_NETHER_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_bricks.png");
 const BLOCK_BREWING_STAND: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brewing_stand.png");
-const BLOCK_CAULDRON: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cauldron.png");
-const BLOCK_END_PORTAL_FRAME: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_portal_frame.png");
 const BLOCK_END_STONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_stone.png");
 const BLOCK_DRAGON_EGG: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dragon_egg.png");
 const BLOCK_REDSTONE_LAMP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("redstone_lamp.png");
-const BLOCK_COCOA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cocoa.png");
-const BLOCK_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone_stairs.png");
+const BLOCK_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone.png");
 const BLOCK_EMERALD_ORE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("emerald_ore.png");
-const BLOCK_ENDER_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("ender_chest.png");
 const BLOCK_EMERALD_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("emerald_block.png");
-const BLOCK_SPRUCE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_stairs.png");
-const BLOCK_BIRCH_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_stairs.png");
-const BLOCK_JUNGLE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_stairs.png");
-const BLOCK_COMMAND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("command_block.png");
+const BLOCK_SPRUCE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_planks.png");
+const BLOCK_BIRCH_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_planks.png");
+const BLOCK_JUNGLE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_planks.png");
 const BLOCK_BEACON: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("beacon.png");
-const BLOCK_COBBLESTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone_wall.png");
-const BLOCK_MOSSY_COBBLESTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_cobblestone_wall.png");
+const BLOCK_COBBLESTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone.png");
+const BLOCK_MOSSY_COBBLESTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_cobblestone.png");
 const BLOCK_FLOWER_POT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("flower_pot.png");
-const BLOCK_POTTED_OAK_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_oak_sapling.png");
-const BLOCK_POTTED_SPRUCE_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_spruce_sapling.png");
-const BLOCK_POTTED_BIRCH_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_birch_sapling.png");
-const BLOCK_POTTED_JUNGLE_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_jungle_sapling.png");
-const BLOCK_POTTED_ACACIA_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_acacia_sapling.png");
-const BLOCK_POTTED_DARK_OAK_SAPLING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_dark_oak_sapling.png");
-const BLOCK_POTTED_FERN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_fern.png");
-const BLOCK_POTTED_DANDELION: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_dandelion.png");
-const BLOCK_POTTED_POPPY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_poppy.png");
-const BLOCK_POTTED_BLUE_ORCHID: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_blue_orchid.png");
-const BLOCK_POTTED_ALLIUM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_allium.png");
-const BLOCK_POTTED_AZURE_BLUET: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_azure_bluet.png");
-const BLOCK_POTTED_RED_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_red_tulip.png");
-const BLOCK_POTTED_ORANGE_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_orange_tulip.png");
-const BLOCK_POTTED_WHITE_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_white_tulip.png");
-const BLOCK_POTTED_PINK_TULIP: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_pink_tulip.png");
-const BLOCK_POTTED_OXEYE_DAISY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_oxeye_daisy.png");
-const BLOCK_POTTED_CORNFLOWER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_cornflower.png");
-const BLOCK_POTTED_LILY_OF_THE_VALLEY: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_lily_of_the_valley.png");
-const BLOCK_POTTED_WITHER_ROSE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_wither_rose.png");
-const BLOCK_POTTED_RED_MUSHROOM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_red_mushroom.png");
-const BLOCK_POTTED_BROWN_MUSHROOM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_brown_mushroom.png");
-const BLOCK_POTTED_DEAD_BUSH: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_dead_bush.png");
-const BLOCK_POTTED_CACTUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_cactus.png");
-const BLOCK_SKELETON_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("skeleton_skull.png");
-const BLOCK_SKELETON_WALL_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("skeleton_wall_skull.png");
-const BLOCK_WITHER_SKELETON_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("wither_skeleton_skull.png");
-const BLOCK_WITHER_SKELETON_WALL_SKULL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("wither_skeleton_wall_skull.png");
-const BLOCK_ZOMBIE_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("zombie_head.png");
-const BLOCK_ZOMBIE_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("zombie_wall_head.png");
-const BLOCK_PLAYER_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("player_head.png");
-const BLOCK_PLAYER_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("player_wall_head.png");
-const BLOCK_CREEPER_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("creeper_head.png");
-const BLOCK_CREEPER_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("creeper_wall_head.png");
-const BLOCK_DRAGON_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dragon_head.png");
-const BLOCK_DRAGON_WALL_HEAD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dragon_wall_head.png");
-const BLOCK_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("anvil.png");
-const BLOCK_CHIPPED_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chipped_anvil.png");
-const BLOCK_DAMAGED_ANVIL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("damaged_anvil.png");
-const BLOCK_TRAPPED_CHEST: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("trapped_chest.png");
 const BLOCK_COMPARATOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("comparator.png");
-const BLOCK_DAYLIGHT_DETECTOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("daylight_detector.png");
 const BLOCK_REDSTONE_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("redstone_block.png");
 const BLOCK_NETHER_QUARTZ_ORE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_quartz_ore.png");
-const BLOCK_HOPPER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("hopper.png");
-const BLOCK_QUARTZ_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_block.png");
 const BLOCK_CHISELED_QUARTZ_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_quartz_block.png");
 const BLOCK_QUARTZ_PILLAR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_pillar.png");
-const BLOCK_QUARTZ_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_stairs.png");
-const BLOCK_DROPPER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dropper.png");
+const BLOCK_QUARTZ_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_bricks.png");
 const BLOCK_WHITE_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_terracotta.png");
 const BLOCK_ORANGE_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_terracotta.png");
 const BLOCK_MAGENTA_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("magenta_terracotta.png");
@@ -870,36 +1046,15 @@ const BLOCK_BROWN_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_sid
 const BLOCK_GREEN_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("green_terracotta.png");
 const BLOCK_RED_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_terracotta.png");
 const BLOCK_BLACK_TERRACOTTA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("black_terracotta.png");
-const BLOCK_WHITE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_stained_glass_pane.png");
-const BLOCK_ORANGE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("orange_stained_glass_pane.png");
-const BLOCK_MAGENTA_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("magenta_stained_glass_pane.png");
-const BLOCK_LIGHT_BLUE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("light_blue_stained_glass_pane.png");
-const BLOCK_YELLOW_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("yellow_stained_glass_pane.png");
-const BLOCK_LIME_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lime_stained_glass_pane.png");
-const BLOCK_PINK_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("pink_stained_glass_pane.png");
-const BLOCK_GRAY_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("gray_stained_glass_pane.png");
-const BLOCK_LIGHT_GRAY_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("light_gray_stained_glass_pane.png");
-const BLOCK_CYAN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cyan_stained_glass_pane.png");
-const BLOCK_PURPLE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purple_stained_glass_pane.png");
-const BLOCK_BLUE_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blue_stained_glass_pane.png");
-const BLOCK_BROWN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brown_stained_glass_pane.png");
-const BLOCK_GREEN_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("green_stained_glass_pane.png");
-const BLOCK_RED_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_stained_glass_pane.png");
-const BLOCK_BLACK_STAINED_GLASS_PANE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("black_stained_glass_pane.png");
-const BLOCK_ACACIA_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_stairs.png");
-const BLOCK_DARK_OAK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_stairs.png");
+const BLOCK_ACACIA_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_planks.png");
+const BLOCK_DARK_OAK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_planks.png");
 const BLOCK_SLIME_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("slime_block.png");
-const BLOCK_BARRIER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("barrier.png");
-const BLOCK_IRON_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("iron_trapdoor.png");
 const BLOCK_PRISMARINE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine.png");
 const BLOCK_PRISMARINE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_bricks.png");
 const BLOCK_DARK_PRISMARINE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_prismarine.png");
-const BLOCK_PRISMARINE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_stairs.png");
-const BLOCK_PRISMARINE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_brick_stairs.png");
-const BLOCK_DARK_PRISMARINE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_prismarine_stairs.png");
-const BLOCK_PRISMARINE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_slab.png");
-const BLOCK_PRISMARINE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_brick_slab.png");
-const BLOCK_DARK_PRISMARINE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_prismarine_slab.png");
+const BLOCK_PRISMARINE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_planks.png");
+const BLOCK_PRISMARINE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("prismarine_brick_planks.png");
+const BLOCK_DARK_PRISMARINE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_prismarine_planks.png");
 const BLOCK_SEA_LANTERN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sea_lantern.png");
 const BLOCK_HAY_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("hay_block.png");
 const BLOCK_WHITE_CARPET: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("white_carpet.png");
@@ -924,52 +1079,18 @@ const BLOCK_PACKED_ICE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("pac
 const BLOCK_RED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone.png");
 const BLOCK_CHISELED_RED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_red_sandstone.png");
 const BLOCK_CUT_RED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cut_red_sandstone.png");
-const BLOCK_RED_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone_stairs.png");
-const BLOCK_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("oak_slab.png");
-const BLOCK_SPRUCE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_slab.png");
-const BLOCK_BIRCH_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_slab.png");
-const BLOCK_JUNGLE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_slab.png");
-const BLOCK_ACACIA_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_slab.png");
-const BLOCK_DARK_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_slab.png");
-const BLOCK_STONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_slab.png");
-const BLOCK_SMOOTH_STONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_stone_slab.png");
-const BLOCK_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sandstone_slab.png");
-const BLOCK_CUT_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cut_sandstone_slab.png");
-const BLOCK_PETRIFIED_OAK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("petrified_oak_slab.png");
-const BLOCK_COBBLESTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cobblestone_slab.png");
-const BLOCK_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("brick_slab.png");
-const BLOCK_STONE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_brick_slab.png");
-const BLOCK_NETHER_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("nether_brick_slab.png");
-const BLOCK_QUARTZ_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_slab.png");
-const BLOCK_RED_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone_slab.png");
-const BLOCK_CUT_RED_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cut_red_sandstone_slab.png");
-const BLOCK_PURPUR_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_slab.png");
+const BLOCK_RED_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone_planks.png");
 const BLOCK_SMOOTH_STONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_stone.png");
 const BLOCK_SMOOTH_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_sandstone.png");
 const BLOCK_SMOOTH_QUARTZ: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_quartz.png");
-const BLOCK_SMOOTH_RED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_red_sandstone.png");
-const BLOCK_SPRUCE_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_fence_gate.png");
-const BLOCK_BIRCH_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_fence_gate.png");
-const BLOCK_JUNGLE_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_fence_gate.png");
-const BLOCK_ACACIA_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_fence_gate.png");
-const BLOCK_DARK_OAK_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_fence_gate.png");
-const BLOCK_SPRUCE_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_fence.png");
-const BLOCK_BIRCH_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_fence.png");
-const BLOCK_JUNGLE_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_fence.png");
-const BLOCK_ACACIA_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_fence.png");
-const BLOCK_DARK_OAK_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_fence.png");
-const BLOCK_SPRUCE_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("spruce_door.png");
-const BLOCK_BIRCH_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("birch_door.png");
-const BLOCK_JUNGLE_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jungle_door.png");
-const BLOCK_ACACIA_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("acacia_door.png");
-const BLOCK_DARK_OAK_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("dark_oak_door.png");
+const BLOCK_SMOOTH_RED_SANDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_sandstone.png");
 const BLOCK_END_ROD: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_rod.png");
 const BLOCK_CHORUS_PLANT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chorus_plant.png");
 const BLOCK_CHORUS_FLOWER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chorus_flower.png");
 const BLOCK_PURPUR_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_block.png");
 const BLOCK_PURPUR_PILLAR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_pillar.png");
-const BLOCK_PURPUR_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_stairs.png");
-const BLOCK_END_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_stone_bricks.png");
+const BLOCK_PURPUR_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("purpur_planks.png");
+const BLOCK_END_STONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_stone_planks.png");
 const BLOCK_GRASS_PATH: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("grass_path.png");
 const BLOCK_REPEATING_COMMAND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("repeating_command_block.png");
 const BLOCK_CHAIN_COMMAND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chain_command_block.png");
@@ -1060,21 +1181,20 @@ const BLOCK_SEA_PICKLE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sea
 const BLOCK_BLUE_ICE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blue_ice.png");
 const BLOCK_CONDUIT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("conduit.png");
 const BLOCK_BAMBOO: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bamboo.png");
-const BLOCK_POTTED_BAMBOO: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_bamboo.png");
-const BLOCK_POLISHED_GRANITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_granite_stairs.png");
-const BLOCK_SMOOTH_RED_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_red_sandstone_stairs.png");
-const BLOCK_MOSSY_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_stone_brick_stairs.png");
-const BLOCK_POLISHED_DIORITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_diorite_stairs.png");
-const BLOCK_MOSSY_COBBLESTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_cobblestone_stairs.png");
-const BLOCK_END_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_stone_brick_stairs.png");
+const BLOCK_POLISHED_GRANITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_granite.png");
+const BLOCK_SMOOTH_RED_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_red_sandstone.png");
+const BLOCK_MOSSY_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_stone_bricks.png");
+const BLOCK_POLISHED_DIORITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_diorite.png");
+const BLOCK_MOSSY_COBBLESTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_cobblestone.png");
+const BLOCK_END_STONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("end_stone_brick.png");
 const BLOCK_STONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("stone_stairs.png");
-const BLOCK_SMOOTH_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_sandstone_stairs.png");
-const BLOCK_SMOOTH_QUARTZ_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_quartz_stairs.png");
+const BLOCK_SMOOTH_SANDSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_sandstone.png");
+const BLOCK_SMOOTH_QUARTZ_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_quartz.png");
 const BLOCK_GRANITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("granite_stairs.png");
 const BLOCK_ANDESITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("andesite_stairs.png");
-const BLOCK_RED_NETHER_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_nether_brick_stairs.png");
-const BLOCK_POLISHED_ANDESITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_andesite_stairs.png");
-const BLOCK_DIORITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("diorite_stairs.png");
+const BLOCK_RED_NETHER_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("red_nether_brick.png");
+const BLOCK_POLISHED_ANDESITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_andesite.png");
+const BLOCK_DIORITE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("diorite.png");
 const BLOCK_POLISHED_GRANITE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_granite_slab.png");
 const BLOCK_SMOOTH_RED_SANDSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smooth_red_sandstone_slab.png");
 const BLOCK_MOSSY_STONE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("mossy_stone_brick_slab.png");
@@ -1104,7 +1224,6 @@ const BLOCK_SCAFFOLDING: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sc
 const BLOCK_LOOM: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("loom.png");
 const BLOCK_BARREL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("barrel.png");
 const BLOCK_SMOKER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("smoker.png");
-const BLOCK_BLAST_FURNACE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blast_furnace.png");
 const BLOCK_CARTOGRAPHY_TABLE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cartography_table.png");
 const BLOCK_FLETCHING_TABLE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("fletching_table.png");
 const BLOCK_GRINDSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("grindstone.png");
@@ -1131,17 +1250,9 @@ const BLOCK_SHROOMLIGHT: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("sh
 const BLOCK_CRIMSON_PLANKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_planks.png");
 const BLOCK_WARPED_PLANKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_planks.png");
 const BLOCK_CRIMSON_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_slab.png");
-const BLOCK_WARPED_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_slab.png");
-const BLOCK_CRIMSON_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_fence.png");
-const BLOCK_WARPED_FENCE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_fence.png");
-const BLOCK_CRIMSON_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_trapdoor.png");
-const BLOCK_WARPED_TRAPDOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_trapdoor.png");
-const BLOCK_CRIMSON_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_fence_gate.png");
-const BLOCK_WARPED_FENCE_GATE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_fence_gate.png");
-const BLOCK_CRIMSON_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_stairs.png");
-const BLOCK_WARPED_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_stairs.png");
-const BLOCK_CRIMSON_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_door.png");
-const BLOCK_WARPED_DOOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_door.png");
+const BLOCK_WARPED_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_planks.png");
+const BLOCK_CRIMSON_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crimson_planks_alt.png");
+const BLOCK_WARPED_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("warped_planks.png");
 const BLOCK_STRUCTURE_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("structure_block.png");
 const BLOCK_JIGSAW: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("jigsaw.png");
 const BLOCK_COMPOSTER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("composter.png");
@@ -1154,26 +1265,22 @@ const BLOCK_NETHERITE_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side
 const BLOCK_ANCIENT_DEBRIS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("ancient_debris.png");
 const BLOCK_CRYING_OBSIDIAN: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("crying_obsidian.png");
 const BLOCK_RESPAWN_ANCHOR: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("respawn_anchor.png");
-const BLOCK_POTTED_CRIMSON_FUNGUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_crimson_fungus.png");
-const BLOCK_POTTED_WARPED_FUNGUS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_warped_fungus.png");
-const BLOCK_POTTED_CRIMSON_ROOTS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_crimson_roots.png");
-const BLOCK_POTTED_WARPED_ROOTS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("potted_warped_roots.png");
 const BLOCK_LODESTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("lodestone.png");
 const BLOCK_BLACKSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blackstone.png");
-const BLOCK_BLACKSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blackstone_stairs.png");
+const BLOCK_BLACKSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blackstone.png");
 const BLOCK_BLACKSTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blackstone_wall.png");
 const BLOCK_BLACKSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("blackstone_slab.png");
 const BLOCK_POLISHED_BLACKSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone.png");
 const BLOCK_POLISHED_BLACKSTONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_bricks.png");
 const BLOCK_CRACKED_POLISHED_BLACKSTONE_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cracked_polished_blackstone_bricks.png");
 const BLOCK_CHISELED_POLISHED_BLACKSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_polished_blackstone.png");
-const BLOCK_POLISHED_BLACKSTONE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick_slab.png");
-const BLOCK_POLISHED_BLACKSTONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick_stairs.png");
-const BLOCK_POLISHED_BLACKSTONE_BRICK_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick_wall.png");
+const BLOCK_POLISHED_BLACKSTONE_BRICK_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick.png");
+const BLOCK_POLISHED_BLACKSTONE_BRICK_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick.png");
+const BLOCK_POLISHED_BLACKSTONE_BRICK_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_brick.png");
 const BLOCK_GILDED_BLACKSTONE: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("gilded_blackstone.png");
-const BLOCK_POLISHED_BLACKSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_stairs.png");
-const BLOCK_POLISHED_BLACKSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_slab.png");
-const BLOCK_POLISHED_BLACKSTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone_wall.png");
+const BLOCK_POLISHED_BLACKSTONE_STAIRS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone.png");
+const BLOCK_POLISHED_BLACKSTONE_SLAB: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone.png");
+const BLOCK_POLISHED_BLACKSTONE_WALL: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("polished_blackstone.png");
 const BLOCK_CHISELED_NETHER_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("chiseled_nether_bricks.png");
 const BLOCK_CRACKED_NETHER_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("cracked_nether_bricks.png");
 const BLOCK_QUARTZ_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("quartz_bricks.png");
@@ -1247,22 +1354,6 @@ pub fn get_block_type_info(block_type: &BlockType) -> Option<&'static BlockTypeI
         BlockType::ChiseledSandstone => Some(&BLOCK_CHISELED_SANDSTONE),
         BlockType::CutSandstone => Some(&BLOCK_CUT_SANDSTONE),
         BlockType::NoteBlock => Some(&BLOCK_NOTE_BLOCK),
-        BlockType::WhiteBed => Some(&BLOCK_WHITE_BED),
-        BlockType::OrangeBed => Some(&BLOCK_ORANGE_BED),
-        BlockType::MagentaBed => Some(&BLOCK_MAGENTA_BED),
-        BlockType::LightBlueBed => Some(&BLOCK_LIGHT_BLUE_BED),
-        BlockType::YellowBed => Some(&BLOCK_YELLOW_BED),
-        BlockType::LimeBed => Some(&BLOCK_LIME_BED),
-        BlockType::PinkBed => Some(&BLOCK_PINK_BED),
-        BlockType::GrayBed => Some(&BLOCK_GRAY_BED),
-        BlockType::LightGrayBed => Some(&BLOCK_LIGHT_GRAY_BED),
-        BlockType::CyanBed => Some(&BLOCK_CYAN_BED),
-        BlockType::PurpleBed => Some(&BLOCK_PURPLE_BED),
-        BlockType::BlueBed => Some(&BLOCK_BLUE_BED),
-        BlockType::BrownBed => Some(&BLOCK_BROWN_BED),
-        BlockType::GreenBed => Some(&BLOCK_GREEN_BED),
-        BlockType::RedBed => Some(&BLOCK_RED_BED),
-        BlockType::BlackBed => Some(&BLOCK_BLACK_BED),
         BlockType::StickyPiston => Some(&BLOCK_STICKY_PISTON),
         BlockType::Piston => Some(&BLOCK_PISTON),
         BlockType::PistonHead => Some(&BLOCK_PISTON_HEAD),

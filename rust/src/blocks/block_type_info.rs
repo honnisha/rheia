@@ -25,6 +25,14 @@ impl BlockTypeInfo {
             bottom_texture: Some(texture),
         }
     }
+    pub const fn new_opaque_mono_translucent(texture: &'static str) -> Self {
+        BlockTypeInfo {
+            voxel_visibility: VoxelVisibility::Translucent,
+            top_texture: Some(texture),
+            side_texture: Some(texture),
+            bottom_texture: Some(texture),
+        }
+    }
 
     pub fn get_voxel_visibility(&self) -> &VoxelVisibility {
         &self.voxel_visibility
