@@ -5,7 +5,7 @@ use godot::{
         },
         Image, ImageTexture, StandardMaterial3D,
     },
-    prelude::{Gd, GodotString, PackedByteArray, StringName, ToVariant, godot_print, godot_error},
+    prelude::{godot_error, Gd, GodotString, PackedByteArray, StringName, ToVariant},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
@@ -27,22 +27,29 @@ fn load_image(
         }
     };
 
-    let image = match Image::load_from_file(GodotString::from(format!("res://assets/block/{}", texture))) {
+    let path = format!("res://assets/block/{}", texture);
+    let image = match Image::load_from_file(GodotString::from(&path)) {
         Some(t) => t,
         None => {
-            godot_error!("Can't load texture \"{}\"; not found;", texture);
+            godot_error!("Can't load texture \"{}\"; not found;", path);
             return;
         }
     };
-    let image_bytes = &image.get_data().to_vec();
-    let image_png = match image::load_from_memory_with_format(&image_bytes, ImageFormat::Png) {
+    let b = image.save_png_to_buffer();
+
+    let image_png = match image::load_from_memory(&b.to_vec()) {
         Ok(t) => t,
         Err(e) => {
-            godot_error!("Can't load texture \"{}\"; error: {:?}", texture, e);
+            godot_error!("Can't load texture \"{}\"; error: {:?}", path, e);
             return;
         }
     };
-    let index = texture_mapper.add_texture(texture.to_string());
+    let index = match texture_mapper.add_texture(texture.to_string()) {
+        Some(i) => i,
+        None => {
+            return;
+        }
+    };
 
     let offset_x = 16 * (index % 32_i64);
     let offset_y = 16 * (index as f64 / 32_f64).floor() as i64;

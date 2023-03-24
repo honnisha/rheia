@@ -5,6 +5,7 @@ use crate::mesh::mesh_generator::ChunkShape;
 
 use super::block_info::BlockInfo;
 
+#[allow(dead_code)]
 pub struct Chunk {
     position: [i32; 3],
     pub chunk_data: [BlockInfo; 4096],
@@ -20,6 +21,7 @@ impl Chunk {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_position(&self) -> [i32; 3] {
         self.position
     }
@@ -29,6 +31,7 @@ impl Chunk {
         return self.chunk_data[ChunkShape::linearize(position) as usize];
     }
 
+    #[allow(dead_code)]
     pub fn get_chunk_position(&self) -> Vector3 {
         Chunk::get_chunk_position_from_position(&self.position)
     }

@@ -12,9 +12,12 @@ impl TextureMapper {
         }
     }
 
-    pub fn add_texture(&mut self, texture_name: String) -> i64 {
+    pub fn add_texture(&mut self, texture_name: String) -> Option<i64> {
+        if self.textures_map.contains(&texture_name) {
+            return None;
+        };
         self.textures_map.push(texture_name);
-        self.textures_map.len() as i64 - 1_i64
+        Some(self.textures_map.len() as i64 - 1_i64)
     }
 
     pub fn get_uv_offset(&self, block_type_info: &'static BlockTypeInfo, side_index: i8) -> Option<usize> {
