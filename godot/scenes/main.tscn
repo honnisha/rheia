@@ -52,7 +52,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 7.09302, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.20133, 0)
 mesh = SubResource("BoxMesh_6021w")
 
-[node name="Control" type="Control" parent="."]
+[node name="GUIControl" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -60,7 +60,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ConsoleContainer" type="MarginContainer" parent="Control"]
+[node name="MarginContainer" type="MarginContainer" parent="GUIControl"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -70,23 +70,26 @@ grow_vertical = 2
 theme_override_constants/margin_left = 25
 theme_override_constants/margin_top = 25
 theme_override_constants/margin_right = 400
-theme_override_constants/margin_bottom = 200
+theme_override_constants/margin_bottom = 100
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Control/ConsoleContainer"]
+[node name="ConsoleContainer" type="Console" parent="GUIControl/MarginContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GUIControl/MarginContainer/ConsoleContainer"]
 layout_mode = 2
 theme = ExtResource("4_tvi6q")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Control/ConsoleContainer/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ConsoleBackground" type="TextureRect" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer"]
+[node name="ConsoleBackground" type="TextureRect" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("4_tvi6q")
 texture = ExtResource("5_tp2go")
 
-[node name="MarginContainer" type="MarginContainer" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground"]
+[node name="MarginContainer" type="MarginContainer" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -98,7 +101,7 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
+[node name="ConsoleText" type="RichTextLabel" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
 layout_mode = 2
 focus_mode = 2
 theme_override_fonts/normal_font = ExtResource("6_ne3hc")
@@ -107,6 +110,10 @@ theme_override_fonts/italics_font = ExtResource("8_a2yc2")
 theme_override_fonts/bold_italics_font = ExtResource("9_4q817")
 theme_override_fonts/mono_font = ExtResource("6_ne3hc")
 theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
 theme_override_styles/focus = SubResource("StyleBoxEmpty_dlnae")
 bbcode_enabled = true
 text = "Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
@@ -153,18 +160,18 @@ Main scene loaded;
 autowrap_mode = 0
 selection_enabled = true
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="Control/ConsoleContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 8
 theme_override_constants/separation = 5
 
-[node name="TextureRect" type="TextureRect" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2"]
+[node name="TextureRect" type="TextureRect" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(1, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("10_mfcdm")
 
-[node name="LineEdit" type="LineEdit" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2/TextureRect"]
+[node name="ConsoleInput" type="LineEdit" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer2/TextureRect"]
 custom_minimum_size = Vector2(1, 1)
 layout_mode = 2
 offset_left = 5.0
@@ -180,7 +187,7 @@ flat = true
 caret_blink = true
 caret_force_displayed = true
 
-[node name="TextureButton" type="TextureButton" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2"]
+[node name="ConsoleButton" type="TextureButton" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer2"]
 custom_minimum_size = Vector2(1, 1)
 layout_direction = 1
 layout_mode = 2
@@ -188,3 +195,32 @@ action_mode = 0
 texture_normal = ExtResource("10_slteo")
 texture_pressed = ExtResource("10_w5mok")
 texture_hover = ExtResource("11_n3527")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+
+[node name="ConsoleSugestioins" type="RichTextLabel" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer3/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_fonts/normal_font = ExtResource("6_ne3hc")
+theme_override_fonts/bold_font = ExtResource("7_ttyaw")
+theme_override_fonts/italics_font = ExtResource("8_a2yc2")
+theme_override_fonts/bold_italics_font = ExtResource("9_4q817")
+theme_override_fonts/mono_font = ExtResource("6_ne3hc")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
+bbcode_enabled = true
+text = "test
+test2
+test3"
+fit_content = true
+scroll_active = false

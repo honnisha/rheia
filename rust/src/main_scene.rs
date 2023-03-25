@@ -2,6 +2,7 @@ use godot::engine::RichTextLabel;
 use godot::prelude::*;
 
 use crate::client_scripts::scripts_manager::ScriptsManager;
+use crate::console_handler::Console;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -11,11 +12,11 @@ pub struct Main {
     scripts_manager: ScriptsManager,
     camera: Option<Gd<Camera3D>>,
     debug_text: Option<Gd<RichTextLabel>>,
+    console: Option<Gd<Console>>,
 }
 
 #[godot_api]
-impl Main {
-}
+impl Main {}
 
 #[godot_api]
 impl NodeVirtual for Main {
@@ -25,12 +26,18 @@ impl NodeVirtual for Main {
             scripts_manager: ScriptsManager::new(),
             camera: None,
             debug_text: None,
+            console: None,
         }
     }
 
     fn ready(&mut self) {
         self.camera = Some(self.base.get_node_as("Camera"));
         self.debug_text = Some(self.base.get_node_as("Camera/DebugText"));
+
+        match self.base.try_get_node_as("GUIControl/MarginContainer/ConsoleContainer") {
+            Some(c) => self.console = Some(c),
+            _ => godot_error!("Console element not found")
+        }
 
         let camera = self.camera.as_deref_mut().unwrap();
         camera.set_position(Vector3::new(0.0, 15.0, 0.0));
