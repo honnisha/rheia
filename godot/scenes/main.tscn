@@ -1,14 +1,27 @@
-[gd_scene load_steps=7 format=3 uid="uid://cx0wve30173ae"]
+[gd_scene load_steps=18 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
-[ext_resource type="Texture2D" uid="uid://l3b78x3f7thl" path="res://assets/sky/moon.png" id="5_7e755"]
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="4_tvi6q"]
+[ext_resource type="Texture2D" uid="uid://c2ujts6nvss0c" path="res://assets/gui/textures/Chat/text_background.png" id="5_tp2go"]
+[ext_resource type="FontFile" uid="uid://clhrph24nx6vo" path="res://assets/gui/fonts/hack/Hack-Regular.ttf" id="6_ne3hc"]
+[ext_resource type="FontFile" uid="uid://dxly1nwoo0j78" path="res://assets/gui/fonts/hack/Hack-Bold.ttf" id="7_ttyaw"]
+[ext_resource type="FontFile" uid="uid://b4ff0cugvpgrk" path="res://assets/gui/fonts/hack/Hack-Italic.ttf" id="8_a2yc2"]
+[ext_resource type="FontFile" uid="uid://kv6t6keof778" path="res://assets/gui/fonts/hack/Hack-BoldItalic.ttf" id="9_4q817"]
+[ext_resource type="Texture2D" uid="uid://bs6mrn3vvg52b" path="res://assets/gui/textures/Chat/input_background.png" id="10_mfcdm"]
+[ext_resource type="Texture2D" uid="uid://di20s8qakcqg6" path="res://assets/gui/textures/Chat/submit.png" id="10_slteo"]
+[ext_resource type="Texture2D" uid="uid://dopkig5y4obsw" path="res://assets/gui/textures/Chat/submit_pressed.png" id="10_w5mok"]
+[ext_resource type="Texture2D" uid="uid://ddj8q30k51qjm" path="res://assets/gui/textures/Chat/submit_hovered.png" id="11_n3527"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pektk"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_6021w"]
 material = SubResource("StandardMaterial3D_pektk")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dlnae"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p2vo5"]
 
 [node name="Main" type="Main"]
 
@@ -35,11 +48,143 @@ wind_strength = 0.05
 [node name="human" parent="." instance=ExtResource("4_tj33o")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6918, 7.09302, 0)
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(1045, 103)
-scale = Vector2(0.255859, 0.255859)
-texture = ExtResource("5_7e755")
-
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.20133, 0)
 mesh = SubResource("BoxMesh_6021w")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ConsoleContainer" type="MarginContainer" parent="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 400
+theme_override_constants/margin_bottom = 200
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Control/ConsoleContainer"]
+layout_mode = 2
+theme = ExtResource("4_tvi6q")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/ConsoleContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConsoleBackground" type="TextureRect" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("4_tvi6q")
+texture = ExtResource("5_tp2go")
+
+[node name="MarginContainer" type="MarginContainer" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
+layout_mode = 2
+focus_mode = 2
+theme_override_fonts/normal_font = ExtResource("6_ne3hc")
+theme_override_fonts/bold_font = ExtResource("7_ttyaw")
+theme_override_fonts/italics_font = ExtResource("8_a2yc2")
+theme_override_fonts/bold_italics_font = ExtResource("9_4q817")
+theme_override_fonts/mono_font = ExtResource("6_ne3hc")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dlnae")
+bbcode_enabled = true
+text = "Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
+ 
+World loaded;
+▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
+[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
+[honny_test] test register
+● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
+■ loaded resource \"Test\" author:\"Test autor\" version:1.0
+Main scene loaded;
+--- Debugging process stopped ---
+Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
+ 
+World loaded;
+▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
+[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
+[honny_test] test register
+● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
+■ loaded resource \"Test\" author:\"Test autor\" version:1.0
+Main scene loaded;
+--- Debugging process stopped ---
+Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
+ 
+World loaded;
+▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
+[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
+[honny_test] test register
+● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
+■ loaded resource \"Test\" author:\"Test autor\" version:1.0
+Main scene loaded;
+--- Debugging process stopped ---
+Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
+ 
+World loaded;
+▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
+[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
+[honny_test] test register
+● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
+■ loaded resource \"Test\" author:\"Test autor\" version:1.0
+Main scene loaded;
+--- Debugging process stopped ---
+[color=blue]blue[/color]"
+autowrap_mode = 0
+selection_enabled = true
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Control/ConsoleContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_constants/separation = 5
+
+[node name="TextureRect" type="TextureRect" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("10_mfcdm")
+
+[node name="LineEdit" type="LineEdit" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2/TextureRect"]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+offset_left = 5.0
+offset_right = 629.0
+offset_bottom = 28.0
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("6_ne3hc")
+theme_override_font_sizes/font_size = 12
+theme_override_styles/focus = SubResource("StyleBoxEmpty_p2vo5")
+text = "test"
+context_menu_enabled = false
+flat = true
+caret_blink = true
+caret_force_displayed = true
+
+[node name="TextureButton" type="TextureButton" parent="Control/ConsoleContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(1, 1)
+layout_direction = 1
+layout_mode = 2
+action_mode = 0
+texture_normal = ExtResource("10_slteo")
+texture_pressed = ExtResource("10_w5mok")
+texture_hover = ExtResource("11_n3527")
