@@ -16,7 +16,12 @@ pub struct Main {
 }
 
 #[godot_api]
-impl Main {}
+impl Main {
+    #[func]
+    fn handle_console_command(&mut self, new_text: GodotString) {
+        godot_print!("console_command: {}", new_text);
+    }
+}
 
 #[godot_api]
 impl NodeVirtual for Main {
@@ -34,8 +39,15 @@ impl NodeVirtual for Main {
         self.camera = Some(self.base.get_node_as("Camera"));
         self.debug_text = Some(self.base.get_node_as("Camera/DebugText"));
 
-        match self.base.try_get_node_as("GUIControl/MarginContainer/ConsoleContainer") {
-            Some(c) => self.console = Some(c),
+        match self.base.try_get_node_as::<Console>("GUIControl/MarginContainer/ConsoleContainer") {
+            Some(c) => {
+                self.console = Some(c);
+                self.console.as_mut().unwrap().bind_mut().connect(
+                    "submit_console_command".into(),
+                    Callable::from_object_method(self.base.share(), "handle_console_command"),
+                    0,
+                );
+            },
             _ => godot_error!("Console element not found")
         }
 

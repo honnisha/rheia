@@ -12,30 +12,48 @@ pub struct Console {
     console_input: Option<Gd<LineEdit>>,
     console_button: Option<Gd<TextureButton>>,
     console_sugestions: Option<Gd<RichTextLabel>>,
+    commands_history: Vec<String>,
 }
 
 #[godot_api]
 impl Console {
+    #[signal]
+    fn submit_console_command();
+
     fn scroll_to_bottom(&mut self) {
         let c = self.console_text.as_mut().unwrap();
         let lines = c.get_line_count();
         c.scroll_to_line(lines - 1);
     }
 
+    fn submit_command(&mut self, command: String) {
+        if self.commands_history.contains(&command) {
+            let index = self.commands_history.iter().position(|x| *x == command).unwrap();
+            self.commands_history.remove(index);
+        }
+        self.commands_history.push(command.clone());
+        self.base.emit_signal("submit_console_command".into(), &[command.to_variant()]);
+    }
+
     #[func]
     fn button_pressed(&mut self) {
         self.scroll_to_bottom();
-        godot_print!("Pressed;");
+        let i = self.console_input.as_mut().unwrap();
+        let command = i.get_text().to_string();
+        i.clear();
+        self.submit_command(command);
     }
 
     #[func]
     fn text_changed(&mut self, new_text: GodotString) {
-        godot_print!("new_text: {}", new_text);
+        godot_print!("text changed: {}", new_text);
     }
 
     #[func]
     fn text_submitted(&mut self, new_text: GodotString) {
-        godot_print!("text_submitted");
+        self.scroll_to_bottom();
+        self.submit_command(new_text.to_string());
+        self.console_input.as_mut().unwrap().clear();
     }
 }
 
@@ -48,6 +66,7 @@ impl NodeVirtual for Console {
             console_button: None,
             console_sugestions: None,
             base: base,
+            commands_history: Vec::new(),
         }
     }
     fn ready(&mut self) {
