@@ -26,10 +26,6 @@ impl Main {
             vec![Dynamic::from(new_text.to_string())],
         );
     }
-
-    pub fn get_camera(&self) -> &Option<Gd<Camera3D>> {
-        &self.camera
-    }
 }
 
 #[godot_api]

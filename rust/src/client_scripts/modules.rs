@@ -10,21 +10,20 @@ pub mod main_api {
 
     #[rhai_fn(pure)]
     pub fn register_event(main: &mut Main, event_slug: String, callback: FnPtr) {
-        let mut m = main.borrow_mut();
-        match m.add_callback(event_slug.clone(), &callback) {
-            Ok(e) => e,
-            Err(e) => {
-                console(
-                    main,
-                    format!(
-                        "[{}] register_event error: {:?}",
-                        main.borrow().get_slug(),
-                        e
-                    ),
-                );
-                return;
-            }
-        };
+        let add_result = main
+            .borrow_mut()
+            .add_callback(event_slug.clone(), &callback);
+        if add_result.is_err() {
+            console(
+                main,
+                format!(
+                    "[{}] register_event error: {:?}",
+                    main.borrow().get_slug(),
+                    add_result.err()
+                ),
+            );
+            return;
+        }
         console(
             main,
             format!(

@@ -116,47 +116,6 @@ theme_override_font_sizes/bold_italics_font_size = 12
 theme_override_font_sizes/mono_font_size = 12
 theme_override_styles/focus = SubResource("StyleBoxEmpty_dlnae")
 bbcode_enabled = true
-text = "Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
- 
-World loaded;
-▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
-[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
-[honny_test] test register
-● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
-■ loaded resource \"Test\" author:\"Test autor\" version:1.0
-Main scene loaded;
---- Debugging process stopped ---
-Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
- 
-World loaded;
-▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
-[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
-[honny_test] test register
-● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
-■ loaded resource \"Test\" author:\"Test autor\" version:1.0
-Main scene loaded;
---- Debugging process stopped ---
-Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
- 
-World loaded;
-▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
-[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
-[honny_test] test register
-● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
-■ loaded resource \"Test\" author:\"Test autor\" version:1.0
-Main scene loaded;
---- Debugging process stopped ---
-Vulkan API 1.2.175 - Forward+ - Using Vulkan Device #0: NVIDIA - NVIDIA GeForce GTX 770
- 
-World loaded;
-▼ Rescan resources folders inside: /home/honnisha/godot/honny-craft/resources
-[honny_test] Event registered for \"onKeyPress\": Fn(onKeyPress)
-[honny_test] test register
-● Script \"honny_test\" rhai \"test.rhai\" loaded: /home/honnisha/godot/honny-craft/resources/test/test.rhai
-■ loaded resource \"Test\" author:\"Test autor\" version:1.0
-Main scene loaded;
---- Debugging process stopped ---
-[color=blue]blue[/color]"
 autowrap_mode = 0
 selection_enabled = true
 
@@ -181,7 +140,6 @@ size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("6_ne3hc")
 theme_override_font_sizes/font_size = 12
 theme_override_styles/focus = SubResource("StyleBoxEmpty_p2vo5")
-text = "test"
 context_menu_enabled = false
 flat = true
 caret_blink = true
@@ -219,8 +177,5 @@ theme_override_font_sizes/italics_font_size = 12
 theme_override_font_sizes/bold_italics_font_size = 12
 theme_override_font_sizes/mono_font_size = 12
 bbcode_enabled = true
-text = "test
-test2
-test3"
 fit_content = true
 scroll_active = false

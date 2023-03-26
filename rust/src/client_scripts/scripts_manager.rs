@@ -1,6 +1,5 @@
 use godot::prelude::*;
 use rhai::Dynamic;
-use rhai::FuncArgs;
 use rhai::exported_module;
 use rhai::Engine;
 use serde::{Deserialize, Serialize};

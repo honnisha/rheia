@@ -44,6 +44,7 @@ impl ScriptInstanceScope {
     }
 
     pub fn console_send(&mut self, message: String) {
-        self.console.bind_mut().send(message);
+        godot_print!("[{}] {}", self.slug, message);
+        self.console.bind_mut().send(format!("[{}] {}", self.slug, message));
     }
 }

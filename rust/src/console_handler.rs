@@ -17,7 +17,8 @@ pub struct Console {
 
 #[godot_api]
 impl Console {
-    pub fn send(&self, message: String) {
+    pub fn send(&mut self, message: String) {
+        self.console_text.as_mut().unwrap().add_text(format!("\n{}", message).into());
     }
 
     #[signal]
@@ -47,10 +48,10 @@ impl Console {
         self.submit_command(command);
     }
 
-    #[func]
-    fn text_changed(&mut self, new_text: GodotString) {
-        godot_print!("text changed: {}", new_text);
-    }
+    //#[func]
+    //fn text_changed(&mut self, new_text: GodotString) {
+    //    godot_print!("text changed: {}", new_text);
+    //}
 
     #[func]
     fn text_submitted(&mut self, new_text: GodotString) {
@@ -83,11 +84,11 @@ impl NodeVirtual for Console {
         match self.base.try_get_node_as::<LineEdit>("VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput") {
             Some(e) => {
                 self.console_input = Some(e);
-                self.console_input.as_mut().unwrap().connect(
-                    "text_changed".into(),
-                    Callable::from_object_method(self.base.share(), "text_changed"),
-                    0,
-                );
+                //self.console_input.as_mut().unwrap().connect(
+                //    "text_changed".into(),
+                //    Callable::from_object_method(self.base.share(), "text_changed"),
+                //    0,
+                //);
                 self.console_input.as_mut().unwrap().connect(
                     "text_submitted".into(),
                     Callable::from_object_method(self.base.share(), "text_submitted"),
