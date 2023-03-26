@@ -1,6 +1,11 @@
 fn onKeyPress() {
-    godot_print("onKeyPress fired");
+    Main.console("onKeyPress fired");
 }
-registerEvent("onKeyPress", onKeyPress);
+Main.register_event("onKeyPress", onKeyPress);
 
-godot_print("test register");
+fn onConsoleCommand(command) {
+    Main.console(`onConsoleCommand fired; command:${command}`);
+}
+Main.register_event("onConsoleCommand", onConsoleCommand);
+
+Main.console("test register");

@@ -1,4 +1,6 @@
 use godot::prelude::*;
+use rhai::Dynamic;
+use rhai::exported_module;
 use rhai::Engine;
 use serde::{Deserialize, Serialize};
 use serde_yaml::Error;
@@ -6,7 +8,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
-use super::modules::register_modules;
+use super::modules::main_api;
 use super::script_instance::ScriptInstance;
 
 pub struct ScriptsManager {
@@ -26,7 +28,8 @@ pub struct Manifest {
 impl ScriptsManager {
     pub fn new() -> Self {
         let mut engine = Engine::new();
-        register_modules(&mut engine);
+
+        engine.register_global_module(exported_module!(main_api).into());
 
         ScriptsManager {
             rhai_engine: engine,
@@ -34,7 +37,7 @@ impl ScriptsManager {
         }
     }
 
-    pub fn rescan_scripts(&mut self) {
+    pub fn rescan_scripts(&mut self, main_base: &Base<Node>) {
         let mut path = env::current_dir().unwrap().clone();
         path.pop();
         path.push("resources");
@@ -70,12 +73,12 @@ impl ScriptsManager {
                     continue;
                 }
             };
-            self.load_manifest(manifest, current_path.display().to_string())
+            self.load_manifest(manifest, current_path.display().to_string(), main_base)
         }
     }
 
-    pub fn load_manifest(&mut self, manifest: Manifest, path: String) {
-        let script_instance = ScriptInstance::from_manifest(&manifest, path);
+    pub fn load_manifest(&mut self, manifest: Manifest, path: String, main_base: &Base<Node>) {
+        let mut script_instance = ScriptInstance::from_manifest(&manifest, path, main_base);
         match script_instance.try_to_load(&mut self.rhai_engine, &manifest.client_scripts) {
             Ok(()) => (),
             Err(e) => {
@@ -91,5 +94,11 @@ impl ScriptsManager {
             manifest.autor,
             manifest.version
         );
+    }
+
+    pub fn run_event(&mut self, event_slug: String, attrs: &Vec<Dynamic>) {
+        for (_, script) in self.scripts.iter_mut() {
+            script.run_event(&event_slug, attrs);
+        }
     }
 }

@@ -1,24 +1,30 @@
 use godot::prelude::godot_print;
-use rhai::{Dynamic, Engine, NativeCallContext};
+use rhai::plugin::*;
+use rhai::{FnPtr, NativeCallContext};
 
-pub fn fn_godot_print(context: NativeCallContext, msg: String) {
-    godot_print!(
-        "[{}] {}",
-        context.global_runtime_state().source.as_ref().unwrap(),
-        msg
-    );
-}
+#[export_module]
+pub mod main_api {
+    use crate::client_scripts::instance_scope::SharedScriptInstanceScope;
 
-pub fn register_event(context: NativeCallContext, event_name: String, callback: Dynamic) {
-    godot_print!(
-        "[{}] Event registered for \"{}\": {}",
-        context.global_runtime_state().source.as_ref().unwrap(),
-        event_name,
-        callback
-    );
-}
+    pub type Main = SharedScriptInstanceScope;
 
-pub fn register_modules(rhai_engine: &mut Engine) {
-    rhai_engine.register_fn("godot_print", fn_godot_print);
-    rhai_engine.register_fn("registerEvent", register_event);
+    #[rhai_fn(pure)]
+    pub fn register_event(main: &mut Main, event_name: String, callback: FnPtr) {
+        godot_print!(
+            "[{}] Event registered for \"{}\": {}",
+            main.borrow().get_slug(),
+            event_name,
+            callback
+        );
+    }
+
+    #[rhai_fn(pure)]
+    pub fn get_slug(main: &mut Main) -> String {
+        main.borrow().get_slug().clone()
+    }
+
+    #[rhai_fn(pure)]
+    pub fn console(main: &mut Main, message: String) {
+        godot_print!("[{}] {}", main.borrow().get_slug().clone(), message,);
+    }
 }
