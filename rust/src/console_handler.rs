@@ -17,6 +17,9 @@ pub struct Console {
 
 #[godot_api]
 impl Console {
+    pub fn send(&self, message: String) {
+    }
+
     #[signal]
     fn submit_console_command();
 

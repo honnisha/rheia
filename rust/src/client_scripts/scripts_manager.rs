@@ -1,5 +1,6 @@
 use godot::prelude::*;
 use rhai::Dynamic;
+use rhai::FuncArgs;
 use rhai::exported_module;
 use rhai::Engine;
 use serde::{Deserialize, Serialize};
@@ -96,9 +97,9 @@ impl ScriptsManager {
         );
     }
 
-    pub fn run_event(&mut self, event_slug: String, attrs: &Vec<Dynamic>) {
+    pub fn run_event(&mut self, event_slug: String, attrs: Vec<Dynamic>) {
         for (_, script) in self.scripts.iter_mut() {
-            script.run_event(&event_slug, attrs);
+            script.run_event(&self.rhai_engine, &event_slug, &attrs);
         }
     }
 }

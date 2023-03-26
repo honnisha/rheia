@@ -1,7 +1,7 @@
 use super::instance_scope::ScriptInstanceScope;
 use super::scripts_manager::Manifest;
 use godot::prelude::*;
-use rhai::{Engine, ImmutableString, Scope, Dynamic};
+use rhai::{Engine, ImmutableString, Scope, AST, FuncArgs, Dynamic};
 use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
@@ -12,6 +12,7 @@ pub struct ScriptInstance {
     autor: String,
     version: String,
     source: Option<String>,
+    ast: Option<AST>,
     scope: Scope<'static>,
     scope_instance: Rc<RefCell<ScriptInstanceScope>>,
 }
@@ -26,6 +27,7 @@ impl ScriptInstance {
             autor: manifest.autor.clone(),
             version: manifest.autor.clone(),
             source: Some(source.clone()),
+            ast: None,
             scope: Scope::new(),
             scope_instance: Rc::new(RefCell::new(shared_controller)),
         };
@@ -33,6 +35,22 @@ impl ScriptInstance {
             .scope
             .push_constant("Main", script_instance.scope_instance.clone());
         script_instance
+    }
+
+    //pub fn get_callbacks(&self) -> Vec<(String, String)> {
+    //    self.scope_instance.borrow().callbacks.clone()
+    //}
+
+    pub fn get_ast(&mut self) -> &Option<AST> {
+        &self.ast
+    }
+
+    pub fn get_scope(&mut self) -> &'static mut Scope {
+        &mut self.scope
+    }
+
+    pub fn get_scope_instance(&mut self) -> &Rc<RefCell<ScriptInstanceScope>> {
+        &self.scope_instance
     }
 
     #[allow(dead_code)]
@@ -106,10 +124,36 @@ impl ScriptInstance {
                 client_script,
                 path
             );
+            self.ast = Some(ast);
         }
         Ok(())
     }
 
-    pub fn run_event(&mut self, event_slug: &String, attrs: &Vec<Dynamic>) {
+    pub fn run_event(&mut self, rhai_engine: &Engine, event_slug: &String, attrs: &Vec<Dynamic>) {
+        let si = self.scope_instance.clone();
+        let callbacks = &si.borrow().callbacks;
+
+        for callback in callbacks {
+            if &callback.0 == event_slug {
+                // Call callback
+                rhai_engine.call_fn::<()>(
+                    &mut self.scope,
+                    &self.ast.as_ref().unwrap(),
+                    &callback.1,
+                    attrs.clone(),
+                );
+            }
+        }
+    }
+}
+
+impl AsRef<ScriptInstance> for ScriptInstance {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+impl AsMut<ScriptInstance> for ScriptInstance {
+    fn as_mut(&mut self) -> &mut Self {
+        self
     }
 }

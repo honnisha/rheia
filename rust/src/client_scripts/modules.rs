@@ -9,12 +9,30 @@ pub mod main_api {
     pub type Main = SharedScriptInstanceScope;
 
     #[rhai_fn(pure)]
-    pub fn register_event(main: &mut Main, event_name: String, callback: FnPtr) {
-        godot_print!(
-            "[{}] Event registered for \"{}\": {}",
-            main.borrow().get_slug(),
-            event_name,
-            callback
+    pub fn register_event(main: &mut Main, event_slug: String, callback: FnPtr) {
+        let mut m = main.borrow_mut();
+        match m.add_callback(event_slug.clone(), &callback) {
+            Ok(e) => e,
+            Err(e) => {
+                console(
+                    main,
+                    format!(
+                        "[{}] register_event error: {:?}",
+                        main.borrow().get_slug(),
+                        e
+                    ),
+                );
+                return;
+            }
+        };
+        console(
+            main,
+            format!(
+                "[{}] Event registered for \"{}\": {}",
+                main.borrow().get_slug(),
+                event_slug,
+                callback
+            ),
         );
     }
 
@@ -26,5 +44,6 @@ pub mod main_api {
     #[rhai_fn(pure)]
     pub fn console(main: &mut Main, message: String) {
         godot_print!("[{}] {}", main.borrow().get_slug().clone(), message,);
+        main.borrow_mut().console_send(message);
     }
 }

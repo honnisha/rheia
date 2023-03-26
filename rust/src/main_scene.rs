@@ -21,9 +21,10 @@ impl Main {
     #[func]
     fn handle_console_command(&mut self, new_text: GodotString) {
         godot_print!("console_command: {}", new_text);
-        let mut attrs: Vec<Dynamic> = Vec::new();
-        attrs.push(Dynamic::from(new_text.to_string()));
-        self.scripts_manager.run_event("onConsoleCommand".to_string(), &attrs);
+        self.scripts_manager.run_event(
+            "onConsoleCommand".to_string(),
+            vec![Dynamic::from(new_text.to_string())],
+        );
     }
 
     pub fn get_camera(&self) -> &Option<Gd<Camera3D>> {
@@ -34,7 +35,6 @@ impl Main {
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
-
         Main {
             base,
             scripts_manager: ScriptsManager::new(),
