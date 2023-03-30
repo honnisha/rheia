@@ -1,4 +1,4 @@
-use crate::blocks::block_type_info::BlockTypeInfo;
+use crate::world::blocks::block_type_info::BlockTypeInfo;
 
 
 pub struct TextureMapper {

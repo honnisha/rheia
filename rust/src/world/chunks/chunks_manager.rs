@@ -8,11 +8,11 @@ use godot::{
 use ndshape::ConstShape;
 
 use crate::{
-    blocks::blocks_storage::BlockType,
-    mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape},
-    textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
-    utils::block_mesh::VoxelVisibility,
-    world_generator::WorldGenerator,
+    utils::mesh::block_mesh::VoxelVisibility,
+    utils::mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape},
+    utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
+    world::blocks::blocks_storage::BlockType,
+    world::world_generator::WorldGenerator,
 };
 
 use super::{block_info::BlockInfo, chunk::Chunk};

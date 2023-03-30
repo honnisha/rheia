@@ -1,7 +1,7 @@
 use godot::prelude::Vector3;
 use ndshape::ConstShape;
 
-use crate::mesh::mesh_generator::ChunkShape;
+use crate::utils::mesh::mesh_generator::ChunkShape;
 
 use super::block_info::BlockInfo;
 

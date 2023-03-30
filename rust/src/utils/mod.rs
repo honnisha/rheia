@@ -1,1 +1,3 @@
-pub mod block_mesh;
+pub mod textures;
+pub mod schematics;
+pub mod mesh;

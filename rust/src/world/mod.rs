@@ -1,6 +1,10 @@
 use godot::prelude::*;
 
-use crate::chunks::chunks_manager::ChunksManager;
+use crate::world::chunks::chunks_manager::ChunksManager;
+
+pub mod blocks;
+pub mod chunks;
+pub mod world_generator;
 
 #[derive(GodotClass)]
 #[class(base=Node)]

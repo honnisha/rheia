@@ -1,4 +1,4 @@
-use crate::utils::block_mesh::VoxelVisibility;
+use crate::utils::mesh::block_mesh::VoxelVisibility;
 
 pub struct BlockTypeInfo {
     pub voxel_visibility: VoxelVisibility,

@@ -256,7 +256,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{blocks::blocks_storage::BlockType, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+    use crate::{world::blocks::blocks_storage::BlockType, utils::mesh::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};

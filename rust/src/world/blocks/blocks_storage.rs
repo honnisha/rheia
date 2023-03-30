@@ -1,6 +1,6 @@
 use strum_macros::EnumIter;
 
-use crate::utils::block_mesh::VoxelVisibility;
+use crate::utils::mesh::block_mesh::VoxelVisibility;
 
 use super::block_type_info::BlockTypeInfo;
 

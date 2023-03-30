@@ -1,9 +1,10 @@
 use crate::{
-    textures::texture_mapper::TextureMapper,
-    utils::block_mesh::{
+    utils::mesh::block_mesh::{
         ndshape::ConstShape3u32, visible_block_faces, UnitQuadBuffer, UnorientedQuad,
         RIGHT_HANDED_Y_UP_CONFIG,
-    }, blocks::blocks_storage::BlockType,
+    },
+    utils::textures::texture_mapper::TextureMapper,
+    world::blocks::blocks_storage::BlockType,
 };
 use godot::prelude::{Array, Gd};
 use godot::{engine::ArrayMesh, prelude::Variant};
@@ -85,7 +86,7 @@ pub fn generate_chunk_geometry(
                 &unoriented_quad,
             ) {
                 let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
-                //let offset = match block_type.get_uv_offset(side_index as i8) {
+                    //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
                     _ => 0,
                 };

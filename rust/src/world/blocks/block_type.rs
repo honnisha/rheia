@@ -1,4 +1,4 @@
-use crate::utils::block_mesh::{Voxel, VoxelVisibility};
+use crate::utils::mesh::block_mesh::{Voxel, VoxelVisibility};
 
 use super::{
     block_type_info::BlockTypeInfo,

@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::console_handler::Console;
+use crate::main_scene::CONSOLE_PATH;
 
 pub struct ScriptInstanceScope {
     slug: String,
@@ -17,8 +18,7 @@ impl ScriptInstanceScope {
     pub fn new(slug: String, main_base: &Base<Node>) -> Self {
         ScriptInstanceScope {
             slug: slug,
-            console: main_base
-                .get_node_as::<Console>("GUIControl/MarginContainer/ConsoleContainer"),
+            console: main_base.get_node_as::<Console>(CONSOLE_PATH),
             callbacks: Vec::new(),
         }
     }
@@ -45,6 +45,8 @@ impl ScriptInstanceScope {
 
     pub fn console_send(&mut self, message: String) {
         godot_print!("[{}] {}", self.slug, message);
-        self.console.bind_mut().send(format!("[{}] {}", self.slug, message));
+        self.console
+            .bind_mut()
+            .send(format!("[{}] {}", self.slug, message));
     }
 }

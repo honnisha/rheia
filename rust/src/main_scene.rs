@@ -13,7 +13,6 @@ pub struct Main {
     scripts_manager: ScriptsManager,
     camera: Option<Gd<Camera3D>>,
     debug_text: Option<Gd<RichTextLabel>>,
-    console: Option<Gd<Console>>,
 }
 
 #[godot_api]
@@ -28,6 +27,10 @@ impl Main {
     }
 }
 
+pub const CONSOLE_PATH: &str = "GUIControl/MarginContainer/ConsoleContainer";
+const CAMERA_PATH: &str = "Camera";
+const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
+
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
@@ -36,31 +39,26 @@ impl NodeVirtual for Main {
             scripts_manager: ScriptsManager::new(),
             camera: None,
             debug_text: None,
-            console: None,
         }
     }
 
     fn ready(&mut self) {
-        self.camera = Some(self.base.get_node_as("Camera"));
-        self.debug_text = Some(self.base.get_node_as("Camera/DebugText"));
-
-        match self
-            .base
-            .try_get_node_as::<Console>("GUIControl/MarginContainer/ConsoleContainer")
-        {
-            Some(c) => {
-                self.console = Some(c);
-                self.console.as_mut().unwrap().bind_mut().connect(
-                    "submit_console_command".into(),
-                    Callable::from_object_method(self.base.share(), "handle_console_command"),
-                    0,
-                );
-            }
-            _ => godot_error!("Console element not found"),
-        }
-
+        self.camera = Some(self.base.get_node_as(CAMERA_PATH));
         let camera = self.camera.as_deref_mut().unwrap();
         camera.set_position(Vector3::new(0.0, 15.0, 0.0));
+
+        self.debug_text = Some(self.base.get_node_as(CAMERA_TEXT_PATH));
+
+        let console = self.base.try_get_node_as::<Console>(CONSOLE_PATH);
+        if console.is_some() {
+            console.unwrap().bind_mut().connect(
+                "submit_console_command".into(),
+                Callable::from_object_method(self.base.share(), "handle_console_command"),
+                0,
+            );
+        } else {
+            godot_error!("Console element not found");
+        }
 
         self.scripts_manager.rescan_scripts(&self.base);
         godot_print!("Main scene loaded;");

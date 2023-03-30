@@ -1,4 +1,3 @@
-use godot::prelude::godot_print;
 use rhai::plugin::*;
 use rhai::{FnPtr, NativeCallContext};
 
@@ -16,22 +15,13 @@ pub mod main_api {
         if add_result.is_err() {
             console(
                 main,
-                format!(
-                    "[{}] register_event error: {:?}",
-                    main.borrow().get_slug(),
-                    add_result.err()
-                ),
+                format!("register_event error: {:?}", add_result.err().unwrap()),
             );
             return;
         }
         console(
             main,
-            format!(
-                "[{}] Event registered for \"{}\": {}",
-                main.borrow().get_slug(),
-                event_slug,
-                callback
-            ),
+            format!("Event registered for \"{}\": {}", event_slug, callback),
         );
     }
 
@@ -42,7 +32,6 @@ pub mod main_api {
 
     #[rhai_fn(pure)]
     pub fn console(main: &mut Main, message: String) {
-        godot_print!("[{}] {}", main.borrow().get_slug().clone(), message,);
         main.borrow_mut().console_send(message);
     }
 }

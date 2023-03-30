@@ -8,15 +8,10 @@ use godot::prelude::*;
 
 mod main_scene;
 mod client_scripts;
-mod mesh;
-mod chunks;
-mod world;
+pub mod world;
 pub mod utils;
-pub mod world_generator;
-pub mod schematics;
-pub mod blocks;
-pub mod textures;
 pub mod console_handler;
+pub mod controller;
 
 struct HonnyCraft;
 

@@ -1,4 +1,4 @@
-use crate::blocks::{block_type_info::BlockTypeInfo, blocks_storage::BlockType};
+use crate::world::blocks::{block_type_info::BlockTypeInfo, blocks_storage::BlockType};
 
 #[derive(Copy)]
 pub struct BlockInfo {

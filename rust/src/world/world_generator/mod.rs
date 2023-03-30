@@ -2,8 +2,8 @@ use bracket_noise::prelude::*;
 use ndshape::ConstShape;
 
 use crate::{
-    blocks::blocks_storage::BlockType, chunks::block_info::BlockInfo,
-    mesh::mesh_generator::ChunkShape,
+    world::blocks::blocks_storage::BlockType, world::chunks::block_info::BlockInfo,
+    utils::mesh::mesh_generator::ChunkShape,
 };
 
 pub struct WorldGenerator {

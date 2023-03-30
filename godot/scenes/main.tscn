@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=20 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
@@ -23,6 +23,10 @@ material = SubResource("StandardMaterial3D_pektk")
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p2vo5"]
 
+[sub_resource type="BoxMesh" id="BoxMesh_tot8o"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_eppau"]
+
 [node name="Main" type="Main"]
 
 [node name="Camera" type="Camera3D" parent="."]
@@ -34,6 +38,8 @@ script = ExtResource("1_pyknb")
 offset_right = 1152.0
 offset_bottom = 648.0
 text = "Camera position: 0.00 15.00 0.00"
+
+[node name="RayCast3D" type="RayCast3D" parent="Camera"]
 
 [node name="World" type="World" parent="."]
 
@@ -179,3 +185,12 @@ theme_override_font_sizes/mono_font_size = 12
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.0069, -18.2698)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
+mesh = SubResource("BoxMesh_tot8o")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("BoxShape3D_eppau")

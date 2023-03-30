@@ -11,7 +11,7 @@ use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
 use strum::IntoEnumIterator;
 
-use crate::blocks::blocks_storage::BlockType;
+use crate::world::blocks::blocks_storage::BlockType;
 
 use super::texture_mapper::TextureMapper;
 

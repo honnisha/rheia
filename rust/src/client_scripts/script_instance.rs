@@ -114,13 +114,18 @@ impl ScriptInstance {
     }
 
     pub fn run_event(&mut self, rhai_engine: &Engine, event_slug: &String, attrs: &Vec<Dynamic>) {
+        let callbacks: Vec<(String, String)>;
+        let slug: String;
         let si = self.scope_instance.clone();
-        let callbacks = &si.borrow().callbacks;
+        {
+            callbacks = si.borrow().callbacks.clone();
+            slug = si.borrow().get_slug().clone();
+        }
 
         for callback in callbacks {
             if &callback.0 == event_slug {
-                godot_print!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
                 // Call callback
+                godot_print!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
                 let callback_result = rhai_engine.call_fn::<()>(
                     &mut self.scope,
                     &self.ast.as_ref().unwrap(),
@@ -129,17 +134,17 @@ impl ScriptInstance {
                 );
                 godot_print!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
                 if callback_result.is_err() {
-                    let mut sc = self.scope_instance.borrow_mut();
                     let m = format!(
                         "[{}] Event {} callback \"{}\" error: {:?}",
-                        sc.get_slug(),
+                        slug,
                         event_slug,
                         callback.1,
                         callback_result.err()
                     );
+                    let mut sc = self.scope_instance.borrow_mut();
                     sc.console_send(m);
                 }
-                godot_print!("event {} fired for {}", event_slug, self.scope_instance.borrow().get_slug())
+                godot_print!("event {} fired for {}", event_slug, slug)
             }
         }
     }
