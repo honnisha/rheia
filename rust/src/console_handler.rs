@@ -1,5 +1,5 @@
 use godot::{
-    engine::{LineEdit, RichTextLabel, TextureButton, MarginContainer},
+    engine::{LineEdit, RichTextLabel, TextureButton, MarginContainer, Engine},
     prelude::*,
 };
 
@@ -8,6 +8,7 @@ use godot::{
 pub struct Console {
     #[base]
     base: Base<MarginContainer>,
+    active: bool,
     console_text: Option<Gd<RichTextLabel>>,
     console_input: Option<Gd<LineEdit>>,
     console_button: Option<Gd<TextureButton>>,
@@ -23,6 +24,24 @@ impl Console {
 
     #[signal]
     fn submit_console_command();
+
+    #[signal]
+    fn submit_toggle_console();
+
+    fn toggle_console(&mut self) {
+        self.active = !self.active;
+        self.base.set_visible(self.active);
+
+        if self.active {
+            let i = self.console_input.as_mut().unwrap();
+            if !i.has_focus() {
+                i.grab_focus();
+            }
+            i.clear();
+        }
+
+        self.base.emit_signal("submit_toggle_console".into(), &[self.active.to_variant()]);
+    }
 
     fn scroll_to_bottom(&mut self) {
         let c = self.console_text.as_mut().unwrap();
@@ -65,6 +84,7 @@ impl Console {
 impl NodeVirtual for Console {
     fn init(base: Base<MarginContainer>) -> Self {
         Console {
+            active: false,
             console_text: None,
             console_input: None,
             console_button: None,
@@ -114,19 +134,31 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self.base.try_get_node_as::<RichTextLabel>("GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins") {
+        match self.base.try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins") {
             Some(e) => self.console_sugestions = Some(e),
             _ => {
                 godot_error!("console_sugestions element not found");
                 return;
             }
         };
+        self.base.set_visible(false);
         godot_print!("Console successfily loaded;");
     }
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         let input = Input::singleton();
+        if input.is_action_just_pressed("ui_toggle_console".into(), false) {
+            self.toggle_console();
+        }
+        if !self.active {
+            return;
+        }
+
         if input.is_action_just_pressed("ui_up".into(), false) {
             godot_print!("up");
         }

@@ -1,6 +1,5 @@
-[gd_scene load_steps=20 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=19 format=3 uid="uid://c5l1r11gi0tet"]
 
-[ext_resource type="Script" path="res://camera.gd" id="1_pyknb"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
 [ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="4_tvi6q"]
@@ -29,17 +28,18 @@ material = SubResource("StandardMaterial3D_pektk")
 
 [node name="Main" type="Main"]
 
-[node name="Camera" type="Camera3D" parent="."]
+[node name="PlayerController" type="PlayerController" parent="."]
+
+[node name="Camera" type="Camera3D" parent="PlayerController"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
 current = true
-script = ExtResource("1_pyknb")
 
-[node name="DebugText" type="RichTextLabel" parent="Camera"]
+[node name="DebugText" type="RichTextLabel" parent="PlayerController/Camera"]
 offset_right = 1152.0
 offset_bottom = 648.0
 text = "Camera position: 0.00 15.00 0.00"
 
-[node name="RayCast3D" type="RayCast3D" parent="Camera"]
+[node name="RayCast3D" type="RayCast3D" parent="PlayerController/Camera"]
 
 [node name="World" type="World" parent="."]
 
@@ -109,7 +109,6 @@ theme_override_constants/margin_bottom = 10
 
 [node name="ConsoleText" type="RichTextLabel" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
 layout_mode = 2
-focus_mode = 2
 theme_override_fonts/normal_font = ExtResource("6_ne3hc")
 theme_override_fonts/bold_font = ExtResource("7_ttyaw")
 theme_override_fonts/italics_font = ExtResource("8_a2yc2")
@@ -147,6 +146,7 @@ theme_override_fonts/font = ExtResource("6_ne3hc")
 theme_override_font_sizes/font_size = 12
 theme_override_styles/focus = SubResource("StyleBoxEmpty_p2vo5")
 context_menu_enabled = false
+deselect_on_focus_loss_enabled = false
 flat = true
 caret_blink = true
 caret_force_displayed = true
@@ -155,6 +155,7 @@ caret_force_displayed = true
 custom_minimum_size = Vector2(1, 1)
 layout_direction = 1
 layout_mode = 2
+focus_mode = 0
 action_mode = 0
 texture_normal = ExtResource("10_slteo")
 texture_pressed = ExtResource("10_w5mok")

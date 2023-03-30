@@ -176,6 +176,9 @@ func set_time():
 	sky_shader.set_shader_parameter("attenuation",clamp(light_energy,night_level_light*0.25,1.00));#clouds too bright with night_level_light
 
 func _process(delta:float):
+	if Engine.is_editor_hint():
+		return;
+
 	if !lighting_strike:
 		return;
 	lighting_time += delta;
@@ -188,8 +191,14 @@ func _process(delta:float):
 		sun_moon.look_at_from_position(lighting_pos,Vector3.ZERO,Vector3.UP);
 
 func _ready():
+	if Engine.is_editor_hint():
+		return;
+
 	set_process(false);
 
 func _input(event):
+	if Engine.is_editor_hint():
+		return;
+
 	if event.is_action_pressed("ui_accept"):
 		lighting_strike = true;
