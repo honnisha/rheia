@@ -1,4 +1,7 @@
-use godot::{prelude::*, engine::{RichTextLabel, Engine}};
+use godot::{
+    engine::{Engine, RichTextLabel},
+    prelude::*,
+};
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -11,7 +14,6 @@ pub struct PlayerController {
 
 #[godot_api]
 impl PlayerController {
-
     #[signal]
     fn submit_camera_move();
 }
@@ -36,7 +38,7 @@ impl NodeVirtual for PlayerController {
 
                 let camera = self.camera.as_deref_mut().unwrap();
                 camera.set_position(Vector3::new(0.0, 15.0, 0.0));
-            },
+            }
             None => {
                 godot_error!("Camera element not found for PlayerController");
             }
@@ -45,7 +47,7 @@ impl NodeVirtual for PlayerController {
         match self.base.try_get_node_as::<RichTextLabel>(CAMERA_TEXT_PATH) {
             Some(c) => {
                 self.debug_text = Some(c);
-            },
+            }
             None => {
                 godot_error!("Debug text element not found for PlayerController");
             }
@@ -55,7 +57,7 @@ impl NodeVirtual for PlayerController {
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
         if Engine::singleton().is_editor_hint() {
-            return
+            return;
         }
 
         if self.camera.is_none() {
@@ -74,6 +76,7 @@ impl NodeVirtual for PlayerController {
             .unwrap()
             .set_text(GodotString::from(text));
 
-        self.base.emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
+        self.base
+            .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
     }
 }

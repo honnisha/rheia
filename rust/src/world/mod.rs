@@ -2,6 +2,8 @@ use godot::{engine::Engine, prelude::*};
 
 use crate::{world::chunks::chunks_manager::ChunksManager, controller::player_controller::PlayerController};
 
+use self::blocks::blocks_storage::BlockType;
+
 pub mod blocks;
 pub mod chunks;
 pub mod world_generator;
@@ -22,6 +24,10 @@ impl World {
             .as_mut()
             .unwrap()
             .update_camera_position(&mut self.base, global_position);
+    }
+
+    pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
+        self.chunks_manager.as_mut().unwrap().modify_block(pos, block_type);
     }
 }
 

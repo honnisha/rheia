@@ -1,5 +1,6 @@
-[gd_scene load_steps=19 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=20 format=3 uid="uid://c5l1r11gi0tet"]
 
+[ext_resource type="Script" path="res://camera.gd" id="1_jif2f"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
 [ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="4_tvi6q"]
@@ -33,6 +34,7 @@ material = SubResource("StandardMaterial3D_pektk")
 [node name="Camera" type="Camera3D" parent="PlayerController"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
 current = true
+script = ExtResource("1_jif2f")
 
 [node name="DebugText" type="RichTextLabel" parent="PlayerController/Camera"]
 offset_right = 1152.0
@@ -79,6 +81,7 @@ theme_override_constants/margin_right = 400
 theme_override_constants/margin_bottom = 100
 
 [node name="ConsoleContainer" type="Console" parent="GUIControl/MarginContainer"]
+visible = false
 layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="GUIControl/MarginContainer/ConsoleContainer"]
@@ -109,6 +112,7 @@ theme_override_constants/margin_bottom = 10
 
 [node name="ConsoleText" type="RichTextLabel" parent="GUIControl/MarginContainer/ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
 layout_mode = 2
+focus_mode = 2
 theme_override_fonts/normal_font = ExtResource("6_ne3hc")
 theme_override_fonts/bold_font = ExtResource("7_ttyaw")
 theme_override_fonts/italics_font = ExtResource("8_a2yc2")

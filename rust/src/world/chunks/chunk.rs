@@ -1,7 +1,7 @@
 use godot::prelude::Vector3;
 use ndshape::ConstShape;
 
-use crate::utils::mesh::mesh_generator::ChunkShape;
+use crate::{utils::mesh::mesh_generator::ChunkShape, world::blocks::blocks_storage::BlockType};
 
 use super::block_info::BlockInfo;
 
@@ -31,16 +31,29 @@ impl Chunk {
         return self.chunk_data[ChunkShape::linearize(position) as usize];
     }
 
-    #[allow(dead_code)]
-    pub fn get_chunk_position(&self) -> Vector3 {
-        Chunk::get_chunk_position_from_position(&self.position)
+    pub fn get_chunk_position_from_coordinate(position: &[i32; 3]) -> Vector3 {
+        Vector3::new(
+            position[0] as f32 * 16.0,
+            position[1] as f32 * 16.0,
+            position[2] as f32 * 16.0,
+        )
     }
 
-    pub fn get_chunk_position_from_position(position: &[i32; 3]) -> Vector3 {
-        Vector3::new(
-            position[0] as f32 * 16.0 - 8.0,
-            position[1] as f32 * 16.0 - 8.0,
-            position[2] as f32 * 16.0 - 8.0,
-        )
+    pub fn get_chunk_positions_by_coordinate(c: &[i32; 3]) -> [i32; 3] {
+        [c[0] % 16, c[1] % 16, c[2] % 16]
+    }
+
+    fn get_local_from_global(&self, global_pos: &[i32; 3]) -> [u32; 3] {
+        [
+            (global_pos[0] - (self.position[0] * 16_i32) as i32) as u32,
+            (global_pos[1] - (self.position[1] * 16_i32) as i32) as u32,
+            (global_pos[2] - (self.position[2] * 16_i32) as i32) as u32
+        ]
+    }
+
+    pub fn set_block(&mut self, global_pos: &[i32; 3], block_type: BlockType) {
+        let local_pos = self.get_local_from_global(global_pos);
+        let i = ChunkShape::linearize(local_pos) as usize;
+        self.chunk_data[i] = BlockInfo::new(block_type);
     }
 }

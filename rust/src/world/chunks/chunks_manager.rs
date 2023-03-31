@@ -37,6 +37,15 @@ impl ChunksManager {
         }
     }
 
+    pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
+        let chunk_pos = Chunk::get_chunk_positions_by_coordinate(pos);
+        let c = self.chunks.get_mut(&chunk_pos);
+
+        if c.is_some() {
+            c.unwrap().set_block(pos, block_type);
+        }
+    }
+
     pub fn duplicate_material(&self) -> Gd<Material> {
         let material = self.material.duplicate(true).unwrap();
         material.cast::<Material>()
@@ -207,7 +216,7 @@ impl ChunksManager {
                 "chunk_{}_{}_{}",
                 p[0], p[1], p[2]
             )));
-            mesh.set_position(Chunk::get_chunk_position_from_position(chunk_position));
+            mesh.set_position(Chunk::get_chunk_position_from_coordinate(chunk_position));
             base.add_child(mesh.upcast(), false, InternalMode::INTERNAL_MODE_BACK);
         }
 
