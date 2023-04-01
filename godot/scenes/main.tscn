@@ -45,6 +45,8 @@ text = "Camera position: 0.00 15.00 0.00"
 
 [node name="World" type="World" parent="."]
 
+[node name="ChunksManager" type="ChunksManager" parent="World"]
+
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
 time_of_day_setup = 0.762
 clouds_coverage = 0.39

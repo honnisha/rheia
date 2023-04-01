@@ -51,7 +51,7 @@ pub fn generate_buffer(chunk_data: &[BlockType; 5832]) -> UnitQuadBuffer {
 pub fn generate_chunk_geometry(
     texture_mapper: &TextureMapper,
     chunk_data: &[BlockType; 5832],
-) -> Option<Gd<ArrayMesh>> {
+) -> Gd<ArrayMesh> {
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
 
@@ -99,8 +99,9 @@ pub fn generate_chunk_geometry(
         }
     }
 
+    let mut mesh_ist = ArrayMesh::new();
     if &indices.len() == &(0 as usize) {
-        return None;
+        return mesh_ist;
     }
 
     arrays.set(
@@ -120,7 +121,6 @@ pub fn generate_chunk_geometry(
         Variant::from(uvs),
     );
 
-    let mut mesh_ist = ArrayMesh::new();
     mesh_ist.add_surface_from_arrays(
         mesh::PrimitiveType::PRIMITIVE_TRIANGLES,
         arrays,
@@ -128,5 +128,5 @@ pub fn generate_chunk_geometry(
         Default::default(),
         Default::default(),
     );
-    Some(mesh_ist)
+    mesh_ist
 }

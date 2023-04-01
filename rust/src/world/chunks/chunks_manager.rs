@@ -2,14 +2,14 @@ use std::collections::HashMap;
 
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D},
+    engine::{node::InternalMode, StandardMaterial3D},
     prelude::*,
 };
 use ndshape::ConstShape;
 
 use crate::{
     utils::mesh::block_mesh::VoxelVisibility,
-    utils::mesh::mesh_generator::{generate_chunk_geometry, ChunkBordersShape, ChunkShape},
+    utils::mesh::mesh_generator::{ChunkBordersShape, ChunkShape},
     utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
     world::blocks::blocks_storage::BlockType,
     world::world_generator::WorldGenerator,
@@ -17,38 +17,30 @@ use crate::{
 
 use super::{block_info::BlockInfo, chunk::Chunk};
 
+#[derive(GodotClass)]
+#[class(base=Node)]
 pub struct ChunksManager {
-    chunks: HashMap<[i32; 3], Chunk>,
+    #[base]
+    base: Base<Node>,
+
+    chunks: HashMap<[i32; 3], Gd<Chunk>>,
     world_generator: WorldGenerator,
-    material: Gd<StandardMaterial3D>,
+
     texture_mapper: TextureMapper,
+    material: Gd<StandardMaterial3D>,
 }
 
-impl ChunksManager {
-    pub fn new() -> Self {
-        let mut rng = RandomNumberGenerator::new();
-        let seed = rng.next_u64();
-        let mut texture_mapper = TextureMapper::new();
-        ChunksManager {
-            chunks: HashMap::new(),
-            world_generator: WorldGenerator::new(seed),
-            material: build_blocks_material(&mut texture_mapper),
-            texture_mapper: texture_mapper,
-        }
-    }
+#[godot_api]
+impl ChunksManager {}
 
+impl ChunksManager {
     pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
         let chunk_pos = Chunk::get_chunk_positions_by_coordinate(pos);
         let c = self.chunks.get_mut(&chunk_pos);
 
         if c.is_some() {
-            c.unwrap().set_block(pos, block_type);
+            c.unwrap().bind_mut().set_block(pos, block_type);
         }
-    }
-
-    pub fn duplicate_material(&self) -> Gd<Material> {
-        let material = self.material.duplicate(true).unwrap();
-        material.cast::<Material>()
     }
 
     #[allow(unused_variables)]
@@ -66,7 +58,7 @@ impl ChunksManager {
                     for y in 0_i32..2_i32 {
                         let chunk_position = &[x, y, z];
                         if !self.is_chunk_loaded(chunk_position) {
-                            self.spawn_chunk(base, chunk_position);
+                            self.spawn_chunk(chunk_position);
                         }
                     }
                 }
@@ -76,7 +68,7 @@ impl ChunksManager {
 
     pub fn is_chunk_loaded(&self, chunk_position: &[i32; 3]) -> bool {
         match self.chunks.get(chunk_position) {
-            Some(c) => c.loaded,
+            Some(c) => c.bind().is_loaded(),
             None => false,
         }
     }
@@ -90,8 +82,21 @@ impl ChunksManager {
         self.world_generator
             .generate_chunk_data(&mut chunk_data, chunk_position);
 
-        let chunk = Chunk::new(*chunk_position, chunk_data);
-        self.chunks.insert(*chunk_position, chunk);
+        let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data));
+        chunk
+            .bind_mut()
+            .create_mesh(&chunk_position, &self.material);
+
+        let chunk_name = GodotString::from(format!(
+            "chunk_{}_{}_{}",
+            chunk_position[0], chunk_position[1], chunk_position[2]
+        ));
+        chunk.bind_mut().base.set_name(chunk_name.clone());
+
+        self.base
+            .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_BACK);
+        let c = self.base.get_node_as::<Chunk>(&chunk_name);
+        self.chunks.insert(*chunk_position, c.cast::<Chunk>());
     }
 
     pub fn format_chunk_data_with_boundaries<'a>(
@@ -165,7 +170,8 @@ impl ChunksManager {
                             //    pos_inside,
                             //    pos_outside
                             //);
-                            b_chunk[pos_i as usize] = border_chunk.chunk_data[pos_o as usize]
+                            b_chunk[pos_i as usize] = border_chunk.bind().get_chunk_data()
+                                [pos_o as usize]
                                 .get_block_type()
                                 .clone();
                         }
@@ -177,51 +183,42 @@ impl ChunksManager {
         return (self, b_chunk);
     }
 
-    pub fn get_mesh(&self, bordered_chunk_data: &[BlockType; 5832]) -> Option<Gd<MeshInstance3D>> {
-        let mesh = match generate_chunk_geometry(&self.texture_mapper, &bordered_chunk_data) {
-            Some(m) => m,
-            None => return None,
-        };
-
-        let mut mesh_instance = MeshInstance3D::new_alloc();
-        mesh_instance.set_mesh(mesh.upcast());
-        mesh_instance.create_trimesh_collision();
-        Some(mesh_instance)
-    }
-
-    pub fn get_chunk(&self, chunk_position: &[i32; 3]) -> &Chunk {
+    pub fn get_chunk(&self, chunk_position: &[i32; 3]) -> &Gd<Chunk> {
         &self.chunks.get(chunk_position).unwrap()
     }
 
-    pub fn get_chunk_data(&self, chunk_position: &[i32; 3]) -> [BlockInfo; 4096] {
-        self.chunks.get(chunk_position).unwrap().chunk_data.clone()
-    }
-
-    pub fn spawn_chunk(&mut self, base: &mut Base<Node>, chunk_position: &[i32; 3]) {
+    pub fn spawn_chunk(&mut self, chunk_position: &[i32; 3]) {
         self.load_chunk(&chunk_position);
-        let chunk_data = self.get_chunk_data(chunk_position);
 
-        let bordered_chunk_data = self
-            .format_chunk_data_with_boundaries(&chunk_data, &chunk_position)
-            .1;
-        let mesh_option = self.get_mesh(&bordered_chunk_data);
-
-        if mesh_option.is_some() {
-            let mut mesh = mesh_option.unwrap();
-            let material = self.duplicate_material();
-            mesh.set_material_overlay(material);
-
-            let p = chunk_position;
-            mesh.set_name(GodotString::from(format!(
-                "chunk_{}_{}_{}",
-                p[0], p[1], p[2]
-            )));
-            mesh.set_position(Chunk::get_chunk_position_from_coordinate(chunk_position));
-            base.add_child(mesh.upcast(), false, InternalMode::INTERNAL_MODE_BACK);
+        let chunk_data: [BlockInfo; 4096];
+        let cs = &mut self.chunks;
+        {
+            chunk_data = cs.get_mut(chunk_position).unwrap().bind().get_chunk_data().clone();
         }
 
-        let mut chunk = self.chunks.get_mut(chunk_position).unwrap();
-        chunk.loaded = true;
+        let bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position).1;
+
+        let chunk = self.chunks.get_mut(chunk_position).unwrap();
+        chunk
+            .bind_mut()
+            .update_mesh(&bordered_chunk_data, &self.texture_mapper);
+    }
+}
+
+#[godot_api]
+impl NodeVirtual for ChunksManager {
+    fn init(base: Base<Node>) -> Self {
+        let mut rng = RandomNumberGenerator::new();
+        let seed = rng.next_u64();
+        let mut texture_mapper = TextureMapper::new();
+
+        ChunksManager {
+            base,
+            chunks: HashMap::new(),
+            world_generator: WorldGenerator::new(seed),
+            material: build_blocks_material(&mut texture_mapper),
+            texture_mapper: texture_mapper,
+        }
     }
 }
 

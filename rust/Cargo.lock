@@ -306,9 +306,9 @@ dependencies = [
 
 [[package]]
 name = "clang-sys"
-version = "1.6.0"
+version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77ed9a53e5d4d9c573ae844bfac6872b159cb1d1585a83b29e7a64b7eef7332a"
+checksum = "c688fc74432808e3eb684cae8830a86be1d66a2bd58e1f248ed0960a590baf6f"
 dependencies = [
  "glob",
  "libc",
@@ -317,9 +317,9 @@ dependencies = [
 
 [[package]]
 name = "cmake"
-version = "0.1.49"
+version = "0.1.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db34956e100b30725f2eb215f90d4871051239535632f84fea3bc92722c66b7c"
+checksum = "a31c789563b815f77f4250caee12365734369f942439b7defd71e18a48197130"
 dependencies = [
  "cc",
 ]
@@ -755,7 +755,7 @@ checksum = "1a5c6c585bc94aaf2c7b51dd4c2ba22680844aba4c687be581871a6f518c5742"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.10",
+ "syn 2.0.12",
 ]
 
 [[package]]
@@ -800,15 +800,15 @@ checksum = "3a471a38ef8ed83cd6e40aa59c1ffe17db6855c18e3604d9c4ed8c08ebc28678"
 
 [[package]]
 name = "futures-core"
-version = "0.3.27"
+version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86d7a0c1aa76363dac491de0ee99faf6941128376f1cf96f07db7603b7de69dd"
+checksum = "4bca583b7e26f571124fe5b7561d49cb2868d79116cfa0eefce955557c6fee8c"
 
 [[package]]
 name = "futures-sink"
-version = "0.3.27"
+version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec93083a4aecafb2a80a885c9de1f0ccae9dbd32c2bb54b0c3a65690e0b8d2f2"
+checksum = "f43be4fe21a13b9781a69afa4985b0f6ee0e1afab2c6f454a8cf30e2b2237b6e"
 
 [[package]]
 name = "getrandom"
@@ -893,7 +893,7 @@ dependencies = [
  "once_cell",
  "osmesa-sys",
  "parking_lot 0.12.1",
- "raw-window-handle 0.5.1",
+ "raw-window-handle 0.5.2",
  "wayland-client",
  "wayland-egl",
  "winapi",
@@ -942,7 +942,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#c1c2d600dd5ab247a50a4ec7c35102df75ecc4f0"
+source = "git+https://github.com/godot-rust/gdext?branch=master#08c65941ce544b2255d5b09168c7e9944a9dd454"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -951,7 +951,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#c1c2d600dd5ab247a50a4ec7c35102df75ecc4f0"
+source = "git+https://github.com/godot-rust/gdext?branch=master#08c65941ce544b2255d5b09168c7e9944a9dd454"
 dependencies = [
  "heck",
  "nanoserde",
@@ -964,7 +964,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#c1c2d600dd5ab247a50a4ec7c35102df75ecc4f0"
+source = "git+https://github.com/godot-rust/gdext?branch=master#08c65941ce544b2255d5b09168c7e9944a9dd454"
 dependencies = [
  "glam 0.22.0",
  "godot-codegen",
@@ -975,7 +975,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#c1c2d600dd5ab247a50a4ec7c35102df75ecc4f0"
+source = "git+https://github.com/godot-rust/gdext?branch=master#08c65941ce544b2255d5b09168c7e9944a9dd454"
 dependencies = [
  "bindgen",
  "godot-codegen",
@@ -985,7 +985,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#c1c2d600dd5ab247a50a4ec7c35102df75ecc4f0"
+source = "git+https://github.com/godot-rust/gdext?branch=master#08c65941ce544b2255d5b09168c7e9944a9dd454"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1324,7 +1324,7 @@ dependencies = [
  "jni-sys",
  "ndk-sys 0.4.1+23.1.7779620",
  "num_enum",
- "raw-window-handle 0.5.1",
+ "raw-window-handle 0.5.2",
  "thiserror",
 ]
 
@@ -1753,9 +1753,9 @@ dependencies = [
 
 [[package]]
 name = "raw-window-handle"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f851a03551ceefd30132e447f07f96cb7011d6b658374f3aed847333adb5559"
+checksum = "f2ff9a1f06a88b01621b7ae906ef0211290d1c8a168a15542486a8f61c0833b9"
 
 [[package]]
 name = "rayon"
@@ -1899,9 +1899,9 @@ checksum = "a0eddf2e8f50ced781f288c19f18621fa72a3779e3cb58dbf23b07469b0abeb4"
 
 [[package]]
 name = "serde"
-version = "1.0.158"
+version = "1.0.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "771d4d9c4163ee138805e12c710dd365e4f44be8be0503cb1bb9eb989425d9c9"
+checksum = "3c04e8343c3daeec41f58990b9d77068df31209f2af111e059e9fe9646693065"
 dependencies = [
  "serde_derive",
 ]
@@ -1917,13 +1917,13 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.158"
+version = "1.0.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e801c1712f48475582b7696ac71e0ca34ebb30e09338425384269d9717c62cad"
+checksum = "4c614d17805b093df4b147b51339e7e44bf05ef59fba1e45d83500bcfb4d8585"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.10",
+ "syn 2.0.12",
 ]
 
 [[package]]
@@ -2057,9 +2057,9 @@ dependencies = [
 
 [[package]]
 name = "spin"
-version = "0.9.6"
+version = "0.9.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5d6e0250b93c8427a177b849d144a96d5acc57006149479403d7861ab721e34"
+checksum = "c0959fd6f767df20b231736396e4f602171e00d95205676286e79d4a4eb67bef"
 dependencies = [
  "lock_api",
 ]
@@ -2108,9 +2108,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.10"
+version = "2.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5aad1363ed6d37b84299588d62d3a7d95b5a5c2d9aad5c85609fda12afaa1f40"
+checksum = "79d9531f94112cfc3e4c8f5f02cb2b58f72c97b7efd85f70203cc6d8efda5927"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2134,7 +2134,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.10",
+ "syn 2.0.12",
 ]
 
 [[package]]
@@ -2184,9 +2184,9 @@ dependencies = [
 
 [[package]]
 name = "tokio"
-version = "1.26.0"
+version = "1.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03201d01c3c27a29c8a5cee5b55a93ddae1ccf6f08f65365c2c918f8c1b76f64"
+checksum = "d0de47a4eecbe11f498978a9b29d792f0d2692d1dd003650c24c76510e3bc001"
 dependencies = [
  "autocfg",
  "pin-project-lite",
@@ -2655,7 +2655,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "percent-encoding",
  "raw-window-handle 0.4.3",
- "raw-window-handle 0.5.1",
+ "raw-window-handle 0.5.2",
  "sctk-adwaita",
  "smithay-client-toolkit 0.16.0",
  "wasm-bindgen",
@@ -2712,9 +2712,9 @@ checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
 
 [[package]]
 name = "zune-inflate"
-version = "0.2.52"
+version = "0.2.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10ca8ee3897e213bf74d46641942575fb9b4bd9933cbce0b40eb320836da67e0"
+checksum = "440a08fd59c6442e4b846ea9b10386c38307eae728b216e1ab2c305d1c9daaf8"
 dependencies = [
  "simd-adler32",
 ]

@@ -3,7 +3,7 @@ use godot::{
         base_material_3d::{
             AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam,
         },
-        Image, ImageTexture, StandardMaterial3D,
+        Image, ImageTexture, StandardMaterial3D, Engine,
     },
     prelude::{godot_error, Gd, GodotString, PackedByteArray, StringName, ToVariant},
 };
@@ -81,6 +81,10 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
 
 pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardMaterial3D> {
     let mut material = StandardMaterial3D::new();
+    if Engine::singleton().is_editor_hint() {
+        return material;
+    }
+
     material.set_alpha_scissor_threshold(0_f64);
     material.set_alpha_antialiasing(AlphaAntiAliasing::ALPHA_ANTIALIASING_OFF);
 
