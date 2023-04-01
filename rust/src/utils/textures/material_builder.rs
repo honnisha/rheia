@@ -28,6 +28,7 @@ fn load_image(
     };
 
     let path = format!("res://assets/block/{}", texture);
+    //let image = match try_load::<Image>(&path) {
     let image = match Image::load_from_file(GodotString::from(&path)) {
         Some(t) => t,
         None => {

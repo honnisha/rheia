@@ -10,6 +10,7 @@ pub struct PlayerController {
     base: Base<Node>,
     camera: Option<Gd<Camera3D>>,
     debug_text: Option<Gd<RichTextLabel>>,
+    buffer_position: Vector3,
 }
 
 #[godot_api]
@@ -28,6 +29,7 @@ impl NodeVirtual for PlayerController {
             base,
             camera: None,
             debug_text: None,
+            buffer_position: Vector3::ZERO,
         }
     }
 
@@ -76,7 +78,10 @@ impl NodeVirtual for PlayerController {
             .unwrap()
             .set_text(GodotString::from(text));
 
-        self.base
-            .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
+        if self.buffer_position.distance_to(camera_pos) > 0.1 {
+            self.buffer_position = camera_pos;
+            self.base
+                .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
+        }
     }
 }

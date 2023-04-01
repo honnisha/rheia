@@ -72,4 +72,16 @@ impl NodeVirtual for World {
 
         godot_print!("World loaded;");
     }
+
+    #[allow(unused_variables)]
+    fn process(&mut self, delta: f64) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
+        let input = Input::singleton();
+        if input.is_action_just_pressed("ui_up".into(), false) {
+            self.modify_block(&[20_i32, 20_i32, 20_i32], BlockType::CraftingTable);
+        }
+    }
 }
