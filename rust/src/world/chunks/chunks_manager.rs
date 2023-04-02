@@ -35,7 +35,7 @@ impl ChunksManager {}
 
 impl ChunksManager {
     pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
-        let chunk_pos = Chunk::get_chunk_positions_by_coordinate(pos);
+        let chunk_pos = Chunk::get_chunk_pos_by_global(pos);
         if let Some(mut c) = self.get_chunk(&chunk_pos) {
             c.bind_mut().set_block(pos, block_type);
 
@@ -126,7 +126,7 @@ impl ChunksManager {
         self.base
             .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
         let c = self.base.get_node_as::<Node3D>(&chunk_name);
-        let index = c.get_index(false);
+        let index = c.get_index(true);
         self.chunks_ids.insert(*chunk_position, index.clone());
         index.clone()
     }

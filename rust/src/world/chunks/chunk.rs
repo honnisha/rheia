@@ -59,11 +59,6 @@ impl Chunk {
         self.loaded
     }
 
-    pub fn get_chunk_position(&self) -> [i32; 3] {
-        let p = self.base.get_global_position();
-        Chunk::get_chunk_positions_by_coordinate(&[p.x as i32, p.y as i32, p.z as i32])
-    }
-
     pub fn get_chunk_data(&self) -> &[BlockInfo; 4096] {
         &self.chunk_data
     }
@@ -71,6 +66,11 @@ impl Chunk {
     #[allow(dead_code)]
     pub fn get_block_info(&self, position: [u32; 3]) -> BlockInfo {
         return self.chunk_data[ChunkShape::linearize(position) as usize];
+    }
+
+    pub fn get_chunk_position(&self) -> [i32; 3] {
+        let p = self.base.get_global_position();
+        Chunk::get_chunk_pos_by_global(&[p.x as i32, p.y as i32, p.z as i32])
     }
 
     pub fn get_chunk_position_from_coordinate(position: &[i32; 3]) -> Vector3 {
@@ -81,26 +81,46 @@ impl Chunk {
         )
     }
 
-    pub fn get_chunk_positions_by_coordinate(c: &[i32; 3]) -> [i32; 3] {
-        [c[0] % 16, c[1] % 16, c[2] % 16]
+    /// Return chunk position from global coordinate
+    ///
+    /// &[33_i32, 17_i32, -17_i32]
+    /// returns
+    /// [2_i32, 1_i32, -1_i32]
+    pub fn get_chunk_pos_by_global(p: &[i32; 3]) -> [i32; 3] {
+        [p[0] / 16_i32, p[1] / 16_i32, p[2] / 16_i32]
     }
 
-    fn get_local_from_global(&self, global_pos: &[i32; 3]) -> [u32; 3] {
-        let p = self.get_chunk_position();
+    fn fix_loc_pos(p: i32) -> u32{
+        if p < 0 {
+            return (15_i32 + p) as u32;
+        }
+        return p as u32;
+    }
+    /// Return chunk local position
+    /// by global coordinate
+    ///
+    /// &[33_i32, 18_i32, -18_i32]
+    /// returns
+    /// [1_u32, 2_u32, 13_u32]
+    pub fn get_chunk_local_pos_from_global(p: &[i32; 3]) -> [u32; 3] {
         [
-            (global_pos[0] - (p[0] * 16_i32) as i32) as u32,
-            (global_pos[1] - (p[1] * 16_i32) as i32) as u32,
-            (global_pos[2] - (p[2] * 16_i32) as i32) as u32,
+            Chunk::fix_loc_pos(p[0] % 16_i32),
+            Chunk::fix_loc_pos(p[1] % 16_i32),
+            Chunk::fix_loc_pos(p[2] % 16_i32)
         ]
     }
 
     pub fn set_block(&mut self, global_pos: &[i32; 3], block_type: BlockType) {
-        let local_pos = self.get_local_from_global(global_pos);
+        let local_pos = Chunk::get_chunk_local_pos_from_global(global_pos);
         let i = ChunkShape::linearize(local_pos) as usize;
         self.chunk_data[i] = BlockInfo::new(block_type);
     }
 
-    pub fn update_mesh(&mut self, bordered_chunk_data: &[BlockType; 5832], texture_mapper: &TextureMapper) {
+    pub fn update_mesh(
+        &mut self,
+        bordered_chunk_data: &[BlockType; 5832],
+        texture_mapper: &TextureMapper,
+    ) {
         let mesh = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
 
         let m = self.mesh.as_mut().unwrap().borrow_mut();
@@ -118,4 +138,25 @@ impl Node3DVirtual for Chunk {
     }
 
     fn ready(&mut self) {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Chunk;
+
+    #[test]
+    fn test_get_chunk_pos_by_global() {
+        assert_eq!(
+            Chunk::get_chunk_pos_by_global(&[33_i32, 17_i32, -17_i32]),
+            [2_i32, 1_i32, -1_i32]
+        );
+    }
+
+    #[test]
+    fn test_get_chunk_local_pos_from_global() {
+        assert_eq!(
+            Chunk::get_chunk_local_pos_from_global(&[33_i32, 18_i32, -18_i32]),
+            [1_u32, 2_u32, 13_u32]
+        );
+    }
 }

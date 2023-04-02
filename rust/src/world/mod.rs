@@ -82,6 +82,7 @@ impl NodeVirtual for World {
         let input = Input::singleton();
         if input.is_action_just_pressed("ui_up".into(), false) {
             self.modify_block(&[20_i32, 20_i32, 20_i32], BlockType::CraftingTable);
+            godot_print!("block changed;");
         }
     }
 }
