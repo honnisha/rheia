@@ -39,6 +39,7 @@ script = ExtResource("1_jif2f")
 [node name="DebugText" type="RichTextLabel" parent="PlayerController/Camera"]
 offset_right = 1152.0
 offset_bottom = 648.0
+bbcode_enabled = true
 text = "Camera position: 0.00 15.00 0.00"
 
 [node name="RayCast3D" type="RayCast3D" parent="PlayerController/Camera"]

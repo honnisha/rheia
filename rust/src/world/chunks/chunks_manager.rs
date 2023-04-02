@@ -112,7 +112,7 @@ impl ChunksManager {
         self.world_generator
             .generate_chunk_data(&mut chunk_data, chunk_position);
 
-        let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data));
+        let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data, chunk_position.clone()));
         chunk
             .bind_mut()
             .create_mesh(&chunk_position, &self.material);
@@ -122,6 +122,9 @@ impl ChunksManager {
             chunk_position[0], chunk_position[1], chunk_position[2]
         ));
         chunk.bind_mut().base.set_name(chunk_name.clone());
+
+        let global_pos = Chunk::get_chunk_position_from_coordinate(&chunk_position);
+        chunk.bind_mut().base.set_global_position(global_pos);
 
         self.base
             .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);

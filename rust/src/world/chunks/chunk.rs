@@ -24,18 +24,20 @@ pub struct Chunk {
     chunk_data: [BlockInfo; 4096],
     mesh: Option<Gd<MeshInstance3D>>,
     loaded: bool,
+    position: [i32; 3],
 }
 
 #[godot_api]
 impl Chunk {}
 
 impl Chunk {
-    pub fn create(base: Base<Node3D>, chunk_data: [BlockInfo; 4096]) -> Self {
+    pub fn create(base: Base<Node3D>, chunk_data: [BlockInfo; 4096], position: [i32; 3]) -> Self {
         Chunk {
             base: base,
             chunk_data: chunk_data,
             mesh: None,
             loaded: false,
+            position: position,
         }
     }
 
@@ -45,9 +47,6 @@ impl Chunk {
 
         let new_mat = material.duplicate(true).unwrap().cast::<Material>();
         mesh.set_material_overlay(new_mat);
-
-        let global_pos = Chunk::get_chunk_position_from_coordinate(&chunk_position);
-        mesh.set_global_position(global_pos);
 
         self.base
             .add_child(mesh.upcast(), true, InternalMode::INTERNAL_MODE_BACK);
@@ -69,44 +68,47 @@ impl Chunk {
     }
 
     pub fn get_chunk_position(&self) -> [i32; 3] {
-        let p = self.base.get_global_position();
-        Chunk::get_chunk_pos_by_global(&[p.x as i32, p.y as i32, p.z as i32])
+        self.position
     }
 
+    // Get global position from chunk coordinate
     pub fn get_chunk_position_from_coordinate(position: &[i32; 3]) -> Vector3 {
+        // -1 because of chunk boundaries
         Vector3::new(
-            position[0] as f32 * 16.0,
-            position[1] as f32 * 16.0,
-            position[2] as f32 * 16.0,
+            position[0] as f32 * 16.0 - 1_f32,
+            position[1] as f32 * 16.0 - 1_f32,
+            position[2] as f32 * 16.0 - 1_f32,
         )
     }
 
+    fn fix_chunk_loc_pos(p: i32) -> i32 {
+        if p < 0 {
+            return (p + 1_i32) / 16_i32 + -1_i32;
+        }
+        return p / 16_i32;
+    }
     /// Return chunk position from global coordinate
-    ///
-    /// &[33_i32, 17_i32, -17_i32]
-    /// returns
-    /// [2_i32, 1_i32, -1_i32]
     pub fn get_chunk_pos_by_global(p: &[i32; 3]) -> [i32; 3] {
-        [p[0] / 16_i32, p[1] / 16_i32, p[2] / 16_i32]
+        [
+            Chunk::fix_chunk_loc_pos(p[0]),
+            Chunk::fix_chunk_loc_pos(p[1]),
+            Chunk::fix_chunk_loc_pos(p[2]),
+        ]
     }
 
-    fn fix_loc_pos(p: i32) -> u32{
+    fn fix_loc_pos(p: i32) -> u32 {
         if p < 0 {
-            return (15_i32 + p) as u32;
+            return (15_i32 + ((p + 1_i32) % 16_i32)) as u32;
         }
-        return p as u32;
+        return (p % 16_i32) as u32;
     }
     /// Return chunk local position
     /// by global coordinate
-    ///
-    /// &[33_i32, 18_i32, -18_i32]
-    /// returns
-    /// [1_u32, 2_u32, 13_u32]
     pub fn get_chunk_local_pos_from_global(p: &[i32; 3]) -> [u32; 3] {
         [
-            Chunk::fix_loc_pos(p[0] % 16_i32),
-            Chunk::fix_loc_pos(p[1] % 16_i32),
-            Chunk::fix_loc_pos(p[2] % 16_i32)
+            Chunk::fix_loc_pos(p[0]),
+            Chunk::fix_loc_pos(p[1]),
+            Chunk::fix_loc_pos(p[2]),
         ]
     }
 
@@ -134,7 +136,11 @@ impl Chunk {
 #[godot_api]
 impl Node3DVirtual for Chunk {
     fn init(base: Base<Node3D>) -> Self {
-        Chunk::create(base, [BlockInfo::new(BlockType::Air); 4096])
+        Chunk::create(
+            base,
+            [BlockInfo::new(BlockType::Air); 4096],
+            [0_i32, 0_i32, 0_i32],
+        )
     }
 
     fn ready(&mut self) {}
@@ -147,16 +153,32 @@ mod tests {
     #[test]
     fn test_get_chunk_pos_by_global() {
         assert_eq!(
-            Chunk::get_chunk_pos_by_global(&[33_i32, 17_i32, -17_i32]),
-            [2_i32, 1_i32, -1_i32]
+            Chunk::get_chunk_pos_by_global(&[0_i32, 1_i32, 20_i32]),
+            [0_i32, 0_i32, 1_i32]
+        );
+        assert_eq!(
+            Chunk::get_chunk_pos_by_global(&[-15_i32, -16_i32, -17_i32]),
+            [-1_i32, -1_i32, -2_i32]
+        );
+        assert_eq!(
+            Chunk::get_chunk_pos_by_global(&[33_i32, -1_i32, -20_i32]),
+            [2_i32, -1_i32, -2_i32]
         );
     }
 
     #[test]
     fn test_get_chunk_local_pos_from_global() {
         assert_eq!(
-            Chunk::get_chunk_local_pos_from_global(&[33_i32, 18_i32, -18_i32]),
-            [1_u32, 2_u32, 13_u32]
+            Chunk::get_chunk_local_pos_from_global(&[0_i32, 1_i32, 20_i32]),
+            [0_u32, 1_u32, 4_u32]
+        );
+        assert_eq!(
+            Chunk::get_chunk_local_pos_from_global(&[0_i32, -1_i32, -2_i32]),
+            [0_u32, 15_u32, 14_u32]
+        );
+        assert_eq!(
+            Chunk::get_chunk_local_pos_from_global(&[-15_i32, -16_i32, -17_i32]),
+            [1_u32, 0_u32, 15_u32]
         );
     }
 }
