@@ -9,6 +9,8 @@ use super::block_type_info::BlockTypeInfo;
 #[repr(u16)]
 pub enum BlockType {
     Air,
+    Water,
+    Lava,
     Stone,
     Granite,
     PolishedGranite,
@@ -575,6 +577,8 @@ pub enum BlockType {
 }
 
 const BLOCK_AIR: BlockTypeInfo = BlockTypeInfo::new_empty();
+const BLOCK_WATER: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("water.png");
+const BLOCK_LAVA: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_translucent("lava.png");
 
 const BLOCK_GRASS_BLOCK: BlockTypeInfo = BlockTypeInfo {
     voxel_visibility: VoxelVisibility::Opaque,
@@ -1288,6 +1292,8 @@ const BLOCK_QUARTZ_BRICKS: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("
 pub fn get_block_type_info(block_type: &BlockType) -> Option<&'static BlockTypeInfo> {
     match block_type {
         BlockType::Air => Some(&BLOCK_AIR),
+        BlockType::Water => Some(&BLOCK_WATER),
+        BlockType::Lava => Some(&BLOCK_LAVA),
         BlockType::Stone => Some(&BLOCK_STONE),
         BlockType::Granite => Some(&BLOCK_GRANITE),
         BlockType::PolishedGranite => Some(&BLOCK_POLISHED_GRANITE),

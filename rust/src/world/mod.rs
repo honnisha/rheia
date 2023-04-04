@@ -1,10 +1,12 @@
-use godot::{engine::Engine, prelude::*};
-
 use crate::{
-    controller::player_controller::PlayerController, world::chunks::chunks_manager::ChunksManager,
+    controller::player_controller::PlayerController,
+    utils::schematics::{convert_schem_to_blockinfo, load_schem_data},
+    world::chunks::chunks_manager::ChunksManager,
 };
+use godot::{engine::Engine, prelude::*};
+use std::{collections::HashMap, env};
 
-use self::blocks::blocks_storage::BlockType;
+use self::{blocks::blocks_storage::BlockType, chunks::block_info::BlockInfo};
 
 pub mod blocks;
 pub mod chunks;
@@ -23,16 +25,26 @@ impl World {
     #[func]
     fn handle_camera_move(&mut self, global_position: Vector3) {
         if let Some(manager) = self.chunks_manager.as_mut() {
-            manager.bind_mut().update_camera_position(&mut self.base, global_position);
+            manager
+                .bind_mut()
+                .update_camera_position(&mut self.base, global_position);
         }
     }
 
-    pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
+    pub fn modify_block(&mut self, pos: &[i32; 3], block_info: BlockInfo) {
         self.chunks_manager
             .as_mut()
             .unwrap()
             .bind_mut()
-            .modify_block(pos, block_type);
+            .modify_block(pos, block_info)
+    }
+
+    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], BlockInfo>) -> i32 {
+        self.chunks_manager
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .modify_block_batch(data)
     }
 }
 
@@ -81,15 +93,30 @@ impl NodeVirtual for World {
 
         let input = Input::singleton();
         if input.is_action_just_pressed("ui_up".into(), false) {
-            self.modify_block(&[0_i32, 20_i32, -20_i32], BlockType::CraftingTable);
-            self.modify_block(&[0_i32, 20_i32, -17_i32], BlockType::GrassBlock);
-            self.modify_block(&[0_i32, 20_i32, -16_i32], BlockType::Stone);
-            self.modify_block(&[0_i32, 20_i32, -15_i32], BlockType::Bricks);
-            self.modify_block(&[0_i32, 20_i32, -1_i32], BlockType::CraftingTable);
-            self.modify_block(&[0_i32, 21_i32, 0_i32], BlockType::Andesite);
-            self.modify_block(&[0_i32, 20_i32, 1_i32], BlockType::Stone);
-            self.modify_block(&[0_i32, 20_i32, 5_i32], BlockType::Bedrock);
+            self.modify_block(
+                &[0_i32, 20_i32, -20_i32],
+                BlockInfo::new(BlockType::CraftingTable),
+            );
             godot_print!("block changed;");
+        }
+        if input.is_action_just_pressed("ui_right".into(), false) {
+            let mut path = env::current_dir().unwrap().clone();
+            path.pop();
+            path.push("schematics");
+            path.push("arena.schem");
+            let schem = match load_schem_data(&path) {
+                Ok(e) => e,
+                Err(e) => {
+                    godot_print!("Schem not found: {:?} error: {:?}", path, e);
+                    return;
+                }
+            };
+
+            let modify_data = convert_schem_to_blockinfo(&[0_i32, 80_i32, 0_i32], &schem);
+            let source_len = modify_data.len();
+            let count = self.modify_block_batch(modify_data);
+            println!("Offset {:?}", schem.offset);
+            println!("Schem {:?} pasted; blocks size: {}; modified blocks: {}", path, source_len, count);
         }
     }
 }

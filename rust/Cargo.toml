@@ -34,3 +34,5 @@ flate2 = "1.0"
 fastnbt = "2"
 
 image = "0.24.5"
+
+regex = "1.7.3"

@@ -1,6 +1,6 @@
 use crate::world::blocks::{block_type_info::BlockTypeInfo, blocks_storage::BlockType};
 
-#[derive(Copy)]
+#[derive(Debug, Copy)]
 pub struct BlockInfo {
     block_type: BlockType,
 }
@@ -26,5 +26,11 @@ impl Clone for BlockInfo {
         BlockInfo {
             block_type: self.block_type,
         }
+    }
+}
+
+impl PartialEq for BlockInfo {
+    fn eq(&self, other: &BlockInfo) -> bool {
+        self.block_type == other.block_type
     }
 }

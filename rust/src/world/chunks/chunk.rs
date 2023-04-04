@@ -1,7 +1,7 @@
 use std::borrow::BorrowMut;
 
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D, StandardMaterial3D},
+    engine::{node::InternalMode, Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -28,7 +28,20 @@ pub struct Chunk {
 }
 
 #[godot_api]
-impl Chunk {}
+impl Chunk {
+
+    pub fn create_mesh(&mut self, material: &Gd<Material>) {
+        let mut mesh = MeshInstance3D::new_alloc();
+        mesh.set_name(GodotString::from("ChunkMesh"));
+
+        mesh.set_material_overlay(material.share());
+
+        self.base
+            .add_child(mesh.upcast(), true, InternalMode::INTERNAL_MODE_BACK);
+        let m = self.base.get_node_as::<MeshInstance3D>("ChunkMesh");
+        self.mesh = Some(m);
+    }
+}
 
 impl Chunk {
     pub fn create(base: Base<Node3D>, chunk_data: [BlockInfo; 4096], position: [i32; 3]) -> Self {
@@ -39,19 +52,6 @@ impl Chunk {
             loaded: false,
             position: position,
         }
-    }
-
-    pub fn create_mesh(&mut self, chunk_position: &[i32; 3], material: &Gd<StandardMaterial3D>) {
-        let mut mesh = MeshInstance3D::new_alloc();
-        mesh.set_name(GodotString::from("ChunkMesh"));
-
-        let new_mat = material.duplicate(true).unwrap().cast::<Material>();
-        mesh.set_material_overlay(new_mat);
-
-        self.base
-            .add_child(mesh.upcast(), true, InternalMode::INTERNAL_MODE_BACK);
-        let m = self.base.get_node_as::<MeshInstance3D>("ChunkMesh");
-        self.mesh = Some(m);
     }
 
     pub fn is_loaded(&self) -> bool {
@@ -112,10 +112,10 @@ impl Chunk {
         ]
     }
 
-    pub fn set_block(&mut self, global_pos: &[i32; 3], block_type: BlockType) {
+    pub fn set_block(&mut self, global_pos: &[i32; 3], block_info: BlockInfo) {
         let local_pos = Chunk::get_chunk_local_pos_from_global(global_pos);
         let i = ChunkShape::linearize(local_pos) as usize;
-        self.chunk_data[i] = BlockInfo::new(block_type);
+        self.chunk_data[i] = block_info;
     }
 
     pub fn update_mesh(
@@ -128,6 +128,7 @@ impl Chunk {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
         m.set_mesh(mesh.upcast());
         m.create_trimesh_collision();
+        //m.create_convex_collision(false, false);
 
         self.loaded = true;
     }

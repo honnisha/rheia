@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, StandardMaterial3D},
+    engine::{node::InternalMode, Material},
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -27,20 +27,45 @@ pub struct ChunksManager {
     world_generator: WorldGenerator,
 
     texture_mapper: TextureMapper,
-    material: Gd<StandardMaterial3D>,
+    material: Gd<Material>,
 }
 
 #[godot_api]
 impl ChunksManager {}
 
 impl ChunksManager {
-    pub fn modify_block(&mut self, pos: &[i32; 3], block_type: BlockType) {
+    pub fn modify_block(&mut self, pos: &[i32; 3], block_info: BlockInfo) {
         let chunk_pos = Chunk::get_chunk_pos_by_global(pos);
         if let Some(mut c) = self.get_chunk(&chunk_pos) {
-            c.bind_mut().set_block(pos, block_type);
+            c.bind_mut().set_block(pos, block_info);
 
             self.update_chunk_mesh(&mut c);
         }
+    }
+
+    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], BlockInfo>) -> i32 {
+        let mut updated_chunks: HashSet<i64> = HashSet::new();
+        let mut count: i32 = 0;
+
+        for (pos, block_info) in data {
+            let chunk_pos = Chunk::get_chunk_pos_by_global(&pos);
+            //println!("pos:{:?} block_info:{:?}", pos, block_info);
+
+            if let Some(mut c) = self.get_chunk(&chunk_pos) {
+                c.bind_mut().set_block(&pos, block_info);
+                updated_chunks.insert(c.bind().get_index(true));
+                count += 1;
+            } else {
+                //println!("modify_block_batch: Chunk {:?} not found", chunk_pos);
+            }
+        }
+
+        for updated_chunk in updated_chunks {
+            let mut c = self.get_chunk_by_index(updated_chunk).unwrap();
+            self.update_chunk_mesh(&mut c);
+            //println!("update chunk mesh:{:?}", c);
+        }
+        count
     }
 
     fn update_chunk_mesh(&mut self, chunk: &mut Gd<Chunk>) {
@@ -59,7 +84,7 @@ impl ChunksManager {
 
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let chunks_distance = 3;
+        let chunks_distance = 12;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
         let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
@@ -69,7 +94,7 @@ impl ChunksManager {
         for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
                 if (Vector2::new(x as real, z as real) - p2).length() < chunks_distance as f32 {
-                    for y in 0_i32..2_i32 {
+                    for y in 0_i32..16_i32 {
                         let chunk_position = &[x, y, z];
                         if !self.is_chunk_loaded(chunk_position) {
                             self.spawn_chunk(chunk_position);
@@ -112,10 +137,8 @@ impl ChunksManager {
         self.world_generator
             .generate_chunk_data(&mut chunk_data, chunk_position);
 
-        let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data, chunk_position.clone()));
-        chunk
-            .bind_mut()
-            .create_mesh(&chunk_position, &self.material);
+        let mut chunk =
+            Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data, chunk_position.clone()));
 
         let chunk_name = GodotString::from(format!(
             "chunk_{}_{}_{}",
@@ -124,13 +147,16 @@ impl ChunksManager {
         chunk.bind_mut().base.set_name(chunk_name.clone());
 
         let global_pos = Chunk::get_chunk_position_from_coordinate(&chunk_position);
-        chunk.bind_mut().base.set_global_position(global_pos);
 
         self.base
             .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
-        let c = self.base.get_node_as::<Node3D>(&chunk_name);
+
+        let mut c = self.base.get_node_as::<Node3D>(&chunk_name);
         let index = c.get_index(true);
         self.chunks_ids.insert(*chunk_position, index.clone());
+
+        c.set_global_position(global_pos);
+        c.cast::<Chunk>().bind_mut().create_mesh(&self.material);
         index.clone()
     }
 
@@ -241,11 +267,12 @@ impl NodeVirtual for ChunksManager {
         let seed = rng.next_u64();
         let mut texture_mapper = TextureMapper::new();
 
+        let texture = build_blocks_material(&mut texture_mapper);
         ChunksManager {
             base,
             chunks_ids: HashMap::new(),
             world_generator: WorldGenerator::new(seed),
-            material: build_blocks_material(&mut texture_mapper),
+            material: texture.duplicate(true).unwrap().cast::<Material>(),
             texture_mapper: texture_mapper,
         }
     }
