@@ -24,9 +24,9 @@ pub struct BlockEntity {
 pub struct SchemData {
     version: u32,
     data_version: u32,
-    width: u32,
-    height: u32,
-    length: u32,
+    pub width: u32,
+    pub height: u32,
+    pub length: u32,
     pub offset: Option<IntArray>,
     palette: HashMap<String, Value>,
     block_entities: Vec<BlockEntity>,
@@ -130,19 +130,16 @@ pub fn convert_schem_to_blockinfo(
         let z = (index % (schem.width * schem.length)) / schem.width;
         let x = (index % (schem.width * schem.length)) % schem.width;
 
-        match palette_map.get(&(value as i64)) {
-            Some(e) => {
-                result.insert(
-                    [
-                        anchor[0] + (x as i32 + offset.0),
-                        anchor[1] + (y as i32 + offset.1),
-                        anchor[2] + (z as i32 + offset.2),
-                    ],
-                    e.clone(),
-                );
-            },
-            _ => { continue; }
-        };
+        if let Some(e) = palette_map.get(&(value as i64)) {
+            result.insert(
+                [
+                    anchor[0] + (x as i32 + offset.0),
+                    anchor[1] + (y as i32 + offset.1),
+                    anchor[2] + (z as i32 + offset.2),
+                ],
+                e.clone(),
+            );
+        }
         index += 1;
     }
     result

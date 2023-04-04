@@ -127,7 +127,7 @@ impl Chunk {
 
         let m = self.mesh.as_mut().unwrap().borrow_mut();
         m.set_mesh(mesh.upcast());
-        m.create_trimesh_collision();
+        //m.create_trimesh_collision();
         //m.create_convex_collision(false, false);
 
         self.loaded = true;

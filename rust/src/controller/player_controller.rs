@@ -41,7 +41,7 @@ impl NodeVirtual for PlayerController {
                 self.camera = Some(c);
 
                 let camera = self.camera.as_deref_mut().unwrap();
-                camera.set_position(Vector3::new(0.0, 15.0, 0.0));
+                camera.set_position(Vector3::new(0.0, 40.0, 0.0));
             }
             None => {
                 godot_error!("Camera element not found for PlayerController");

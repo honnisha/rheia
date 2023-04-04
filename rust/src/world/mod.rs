@@ -115,7 +115,7 @@ impl NodeVirtual for World {
             let modify_data = convert_schem_to_blockinfo(&[0_i32, 80_i32, 0_i32], &schem);
             let source_len = modify_data.len();
             let count = self.modify_block_batch(modify_data);
-            println!("Offset {:?}", schem.offset);
+            println!("Offset {:?} width:{:?} height:{:?} length:{:?}", schem.offset, schem.width, schem.height, schem.length);
             println!("Schem {:?} pasted; blocks size: {}; modified blocks: {}", path, source_len, count);
         }
     }
