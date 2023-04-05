@@ -93,10 +93,7 @@ impl NodeVirtual for World {
 
         let input = Input::singleton();
         if input.is_action_just_pressed("ui_up".into(), false) {
-            self.modify_block(
-                &[0_i32, 20_i32, -20_i32],
-                BlockInfo::new(BlockType::CraftingTable),
-            );
+            self.modify_block(&[0_i32, 20_i32, -20_i32], BlockInfo::new(BlockType::CraftingTable));
             godot_print!("block changed;");
         }
         if input.is_action_just_pressed("ui_right".into(), false) {
@@ -112,11 +109,17 @@ impl NodeVirtual for World {
                 }
             };
 
-            let modify_data = convert_schem_to_blockinfo(&[0_i32, 80_i32, 0_i32], &schem);
+            let modify_data = convert_schem_to_blockinfo(&[0_i32, 40_i32, 0_i32], &schem);
             let source_len = modify_data.len();
             let count = self.modify_block_batch(modify_data);
-            println!("Offset {:?} width:{:?} height:{:?} length:{:?}", schem.offset, schem.width, schem.height, schem.length);
-            println!("Schem {:?} pasted; blocks size: {}; modified blocks: {}", path, source_len, count);
+            println!(
+                "Offset {:?} width:{:?} height:{:?} length:{:?}",
+                schem.get_local_offset(), schem.width, schem.height, schem.length
+            );
+            println!(
+                "Schem {:?} pasted; blocks size: {}; modified blocks: {}",
+                path, source_len, count
+            );
         }
     }
 }

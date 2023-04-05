@@ -1,11 +1,11 @@
-use std::collections::{HashMap, HashSet};
-
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
     engine::{node::InternalMode, Material},
     prelude::*,
 };
 use ndshape::ConstShape;
+use std::collections::{HashMap, HashSet};
+use std::time::Instant;
 
 use crate::{
     utils::mesh::block_mesh::VoxelVisibility,
@@ -44,6 +44,10 @@ impl ChunksManager {
     }
 
     pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], BlockInfo>) -> i32 {
+        let now = Instant::now();
+        let blocks_now = Instant::now();
+
+        println!("modify_block_batch: Start to update {} blocks", data.len());
         let mut updated_chunks: HashSet<i64> = HashSet::new();
         let mut count: i32 = 0;
 
@@ -60,11 +64,15 @@ impl ChunksManager {
             }
         }
 
+        println!("modify_block_batch: complete in {:.2?}; Start to update {} chunks", blocks_now.elapsed(), updated_chunks.len());
+        let chunks_now = Instant::now();
+
         for updated_chunk in updated_chunks {
             let mut c = self.get_chunk_by_index(updated_chunk).unwrap();
             self.update_chunk_mesh(&mut c);
             //println!("update chunk mesh:{:?}", c);
         }
+        println!("modify_block_batch: complete in {:.2?}; Total update complete in {:.2?}", chunks_now.elapsed(), now.elapsed());
         count
     }
 
@@ -74,12 +82,9 @@ impl ChunksManager {
             let chunk_ref = chunk.bind();
             let chunk_data = chunk_ref.get_chunk_data();
             let chunk_position = chunk_ref.get_chunk_position();
-            bordered_chunk_data =
-                self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position);
+            bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position);
         }
-        chunk
-            .bind_mut()
-            .update_mesh(&bordered_chunk_data, &self.texture_mapper);
+        chunk.bind_mut().update_mesh(&bordered_chunk_data, &self.texture_mapper);
     }
 
     #[allow(unused_variables)]
@@ -137,8 +142,7 @@ impl ChunksManager {
         self.world_generator
             .generate_chunk_data(&mut chunk_data, chunk_position);
 
-        let mut chunk =
-            Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data, chunk_position.clone()));
+        let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base, chunk_data, chunk_position.clone()));
 
         let chunk_name = GodotString::from(format!(
             "chunk_{}_{}_{}",
@@ -231,11 +235,10 @@ impl ChunksManager {
                             //    pos_inside,
                             //    pos_outside
                             //);
-                            b_chunk[pos_i as usize] =
-                                border_chunk.as_ref().unwrap().bind().get_chunk_data()
-                                    [pos_o as usize]
-                                    .get_block_type()
-                                    .clone();
+                            b_chunk[pos_i as usize] = border_chunk.as_ref().unwrap().bind().get_chunk_data()
+                                [pos_o as usize]
+                                .get_block_type()
+                                .clone();
                         }
                     }
                 }

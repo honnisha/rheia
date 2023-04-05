@@ -12,6 +12,19 @@ use crate::world::{
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+#[allow(non_snake_case)]
+pub struct Metadata {
+    name: Option<String>,
+    author: Option<String>,
+    WEOffsetX: Option<i32>,
+    WEOffsetY: Option<i32>,
+    WEOffsetZ: Option<i32>,
+    #[serde(flatten)]
+    other: HashMap<String, Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct BlockEntity {
     pos: IntArray,
     id: String,
@@ -31,6 +44,7 @@ pub struct SchemData {
     palette: HashMap<String, Value>,
     block_entities: Vec<BlockEntity>,
     block_data: ByteArray,
+    metadata: Option<Metadata>,
 }
 
 impl SchemData {
@@ -56,6 +70,19 @@ impl SchemData {
             result.insert(p.1.as_i64().unwrap(), BlockInfo::new(block_type));
         }
         result
+    }
+
+    pub fn get_local_offset(&self) -> (i32, i32, i32) {
+        match self.metadata.as_ref() {
+            Some(m) => {
+                (
+                    match m.WEOffsetX { Some(e) => e, _ => 0_i32},
+                    match m.WEOffsetY { Some(e) => e, _ => 0_i32},
+                    match m.WEOffsetZ { Some(e) => e, _ => 0_i32},
+                )
+            },
+            _ => (0_i32, 0_i32, 0_i32)
+        }
     }
 }
 
@@ -98,10 +125,7 @@ pub fn convert_schem_to_blockinfo(
 
     let mut result = HashMap::new();
 
-    let offset = match &schem.offset {
-        Some(e) => (e[0], e[1], e[2]),
-        _ => (0_i32, 0_i32, 0_i32),
-    };
+    let offset = schem.get_local_offset();
 
     let mut index = 0_u32;
     let mut i = 0;

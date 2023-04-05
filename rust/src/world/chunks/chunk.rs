@@ -29,7 +29,6 @@ pub struct Chunk {
 
 #[godot_api]
 impl Chunk {
-
     pub fn create_mesh(&mut self, material: &Gd<Material>) {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
@@ -118,11 +117,7 @@ impl Chunk {
         self.chunk_data[i] = block_info;
     }
 
-    pub fn update_mesh(
-        &mut self,
-        bordered_chunk_data: &[BlockType; 5832],
-        texture_mapper: &TextureMapper,
-    ) {
+    pub fn update_mesh(&mut self, bordered_chunk_data: &[BlockType; 5832], texture_mapper: &TextureMapper) {
         let mesh = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
 
         let m = self.mesh.as_mut().unwrap().borrow_mut();
@@ -137,11 +132,7 @@ impl Chunk {
 #[godot_api]
 impl Node3DVirtual for Chunk {
     fn init(base: Base<Node3D>) -> Self {
-        Chunk::create(
-            base,
-            [BlockInfo::new(BlockType::Air); 4096],
-            [0_i32, 0_i32, 0_i32],
-        )
+        Chunk::create(base, [BlockInfo::new(BlockType::Air); 4096], [0_i32, 0_i32, 0_i32])
     }
 
     fn ready(&mut self) {}
