@@ -35,3 +35,5 @@ ui_toggle_console={
 [rendering]
 
 renderer/rendering_method.mobile="gl_compatibility"
+driver/threads/thread_model=2
+anti_aliasing/quality/use_taa=true

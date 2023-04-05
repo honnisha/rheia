@@ -220,6 +220,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
+name = "bytes"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89b2fd2a0dcf38d7971e2194b6b6eebab45ae01067456a7fd93d5547a61b70be"
+
+[[package]]
 name = "calloop"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -896,7 +902,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -905,7 +911,7 @@ dependencies = [
 [[package]]
 name = "godot-bindings"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "godot4-prebuilt",
 ]
@@ -913,7 +919,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "godot-bindings",
  "heck",
@@ -925,7 +931,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "glam 0.22.0",
  "godot-codegen",
@@ -935,7 +941,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -945,7 +951,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e0d45a36fb18e2ee9041277a61b096f762baa0ce"
+source = "git+https://github.com/godot-rust/gdext?branch=master#04c2323c754e103f0cede36c9aa685a753bcb2c0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -999,9 +1005,11 @@ dependencies = [
  "godot",
  "ilattice",
  "image",
+ "lazy_static",
  "ndcopy",
  "ndshape",
  "rand",
+ "rayon",
  "regex",
  "rhai",
  "serde",
@@ -1919,6 +1927,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8229b473baa5980ac72ef434c4415e70c4b5e71b423043adb4ba059f89c99a1"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "simd-adler32"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1995,6 +2012,16 @@ dependencies = [
  "wayland-client",
  "wayland-cursor",
  "wayland-protocols",
+]
+
+[[package]]
+name = "socket2"
+version = "0.4.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64a4a911eed85daf18834cfaa86a79b7d266ff93ff5ba14005426219480ed662"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]
@@ -2131,7 +2158,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0de47a4eecbe11f498978a9b29d792f0d2692d1dd003650c24c76510e3bc001"
 dependencies = [
  "autocfg",
+ "bytes",
+ "libc",
+ "mio",
+ "num_cpus",
+ "parking_lot 0.12.1",
  "pin-project-lite",
+ "signal-hook-registry",
+ "socket2",
+ "tokio-macros",
  "windows-sys 0.45.0",
 ]
 
@@ -2143,6 +2178,17 @@ checksum = "fb2d1b8f4548dbf5e1f7818512e9c406860678f29c300cdf0ebac72d1a3a1671"
 dependencies = [
  "crossbeam-utils 0.7.2",
  "futures",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61a573bdc87985e9d6ddeed1b3d864e8a302c847e40d647746df2f1de209d1ce"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.13",
 ]
 
 [[package]]

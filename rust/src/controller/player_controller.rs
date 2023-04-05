@@ -72,7 +72,8 @@ impl NodeVirtual for PlayerController {
 
         let camera_pos = camera.get_global_position();
         let text = format!(
-            "Camera position: [b]{:.2} {:.2} {:.2}[/b]\nChunk postition: [b]{:?}[/b]",
+            "FPS: {:.0}\nCamera position: [b]{:.2} {:.2} {:.2}[/b]\nChunk postition: [b]{:?}[/b]",
+            Engine::singleton().get_frames_per_second(),
             camera_pos.x, camera_pos.y, camera_pos.z,
             Chunk::get_chunk_pos_by_global(
                 &[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32]

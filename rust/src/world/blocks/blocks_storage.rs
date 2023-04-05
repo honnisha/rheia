@@ -286,7 +286,7 @@ pub enum BlockType {
     AcaciaStairs,
     DarkOakStairs,
     SlimeBlock,
-    Barrier,
+    //Barrier,
     IronTrapdoor,
     Prismarine,
     PrismarineBricks,
@@ -718,13 +718,6 @@ const BLOCK_DROPPER: BlockTypeInfo = BlockTypeInfo {
     top_texture: Some("dropper_front_vertical.png"),
     side_texture: Some("dropper_front.png"),
     bottom_texture: Some("stone.png"),
-};
-
-const BLOCK_BARRIER: BlockTypeInfo = BlockTypeInfo {
-    voxel_visibility: VoxelVisibility::Translucent,
-    top_texture: None,
-    side_texture: None,
-    bottom_texture: None,
 };
 
 const BLOCK_COMMAND_BLOCK: BlockTypeInfo = BlockTypeInfo::new_opaque_mono_side("bedrock.png");
@@ -1569,7 +1562,7 @@ pub fn get_block_type_info(block_type: &BlockType) -> Option<&'static BlockTypeI
         BlockType::AcaciaStairs => Some(&BLOCK_ACACIA_STAIRS),
         BlockType::DarkOakStairs => Some(&BLOCK_DARK_OAK_STAIRS),
         BlockType::SlimeBlock => Some(&BLOCK_SLIME_BLOCK),
-        BlockType::Barrier => Some(&BLOCK_BARRIER),
+        // BlockType::Barrier => Some(&BLOCK_BARRIER),
         BlockType::IronTrapdoor => Some(&BLOCK_IRON_TRAPDOOR),
         BlockType::Prismarine => Some(&BLOCK_PRISMARINE),
         BlockType::PrismarineBricks => Some(&BLOCK_PRISMARINE_BRICKS),

@@ -381,7 +381,7 @@ pub fn block_type_from_minecraft_name(name: &str) -> Option<BlockType> {
         "acacia_stairs" => Some(BlockType::AcaciaStairs),
         "dark_oak_stairs" => Some(BlockType::DarkOakStairs),
         "slime_block" => Some(BlockType::SlimeBlock),
-        "barrier" => Some(BlockType::Barrier),
+        // "barrier" => Some(BlockType::Barrier),
         "iron_trapdoor" => Some(BlockType::IronTrapdoor),
         "prismarine" => Some(BlockType::Prismarine),
         "prismarine_bricks" => Some(BlockType::PrismarineBricks),
