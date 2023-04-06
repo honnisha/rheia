@@ -37,6 +37,7 @@ impl NodeVirtual for Main {
     }
 
     fn ready(&mut self) {
+        godot_print!("Start loading main scene;");
         if Engine::singleton().is_editor_hint() {
             return;
         }

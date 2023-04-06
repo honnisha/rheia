@@ -94,6 +94,7 @@ impl NodeVirtual for Console {
         }
     }
     fn ready(&mut self) {
+        godot_print!("Start loading console;");
         match self.base.try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText") {
             Some(e) => self.console_text = Some(e),
             _ => {

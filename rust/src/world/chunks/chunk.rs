@@ -111,6 +111,10 @@ impl Chunk {
         ]
     }
 
+    pub fn set_block_by_local_pos(&mut self, pos: u32, block_info: BlockInfo) {
+        self.chunk_data[pos as usize] = block_info;
+    }
+
     pub fn set_block(&mut self, global_pos: &[i32; 3], block_info: BlockInfo) {
         let local_pos = Chunk::get_chunk_local_pos_from_global(global_pos);
         let i = ChunkShape::linearize(local_pos) as usize;

@@ -1,12 +1,17 @@
 use fastnbt::{ByteArray, IntArray, Value};
 use flate2::read::GzDecoder;
+use ndshape::ConstShape;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::time::Instant;
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
 use crate::world::{
-    blocks::minecraft_types::block_type_from_minecraft_name, chunks::block_info::BlockInfo,
+    blocks::minecraft_types::block_type_from_minecraft_name,
+    chunks::{block_info::BlockInfo, chunk::Chunk},
 };
+
+use super::mesh::mesh_generator::ChunkShape;
 
 // https://github.com/SpongePowered/Schematic-Specification
 
@@ -74,19 +79,27 @@ impl SchemData {
 
     pub fn get_local_offset(&self) -> (i32, i32, i32) {
         match self.metadata.as_ref() {
-            Some(m) => {
-                (
-                    match m.WEOffsetX { Some(e) => e, _ => 0_i32},
-                    match m.WEOffsetY { Some(e) => e, _ => 0_i32},
-                    match m.WEOffsetZ { Some(e) => e, _ => 0_i32},
-                )
-            },
-            _ => (0_i32, 0_i32, 0_i32)
+            Some(m) => (
+                match m.WEOffsetX {
+                    Some(e) => e,
+                    _ => 0_i32,
+                },
+                match m.WEOffsetY {
+                    Some(e) => e,
+                    _ => 0_i32,
+                },
+                match m.WEOffsetZ {
+                    Some(e) => e,
+                    _ => 0_i32,
+                },
+            ),
+            _ => (0_i32, 0_i32, 0_i32),
         }
     }
 }
 
 pub fn load_schem_data(path: &PathBuf) -> Result<SchemData, String> {
+    let now = Instant::now();
     let filename = path.clone().into_os_string().into_string().unwrap();
     let file = match std::fs::File::open(path) {
         Ok(f) => f,
@@ -101,10 +114,11 @@ pub fn load_schem_data(path: &PathBuf) -> Result<SchemData, String> {
     };
 
     match fastnbt::from_bytes(&bytes) {
-        Ok(d) => Ok(d),
-        Err(e) => {
-            return Err(format!("fastnbt::from_bytes file error \"{}\": {}", filename, e).into())
+        Ok(d) => {
+            println!("Schem {:?} loaded in {:.2?}", path, now.elapsed());
+            Ok(d)
         }
+        Err(e) => return Err(format!("fastnbt::from_bytes file error \"{}\": {}", filename, e).into()),
     }
 }
 
@@ -117,10 +131,8 @@ pub fn parse_block_id(block_id: &String) -> Option<&str> {
     }
 }
 
-pub fn convert_schem_to_blockinfo(
-    anchor: &[i32; 3],
-    schem: &SchemData,
-) -> HashMap<[i32; 3], BlockInfo> {
+pub fn convert_schem_to_blockinfo(anchor: &[i32; 3], schem: &SchemData) -> HashMap<[i32; 3], HashMap<u32, BlockInfo>> {
+    let now = Instant::now();
     let palette_map = schem.remap_palette();
 
     let mut result = HashMap::new();
@@ -133,7 +145,6 @@ pub fn convert_schem_to_blockinfo(
     let mut varint_length;
 
     while i < schem.block_data.len() {
-
         value = 0_i64;
         varint_length = 0_i64;
 
@@ -150,22 +161,27 @@ pub fn convert_schem_to_blockinfo(
             i += 1;
         }
         // index = (y * length + z) * width + x
-        let y = index / (schem.width * schem.length);
-        let z = (index % (schem.width * schem.length)) / schem.width;
-        let x = (index % (schem.width * schem.length)) % schem.width;
+        let _y = index / (schem.width * schem.length);
+        let _z = (index % (schem.width * schem.length)) / schem.width;
+        let _x = (index % (schem.width * schem.length)) % schem.width;
+
+        let x = anchor[0] + (_x as i32 + offset.0);
+        let y = anchor[1] + (_y as i32 + offset.1);
+        let z = anchor[2] + (_z as i32 + offset.2);
 
         if let Some(e) = palette_map.get(&(value as i64)) {
-            result.insert(
-                [
-                    anchor[0] + (x as i32 + offset.0),
-                    anchor[1] + (y as i32 + offset.1),
-                    anchor[2] + (z as i32 + offset.2),
-                ],
-                e.clone(),
-            );
+            let global_pos = [x, y, z];
+            let chunk_pos = Chunk::get_chunk_pos_by_global(&global_pos);
+            let chunk = result.entry(chunk_pos).or_insert(HashMap::new());
+
+            let local_pos = Chunk::get_chunk_local_pos_from_global(&global_pos);
+            let i = ChunkShape::linearize(local_pos);
+
+            chunk.insert(i, e.clone());
         }
         index += 1;
     }
+    println!("convert_schem_to_blockinfo: completed in {:.2?}", now.elapsed());
     result
 }
 
@@ -176,7 +192,7 @@ mod tests {
     use fastnbt::Value;
 
     use crate::world::blocks::blocks_storage::BlockType;
-    use crate::{world::chunks::block_info::BlockInfo};
+    use crate::world::chunks::block_info::BlockInfo;
 
     use super::{convert_schem_to_blockinfo, load_schem_data};
 
@@ -187,12 +203,7 @@ mod tests {
         path.push("large.schem");
 
         let schem_data_result = load_schem_data(&path);
-        assert_eq!(
-            schem_data_result.is_ok(),
-            true,
-            "error: {:?}",
-            schem_data_result.err()
-        );
+        assert_eq!(schem_data_result.is_ok(), true, "error: {:?}", schem_data_result.err());
 
         let schem_data = schem_data_result.unwrap();
         let palette_map = schem_data.remap_palette();

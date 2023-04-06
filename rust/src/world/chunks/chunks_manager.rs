@@ -1,18 +1,24 @@
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material, ArrayMesh},
+    engine::{node::InternalMode, Material},
     prelude::*,
 };
-use lazy_static::__Deref;
-use send_wrapper::SendWrapper;
 use ndshape::ConstShape;
-use std::{collections::{HashMap, HashSet}, sync::mpsc::{self, Sender, Receiver}, ops::DerefMut};
+use send_wrapper::SendWrapper;
 use std::time::Instant;
+use std::{
+    collections::HashMap,
+    ops::DerefMut,
+    sync::mpsc::{self, Receiver, Sender},
+};
 
 use crate::{
     utils::mesh::block_mesh::VoxelVisibility,
     utils::mesh::mesh_generator::{ChunkBordersShape, ChunkShape},
-    utils::{textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper}, mesh::mesh_generator::{generate_chunk_geometry, Geometry}},
+    utils::{
+        mesh::mesh_generator::{generate_chunk_geometry, Geometry},
+        textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
+    },
     world::blocks::blocks_storage::BlockType,
     world::world_generator::WorldGenerator,
 };
@@ -39,68 +45,10 @@ pub struct ChunksManager {
 impl ChunksManager {}
 
 impl ChunksManager {
-    pub fn modify_block(&mut self, pos: &[i32; 3], block_info: BlockInfo) {
-        let chunk_pos = Chunk::get_chunk_pos_by_global(pos);
-        if let Some(mut c) = self.get_chunk(&chunk_pos) {
-            c.bind_mut().set_block(pos, block_info);
-
-            self.update_chunk_mesh(&mut c);
-        }
-    }
-
-    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], BlockInfo>) -> i32 {
-        let now = Instant::now();
-        let blocks_now = Instant::now();
-
-        println!("modify_block_batch: Start to update {} blocks", data.len());
-        let mut updated_chunks: HashSet<i64> = HashSet::new();
-        let mut count: i32 = 0;
-
-        for (pos, block_info) in data {
-            let chunk_pos = Chunk::get_chunk_pos_by_global(&pos);
-            //println!("pos:{:?} block_info:{:?}", pos, block_info);
-
-            if let Some(mut c) = self.get_chunk(&chunk_pos) {
-                c.bind_mut().set_block(&pos, block_info);
-                updated_chunks.insert(c.bind().get_index(true));
-                count += 1;
-            } else {
-                //println!("modify_block_batch: Chunk {:?} not found", chunk_pos);
-            }
-        }
-
-        println!("modify_block_batch: complete in {:.2?}; Start to update {} chunks", blocks_now.elapsed(), updated_chunks.len());
-        let chunks_now = Instant::now();
-
-        for updated_chunk in updated_chunks {
-            let mut c = self.get_chunk_by_index(updated_chunk).unwrap();
-            self.update_chunk_mesh(&mut c);
-            //println!("update chunk mesh:{:?}", c);
-        }
-        println!("modify_block_batch: complete in {:.2?}; Total update complete in {:.2?}", chunks_now.elapsed(), now.elapsed());
-        count
-    }
-
-    fn update_chunk_mesh(&mut self, chunk: &mut Gd<Chunk>) {
-        let bordered_chunk_data: [BlockType; 5832];
-        {
-            let chunk_ref = chunk.bind();
-            let chunk_data = chunk_ref.get_chunk_data();
-            let chunk_position = chunk_ref.get_chunk_position();
-            bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position);
-        }
-        let tx = self.tx.clone();
-        //let chunk_position = chunk.bind().get_chunk_position().clone();
-        let wrapped_chunk = SendWrapper::new(chunk.share());
-        let texture_mapper = self.texture_mapper.clone();
-        rayon::spawn(move || {
-            let new_geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
-            tx.send((wrapped_chunk, new_geometry)).unwrap();
-        });
-    }
-
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
+        let now = Instant::now();
+        let mut count: i32 = 0;
         let chunks_distance = 12;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
@@ -115,11 +63,77 @@ impl ChunksManager {
                         let chunk_position = &[x, y, z];
                         if !self.is_chunk_loaded(chunk_position) {
                             self.spawn_chunk(chunk_position);
+                            count += 1;
                         }
                     }
                 }
             }
         }
+        if count > 0 {
+            println!(
+                "update_camera_position complete {:.2?}; chunks: {}",
+                now.elapsed(),
+                count
+            );
+        }
+    }
+
+    pub fn modify_block(&mut self, pos: &[i32; 3], block_info: BlockInfo) {
+        let chunk_pos = Chunk::get_chunk_pos_by_global(pos);
+        if let Some(mut c) = self.get_chunk(&chunk_pos) {
+            c.bind_mut().set_block(pos, block_info);
+
+            self.update_chunk_mesh(&mut c);
+        }
+    }
+
+    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) -> i32 {
+        let now = Instant::now();
+        println!("modify_block_batch: Start to update {} blocks", data.len());
+
+        let mut updated_chunks: Vec<i64> = Vec::new();
+        let mut count: i32 = 0;
+
+        for (chunk_pos, chunk_data) in data {
+            if let Some(mut c) = self.get_chunk(&chunk_pos) {
+                for (block_local_pos, block_info) in chunk_data {
+                    c.bind_mut().set_block_by_local_pos(block_local_pos, block_info);
+                    count += 1;
+                }
+                updated_chunks.push(c.bind().get_index(true));
+            } else {
+                //println!("modify_block_batch: Chunk {:?} not found", chunk_pos);
+            }
+        }
+
+        for updated_chunk in updated_chunks {
+            let mut c = self.get_chunk_by_index(updated_chunk).unwrap();
+            self.update_chunk_mesh(&mut c);
+            //println!("update chunk mesh:{:?}", c);
+        }
+        println!("modify_block_batch: Update complete in {:.2?}", now.elapsed());
+        count
+    }
+
+    fn update_chunk_mesh(&mut self, chunk: &mut Gd<Chunk>) {
+        let bordered_chunk_data: [BlockType; 5832];
+        {
+            let chunk_ref = chunk.bind();
+            let chunk_data = chunk_ref.get_chunk_data();
+            let chunk_position = chunk_ref.get_chunk_position();
+            bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position);
+        }
+
+        // Copy transmitter
+        let tx = self.tx.clone();
+
+        //let chunk_position = chunk.bind().get_chunk_position().clone();
+        let wrapped_chunk = SendWrapper::new(chunk.share());
+        let texture_mapper = self.texture_mapper.clone();
+        rayon::spawn(move || {
+            let new_geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
+            tx.send((wrapped_chunk, new_geometry)).unwrap();
+        });
     }
 
     pub fn get_chunk_by_index(&self, index: i64) -> Option<Gd<Chunk>> {
