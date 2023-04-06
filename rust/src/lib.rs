@@ -41,12 +41,12 @@ impl ExtensionLayer for DefaultLayer {
     fn initialize(&mut self) {
         auto_register_classes();
 
-        rayon::spawn(move || {
-            loop {
-                println!("test loop");
-                thread::sleep(Duration::from_secs(1));
-            }
-        });
+        // rayon::spawn(move || {
+        //     loop {
+        //         println!("test loop");
+        //         thread::sleep(Duration::from_secs(1));
+        //     }
+        // });
     }
 
     fn deinitialize(&mut self) {

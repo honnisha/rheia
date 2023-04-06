@@ -6,7 +6,7 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::blocks::blocks_storage::BlockType,
 };
-use godot::prelude::{Array, Gd};
+use godot::prelude::{Array, Gd, ToVariant};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
@@ -48,10 +48,21 @@ pub fn generate_buffer(chunk_data: &[BlockType; 5832]) -> UnitQuadBuffer {
     buffer
 }
 
+pub trait GeometryTrait: Send + Sync {
+}
+
+pub struct Geometry {
+    pub mesh_ist: Gd<ArrayMesh>,
+}
+
+unsafe impl Send for Geometry {}
+unsafe impl Sync for Geometry {}
+
+
 pub fn generate_chunk_geometry(
     texture_mapper: &TextureMapper,
     chunk_data: &[BlockType; 5832],
-) -> Gd<ArrayMesh> {
+) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
 
@@ -101,7 +112,8 @@ pub fn generate_chunk_geometry(
 
     let mut mesh_ist = ArrayMesh::new();
     if &indices.len() == &(0 as usize) {
-        return mesh_ist;
+        //return mesh_ist;
+        return Geometry { mesh_ist: mesh_ist };
     }
 
     arrays.set(
@@ -128,5 +140,5 @@ pub fn generate_chunk_geometry(
         Default::default(),
         Default::default(),
     );
-    mesh_ist
+    Geometry { mesh_ist: mesh_ist }
 }

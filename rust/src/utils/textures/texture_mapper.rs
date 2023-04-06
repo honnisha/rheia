@@ -1,8 +1,17 @@
 use crate::world::blocks::block_type_info::BlockTypeInfo;
 
 
+#[derive(Debug)]
 pub struct TextureMapper {
     textures_map: Vec<String>,
+}
+
+impl Clone for TextureMapper {
+    fn clone(&self) -> Self {
+        TextureMapper {
+            textures_map: self.textures_map.clone(),
+        }
+    }
 }
 
 impl TextureMapper {

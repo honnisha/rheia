@@ -1,16 +1,18 @@
 use bracket_lib::random::RandomNumberGenerator;
 use godot::{
-    engine::{node::InternalMode, Material},
+    engine::{node::InternalMode, Material, ArrayMesh},
     prelude::*,
 };
+use lazy_static::__Deref;
+use send_wrapper::SendWrapper;
 use ndshape::ConstShape;
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, sync::mpsc::{self, Sender, Receiver}, ops::DerefMut};
 use std::time::Instant;
 
 use crate::{
     utils::mesh::block_mesh::VoxelVisibility,
     utils::mesh::mesh_generator::{ChunkBordersShape, ChunkShape},
-    utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
+    utils::{textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper}, mesh::mesh_generator::{generate_chunk_geometry, Geometry}},
     world::blocks::blocks_storage::BlockType,
     world::world_generator::WorldGenerator,
 };
@@ -28,6 +30,9 @@ pub struct ChunksManager {
 
     texture_mapper: TextureMapper,
     material: Gd<Material>,
+
+    tx: Sender<(SendWrapper<Gd<Chunk>>, Geometry)>,
+    rx: Receiver<(SendWrapper<Gd<Chunk>>, Geometry)>,
 }
 
 #[godot_api]
@@ -84,7 +89,14 @@ impl ChunksManager {
             let chunk_position = chunk_ref.get_chunk_position();
             bordered_chunk_data = self.format_chunk_data_with_boundaries(&chunk_data, &chunk_position);
         }
-        chunk.bind_mut().update_mesh(&bordered_chunk_data, &self.texture_mapper);
+        let tx = self.tx.clone();
+        //let chunk_position = chunk.bind().get_chunk_position().clone();
+        let wrapped_chunk = SendWrapper::new(chunk.share());
+        let texture_mapper = self.texture_mapper.clone();
+        rayon::spawn(move || {
+            let new_geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
+            tx.send((wrapped_chunk, new_geometry)).unwrap();
+        });
     }
 
     #[allow(unused_variables)]
@@ -270,6 +282,8 @@ impl NodeVirtual for ChunksManager {
         let seed = rng.next_u64();
         let mut texture_mapper = TextureMapper::new();
 
+        let (tx, rx) = mpsc::channel();
+
         let texture = build_blocks_material(&mut texture_mapper);
         ChunksManager {
             base,
@@ -277,6 +291,15 @@ impl NodeVirtual for ChunksManager {
             world_generator: WorldGenerator::new(seed),
             material: texture.duplicate(true).unwrap().cast::<Material>(),
             texture_mapper: texture_mapper,
+            tx: tx,
+            rx: rx,
+        }
+    }
+
+    #[allow(unused_variables)]
+    fn process(&mut self, delta: f64) {
+        for (mut wrapped_chunk, new_geometry) in self.rx.try_iter() {
+            wrapped_chunk.deref_mut().bind_mut().update_mesh(new_geometry.mesh_ist);
         }
     }
 }

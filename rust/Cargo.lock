@@ -1012,6 +1012,7 @@ dependencies = [
  "rayon",
  "regex",
  "rhai",
+ "send_wrapper 0.6.0",
  "serde",
  "serde_yaml",
  "strum",
@@ -1854,6 +1855,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0eddf2e8f50ced781f288c19f18621fa72a3779e3cb58dbf23b07469b0abeb4"
 
 [[package]]
+name = "send_wrapper"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
+
+[[package]]
 name = "serde"
 version = "1.0.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2331,7 +2338,7 @@ checksum = "aa3e01d234bb71760e685cfafa5e2c96f8ad877c161a721646356651069e26ac"
 dependencies = [
  "futures",
  "js-sys",
- "send_wrapper",
+ "send_wrapper 0.2.0",
  "tokio-timer",
  "wasm-bindgen",
  "web-sys",

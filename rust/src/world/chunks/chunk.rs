@@ -1,7 +1,7 @@
 use std::borrow::BorrowMut;
 
 use godot::{
-    engine::{node::InternalMode, Material, MeshInstance3D},
+    engine::{node::InternalMode, Material, MeshInstance3D, ArrayMesh},
     prelude::*,
 };
 use ndshape::ConstShape;
@@ -117,14 +117,11 @@ impl Chunk {
         self.chunk_data[i] = block_info;
     }
 
-    pub fn update_mesh(&mut self, bordered_chunk_data: &[BlockType; 5832], texture_mapper: &TextureMapper) {
-        let mesh = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data);
-
+    pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
-        m.set_mesh(mesh.upcast());
+        m.set_mesh(new_mesh.upcast());
         //m.create_trimesh_collision();
         //m.create_convex_collision(false, false);
-
         self.loaded = true;
     }
 }
