@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use crate::{
     utils::mesh::block_mesh::{
         ndshape::ConstShape3u32, visible_block_faces, UnitQuadBuffer, UnorientedQuad,
@@ -6,7 +8,7 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::blocks::blocks_storage::BlockType,
 };
-use godot::prelude::{Array, Gd, ToVariant};
+use godot::prelude::{Array, Gd};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
@@ -60,7 +62,7 @@ unsafe impl Sync for Geometry {}
 
 
 pub fn generate_chunk_geometry(
-    texture_mapper: &TextureMapper,
+    texture_mapper: Arc<RwLock<TextureMapper>>,
     chunk_data: &[BlockType; 5832],
 ) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
@@ -91,12 +93,13 @@ pub fn generate_chunk_geometry(
             normals.extend(face.quad_mesh_normals());
 
             let unoriented_quad = UnorientedQuad::from(quad);
+            let t = texture_mapper.read().unwrap();
             for i in &face.tex_coords(
                 RIGHT_HANDED_Y_UP_CONFIG.u_flip_face,
                 false,
                 &unoriented_quad,
             ) {
-                let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
+                let offset = match t.get_uv_offset(block_type_info, side_index as i8) {
                     //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
                     _ => 0,

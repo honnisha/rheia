@@ -6,9 +6,10 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
+use crate::world::chunks::chunk_info::ChunkInfo;
 use crate::world::{
     blocks::minecraft_types::block_type_from_minecraft_name,
-    chunks::{block_info::BlockInfo, chunk::Chunk},
+    chunks::{block_info::BlockInfo},
 };
 
 use super::mesh::mesh_generator::ChunkShape;
@@ -171,10 +172,10 @@ pub fn convert_schem_to_blockinfo(anchor: &[i32; 3], schem: &SchemData) -> HashM
 
         if let Some(e) = palette_map.get(&(value as i64)) {
             let global_pos = [x, y, z];
-            let chunk_pos = Chunk::get_chunk_pos_by_global(&global_pos);
+            let chunk_pos = ChunkInfo::get_chunk_pos_by_global(&global_pos);
             let chunk = result.entry(chunk_pos).or_insert(HashMap::new());
 
-            let local_pos = Chunk::get_chunk_local_pos_from_global(&global_pos);
+            let local_pos = ChunkInfo::get_chunk_local_pos_from_global(&global_pos);
             let i = ChunkShape::linearize(local_pos);
 
             chunk.insert(i, e.clone());

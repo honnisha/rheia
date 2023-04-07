@@ -24,7 +24,7 @@ impl WorldGenerator {
     }
 
     pub fn generate_chunk_data(
-        &mut self,
+        &self,
         chunk_data: &mut [BlockInfo; 4096],
         chunk_position: &[i32; 3],
     ) {

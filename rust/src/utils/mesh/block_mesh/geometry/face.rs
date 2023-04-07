@@ -20,6 +20,7 @@ pub struct OrientedBlockFace {
     pub(crate) v: UVec3,
 }
 
+#[allow(dead_code)]
 impl OrientedBlockFace {
     pub const fn new(n_sign: i32, permutation: AxisPermutation) -> Self {
         let [n_axis, u_axis, v_axis] = permutation.axes();

@@ -4,10 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use std::{sync::Mutex, thread, time::Duration};
-
 use godot::{prelude::*, private::class_macros::auto_register_classes};
-use rayon::ThreadPool;
 //use tokio::runtime::Runtime;
 //use tokio::time::{sleep, Duration};
 mod client_scripts;
@@ -16,7 +13,6 @@ mod controller;
 mod main_scene;
 mod utils;
 mod world;
-use lazy_static::lazy_static;
 
 struct HonnyCraft;
 

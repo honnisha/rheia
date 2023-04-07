@@ -12,6 +12,7 @@ impl BlockInfo {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_block_type_info(&self) -> &'static BlockTypeInfo {
         self.block_type.get_block_type_info().unwrap()
     }

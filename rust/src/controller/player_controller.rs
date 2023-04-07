@@ -3,7 +3,7 @@ use godot::{
     prelude::*,
 };
 
-use crate::world::chunks::chunk::Chunk;
+use crate::world::chunks::chunk_info::ChunkInfo;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -74,10 +74,10 @@ impl NodeVirtual for PlayerController {
         let text = format!(
             "FPS: {:.0}\nCamera position: [b]{:.2} {:.2} {:.2}[/b]\nChunk postition: [b]{:?}[/b]",
             Engine::singleton().get_frames_per_second(),
-            camera_pos.x, camera_pos.y, camera_pos.z,
-            Chunk::get_chunk_pos_by_global(
-                &[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32]
-            )
+            camera_pos.x,
+            camera_pos.y,
+            camera_pos.z,
+            ChunkInfo::get_chunk_pos_by_global(&[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32])
         );
         self.debug_text
             .as_deref_mut()

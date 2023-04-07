@@ -3,12 +3,14 @@ use ilattice::glam::{IVec3, UVec3};
 /// Either the X, Y, or Z axis.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
+#[allow(dead_code)]
 pub enum Axis {
     X = 0,
     Y = 1,
     Z = 2,
 }
 
+#[allow(dead_code)]
 impl Axis {
     /// The index for a point's component on this axis.
     #[inline]
@@ -45,6 +47,7 @@ impl Axis {
 /// - [AxisPermutation::Zyx]
 /// - [AxisPermutation::Xzy]
 /// - [AxisPermutation::Yxz]
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AxisPermutation {
     // Even permutations
@@ -57,6 +60,7 @@ pub enum AxisPermutation {
     Yxz,
 }
 
+#[allow(dead_code)]
 impl AxisPermutation {
     #[inline]
     pub const fn even_with_normal_axis(axis: Axis) -> Self {
@@ -115,6 +119,7 @@ impl AxisPermutation {
 /// Either the -X, +X, -Y, +Y, -Z, or +Z axis.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
+#[allow(dead_code)]
 pub enum SignedAxis {
     NegX = 0,
     PosX = 1,
@@ -124,6 +129,7 @@ pub enum SignedAxis {
     PosZ = 5,
 }
 
+#[allow(dead_code)]
 impl SignedAxis {
     #[inline]
     pub fn new(sign: i32, axis: Axis) -> Self {

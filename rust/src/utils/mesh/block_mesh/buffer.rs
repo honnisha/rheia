@@ -7,6 +7,7 @@ pub struct QuadBuffer {
     pub groups: [Vec<UnorientedQuad>; 6],
 }
 
+#[allow(dead_code)]
 impl QuadBuffer {
     pub fn new() -> Self {
         const EMPTY: Vec<UnorientedQuad> = Vec::new();
@@ -40,6 +41,7 @@ pub struct UnitQuadBuffer {
     pub groups: [Vec<UnorientedUnitQuad>; 6],
 }
 
+#[allow(dead_code)]
 impl UnitQuadBuffer {
     pub fn new() -> Self {
         const EMPTY: Vec<UnorientedUnitQuad> = Vec::new();
