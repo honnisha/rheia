@@ -1,14 +1,23 @@
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, MutexGuard, RwLock},
+};
 
 use ndshape::ConstShape;
 
-use crate::{utils::mesh::{mesh_generator::{ChunkShape, ChunkBordersShape}, block_mesh::VoxelVisibility}, world::{blocks::blocks_storage::BlockType, world_generator::WorldGenerator}};
+use crate::{
+    utils::mesh::{
+        block_mesh::VoxelVisibility,
+        mesh_generator::{ChunkBordersShape, ChunkShape},
+    },
+    world::{blocks::blocks_storage::BlockType, world_generator::WorldGenerator},
+};
 
 use super::{block_info::BlockInfo, chunk_info::ChunkInfo, chunks_manager::ChunksManager};
 
 pub fn format_chunk_data_with_boundaries(
     world_generator: Arc<RwLock<WorldGenerator>>,
-    chunks_info: &mut HashMap<[i32; 3], ChunkInfo>,
+    ci: &mut MutexGuard<HashMap<[i32; 3], ChunkInfo>>,
     chunk_data: &[BlockInfo; 4096],
     chunk_position: &[i32; 3],
 ) -> [BlockType; 5832] {
@@ -55,11 +64,13 @@ pub fn format_chunk_data_with_boundaries(
                 pos[axis as usize] += value;
                 //godot_print!("load:{:?}", pos);
 
-                let border_chunk_info = ChunksManager::get_or_load_chunk_data(
-                    &world_generator,
-                    chunks_info,
-                    &pos,
-                );
+                let border_chunk_info = match ChunksManager::get_or_load_chunk_data(world_generator.clone(), ci, &pos) {
+                    Some(c) => c,
+                    _ => {
+                        println!("format_chunk_data_with_boundaries: empty chunk");
+                        continue;
+                    }
+                };
 
                 for i in 0_u32..16_u32 {
                     for j in 0_u32..16_u32 {
