@@ -3,16 +3,14 @@ use godot::{
     engine::{node::InternalMode, Material},
     prelude::*,
 };
+use spiral::ManhattanIterator;
+use std::sync::{Arc, RwLock};
 use std::{
     collections::HashMap,
     sync::{
         mpsc::{self, Receiver, Sender},
-        RwLockWriteGuard, RwLockReadGuard,
+        RwLockReadGuard, RwLockWriteGuard,
     },
-};
-use std::{
-    sync::{Arc, RwLock},
-    time::Instant,
 };
 
 use crate::{
@@ -34,6 +32,8 @@ use super::{
 pub type ChunksInfoType = Arc<RwLock<HashMap<[i32; 3], ChunkInfo>>>;
 pub type ChunksInfoLockRead<'a> = RwLockReadGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
 pub type ChunksInfoLockWrite<'a> = RwLockWriteGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
+
+pub const WORLD_CHUNKS_HEIGHT: i32 = 16_i32;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -58,7 +58,6 @@ impl ChunksManager {}
 impl ChunksManager {
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
-        let now = Instant::now();
         let chunks_distance = 12;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
@@ -66,76 +65,68 @@ impl ChunksManager {
 
         let chunk_pos = Vector2::new(chunk_x as real, chunk_z as real);
 
-        for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
-            for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
-                if (Vector2::new(x as real, z as real) - chunk_pos).length() < chunks_distance as f32 {
-                    for y in 0_i32..16_i32 {
-                        let chunk_pos = [x, y, z].clone();
+        let mut chunks_to_load = Vec::new();
 
-                        if self.chunks_godot_ids.contains_key(&chunk_pos) {
-                            continue;
-                        }
+        let iter = ManhattanIterator::new(chunk_x, chunk_z, chunks_distance);
+        for (x, z) in iter {
+            for y in 0_i32..WORLD_CHUNKS_HEIGHT {
+                let chunk_pos = [x, y, z].clone();
 
-                        let chunk = self.spawn_chunk(&chunk_pos);
-                        let index = chunk.bind().get_index(true).clone();
+                if self.chunks_godot_ids.contains_key(&chunk_pos) {
+                    continue;
+                }
 
-                        self.chunks_godot_ids.insert(chunk_pos.clone(), index);
-                        //println!("Chunk object spawned: {:?} index {}", chunk_pos, index);
-                    }
+                let chunk = self.spawn_chunk(&chunk_pos);
+                let index = chunk.bind().get_index(true).clone();
+
+                self.chunks_godot_ids.insert(chunk_pos.clone(), index);
+                //println!("Chunk object spawned: {:?} index {}", chunk_pos, index);
+
+                if !self.is_loaded(&chunk_pos) {
+                    chunks_to_load.push(chunk_pos);
                 }
             }
         }
 
-        for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
-            for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
-                if (Vector2::new(x as real, z as real) - chunk_pos).length() < chunks_distance as f32 {
-                    for y in 0_i32..16_i32 {
-                        let chunk_pos = [x, y, z].clone();
+        let chunks_info = self.chunks_info.clone();
+        let world_generator = self.world_generator.clone();
+        let update_mesh_tx = self.update_mesh_tx.clone();
+        let texture_mapper = self.texture_mapper.clone();
+        rayon::spawn(move || {
+            for chunk_pos in chunks_to_load {
+                {
+                    let c = chunks_info.clone();
 
-                        if self.is_loaded(&chunk_pos) {
-                            continue;
+                    let mut ci_write = match c.write() {
+                        Ok(l) => l,
+                        Err(e) => {
+                            println!("UPDATE_CAMERA_POSITION excepts lock; error: {:?}", e);
+                            return;
                         }
+                    };
+                    ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &chunk_pos);
 
-                        let chunks_info = self.chunks_info.clone();
-                        let world_generator = self.world_generator.clone();
-                        let update_mesh_tx = self.update_mesh_tx.clone();
-                        let texture_mapper = self.texture_mapper.clone();
-                        rayon::spawn(move || {
-                            {
-                                let mut ci_write = match chunks_info.write() {
-                                    Ok(l) => l,
-                                    Err(e) => {
-                                        println!("UPDATE_CAMERA_POSITION excepts lock; error: {:?}", e);
-                                        return;
-                                    }
-                                };
-                                ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &chunk_pos);
-
-                                // Load chunks in border
-                                let boundary = get_boundaries_chunks(&chunk_pos);
-                                for (_axis, _value, pos) in boundary {
-                                    if !ci_write.contains_key(&pos) {
-                                        ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
-                                    }
-                                }
-                                println!("loaded data: {:?}", chunk_pos);
+                    // Load chunks in border
+                    let boundary = get_boundaries_chunks(&chunk_pos);
+                    for (_axis, _value, pos) in boundary {
+                        if pos[1] < WORLD_CHUNKS_HEIGHT && pos[1] >= 0 {
+                            if !ci_write.contains_key(&pos) {
+                                ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
                             }
-
-                            rayon::spawn(move || {
-                                ChunksManager::update_chunk_mesh(
-                                    chunks_info,
-                                    chunk_pos.clone(),
-                                    world_generator,
-                                    update_mesh_tx,
-                                    texture_mapper,
-                                );
-                                println!("updated mesh: {:?}", chunk_pos);
-                            });
-                        });
+                        }
                     }
+                    // println!("Chunk loaded {:?}", chunk_pos);
                 }
+
+                let ci = chunks_info.clone();
+                let tx = update_mesh_tx.clone();
+                let tm = texture_mapper.clone();
+                rayon::spawn(move || {
+                    ChunksManager::update_chunk_mesh(ci, chunk_pos.clone(), tx, tm);
+                    // println!("Update mesh {:?}", chunk_pos);
+                });
             }
-        }
+        });
     }
 
     pub fn modify_block(&self, global_pos: &[i32; 3], block_info: BlockInfo) {
@@ -154,51 +145,50 @@ impl ChunksManager {
         ChunksManager::update_chunk_mesh(
             self.chunks_info.clone(),
             chunk_pos.clone(),
-            self.world_generator.clone(),
             self.update_mesh_tx.clone(),
             self.texture_mapper.clone(),
         );
     }
 
-    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) -> i32 {
-        let now = Instant::now();
+    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) {
         println!("modify_block_batch: Start to update {} blocks", data.len());
 
-        let mut ci = self.chunks_info.write().expect("MODIFY_BLOCK_BATCH excepts lock");
+        let chunks_info = self.chunks_info.clone();
+        let update_mesh_tx = self.update_mesh_tx.clone();
+        let texture_mapper = self.texture_mapper.clone();
 
-        let mut count: i32 = 0;
-        let mut chunks_pos: Vec<[i32; 3]> = Vec::new();
+        //rayon::spawn(move || {
+            let c = chunks_info.clone();
+            let mut ci = c.write().expect("MODIFY_BLOCK_BATCH excepts lock");
 
-        for (chunk_pos, chunk_data) in data {
-            if let Some(info) = ci.get_mut(&chunk_pos) {
-                for (block_local_pos, block_info) in chunk_data {
-                    info.set_block_by_local_pos(block_local_pos, block_info);
-                    count += 1;
+            let mut chunks_pos: Vec<[i32; 3]> = Vec::new();
+
+            for (chunk_pos, chunk_data) in data {
+                if let Some(info) = ci.get_mut(&chunk_pos) {
+                    for (block_local_pos, block_info) in chunk_data {
+                        info.set_block_by_local_pos(block_local_pos, block_info);
+                    }
+                    chunks_pos.push(chunk_pos);
+                } else {
+                    println!("MODIFY_BLOCK_BATCH Cant find ChunkInfo in {:?}", chunk_pos);
                 }
-                chunks_pos.push(chunk_pos);
-            } else {
-                println!("modify_block_batch: Cant find ChunkInfo in {:?}", chunk_pos);
             }
-        }
 
-        for chunk_pos in chunks_pos {
-            ChunksManager::update_chunk_mesh(
-                self.chunks_info.clone(),
-                chunk_pos.clone(),
-                self.world_generator.clone(),
-                self.update_mesh_tx.clone(),
-                self.texture_mapper.clone(),
-            );
-            //println!("update chunk mesh:{:?}", c);
-        }
-        println!("modify_block_batch: Update complete in {:.2?}", now.elapsed());
-        count
+            for chunk_pos in chunks_pos {
+                ChunksManager::update_chunk_mesh(
+                    chunks_info.clone(),
+                    chunk_pos.clone(),
+                    update_mesh_tx.clone(),
+                    texture_mapper.clone(),
+                );
+                //println!("update chunk mesh:{:?}", c);
+            }
+        //});
     }
 
     fn update_chunk_mesh(
         chunks_info: ChunksInfoType,
         chunk_pos: [i32; 3],
-        world_generator: Arc<RwLock<WorldGenerator>>,
         update_mesh_tx: Sender<([i32; 3], Geometry)>,
         texture_mapper: Arc<RwLock<TextureMapper>>,
     ) {
@@ -217,8 +207,7 @@ impl ChunksManager {
             }
         };
         let chunk_data = info.get_chunk_data();
-        let bordered_chunk_data =
-            format_chunk_data_with_boundaries(world_generator.clone(), &ci, &chunk_data, &chunk_pos);
+        let bordered_chunk_data = format_chunk_data_with_boundaries(&ci, &chunk_data, &chunk_pos);
 
         let new_geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data);
         match update_mesh_tx.send((chunk_pos, new_geometry)) {

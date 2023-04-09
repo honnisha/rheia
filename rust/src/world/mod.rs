@@ -39,7 +39,7 @@ impl World {
             .modify_block(pos, block_info)
     }
 
-    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) -> i32 {
+    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) {
         self.chunks_manager
             .as_mut()
             .unwrap()
@@ -111,10 +111,10 @@ impl NodeVirtual for World {
 
             let modify_data = convert_schem_to_blockinfo(&[0_i32, 40_i32, 0_i32], &schem);
             let source_len = modify_data.len();
-            let count = self.modify_block_batch(modify_data);
+            self.modify_block_batch(modify_data);
             println!(
-                "Schem {:?} pasted; blocks size: {}; modified blocks: {}",
-                path, source_len, count
+                "Schem {:?} pasted; blocks size: {}",
+                path, source_len
             );
         }
     }

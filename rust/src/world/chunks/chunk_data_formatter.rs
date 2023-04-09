@@ -1,5 +1,3 @@
-use std::{sync::{Arc, RwLock}, collections::HashMap};
-
 use ndshape::ConstShape;
 
 use crate::{
@@ -7,13 +5,12 @@ use crate::{
         block_mesh::VoxelVisibility,
         mesh_generator::{ChunkBordersShape, ChunkShape},
     },
-    world::{blocks::blocks_storage::BlockType, world_generator::WorldGenerator},
+    world::blocks::blocks_storage::BlockType,
 };
 
-use super::{block_info::BlockInfo, chunks_manager::{ChunksManager, ChunksInfoType, ChunksInfoLockRead}};
+use super::{block_info::BlockInfo, chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_HEIGHT}};
 
 pub fn format_chunk_data_with_boundaries(
-    world_generator: Arc<RwLock<WorldGenerator>>,
     ci: &ChunksInfoLockRead,
     chunk_data: &[BlockInfo; 4096],
     chunk_pos: &[i32; 3],
@@ -50,7 +47,6 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
-
     // fill boundaries
     if !has_any_mesh {
         return b_chunk;
@@ -61,6 +57,9 @@ pub fn format_chunk_data_with_boundaries(
     for (axis, value, pos) in boundary {
         //godot_print!("load:{:?}", pos);
 
+        if pos[1] >= WORLD_CHUNKS_HEIGHT || pos[1] < 0 {
+            continue;
+        }
         let border_chunk_info = match ci.get(&pos) {
             Some(c) => c,
             _ => {
@@ -98,7 +97,6 @@ pub fn format_chunk_data_with_boundaries(
 
     return b_chunk;
 }
-
 
 /// (axis, value, chunk_pos)
 pub fn get_boundaries_chunks(chunk_pos: &[i32; 3]) -> Vec<(i8, i32, [i32; 3])> {

@@ -39,3 +39,4 @@ fastnbt = "2"
 image = "0.24.5"
 
 regex = "1.7.3"
+spiral = "0.1"
