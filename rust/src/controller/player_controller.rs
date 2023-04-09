@@ -24,6 +24,15 @@ impl PlayerController {
 const CAMERA_PATH: &str = "Camera";
 const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
 
+macro_rules! debug_string {
+    () => {
+"FPS: {:.0}
+Camera position: [b]{:.2} {:.2} {:.2}[/b]
+Chunk postition: [b]{:?}[/b]
+Threads count: {}"
+    }
+}
+
 #[godot_api]
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node>) -> Self {
@@ -72,12 +81,13 @@ impl NodeVirtual for PlayerController {
 
         let camera_pos = camera.get_global_position();
         let text = format!(
-            "FPS: {:.0}\nCamera position: [b]{:.2} {:.2} {:.2}[/b]\nChunk postition: [b]{:?}[/b]",
+            debug_string!(),
             Engine::singleton().get_frames_per_second(),
             camera_pos.x,
             camera_pos.y,
             camera_pos.z,
-            ChunkInfo::get_chunk_pos_by_global(&[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32])
+            ChunkInfo::get_chunk_pos_by_global(&[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32]),
+            rayon::current_num_threads(),
         );
         self.debug_text
             .as_deref_mut()

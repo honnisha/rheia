@@ -3,32 +3,16 @@ use ndshape::ConstShape;
 
 use super::block_info::BlockInfo;
 use crate::utils::mesh::mesh_generator::ChunkShape;
-use crate::world::blocks::blocks_storage::BlockType;
 
 pub struct ChunkInfo {
     chunk_data: [BlockInfo; 4096],
-    godot_index: Option<i64>,
 }
 
 impl ChunkInfo {
     pub fn new(chunk_data: [BlockInfo; 4096]) -> Self {
         ChunkInfo {
             chunk_data: chunk_data,
-            godot_index: None,
         }
-    }
-
-    pub fn is_loaded(&self) -> bool {
-        self.godot_index.is_some()
-    }
-
-    pub fn set_godot_index(&mut self, godot_index: i64) {
-        self.godot_index = Some(godot_index)
-    }
-
-    /// Return index of chunk inside ChunksManager node
-    pub fn get_godot_index(&self) -> Option<i64> {
-        self.godot_index
     }
 
     pub fn get_chunk_data(&self) -> &[BlockInfo; 4096] {
@@ -46,7 +30,7 @@ impl ChunkInfo {
     }
 
     // Get global position from chunk coordinate
-    pub fn get_chunk_position_from_coordinate(position: &[i32; 3]) -> Vector3 {
+    pub fn get_chunk_pos_from_coordinate(position: &[i32; 3]) -> Vector3 {
         // -1 because of chunk boundaries
         Vector3::new(
             position[0] as f32 * 16.0 - 1_f32,

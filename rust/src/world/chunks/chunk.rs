@@ -13,6 +13,7 @@ pub struct Chunk {
     #[base]
     pub base: Base<Node3D>,
     mesh: Option<Gd<MeshInstance3D>>,
+    loaded: bool,
 }
 
 #[godot_api]
@@ -35,7 +36,12 @@ impl Chunk {
         Chunk {
             base: base,
             mesh: None,
+            loaded: false,
         }
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.loaded
     }
 
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
@@ -43,6 +49,7 @@ impl Chunk {
         m.set_mesh(new_mesh.upcast());
         //m.create_trimesh_collision();
         //m.create_convex_collision(false, false);
+        self.loaded = true;
     }
 }
 

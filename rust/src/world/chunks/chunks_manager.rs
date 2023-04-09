@@ -35,13 +35,14 @@ pub struct ChunksManager {
     base: Base<Node>,
 
     chunks_info: Arc<Mutex<HashMap<[i32; 3], ChunkInfo>>>,
+    chunks_godot_ids: HashMap<[i32; 3], i64>,
     world_generator: Arc<RwLock<WorldGenerator>>,
 
     texture_mapper: Arc<RwLock<TextureMapper>>,
     material: Gd<Material>,
 
-    update_mesh_tx: Sender<(i64, Geometry)>,
-    update_mesh_rx: Receiver<(i64, Geometry)>,
+    update_mesh_tx: Sender<([i32; 3], Geometry)>,
+    update_mesh_rx: Receiver<([i32; 3], Geometry)>,
 }
 
 #[godot_api]
@@ -51,7 +52,6 @@ impl ChunksManager {
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
         let now = Instant::now();
-        let mut count: i32 = 0;
         let chunks_distance = 12;
 
         let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
@@ -63,57 +63,69 @@ impl ChunksManager {
             for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
                 if (Vector2::new(x as real, z as real) - chunk_pos).length() < chunks_distance as f32 {
                     for y in 0_i32..16_i32 {
-                        let chunk_position = &[x, y, z];
+                        let chunk_pos = [x, y, z].clone();
 
-                        if !self.is_chunk_loaded(chunk_position) {
-                            let chunks_info = self.chunks_info.clone();
+                        if self.chunks_godot_ids.contains_key(&chunk_pos) {
+                            continue;
+                        }
+
+                        let chunk = self.spawn_chunk(&chunk_pos);
+                        let index = chunk.bind().get_index(true).clone();
+
+                        self.chunks_godot_ids.insert(chunk_pos.clone(), index);
+                        //println!("Chunk object spawned: {:?} index {}", chunk_pos, index);
+                    }
+                }
+            }
+        }
+
+        for x in (chunk_x - chunks_distance)..(chunk_x + chunks_distance) {
+            for z in (chunk_z - chunks_distance)..(chunk_z + chunks_distance) {
+                if (Vector2::new(x as real, z as real) - chunk_pos).length() < chunks_distance as f32 {
+                    for y in 0_i32..16_i32 {
+                        let chunk_pos = [x, y, z].clone();
+
+                        if self.is_loaded(&chunk_pos) {
+                            continue
+                        }
+
+                        let chunks_info = self.chunks_info.clone();
+                        let world_generator = self.world_generator.clone();
+                        let update_mesh_tx = self.update_mesh_tx.clone();
+                        let texture_mapper = self.texture_mapper.clone();
+                        rayon::spawn(move || {
                             let mut ci = match chunks_info.lock() {
                                 Ok(c) => c,
                                 Err(e) => {
-                                    println!("update_camera_position; pos: {:?} lock error: {:?}", chunk_position, e);
-                                    continue;
+                                    println!("UPDATE_CAMERA_POSITION; pos: {:?} lock error: {:?}", &chunk_pos, e);
+                                    return;
                                 }
                             };
 
                             {
                                 match ChunksManager::get_or_load_chunk_data(
-                                    self.world_generator.clone(),
+                                    world_generator.clone(),
                                     &mut ci,
-                                    chunk_position,
+                                    &chunk_pos,
                                 ) {
                                     Some(e) => e,
-                                    _ => continue,
+                                    _ => { return; }
                                 };
                             }
-
-                            let chunk = self.spawn_chunk(chunk_position);
-                            let index = chunk.bind().get_index(true).clone();
-
-                            let chunk_info = ci.get_mut(chunk_position).unwrap();
-                            chunk_info.set_godot_index(index);
 
                             {
                                 ChunksManager::update_chunk_mesh(
                                     &mut ci,
-                                    chunk_position.clone(),
-                                    self.world_generator.clone(),
-                                    self.update_mesh_tx.clone(),
-                                    self.texture_mapper.clone(),
+                                    chunk_pos.clone(),
+                                    world_generator,
+                                    update_mesh_tx,
+                                    texture_mapper,
                                 );
                             }
-
-                            count += 1;
-                        }
+                        });
                     }
                 }
             }
-        }
-        if count > 0 {
-            println!(
-                "update_camera_position complete {:.2?}; chunks: {}",
-                now.elapsed(),
-                count
-            );
         }
     }
 
@@ -123,7 +135,7 @@ impl ChunksManager {
         let mut ci = match self.chunks_info.lock() {
             Ok(c) => c,
             Err(e) => {
-                println!("modify_block_batch; lock error: {:?}", e);
+                println!("MODIFY_BLOCK_BATCH; lock error: {:?}", e);
                 return;
             }
         };
@@ -131,7 +143,7 @@ impl ChunksManager {
         let info = if let Some(info) = ci.get_mut(&chunk_pos) {
             info
         } else {
-            println!("modify_block: Cant find ChunkInfo in {:?}", chunk_pos);
+            println!("MODIFY_BLOCK: Cant find ChunkInfo in {:?}", chunk_pos);
             return;
         };
 
@@ -152,7 +164,7 @@ impl ChunksManager {
         let mut ci = match self.chunks_info.lock() {
             Ok(c) => c,
             Err(e) => {
-                println!("modify_block_batch; lock error: {:?}", e);
+                println!("MODIFY_BLOCK_BATCH; lock error: {:?}", e);
                 return 0_i32;
             }
         };
@@ -190,20 +202,13 @@ impl ChunksManager {
         ci: &mut MutexGuard<HashMap<[i32; 3], ChunkInfo>>,
         chunk_pos: [i32; 3],
         world_generator: Arc<RwLock<WorldGenerator>>,
-        update_mesh_tx: Sender<(i64, Geometry)>,
+        update_mesh_tx: Sender<([i32; 3], Geometry)>,
         texture_mapper: Arc<RwLock<TextureMapper>>,
     ) {
         let info = match ci.get(&chunk_pos) {
             Some(e) => e,
             _ => {
-                println!("update_chunk_mesh error: no ChunkInfo in {:?}", chunk_pos);
-                return;
-            }
-        };
-        let index = match info.get_godot_index() {
-            Some(i) => i,
-            _ => {
-                println!("update_chunk_mesh error: no index in {:?}", chunk_pos);
+                println!("UPDATE_CHUNK_MESH error: no ChunkInfo in {:?}", chunk_pos);
                 return;
             }
         };
@@ -212,10 +217,20 @@ impl ChunksManager {
         let bordered_chunk_data =
             format_chunk_data_with_boundaries(world_generator.clone(), ci, &chunk_data, &chunk_pos);
 
-        rayon::spawn(move || {
-            let new_geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data);
-            update_mesh_tx.send((index.clone(), new_geometry)).unwrap();
-        });
+        let new_geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data);
+        update_mesh_tx.send((chunk_pos, new_geometry)).unwrap();
+    }
+
+    pub fn is_loaded(&mut self, chunk_pos: &[i32; 3]) -> bool {
+        match self.chunks_godot_ids.get(chunk_pos) {
+            Some(index) => {
+                match self.get_chunk_by_index(*index) {
+                    Some(c) => c.bind().is_loaded(),
+                    _ => false
+                }
+            }
+            _ => false
+        }
     }
 
     pub fn get_chunk_by_index(&self, index: i64) -> Option<Gd<Chunk>> {
@@ -225,54 +240,36 @@ impl ChunksManager {
         return None;
     }
 
-    pub fn is_chunk_loaded(
-        ci: &'a mut MutexGuard<HashMap<[i32; 3], ChunkInfo>>,
-        &self, chunk_position: &[i32; 3]
-    ) -> bool {
-        let ci = match self.chunks_info.lock() {
-            Ok(c) => c,
-            Err(e) => {
-                println!("update_chunk_mesh; lock error: {:?}", e);
-                return false;
-            }
-        };
-        if let Some(info) = ci.get(chunk_position) {
-            return info.is_loaded();
-        }
-        return false;
-    }
-
     pub fn get_or_load_chunk_data<'a>(
         world_generator: Arc<RwLock<WorldGenerator>>,
         ci: &'a mut MutexGuard<HashMap<[i32; 3], ChunkInfo>>,
-        chunk_position: &[i32; 3],
+        chunk_pos: &[i32; 3],
     ) -> Option<&'a mut ChunkInfo> {
-        if !ci.contains_key(chunk_position) {
+        if !ci.contains_key(chunk_pos) {
             let mut chunk_data = [BlockInfo::new(BlockType::Air); 4096];
             world_generator
                 .read()
                 .unwrap()
-                .generate_chunk_data(&mut chunk_data, chunk_position);
+                .generate_chunk_data(&mut chunk_data, chunk_pos);
 
-            ci.insert(*chunk_position, ChunkInfo::new(chunk_data));
+            ci.insert(*chunk_pos, ChunkInfo::new(chunk_data));
         }
 
-        Some(ci.get_mut(chunk_position).unwrap())
+        Some(ci.get_mut(chunk_pos).unwrap())
     }
 
-    pub fn spawn_chunk(&mut self, chunk_position: &[i32; 3]) -> Gd<Chunk> {
+    pub fn spawn_chunk(&mut self, chunk_pos: &[i32; 3]) -> Gd<Chunk> {
         let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base));
 
         let chunk_name = GodotString::from(format!(
             "chunk_{}_{}_{}",
-            chunk_position[0], chunk_position[1], chunk_position[2]
+            chunk_pos[0], chunk_pos[1], chunk_pos[2]
         ));
         chunk.bind_mut().base.set_name(chunk_name.clone());
 
-        let global_pos = ChunkInfo::get_chunk_position_from_coordinate(&chunk_position);
+        let global_pos = ChunkInfo::get_chunk_pos_from_coordinate(&chunk_pos);
 
-        self.base
-            .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.base.add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
 
         let mut c = self.base.get_node_as::<Node3D>(&chunk_name);
 
@@ -296,9 +293,11 @@ impl NodeVirtual for ChunksManager {
         ChunksManager {
             base,
             chunks_info: Arc::new(Mutex::new(HashMap::new())),
+            chunks_godot_ids: HashMap::new(),
             world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
             material: texture.duplicate(true).unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+
             update_mesh_tx: update_mesh_tx,
             update_mesh_rx: update_mesh_rx,
         }
@@ -306,12 +305,18 @@ impl NodeVirtual for ChunksManager {
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
-        for (chunk_index, new_geometry) in self.update_mesh_rx.try_iter() {
-            if let Some(mut c) = self.get_chunk_by_index(chunk_index) {
-                // println!("Mesh updated: {:?}; surfaces: {}", chunk_pos, new_geometry.mesh_ist.get_surface_count());
-                c.bind_mut().update_mesh(new_geometry.mesh_ist);
-            } else {
-                println!("Cant update mesh for chunk: index {:?} not found", chunk_index);
+        for (chunk_pos, new_geometry) in self.update_mesh_rx.try_iter() {
+            if let Some(index) = self.chunks_godot_ids.get(&chunk_pos) {
+                if let Some(mut chunk) = self.get_chunk_by_index(*index) {
+                    // println!("Mesh updated: {:?}; surfaces: {}", chunk_pos, new_geometry.mesh_ist.get_surface_count());
+                    chunk.bind_mut().update_mesh(new_geometry.mesh_ist);
+                }
+                else {
+                    println!("Cant update mesh for chunk: index {:?} not found", index);
+                }
+            }
+            else {
+                println!("Cant find godot index for chunk {:?}", chunk_pos);
             }
         }
     }
