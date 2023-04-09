@@ -86,14 +86,28 @@ pub fn generate_chunk_geometry(
         // face is OrientedBlockFace
         // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
-            let block_type_info = quad.block_type.get_block_type_info().unwrap();
+            let block_type_info = match quad.block_type.get_block_type_info() {
+                Some(e) => e,
+                _ => {
+                    println!("GENERATE_CHUNK_GEOMETRY cant get block_type_info");
+                    panic!();
+                }
+            };
 
             indices.extend(face.quad_mesh_indices(verts.len() as i32));
             verts.extend(face.quad_mesh_positions(&quad.into(), 1.0));
             normals.extend(face.quad_mesh_normals());
 
             let unoriented_quad = UnorientedQuad::from(quad);
-            let t = texture_mapper.read().unwrap();
+
+            let t = match texture_mapper.read() {
+                Ok(e) => e,
+                Err(e) => {
+                    println!("GENERATE_CHUNK_GEOMETRY cant get texture_mapper lock; error: {:?}", e);
+                    panic!();
+                }
+            };
+
             for i in &face.tex_coords(
                 RIGHT_HANDED_Y_UP_CONFIG.u_flip_face,
                 false,
