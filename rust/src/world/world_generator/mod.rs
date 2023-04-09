@@ -27,7 +27,8 @@ impl WorldGenerator {
         &self,
         chunk_data: &mut [BlockInfo; 4096],
         chunk_position: &[i32; 3],
-    ) {
+    ) -> bool {
+        let mut has_any_block = false;
         for x in 0_u32..16_u32 {
             for z in 0_u32..16_u32 {
                 let x_map = (x as f32 + (chunk_position[0] as f32 * 16_f32)) / 100.0;
@@ -48,10 +49,12 @@ impl WorldGenerator {
                     let y_global = y as f32 + (chunk_position[1] as f32 * 16_f32);
 
                     if height > y_global {
+                        has_any_block = true;
                         chunk_data[i as usize] = BlockInfo::new(BlockType::GrassBlock);
                     }
                 }
             }
         }
+        return has_any_block;
     }
 }

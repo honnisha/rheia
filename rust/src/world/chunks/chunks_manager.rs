@@ -104,16 +104,22 @@ impl ChunksManager {
                             return;
                         }
                     };
-                    ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &chunk_pos);
+                    let has_any_block =
+                        ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &chunk_pos);
 
-                    // Load chunks in border
-                    let boundary = get_boundaries_chunks(&chunk_pos);
-                    for (_axis, _value, pos) in boundary {
-                        if pos[1] < WORLD_CHUNKS_HEIGHT && pos[1] >= 0 {
-                            if !ci_write.contains_key(&pos) {
-                                ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
+                    if has_any_block {
+                        // Load chunks in border
+                        let boundary = get_boundaries_chunks(&chunk_pos);
+                        for (_axis, _value, pos) in boundary {
+                            if pos[1] < WORLD_CHUNKS_HEIGHT && pos[1] >= 0 {
+                                if !ci_write.contains_key(&pos) {
+                                    ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
+                                }
                             }
                         }
+                    }
+                    else {
+                        continue;
                     }
                     // println!("Chunk loaded {:?}", chunk_pos);
                 }
@@ -240,13 +246,14 @@ impl ChunksManager {
         world_generator: Arc<RwLock<WorldGenerator>>,
         ci_write: &mut ChunksInfoLockWrite,
         chunk_pos: &[i32; 3],
-    ) {
+    ) -> bool {
         let mut chunk_data = [BlockInfo::new(BlockType::Air); 4096];
-        world_generator
+        let has_any_block = world_generator
             .read()
             .unwrap()
             .generate_chunk_data(&mut chunk_data, chunk_pos);
         ci_write.insert(*chunk_pos, ChunkInfo::new(chunk_data));
+        has_any_block
     }
 
     pub fn spawn_chunk(&mut self, chunk_pos: &[i32; 3]) -> Gd<Chunk> {
