@@ -1,5 +1,4 @@
 use crate::client_scripts::scripts_manager::ScriptsManager;
-use crate::console_handler::Console;
 use crate::console_handler::CONSOLE_CHANNEL;
 use godot::engine::Engine;
 use godot::prelude::*;

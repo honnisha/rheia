@@ -18,6 +18,7 @@ var _deceleration = -10
 var _vel_multiplier = 6
 
 # Keyboard state
+var active = true
 var _w = false
 var _s = false
 var _a = false
@@ -65,8 +66,19 @@ func _input(event):
 			KEY_SPACE:
 				_space = event.pressed
 
+func _ready():
+	var console = get_parent().get_parent().get_node("GUIControl/MarginContainer/ConsoleContainer")
+	console.submit_toggle_console.connect(_toggle_controller)
+	print_debug("ConsoleContainer signal submit_toggle_console signed")
+
+func _toggle_controller(console_state):
+	active = not console_state
+	
 # Updates mouselook and movement every frame
 func _process(delta):
+	if not active:
+		return
+
 	_update_mouselook()
 	_update_movement(delta)
 

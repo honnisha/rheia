@@ -1,7 +1,7 @@
 use super::instance_scope::ScriptInstanceScope;
 use super::scripts_manager::Manifest;
 use godot::prelude::*;
-use rhai::{Dynamic, Engine, ImmutableString, Scope, AST, CallFnOptions};
+use rhai::{CallFnOptions, Dynamic, Engine, ImmutableString, Scope, AST};
 use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
@@ -57,11 +57,7 @@ impl ScriptInstance {
         &self.version
     }
 
-    pub fn try_to_load(
-        &mut self,
-        rhai_engine: &mut Engine,
-        client_scripts: &Vec<String>,
-    ) -> Result<(), String> {
+    pub fn try_to_load(&mut self, rhai_engine: &mut Engine, client_scripts: &Vec<String>) -> Result<(), String> {
         for client_script in client_scripts {
             let path = format!("{}/{}", self.source.as_ref().unwrap(), client_script);
             let data = match fs::read_to_string(path.clone()) {
@@ -125,31 +121,35 @@ impl ScriptInstance {
         for callback in callbacks {
             if &callback.0 == event_slug {
                 // Call callback
-                //godot_print!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
+                //println!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
 
                 let options = CallFnOptions::new()
                     .eval_ast(false)
                     .rewind_scope(false);
-                let callback_result = rhai_engine.call_fn_with_options::<()>(
+                    //.bind_this_ptr(&mut value);
+
+                let callback_result = rhai_engine.call_fn_with_options::<Dynamic>(
                     options,
                     &mut self.scope,
                     &self.ast.as_ref().unwrap(),
                     &callback.1,
                     attrs.clone(),
                 );
-                //godot_print!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
-                if callback_result.is_err() {
-                    let m = format!(
-                        "[{}] Event {} callback \"{}\" error: {:?}",
-                        slug,
-                        event_slug,
-                        callback.1,
-                        callback_result.err()
-                    );
-                    let mut sc = self.scope_instance.borrow_mut();
-                    sc.console_send(m);
-                }
-                println!("EVENT \"{}\" fired for \"{}\"", event_slug, slug)
+
+                //println!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
+                let result = match callback_result {
+                    Ok(r) => r,
+                    Err(e) => {
+                        let m = format!(
+                            "[{}] Event {} callback \"{}\" error: {:?}",
+                            slug, event_slug, callback.1, e
+                        );
+                        let mut sc = self.scope_instance.borrow_mut();
+                        sc.console_send(m);
+                        Dynamic::from(())
+                    }
+                };
+                println!("EVENT \"{}\" fired for \"{}\" result: {:?}", event_slug, slug, result);
             }
         }
     }
