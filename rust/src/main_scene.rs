@@ -1,9 +1,9 @@
+use crate::client_scripts::scripts_manager::ScriptsManager;
+use crate::console_handler::Console;
+use crate::console_handler::CONSOLE_CHANNEL;
 use godot::engine::Engine;
 use godot::prelude::*;
 use rhai::Dynamic;
-
-use crate::client_scripts::scripts_manager::ScriptsManager;
-use crate::console_handler::Console;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -15,8 +15,7 @@ pub struct Main {
 
 #[godot_api]
 impl Main {
-    #[func]
-    fn handle_console_command(&mut self, new_text: GodotString) {
+    fn handle_console_command(&mut self, new_text: String) {
         godot_print!("console_command: {}", new_text);
         self.scripts_manager.run_event(
             "onConsoleCommand".to_string(),
@@ -42,18 +41,14 @@ impl NodeVirtual for Main {
             return;
         }
 
-        let console = self.base.try_get_node_as::<Console>(CONSOLE_PATH);
-        if console.is_some() {
-            console.unwrap().bind_mut().connect(
-                "submit_console_command".into(),
-                Callable::from_object_method(self.base.share(), "handle_console_command"),
-                0,
-            );
-        } else {
-            godot_error!("Console element not found");
-        }
-
         self.scripts_manager.rescan_scripts(&self.base);
         godot_print!("Main scene loaded;");
+    }
+
+    #[allow(unused_variables)]
+    fn process(&mut self, delta: f64) {
+        for message in CONSOLE_CHANNEL.1.try_iter() {
+            self.handle_console_command(message);
+        }
     }
 }

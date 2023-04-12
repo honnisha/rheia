@@ -1,7 +1,7 @@
 use super::instance_scope::ScriptInstanceScope;
 use super::scripts_manager::Manifest;
 use godot::prelude::*;
-use rhai::{Dynamic, Engine, ImmutableString, Scope, AST};
+use rhai::{Dynamic, Engine, ImmutableString, Scope, AST, CallFnOptions};
 use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
@@ -125,14 +125,19 @@ impl ScriptInstance {
         for callback in callbacks {
             if &callback.0 == event_slug {
                 // Call callback
-                godot_print!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
-                let callback_result = rhai_engine.call_fn::<()>(
+                //godot_print!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
+
+                let options = CallFnOptions::new()
+                    .eval_ast(false)
+                    .rewind_scope(false);
+                let callback_result = rhai_engine.call_fn_with_options::<()>(
+                    options,
                     &mut self.scope,
                     &self.ast.as_ref().unwrap(),
                     &callback.1,
                     attrs.clone(),
                 );
-                godot_print!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
+                //godot_print!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
                 if callback_result.is_err() {
                     let m = format!(
                         "[{}] Event {} callback \"{}\" error: {:?}",
@@ -144,7 +149,7 @@ impl ScriptInstance {
                     let mut sc = self.scope_instance.borrow_mut();
                     sc.console_send(m);
                 }
-                godot_print!("event {} fired for {}", event_slug, slug)
+                println!("EVENT \"{}\" fired for \"{}\"", event_slug, slug)
             }
         }
     }

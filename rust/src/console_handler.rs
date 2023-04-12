@@ -1,7 +1,9 @@
+use crossbeam_channel::{unbounded, Sender, Receiver};
 use godot::{
     engine::{LineEdit, RichTextLabel, TextureButton, MarginContainer, Engine},
     prelude::*,
 };
+use lazy_static::lazy_static;
 
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
@@ -16,14 +18,15 @@ pub struct Console {
     commands_history: Vec<String>,
 }
 
+lazy_static! {
+    pub static ref CONSOLE_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+}
+
 #[godot_api]
 impl Console {
     pub fn send(&mut self, message: String) {
         self.console_text.as_mut().unwrap().add_text(format!("\n{}", message).into());
     }
-
-    #[signal]
-    fn submit_console_command();
 
     #[signal]
     fn submit_toggle_console();
@@ -55,7 +58,7 @@ impl Console {
             self.commands_history.remove(index);
         }
         self.commands_history.push(command.clone());
-        self.base.emit_signal("submit_console_command".into(), &[command.to_variant()]);
+        CONSOLE_CHANNEL.0.send(command).unwrap();
     }
 
     #[func]

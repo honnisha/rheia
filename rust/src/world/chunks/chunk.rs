@@ -47,7 +47,7 @@ impl Chunk {
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
         m.set_mesh(new_mesh.upcast());
-        //m.create_trimesh_collision();
+        m.create_trimesh_collision();
         //m.create_convex_collision(false, false);
         self.loaded = true;
     }

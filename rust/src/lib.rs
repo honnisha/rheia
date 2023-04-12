@@ -1,12 +1,6 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
-
+use crossbeam_channel::{unbounded, Sender, Receiver};
 use godot::{prelude::*, private::class_macros::auto_register_classes};
-//use tokio::runtime::Runtime;
-//use tokio::time::{sleep, Duration};
+use lazy_static::lazy_static;
 mod client_scripts;
 mod console_handler;
 mod controller;
@@ -24,12 +18,9 @@ unsafe impl ExtensionLibrary for HonnyCraft {
     }
 }
 
-//lazy_static! {
-//    pub static ref RUNTIME: Mutex<Runtime> = Mutex::new(tokio::runtime::Builder::new_multi_thread()
-//        .enable_all()
-//        .build()
-//        .unwrap());
-//}
+lazy_static! {
+    pub static ref CHANNEL: (Sender<i32>, Receiver<i32>) = unbounded();
+}
 
 struct DefaultLayer;
 
