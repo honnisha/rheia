@@ -9,20 +9,20 @@ pub mod main_api {
 
     #[rhai_fn(pure)]
     pub fn register_event(main: &mut Main, event_slug: String, callback: FnPtr) {
-        let add_result = main
-            .borrow_mut()
-            .add_callback(event_slug.clone(), &callback);
+        let add_result = main.borrow_mut().add_callback(event_slug.clone(), &callback);
         if add_result.is_err() {
-            console(
-                main,
-                format!("register_event error: {:?}", add_result.err().unwrap()),
-            );
+            console(main, format!("register_event error: {:?}", add_result.err().unwrap()));
             return;
         }
-        console(
-            main,
-            format!("Event registered for \"{}\": {}", event_slug, callback),
-        );
+    }
+
+    #[rhai_fn(pure)]
+    pub fn register_command(main: &mut Main, callback: FnPtr, command_info: Dynamic) {
+        let add_result = main.borrow_mut().add_command(&callback, command_info);
+        if add_result.is_err() {
+            console(main, format!("register_command error: {:?}", add_result.err().unwrap()));
+            return;
+        }
     }
 
     #[rhai_fn(pure)]

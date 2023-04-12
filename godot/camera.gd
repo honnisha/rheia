@@ -69,7 +69,6 @@ func _input(event):
 func _ready():
 	var console = get_parent().get_parent().get_node("GUIControl/MarginContainer/ConsoleContainer")
 	console.submit_toggle_console.connect(_toggle_controller)
-	print_debug("ConsoleContainer signal submit_toggle_console signed")
 
 func _toggle_controller(console_state):
 	active = not console_state

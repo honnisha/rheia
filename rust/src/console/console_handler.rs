@@ -19,12 +19,18 @@ pub struct Console {
 }
 
 lazy_static! {
-    pub static ref CONSOLE_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    pub static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
 }
 
 #[godot_api]
 impl Console {
-    pub fn send(&mut self, message: String) {
+    pub fn send_message(message: String) {
+        godot_print!("{}", message);
+        CONSOLE_INPUT_CHANNEL.0.send(message).unwrap();
+    }
+
+    fn append_text(&mut self, message: String) {
         self.console_text.as_mut().unwrap().add_text(format!("\n{}", message).into());
     }
 
@@ -58,7 +64,7 @@ impl Console {
             self.commands_history.remove(index);
         }
         self.commands_history.push(command.clone());
-        CONSOLE_CHANNEL.0.send(command).unwrap();
+        CONSOLE_OUTPUT_CHANNEL.0.send(command).unwrap();
     }
 
     #[func]
@@ -153,6 +159,10 @@ impl NodeVirtual for Console {
     fn process(&mut self, delta: f64) {
         if Engine::singleton().is_editor_hint() {
             return;
+        }
+
+        for message in CONSOLE_INPUT_CHANNEL.1.try_iter() {
+            self.append_text(message);
         }
 
         let input = Input::singleton();

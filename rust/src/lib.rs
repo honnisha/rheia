@@ -2,11 +2,12 @@ use crossbeam_channel::{unbounded, Sender, Receiver};
 use godot::{prelude::*, private::class_macros::auto_register_classes};
 use lazy_static::lazy_static;
 mod client_scripts;
-mod console_handler;
 mod controller;
 mod main_scene;
 mod utils;
 mod world;
+mod events;
+mod console;
 
 struct HonnyCraft;
 

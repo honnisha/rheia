@@ -6,6 +6,8 @@ use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 
+pub type RcScopeInstance = Rc<RefCell<ScriptInstanceScope>>;
+
 pub struct ScriptInstance {
     slug: String,
     title: String,
@@ -14,12 +16,16 @@ pub struct ScriptInstance {
     source: Option<String>,
     ast: Option<AST>,
     scope: Scope<'static>,
-    scope_instance: Rc<RefCell<ScriptInstanceScope>>,
+    scope_instance: RcScopeInstance,
 }
 
 impl ScriptInstance {
-    pub fn from_manifest(manifest: &Manifest, source: String, main_base: &Base<Node>) -> Self {
-        let shared_controller = ScriptInstanceScope::new(manifest.slug.clone(), main_base);
+    pub fn get_scope_instance(&self) -> &RcScopeInstance {
+        &self.scope_instance
+    }
+
+    pub fn from_manifest(manifest: &Manifest, source: String) -> Self {
+        let shared_controller = ScriptInstanceScope::new(manifest.slug.clone());
 
         let mut script_instance = ScriptInstance {
             slug: manifest.slug.clone(),
@@ -109,49 +115,38 @@ impl ScriptInstance {
         Ok(())
     }
 
-    pub fn run_event(&mut self, rhai_engine: &Engine, event_slug: &String, attrs: &Vec<Dynamic>) {
-        let callbacks: Vec<(String, String)>;
-        let slug: String;
-        let si = self.scope_instance.clone();
-        {
-            callbacks = si.borrow().callbacks.clone();
-            slug = si.borrow().get_slug().clone();
-        }
+    pub fn run_fn(
+        &mut self,
+        rhai_engine: &Engine,
+        fn_name: &String,
+        attrs: &Vec<Dynamic>,
+        bind: &mut Dynamic,
+    ) -> Dynamic {
+        let slug = self.scope_instance.borrow().get_slug().clone();
 
-        for callback in callbacks {
-            if &callback.0 == event_slug {
-                // Call callback
-                //println!("CALL_FN event_slug:{} callback:{:?}", event_slug, callback);
+        let options = CallFnOptions::new()
+            .eval_ast(false)
+            .rewind_scope(true)
+            .bind_this_ptr(bind);
 
-                let options = CallFnOptions::new()
-                    .eval_ast(false)
-                    .rewind_scope(false);
-                    //.bind_this_ptr(&mut value);
+        let callback_result = rhai_engine.call_fn_with_options::<Dynamic>(
+            options,
+            &mut self.scope,
+            &self.ast.as_ref().unwrap(),
+            &fn_name,
+            attrs.clone(),
+        );
 
-                let callback_result = rhai_engine.call_fn_with_options::<Dynamic>(
-                    options,
-                    &mut self.scope,
-                    &self.ast.as_ref().unwrap(),
-                    &callback.1,
-                    attrs.clone(),
-                );
-
-                //println!("event_slug:{} callback:{:?} callback_result:{:?}", event_slug, callback, callback_result);
-                let result = match callback_result {
-                    Ok(r) => r,
-                    Err(e) => {
-                        let m = format!(
-                            "[{}] Event {} callback \"{}\" error: {:?}",
-                            slug, event_slug, callback.1, e
-                        );
-                        let mut sc = self.scope_instance.borrow_mut();
-                        sc.console_send(m);
-                        Dynamic::from(())
-                    }
-                };
-                println!("EVENT \"{}\" fired for \"{}\" result: {:?}", event_slug, slug, result);
+        let result = match callback_result {
+            Ok(r) => r,
+            Err(e) => {
+                let m = format!("[{}] Function {} error: {:?}", slug, fn_name, e);
+                let mut sc = self.scope_instance.borrow_mut();
+                sc.console_send(m);
+                Dynamic::from(())
             }
-        }
+        };
+        result
     }
 }
 

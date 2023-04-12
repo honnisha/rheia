@@ -1,8 +1,7 @@
 use crate::client_scripts::scripts_manager::ScriptsManager;
-use crate::console_handler::CONSOLE_CHANNEL;
+use crate::console::console_handler::{CONSOLE_OUTPUT_CHANNEL, Console};
 use godot::engine::Engine;
 use godot::prelude::*;
-use rhai::Dynamic;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -14,16 +13,21 @@ pub struct Main {
 
 #[godot_api]
 impl Main {
-    fn handle_console_command(&mut self, new_text: String) {
-        godot_print!("console_command: {}", new_text);
-        self.scripts_manager.run_event(
-            "onConsoleCommand".to_string(),
-            vec![Dynamic::from(new_text.to_string())],
-        );
+    //self.scripts_manager.run_event(
+    //    "onConsoleCommand".to_string(),
+    //    vec![Dynamic::from(new_text.to_string())],
+    //);
+
+    fn handle_console_command(&mut self, command: String) {
+        if command.len() == 0 {
+            return;
+        }
+        let finded = self.scripts_manager.run_command(command.clone());
+        if !finded {
+            Console::send_message(format!("Command \"{}\" not found", command));
+        }
     }
 }
-
-pub const CONSOLE_PATH: &str = "GUIControl/MarginContainer/ConsoleContainer";
 
 #[godot_api]
 impl NodeVirtual for Main {
@@ -40,13 +44,13 @@ impl NodeVirtual for Main {
             return;
         }
 
-        self.scripts_manager.rescan_scripts(&self.base);
+        self.scripts_manager.rescan_scripts();
         godot_print!("Main scene loaded;");
     }
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
-        for message in CONSOLE_CHANNEL.1.try_iter() {
+        for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
             self.handle_console_command(message);
         }
     }
