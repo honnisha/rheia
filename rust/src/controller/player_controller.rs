@@ -67,9 +67,9 @@ impl NodeVirtual for PlayerController {
         }
     }
 
-    //#[allow(unused_variables)]
-    //fn input(&mut self, event: Gd<InputEvent>) {
-    //}
+    #[allow(unused_variables)]
+    fn input(&mut self, event: Gd<InputEvent>) {
+    }
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {

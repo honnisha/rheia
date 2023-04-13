@@ -1,3 +1,4 @@
+use clap::error::ErrorKind;
 use godot::prelude::*;
 use regex::Regex;
 use rhai::exported_module;
@@ -124,21 +125,31 @@ impl ScriptsManager {
         }
         let lead_command = command_sequence[0].clone();
 
-        let attrs = vec![Dynamic::from(command.to_string())];
-
-        println!("command_sequence: {:?}", command_sequence);
+        let attrs = vec![Dynamic::from(command_sequence.clone())];
 
         for (_, script) in self.scripts.iter_mut() {
 
             let option_fn = script.get_scope_instance().borrow().get_command(lead_command.to_string());
-            if let Some((fn_name, command)) = option_fn {
-                match command.try_get_matches_from(&command_sequence) {
-                    Ok(_e) => (),
+            if let Some((fn_name, mut command)) = option_fn {
+                match command.clone().try_get_matches_from(&command_sequence) {
+                    Ok(_a) => {
+                    },
                     Err(e) => {
-                        println!("Error command checker: {:?}", e);
+                        match e.kind() {
+                            ErrorKind::DisplayHelp | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
+                                let mut buf = Vec::new();
+                                command.write_help(&mut buf).unwrap();
+                                Console::send_message(String::from_utf8(buf).unwrap());
+                            },
+                            _ => {
+                                Console::send_message(format!("[color=#DE4747]{}[/color]", e.render().to_string()));
+                                println!("Error command checker: {:?}", e);
+                            },
+                        };
                         return true;
                     }
                 }
+
                 let bind = EmptyEvent {};
                 script.run_fn(&self.rhai_engine, &fn_name, &attrs, &mut to_dynamic(bind).unwrap());
                 return true;

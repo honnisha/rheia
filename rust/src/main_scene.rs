@@ -24,7 +24,7 @@ impl Main {
         }
         let finded = self.scripts_manager.run_command(command.clone());
         if !finded {
-            Console::send_message(format!("Command \"{}\" not found", command));
+            Console::send_message(format!("[color=#DE4747]Command \"{}\" not found[/color]", command));
         }
     }
 }

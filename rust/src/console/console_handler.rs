@@ -31,7 +31,8 @@ impl Console {
     }
 
     fn append_text(&mut self, message: String) {
-        self.console_text.as_mut().unwrap().add_text(format!("\n{}", message).into());
+        self.console_text.as_mut().unwrap().append_text(format!("\n{}", message).into());
+        self.scroll_to_bottom();
     }
 
     #[signal]

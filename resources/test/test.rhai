@@ -10,7 +10,7 @@ let test_command = #{
   subcommands: [
     #{
       name: "first",
-      short_flag: "f",
+      short_flag: 'f',
       args: [
         #{
           name: "test arg",

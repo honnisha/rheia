@@ -71,7 +71,7 @@ impl ScriptInstanceScope {
             }
         };
         let fn_name = callback.fn_name().to_string();
-        self.commands.insert(fn_name, info.get_command());
+        self.commands.insert(fn_name, info.eval());
         return Ok(());
     }
 
@@ -79,7 +79,7 @@ impl ScriptInstanceScope {
         &self.slug
     }
 
-    pub fn console_send(&mut self, message: String) {
-        Console::send_message(format!("[{}] {}", self.slug, message));
+    pub fn console_send(&self, message: String) {
+        Console::send_message(format!("[color=gray][{}][/color] {}", self.slug, message));
     }
 }

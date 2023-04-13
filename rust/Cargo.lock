@@ -1033,7 +1033,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -1042,7 +1042,7 @@ dependencies = [
 [[package]]
 name = "godot-bindings"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "godot4-prebuilt",
 ]
@@ -1050,7 +1050,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "godot-bindings",
  "heck",
@@ -1062,7 +1062,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "glam 0.22.0",
  "godot-codegen",
@@ -1072,7 +1072,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -1082,7 +1082,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#21401a115463c6f7da7cff97741785cf7dd2ff11"
+source = "git+https://github.com/godot-rust/gdext?branch=master#d63c0a9e2c96a7a4fb15fffac00bfc1b82724881"
 dependencies = [
  "proc-macro2",
  "quote",

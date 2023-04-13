@@ -122,8 +122,6 @@ impl ScriptInstance {
         attrs: &Vec<Dynamic>,
         bind: &mut Dynamic,
     ) -> Dynamic {
-        let slug = self.scope_instance.borrow().get_slug().clone();
-
         let options = CallFnOptions::new()
             .eval_ast(false)
             .rewind_scope(true)
@@ -140,9 +138,9 @@ impl ScriptInstance {
         let result = match callback_result {
             Ok(r) => r,
             Err(e) => {
-                let m = format!("[{}] Function {} error: {:?}", slug, fn_name, e);
-                let mut sc = self.scope_instance.borrow_mut();
-                sc.console_send(m);
+                self.scope_instance
+                    .borrow()
+                    .console_send(format!("Function {} error: {:?}", fn_name, e));
                 Dynamic::from(())
             }
         };
