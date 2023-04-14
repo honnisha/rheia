@@ -1,2 +1,2 @@
 .directory
-rust/target/*
+client/rust/target/*
