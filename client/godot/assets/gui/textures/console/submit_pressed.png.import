@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ddj8q30k51qjm"
-path="res://.godot/imported/submit_hovered.png-16028bbcde42f90435b1e5054bc61497.ctex"
+uid="uid://dopkig5y4obsw"
+path="res://.godot/imported/submit_pressed.png-531f4a6e70ead530efbdcdc7727fc3ae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/Chat/submit_hovered.png"
-dest_files=["res://.godot/imported/submit_hovered.png-16028bbcde42f90435b1e5054bc61497.ctex"]
+source_file="res://assets/gui/textures/console/submit_pressed.png"
+dest_files=["res://.godot/imported/submit_pressed.png-531f4a6e70ead530efbdcdc7727fc3ae.ctex"]
 
 [params]
 

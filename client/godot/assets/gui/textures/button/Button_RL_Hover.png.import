@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dopkig5y4obsw"
-path="res://.godot/imported/submit_pressed.png-0517aeeaea6a100b04b7e211848fe756.ctex"
+uid="uid://bu4c1ov8lhsk4"
+path="res://.godot/imported/Button_RL_Hover.png-1d2276de9be305f5db3b3c6f3760b22f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/Chat/submit_pressed.png"
-dest_files=["res://.godot/imported/submit_pressed.png-0517aeeaea6a100b04b7e211848fe756.ctex"]
+source_file="res://assets/gui/textures/button/Button_RL_Hover.png"
+dest_files=["res://.godot/imported/Button_RL_Hover.png-1d2276de9be305f5db3b3c6f3760b22f.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://di20s8qakcqg6"
-path="res://.godot/imported/submit.png-33a1981359a33d69b62f214783dc4a5d.ctex"
+uid="uid://c2ujts6nvss0c"
+path="res://.godot/imported/text_background.png-5d400a4a5d5f5d1184d4dc34556e3195.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/Chat/submit.png"
-dest_files=["res://.godot/imported/submit.png-33a1981359a33d69b62f214783dc4a5d.ctex"]
+source_file="res://assets/gui/textures/console/text_background.png"
+dest_files=["res://.godot/imported/text_background.png-5d400a4a5d5f5d1184d4dc34556e3195.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bs6mrn3vvg52b"
-path="res://.godot/imported/input_background.png-32e74785c704f6cfc8a677908a625d31.ctex"
+uid="uid://ddj8q30k51qjm"
+path="res://.godot/imported/submit_hovered.png-89910665e9ac5e800f2a5cd3c1298f9b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/Chat/input_background.png"
-dest_files=["res://.godot/imported/input_background.png-32e74785c704f6cfc8a677908a625d31.ctex"]
+source_file="res://assets/gui/textures/console/submit_hovered.png"
+dest_files=["res://.godot/imported/submit_hovered.png-89910665e9ac5e800f2a5cd3c1298f9b.ctex"]
 
 [params]
 

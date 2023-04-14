@@ -1,0 +1,137 @@
+[gd_scene load_steps=13 format=3 uid="uid://lrxo0w3ffsh"]
+
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_ocmc3"]
+[ext_resource type="Texture2D" uid="uid://c2ujts6nvss0c" path="res://assets/gui/textures/console/text_background.png" id="2_xrfbl"]
+[ext_resource type="FontFile" uid="uid://clhrph24nx6vo" path="res://assets/gui/fonts/hack/Hack-Regular.ttf" id="3_wkh3b"]
+[ext_resource type="FontFile" uid="uid://dxly1nwoo0j78" path="res://assets/gui/fonts/hack/Hack-Bold.ttf" id="4_cmxuq"]
+[ext_resource type="FontFile" uid="uid://b4ff0cugvpgrk" path="res://assets/gui/fonts/hack/Hack-Italic.ttf" id="5_ah55d"]
+[ext_resource type="FontFile" uid="uid://kv6t6keof778" path="res://assets/gui/fonts/hack/Hack-BoldItalic.ttf" id="6_ebake"]
+[ext_resource type="Texture2D" uid="uid://bs6mrn3vvg52b" path="res://assets/gui/textures/console/input_background.png" id="7_4or0o"]
+[ext_resource type="Texture2D" uid="uid://di20s8qakcqg6" path="res://assets/gui/textures/console/submit.png" id="8_dv6jn"]
+[ext_resource type="Texture2D" uid="uid://dopkig5y4obsw" path="res://assets/gui/textures/console/submit_pressed.png" id="9_toiqs"]
+[ext_resource type="Texture2D" uid="uid://ddj8q30k51qjm" path="res://assets/gui/textures/console/submit_hovered.png" id="10_ryaqt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dlnae"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p2vo5"]
+
+[node name="MarginContainer" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 400
+theme_override_constants/margin_bottom = 100
+
+[node name="ConsoleContainer" type="Console" parent="."]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ConsoleContainer"]
+layout_mode = 2
+theme = ExtResource("1_ocmc3")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ConsoleContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ConsoleBackground" type="TextureRect" parent="ConsoleContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_ocmc3")
+texture = ExtResource("2_xrfbl")
+
+[node name="MarginContainer" type="MarginContainer" parent="ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ConsoleText" type="RichTextLabel" parent="ConsoleContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer"]
+layout_mode = 2
+focus_mode = 2
+theme_override_fonts/normal_font = ExtResource("3_wkh3b")
+theme_override_fonts/bold_font = ExtResource("4_cmxuq")
+theme_override_fonts/italics_font = ExtResource("5_ah55d")
+theme_override_fonts/bold_italics_font = ExtResource("6_ebake")
+theme_override_fonts/mono_font = ExtResource("3_wkh3b")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
+theme_override_styles/focus = SubResource("StyleBoxEmpty_dlnae")
+bbcode_enabled = true
+autowrap_mode = 2
+selection_enabled = true
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="ConsoleContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_constants/separation = 5
+
+[node name="TextureRect" type="TextureRect" parent="ConsoleContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("7_4or0o")
+
+[node name="ConsoleInput" type="LineEdit" parent="ConsoleContainer/VBoxContainer/HBoxContainer2/TextureRect"]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+offset_left = 5.0
+offset_right = 629.0
+offset_bottom = 28.0
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("3_wkh3b")
+theme_override_font_sizes/font_size = 12
+theme_override_styles/focus = SubResource("StyleBoxEmpty_p2vo5")
+context_menu_enabled = false
+deselect_on_focus_loss_enabled = false
+flat = true
+caret_blink = true
+caret_force_displayed = true
+
+[node name="ConsoleButton" type="TextureButton" parent="ConsoleContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(1, 1)
+layout_direction = 1
+layout_mode = 2
+focus_mode = 0
+action_mode = 0
+texture_normal = ExtResource("8_dv6jn")
+texture_pressed = ExtResource("9_toiqs")
+texture_hover = ExtResource("10_ryaqt")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="ConsoleContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="ConsoleContainer/VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 10
+
+[node name="ConsoleSugestioins" type="RichTextLabel" parent="ConsoleContainer/VBoxContainer/HBoxContainer3/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_fonts/normal_font = ExtResource("3_wkh3b")
+theme_override_fonts/bold_font = ExtResource("4_cmxuq")
+theme_override_fonts/italics_font = ExtResource("5_ah55d")
+theme_override_fonts/bold_italics_font = ExtResource("6_ebake")
+theme_override_fonts/mono_font = ExtResource("3_wkh3b")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
