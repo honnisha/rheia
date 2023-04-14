@@ -46,8 +46,12 @@ impl Chunk {
 
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
+        let c = new_mesh.get_surface_count();
         m.set_mesh(new_mesh.upcast());
-        m.create_trimesh_collision();
+
+        if c > 0 {
+            m.create_trimesh_collision();
+        }
         //m.create_convex_collision(false, false);
         self.loaded = true;
     }

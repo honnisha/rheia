@@ -1,14 +1,14 @@
+use crate::{
+    utils::mesh::block_mesh::VoxelVisibility,
+    world::{
+        blocks::blocks_storage::BlockType,
+        chunks::chunk_info::{ChunkBordersShape, ChunkShape},
+    },
+};
 use ndshape::ConstShape;
 
-use crate::{
-    utils::mesh::{
-        block_mesh::VoxelVisibility,
-    },
-    world::{blocks::blocks_storage::BlockType, chunks::chunk_info::{ChunkShape, ChunkBordersShape}},
-};
-
 use super::{
-    chunk_info::{ChunkData, CHUNK_SIZE, ChunkDataBordered},
+    chunk_info::{ChunkData, ChunkDataBordered, CHUNK_SIZE},
     chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO},
 };
 
@@ -17,6 +17,8 @@ pub fn format_chunk_data_with_boundaries(
     chunk_data: &ChunkData,
     chunk_pos: &[i32; 3],
 ) -> ChunkDataBordered {
+    //let now = Instant::now();
+
     let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
 
     let mut has_any_mesh = false;
@@ -97,6 +99,7 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
+    //println!("format_chunk_data_with_boundaries {:?} data generated in {:.2?}", chunk_pos, now.elapsed());
     return b_chunk;
 }
 

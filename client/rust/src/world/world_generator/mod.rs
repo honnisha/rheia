@@ -1,11 +1,7 @@
+use crate::world::chunks::chunk_info::{ChunkData, ChunkShape};
+use crate::{world::blocks::blocks_storage::BlockType, world::chunks::block_info::BlockInfo};
 use bracket_noise::prelude::*;
 use ndshape::ConstShape;
-
-use crate::world::chunks::chunk_info::{ChunkData, ChunkShape};
-use crate::{
-    world::blocks::blocks_storage::BlockType,
-    world::chunks::block_info::BlockInfo,
-};
 
 use super::chunks::chunk_info::CHUNK_SIZE;
 
@@ -26,12 +22,13 @@ impl WorldGenerator {
         WorldGenerator { noise: noise }
     }
 
-    pub fn generate_chunk_data(&self, chunk_data: &mut ChunkData, chunk_position: &[i32; 3]) -> bool {
+    pub fn generate_chunk_data(&self, chunk_data: &mut ChunkData, chunk_pos: &[i32; 3]) -> bool {
+        //let now = Instant::now();
         let mut has_any_block = false;
         for x in 0_u32..(CHUNK_SIZE as u32) {
             for z in 0_u32..(CHUNK_SIZE as u32) {
-                let x_map = (x as f32 + (chunk_position[0] as f32 * CHUNK_SIZE as f32)) / 150.0;
-                let z_map = (z as f32 + (chunk_position[2] as f32 * CHUNK_SIZE as f32)) / 150.0;
+                let x_map = (x as f32 + (chunk_pos[0] as f32 * CHUNK_SIZE as f32)) / 150.0;
+                let z_map = (z as f32 + (chunk_pos[2] as f32 * CHUNK_SIZE as f32)) / 150.0;
                 let height = self.noise.get_noise(x_map, z_map) * 40_f32 + 20_f32;
 
                 //godot_print!("x{} z:{} height:{}", x, z, height);
@@ -45,7 +42,7 @@ impl WorldGenerator {
                         pos
                     );
 
-                    let y_global = y as f32 + (chunk_position[1] as f32 * CHUNK_SIZE as f32);
+                    let y_global = y as f32 + (chunk_pos[1] as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
                         has_any_block = true;
@@ -54,6 +51,7 @@ impl WorldGenerator {
                 }
             }
         }
+        //println!("Chunk {:?} data generated in {:.2?}", chunk_pos, now.elapsed());
         return has_any_block;
     }
 }
