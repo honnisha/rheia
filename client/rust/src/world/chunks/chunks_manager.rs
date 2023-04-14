@@ -3,6 +3,7 @@ use godot::{
     engine::{node::InternalMode, Material},
     prelude::*,
 };
+use ndshape::ConstShape;
 use spiral::ManhattanIterator;
 use std::sync::{Arc, RwLock};
 use std::{
@@ -26,14 +27,15 @@ use super::{
     block_info::BlockInfo,
     chunk::Chunk,
     chunk_data_formatter::{format_chunk_data_with_boundaries, get_boundaries_chunks},
-    chunk_info::ChunkInfo,
+    chunk_info::{ChunkInfo, ChunkShape, CHUNK_SIZE},
 };
 
 pub type ChunksInfoType = Arc<RwLock<HashMap<[i32; 3], ChunkInfo>>>;
 pub type ChunksInfoLockRead<'a> = RwLockReadGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
 pub type ChunksInfoLockWrite<'a> = RwLockWriteGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
 
-pub const WORLD_CHUNKS_HEIGHT: i32 = 16_i32;
+pub const WORLD_CHUNKS_FROM: i32 = 0_i32;
+pub const WORLD_CHUNKS_TO: i32 = 16_i32;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -60,8 +62,8 @@ impl ChunksManager {
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
         let chunks_distance = 12;
 
-        let chunk_x = ((camera_position.x as f32) / 16_f32) as i32;
-        let chunk_z = ((camera_position.z as f32) / 16_f32) as i32;
+        let chunk_x = ((camera_position.x as f32) / (CHUNK_SIZE as f32)) as i32;
+        let chunk_z = ((camera_position.z as f32) / (CHUNK_SIZE as f32)) as i32;
 
         let chunk_pos = Vector2::new(chunk_x as real, chunk_z as real);
 
@@ -69,7 +71,7 @@ impl ChunksManager {
 
         let iter = ManhattanIterator::new(chunk_x, chunk_z, chunks_distance);
         for (x, z) in iter {
-            for y in 0_i32..WORLD_CHUNKS_HEIGHT {
+            for y in WORLD_CHUNKS_FROM..WORLD_CHUNKS_TO {
                 let chunk_pos = [x, y, z].clone();
 
                 if self.chunks_godot_ids.contains_key(&chunk_pos) {
@@ -111,7 +113,7 @@ impl ChunksManager {
                         // Load chunks in border
                         let boundary = get_boundaries_chunks(&chunk_pos);
                         for (_axis, _value, pos) in boundary {
-                            if pos[1] < WORLD_CHUNKS_HEIGHT && pos[1] >= 0 {
+                            if pos[1] < WORLD_CHUNKS_TO && pos[1] >= WORLD_CHUNKS_FROM {
                                 if !ci_write.contains_key(&pos) {
                                     ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
                                 }
@@ -247,7 +249,7 @@ impl ChunksManager {
         ci_write: &mut ChunksInfoLockWrite,
         chunk_pos: &[i32; 3],
     ) -> bool {
-        let mut chunk_data = [BlockInfo::new(BlockType::Air); 4096];
+        let mut chunk_data = [BlockInfo::new(BlockType::Air); ChunkShape::SIZE as usize];
         let has_any_block = world_generator
             .read()
             .unwrap()

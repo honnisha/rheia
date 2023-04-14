@@ -6,13 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
-use crate::world::chunks::chunk_info::ChunkInfo;
-use crate::world::{
-    blocks::minecraft_types::block_type_from_minecraft_name,
-    chunks::{block_info::BlockInfo},
-};
-
-use super::mesh::mesh_generator::ChunkShape;
+use crate::world::chunks::chunk_info::{ChunkInfo, ChunkShape};
+use crate::world::{blocks::minecraft_types::block_type_from_minecraft_name, chunks::block_info::BlockInfo};
 
 // https://github.com/SpongePowered/Schematic-Specification
 

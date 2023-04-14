@@ -1,21 +1,29 @@
 use godot::prelude::Vector3;
-use ndshape::ConstShape;
+use ndshape::{ConstShape, ConstShape3u32};
 
 use super::block_info::BlockInfo;
-use crate::utils::mesh::mesh_generator::ChunkShape;
+use crate::{world::blocks::blocks_storage::BlockType};
+
+pub const CHUNK_SIZE: i32 = 16_i32;
+
+pub type ChunkShape = ConstShape3u32<16, 16, 16>;
+pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
+
+pub type ChunkData = [BlockInfo; ChunkShape::SIZE as usize];
+pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 
 pub struct ChunkInfo {
-    chunk_data: [BlockInfo; 4096],
+    chunk_data: ChunkData,
 }
 
 impl ChunkInfo {
-    pub fn new(chunk_data: [BlockInfo; 4096]) -> Self {
+    pub fn new(chunk_data: ChunkData) -> Self {
         ChunkInfo {
             chunk_data: chunk_data,
         }
     }
 
-    pub fn get_chunk_data(&self) -> &[BlockInfo; 4096] {
+    pub fn get_chunk_data(&self) -> &ChunkData {
         &self.chunk_data
     }
 
@@ -33,17 +41,17 @@ impl ChunkInfo {
     pub fn get_chunk_pos_from_coordinate(position: &[i32; 3]) -> Vector3 {
         // -1 because of chunk boundaries
         Vector3::new(
-            position[0] as f32 * 16.0 - 1_f32,
-            position[1] as f32 * 16.0 - 1_f32,
-            position[2] as f32 * 16.0 - 1_f32,
+            position[0] as f32 * CHUNK_SIZE as f32 - 1_f32,
+            position[1] as f32 * CHUNK_SIZE as f32 - 1_f32,
+            position[2] as f32 * CHUNK_SIZE as f32 - 1_f32,
         )
     }
 
     fn fix_chunk_loc_pos(p: i32) -> i32 {
         if p < 0 {
-            return (p + 1_i32) / 16_i32 + -1_i32;
+            return (p + 1_i32) / CHUNK_SIZE + -1_i32;
         }
-        return p / 16_i32;
+        return p / CHUNK_SIZE;
     }
     /// Return chunk position from global coordinate
     pub fn get_chunk_pos_by_global(p: &[i32; 3]) -> [i32; 3] {
@@ -56,9 +64,9 @@ impl ChunkInfo {
 
     fn fix_loc_pos(p: i32) -> u32 {
         if p < 0 {
-            return (15_i32 + ((p + 1_i32) % 16_i32)) as u32;
+            return ((CHUNK_SIZE - 1) + ((p + 1_i32) % CHUNK_SIZE)) as u32;
         }
-        return (p % 16_i32) as u32;
+        return (p % CHUNK_SIZE) as u32;
     }
     /// Return chunk local position
     /// by global coordinate

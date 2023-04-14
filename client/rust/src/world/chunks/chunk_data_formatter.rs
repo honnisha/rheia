@@ -3,25 +3,27 @@ use ndshape::ConstShape;
 use crate::{
     utils::mesh::{
         block_mesh::VoxelVisibility,
-        mesh_generator::{ChunkBordersShape, ChunkShape},
     },
-    world::blocks::blocks_storage::BlockType,
+    world::{blocks::blocks_storage::BlockType, chunks::chunk_info::{ChunkShape, ChunkBordersShape}},
 };
 
-use super::{block_info::BlockInfo, chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_HEIGHT}};
+use super::{
+    chunk_info::{ChunkData, CHUNK_SIZE, ChunkDataBordered},
+    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO},
+};
 
 pub fn format_chunk_data_with_boundaries(
     ci: &ChunksInfoLockRead,
-    chunk_data: &[BlockInfo; 4096],
+    chunk_data: &ChunkData,
     chunk_pos: &[i32; 3],
-) -> [BlockType; 5832] {
-    let mut b_chunk = [BlockType::Air; 5832];
+) -> ChunkDataBordered {
+    let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
 
     let mut has_any_mesh = false;
 
-    for x in 0_u32..16_u32 {
-        for y in 0_u32..16_u32 {
-            for z in 0_u32..16_u32 {
+    for x in 0_u32..(CHUNK_SIZE as u32) {
+        for y in 0_u32..(CHUNK_SIZE as u32) {
+            for z in 0_u32..(CHUNK_SIZE as u32) {
                 let i = ChunkShape::linearize([x, y, z]);
                 assert!(
                     i < ChunkShape::SIZE,
@@ -57,7 +59,7 @@ pub fn format_chunk_data_with_boundaries(
     for (axis, value, pos) in boundary {
         //godot_print!("load:{:?}", pos);
 
-        if pos[1] >= WORLD_CHUNKS_HEIGHT || pos[1] < 0 {
+        if pos[1] >= WORLD_CHUNKS_TO || pos[1] < WORLD_CHUNKS_FROM {
             continue;
         }
         let border_chunk_info = match ci.get(&pos) {
@@ -68,11 +70,11 @@ pub fn format_chunk_data_with_boundaries(
             }
         };
 
-        for i in 0_u32..16_u32 {
-            for j in 0_u32..16_u32 {
+        for i in 0_u32..(CHUNK_SIZE as u32) {
+            for j in 0_u32..(CHUNK_SIZE as u32) {
                 let (i_v, o_v) = match value {
-                    -1 => (0, 15),
-                    _ => (17, 0),
+                    -1 => (0, CHUNK_SIZE as u32 - 1),
+                    _ => (CHUNK_SIZE as u32 + 1, 0),
                 };
 
                 let (pos_inside, pos_outside) = match axis {

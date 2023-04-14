@@ -1,10 +1,9 @@
-[gd_scene load_steps=11 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=10 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="Script" path="res://camera.gd" id="1_jif2f"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://lrxo0w3ffsh" path="res://scenes/console.tscn" id="4_rvd0x"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
-[ext_resource type="PackedScene" uid="uid://dc00ydlsjrmtu" path="res://assets/gui/elements/button_node.tscn" id="5_hyd11"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pektk"]
 
@@ -66,9 +65,6 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="ConsoleContainer" parent="GUIControl" instance=ExtResource("4_rvd0x")]
-layout_mode = 1
-
-[node name="ButtonNode" parent="GUIControl" instance=ExtResource("5_hyd11")]
 layout_mode = 1
 
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
