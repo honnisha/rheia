@@ -46,6 +46,11 @@ impl NodeVirtual for Main {
 
         self.scripts_manager.rescan_scripts();
         godot_print!("Main scene loaded;");
+
+        let mut app = App::new();
+        loop {
+            app.update();
+        }
     }
 
     #[allow(unused_variables)]

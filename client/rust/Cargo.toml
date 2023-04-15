@@ -9,26 +9,43 @@ crate-type = ["cdylib"]
 
 [dependencies]
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master"}
+
 rand = "0.8"
+lazy_static = "1.4.0"
+regex = "1.7.3"
+spiral = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+
+# Network
+naia-hecs-client = { version = "0.20.0", features = [ "wbindgen", "transport_webrtc" ] }
+naia-shared = "0.20.0"
+
+# ECS
+hecs = "0.10.3"
 
 strum = "0.24.1"
 strum_macros = "0.24.3"
 
+# Miltithread heavy tasks
+rayon = "1.7"
+
+# Async channels
 crossbeam = "0.8.2"
 crossbeam-channel = "0.5"
-rayon = "1.7"
-send_wrapper = "0.6.0"
-lazy_static = "1.4.0"
 
+# Single thread links
+send_wrapper = "0.6.0"
+
+# Scripts
 rhai = { version = "1.13.0", features = ["internals", "serde"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
 
 # https://github.com/bonsairobo/block-mesh-rs/blob/main/Cargo.toml
 ilattice = "0.1"
 ndshape = "0.3"
 ndcopy = "0.3"
 
+# Noise
 bracket-lib = "~0.8"
 bracket-noise = "~0.8"
 bracket-random = "~0.8"
@@ -39,9 +56,4 @@ fastnbt = "2"
 
 image = "0.24.5"
 
-regex = "1.7.3"
-spiral = "0.1"
-
 clap = { version = "4.2.1", features = ["string"] }
-
-laminar = "0.5"

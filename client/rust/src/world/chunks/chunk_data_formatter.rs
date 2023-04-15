@@ -17,6 +17,7 @@ pub fn format_chunk_data_with_boundaries(
     chunk_data: &ChunkData,
     chunk_pos: &[i32; 3],
 ) -> ChunkDataBordered {
+    //use std::time::Instant;
     //let now = Instant::now();
 
     let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
@@ -99,7 +100,11 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
-    //println!("format_chunk_data_with_boundaries {:?} data generated in {:.2?}", chunk_pos, now.elapsed());
+    //println!(
+    //    "format_chunk_data_with_boundaries {:?} data generated in {:.2?}",
+    //    chunk_pos,
+    //    now.elapsed()
+    //);
     return b_chunk;
 }
 

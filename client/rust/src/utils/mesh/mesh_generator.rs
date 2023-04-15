@@ -16,7 +16,6 @@ use godot::{
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
 use ndshape::ConstShape;
-use std::time::Instant;
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -57,7 +56,7 @@ unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
 pub fn generate_chunk_geometry(texture_mapper: Arc<RwLock<TextureMapper>>, chunk_data: &ChunkDataBordered) -> Geometry {
-    let now = Instant::now();
+    //let now = Instant::now();
 
     let mut arrays: Array<Variant> = Array::new();
     let mut mesh_ist = ArrayMesh::new();
@@ -133,6 +132,6 @@ pub fn generate_chunk_geometry(texture_mapper: Arc<RwLock<TextureMapper>>, chunk
         Default::default(),
         Default::default(),
     );
-    println!("generate_chunk_geometry data generated in {:.2?}", now.elapsed());
+    //println!("generate_chunk_geometry data generated in {:.2?}", now.elapsed());
     Geometry { mesh_ist: mesh_ist }
 }
