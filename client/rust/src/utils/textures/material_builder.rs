@@ -1,11 +1,9 @@
 use godot::{
     engine::{
-        base_material_3d::{
-            AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam,
-        },
-        Image, ImageTexture, StandardMaterial3D, Engine,
+        base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
+        Engine, Image, ImageTexture, StandardMaterial3D, Texture2D,
     },
-    prelude::{godot_error, Gd, GodotString, PackedByteArray, StringName, ToVariant},
+    prelude::{godot_error, godot_print, try_load, Gd, GodotString, PackedByteArray, StringName, ToVariant},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
@@ -15,11 +13,7 @@ use crate::world::blocks::blocks_storage::BlockType;
 
 use super::texture_mapper::TextureMapper;
 
-fn load_image(
-    texture_mapper: &mut TextureMapper,
-    img: &mut RgbaImage,
-    texture_option: Option<&'static str>,
-) {
+fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_option: Option<&'static str>) {
     let texture = match texture_option {
         Some(t) => t,
         None => {
@@ -28,11 +22,11 @@ fn load_image(
     };
 
     let path = format!("res://assets/block/{}", texture);
-    //let image = match try_load::<Image>(&path) {
-    let image = match Image::load_from_file(GodotString::from(&path)) {
-        Some(t) => t,
+    let image = match try_load::<Texture2D>(&path) {
+        //let image = match Image::load_from_file(GodotString::from(&path)) {
+        Some(t) => t.get_image().unwrap(),
         None => {
-            godot_error!("Can't load texture \"{}\"; not found;", path);
+            godot_print!("Can't load texture \"{}\"; not found;", path);
             return;
         }
     };
@@ -74,8 +68,7 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     }
 
     let mut b: Vec<u8> = Vec::new();
-    img.write_to(&mut Cursor::new(&mut b), ImageFormat::Png)
-        .unwrap();
+    img.write_to(&mut Cursor::new(&mut b), ImageFormat::Png).unwrap();
 
     b.to_vec()
 }

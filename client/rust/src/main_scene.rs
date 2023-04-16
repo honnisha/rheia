@@ -1,5 +1,5 @@
-use std::net::{SocketAddr, UdpSocket};
-use std::time::{Duration, SystemTime};
+use std::net::UdpSocket;
+use std::time::{Instant, SystemTime};
 
 use crate::client_scripts::scripts_manager::ScriptsManager;
 use crate::console::console_handler::{Console, CONSOLE_OUTPUT_CHANNEL};
@@ -8,6 +8,7 @@ use godot::prelude::*;
 use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
 
 const PROTOCOL_ID: u64 = 7;
+const CHANNEL_ID: u8 = 0;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -15,6 +16,8 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     scripts_manager: ScriptsManager,
+    client: Option<RenetClient>,
+    last_updated: Instant,
 }
 
 #[godot_api]
@@ -41,6 +44,8 @@ impl NodeVirtual for Main {
         Main {
             base,
             scripts_manager: ScriptsManager::new(),
+            client: None,
+            last_updated: Instant::now(),
         }
     }
 
@@ -54,48 +59,50 @@ impl NodeVirtual for Main {
         godot_print!("Main scene loaded;");
 
         let ip_port = "127.0.0.1:14191";
-        let delta_time = Duration::from_millis(16);
         let server_addr = ip_port.clone().parse().unwrap();
+
         let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+
         let connection_config = RenetConnectionConfig::default();
 
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+
         let client_id = current_time.as_millis() as u64;
+
         let authentication = ClientAuthentication::Unsecure {
-            client_id,
             protocol_id: PROTOCOL_ID,
+            client_id,
             server_addr,
             user_data: None,
         };
-        let mut client = RenetClient::new(current_time, socket, connection_config, authentication).unwrap();
-        let channel_id = 0;
-
-        println!("Trying connect to {}", ip_port);
-
-        // Your gameplay loop
-        loop {
-            // Receive new messages and update client
-            client.update(delta_time).unwrap();
-
-            if client.is_connected() {
-                // Receive message from server
-                while let Some(message) = client.receive_message(channel_id) {
-                    // Handle received message
-                }
-
-                // Send message
-                client.send_message(channel_id, "client text".as_bytes().to_vec());
-            }
-
-            // Send packets to server
-            client.send_packets().unwrap();
-        }
+        let client = RenetClient::new(current_time, socket, connection_config, authentication).unwrap();
+        self.client = Some(client);
     }
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
         for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
             self.handle_console_command(message);
+        }
+
+        if let Some(client) = self.client.as_mut() {
+            // Receive new messages and update client
+            let now = Instant::now();
+            client.update(now - self.last_updated).unwrap();
+            self.last_updated = now;
+
+            if client.is_connected() {
+                // Receive message from server
+                while let Some(message) = client.receive_message(CHANNEL_ID) {
+                    // Handle received message
+                }
+
+                // Send message
+                client.send_message(CHANNEL_ID, "client text".as_bytes().to_vec());
+            }
+
+            // Send packets to server
+            client.send_packets().unwrap();
         }
     }
 }

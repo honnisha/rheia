@@ -1,7 +1,12 @@
-use std::{net::UdpSocket, time::{Duration, SystemTime}};
+use std::{
+    net::UdpSocket,
+    time::{Duration, Instant, SystemTime}, thread,
+};
 
 use clap::Parser;
-use renet::{RenetServer, ServerConfig, ServerAuthentication, generate_random_bytes, RenetConnectionConfig, ServerEvent};
+use renet::{
+    generate_random_bytes, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent,
+};
 
 const PROTOCOL_ID: u64 = 7;
 
@@ -24,12 +29,13 @@ fn main() {
 
     let ip_port = format!("{}:{}", args.ip, args.port);
 
-    let socket = UdpSocket::bind(ip_port.clone()).unwrap();
-    let server_addr = socket.local_addr().unwrap();
+    //let socket = UdpSocket::bind(ip_port.clone()).unwrap();
+    //let server_addr = socket.local_addr().unwrap();
+    let server_addr = ip_port.parse().unwrap();
+    let socket = UdpSocket::bind(server_addr).unwrap();
 
     let delta_time = Duration::from_millis(16);
-    let authentication = ServerAuthentication::Unsecure {};
-    let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, authentication);
+    let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let connection_config = RenetConnectionConfig::default();
     let mut server = RenetServer::new(current_time, server_config, connection_config, socket).unwrap();
@@ -37,10 +43,14 @@ fn main() {
 
     println!("Server started in {}", ip_port);
 
+    let mut last_updated = Instant::now();
+
     // Your gameplay loop
     loop {
         // Receive new messages and update clients
-        server.update(delta_time).unwrap();
+        let now = Instant::now();
+        server.update(now - last_updated).unwrap();
+        last_updated = now;
 
         // Check for client connections/disconnections
         while let Some(event) = server.get_event() {
@@ -70,5 +80,6 @@ fn main() {
 
         // Send packets to clients
         server.send_packets().unwrap();
+        thread::sleep(Duration::from_millis(50));
     }
 }
