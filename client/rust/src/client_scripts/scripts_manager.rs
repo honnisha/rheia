@@ -1,5 +1,4 @@
 use clap::error::ErrorKind;
-use godot::prelude::*;
 use regex::Regex;
 use rhai::exported_module;
 use rhai::serde::to_dynamic;

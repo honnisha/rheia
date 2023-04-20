@@ -1,5 +1,4 @@
 use clap::Command;
-use godot::prelude::*;
 use rhai::serde::from_dynamic;
 use rhai::{Dynamic, FnPtr};
 use std::cell::RefCell;
