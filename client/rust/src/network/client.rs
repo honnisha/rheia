@@ -1,5 +1,5 @@
 use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
-use std::time::Instant;
+use std::time::Duration;
 use std::{net::UdpSocket, time::SystemTime};
 
 use crate::console::console_handler::Console;
@@ -30,22 +30,19 @@ fn get_network_client(ip_port: String) -> RenetClient {
 
 pub struct NetworkClient {
     client: RenetClient,
-    last_updated: Instant,
 }
 
 impl NetworkClient {
     pub fn init(ip_port: String) -> Self {
+        Console::send_message(format!("Start network client for {}", ip_port));
         NetworkClient {
             client: get_network_client(ip_port),
-            last_updated: Instant::now(),
         }
     }
 
     pub fn update(&mut self, delta: f64) {
         // Receive new messages and update client
-        let now = Instant::now();
-        self.client.update(now - self.last_updated).unwrap();
-        self.last_updated = now;
+        self.client.update(Duration::from_secs_f64(delta)).unwrap();
 
         if self.client.is_connected() {
             // Receive message from server

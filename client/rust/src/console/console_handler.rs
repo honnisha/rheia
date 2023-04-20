@@ -1,6 +1,6 @@
-use crossbeam_channel::{unbounded, Sender, Receiver};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use godot::{
-    engine::{LineEdit, RichTextLabel, TextureButton, MarginContainer, Engine},
+    engine::{Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
 };
 use lazy_static::lazy_static;
@@ -19,19 +19,26 @@ pub struct Console {
 }
 
 lazy_static! {
-    pub static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
 }
 
 #[godot_api]
 impl Console {
+    pub fn get_input_receiver() -> &'static Receiver<String> {
+        &CONSOLE_INPUT_CHANNEL.1
+    }
+
     pub fn send_message(message: String) {
         godot_print!("{}", message);
-        CONSOLE_INPUT_CHANNEL.0.send(message).unwrap();
+        CONSOLE_OUTPUT_CHANNEL.0.send(message).unwrap();
     }
 
     fn append_text(&mut self, message: String) {
-        self.console_text.as_mut().unwrap().append_text(format!("\n{}", message).into());
+        self.console_text
+            .as_mut()
+            .unwrap()
+            .append_text(format!("\n{}", message).into());
         self.scroll_to_bottom();
     }
 
@@ -50,7 +57,8 @@ impl Console {
             i.clear();
         }
 
-        self.base.emit_signal("submit_toggle_console".into(), &[self.active.to_variant()]);
+        self.base
+            .emit_signal("submit_toggle_console".into(), &[self.active.to_variant()]);
     }
 
     fn scroll_to_bottom(&mut self) {
@@ -65,7 +73,7 @@ impl Console {
             self.commands_history.remove(index);
         }
         self.commands_history.push(command.clone());
-        CONSOLE_OUTPUT_CHANNEL.0.send(command).unwrap();
+        CONSOLE_INPUT_CHANNEL.0.send(command).unwrap();
     }
 
     #[func]
@@ -105,14 +113,19 @@ impl NodeVirtual for Console {
     }
     fn ready(&mut self) {
         godot_print!("Start loading console;");
-        match self.base.try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText") {
+        match self.base.try_get_node_as::<RichTextLabel>(
+            "VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText",
+        ) {
             Some(e) => self.console_text = Some(e),
             _ => {
                 godot_error!("console_text element not found");
                 return;
             }
         };
-        match self.base.try_get_node_as::<LineEdit>("VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput") {
+        match self
+            .base
+            .try_get_node_as::<LineEdit>("VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput")
+        {
             Some(e) => {
                 self.console_input = Some(e);
                 //self.console_input.as_mut().unwrap().connect(
@@ -131,7 +144,10 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self.base.try_get_node_as::<TextureButton>("VBoxContainer/HBoxContainer2/ConsoleButton") {
+        match self
+            .base
+            .try_get_node_as::<TextureButton>("VBoxContainer/HBoxContainer2/ConsoleButton")
+        {
             Some(e) => {
                 self.console_button = Some(e);
                 self.console_button.as_mut().unwrap().connect(
@@ -139,13 +155,16 @@ impl NodeVirtual for Console {
                     Callable::from_object_method(self.base.share(), "button_pressed"),
                     0,
                 );
-            },
+            }
             _ => {
                 godot_error!("console_button element not found");
                 return;
             }
         };
-        match self.base.try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins") {
+        match self
+            .base
+            .try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins")
+        {
             Some(e) => self.console_sugestions = Some(e),
             _ => {
                 godot_error!("console_sugestions element not found");
@@ -162,7 +181,7 @@ impl NodeVirtual for Console {
             return;
         }
 
-        for message in CONSOLE_INPUT_CHANNEL.1.try_iter() {
+        for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
             self.append_text(message);
         }
 
@@ -176,11 +195,9 @@ impl NodeVirtual for Console {
 
         if input.is_action_just_pressed("ui_up".into(), false) {
             godot_print!("up");
-        }
-        else if input.is_action_just_pressed("ui_down".into(), false) {
+        } else if input.is_action_just_pressed("ui_down".into(), false) {
             godot_print!("down");
-        }
-        else if input.is_action_just_pressed("ui_focus_next".into(), false) {
+        } else if input.is_action_just_pressed("ui_focus_next".into(), false) {
             godot_print!("tab");
         }
     }

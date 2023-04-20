@@ -1,5 +1,5 @@
 use crate::client_scripts::scripts_manager::ScriptsManager;
-use crate::console::console_handler::{Console, CONSOLE_OUTPUT_CHANNEL};
+use crate::console::console_handler::{Console};
 use crate::network::client::NetworkClient;
 use godot::engine::Engine;
 use godot::prelude::*;
@@ -10,7 +10,7 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     scripts_manager: ScriptsManager,
-    client: Option<NetworkClient>,
+    client: NetworkClient,
 }
 
 #[godot_api]
@@ -34,10 +34,11 @@ impl Main {
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
+        let client = NetworkClient::init("127.0.0.1:14191".to_string());
         Main {
             base,
             scripts_manager: ScriptsManager::new(),
-            client: None,
+            client: client,
         }
     }
 
@@ -49,23 +50,17 @@ impl NodeVirtual for Main {
 
         self.scripts_manager.rescan_scripts();
         godot_print!("Main scene loaded;");
-
-        self.client = Some(NetworkClient::init("127.0.0.1:14191".to_string()));
     }
 
     fn process(&mut self, delta: f64) {
-        for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
+        for message in Console::get_input_receiver().try_iter() {
             self.handle_console_command(message);
         }
 
-        if let Some(client) = self.client.as_mut() {
-            client.update(delta);
-        }
+        self.client.update(delta);
     }
 
     fn exit_tree(&mut self) {
-        if let Some(client) = self.client.as_mut() {
-            client.disconnect();
-        }
+        self.client.disconnect();
     }
 }
