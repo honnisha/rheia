@@ -5,7 +5,7 @@ use clap::Parser;
 
 mod console;
 mod network;
-use rustyline::{DefaultEditor, ExternalPrinter, Result};
+use rustyline::{DefaultEditor, Config, history::FileHistory};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -22,7 +22,10 @@ struct MainCommand {
 fn main() {
     let args = MainCommand::parse();
 
-    let mut rl = DefaultEditor::new().unwrap();
+    let config = Config::builder().auto_add_history(true).build();
+    let history = FileHistory::with_config(config);
+
+    let mut rl = DefaultEditor::with_history(config, history).unwrap();
     let mut printer = rl.create_external_printer().unwrap();
 
     thread::spawn(move || loop {
