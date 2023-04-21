@@ -50,7 +50,6 @@ fn main() {
                 Console::input(input);
             }
             Err(ReadlineError::Interrupted) => {
-                println!("Interrupted");
                 server_active.store(false, Ordering::Relaxed);
                 break;
             }
@@ -70,6 +69,7 @@ fn main() {
             server.update();
         } else {
             server.stop();
+            break;
         }
     }
 }

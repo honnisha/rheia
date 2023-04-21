@@ -75,6 +75,6 @@ impl NetworkServer {
     }
 
     pub fn stop(&mut self) {
-        println!("Stop the server");
+        println!("Stopping the server");
     }
 }
