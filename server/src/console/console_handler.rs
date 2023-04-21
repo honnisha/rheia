@@ -1,5 +1,6 @@
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
+use rustyline::ExternalPrinter;
 
 pub struct Console {}
 
@@ -17,9 +18,9 @@ impl Console {
         CONSOLE_OUTPUT_CHANNEL.0.send(message).unwrap();
     }
 
-    pub fn update() {
+    pub fn update(printer: &mut dyn ExternalPrinter) {
         for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
-            println!("{}", message);
+            printer.print(message).unwrap();
         }
     }
 

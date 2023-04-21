@@ -1,10 +1,11 @@
-use std::{io::{Write, self, Stdout}, thread};
+use std::thread;
 
 use crate::{console::console_handler::Console, network::server::NetworkServer};
 use clap::Parser;
 
 mod console;
 mod network;
+use rustyline::{DefaultEditor, ExternalPrinter, Result};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -21,9 +22,11 @@ struct MainCommand {
 fn main() {
     let args = MainCommand::parse();
 
+    let mut rl = DefaultEditor::new().unwrap();
+    let mut printer = rl.create_external_printer().unwrap();
+
     thread::spawn(move || loop {
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
+        let input = rl.readline("").unwrap();
         Console::input(input);
     });
 
@@ -33,6 +36,6 @@ fn main() {
     let mut server = NetworkServer::init(ip_port);
     loop {
         server.update();
-        Console::update();
+        Console::update(&mut printer);
     }
 }
