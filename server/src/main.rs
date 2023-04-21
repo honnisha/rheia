@@ -5,7 +5,7 @@ use clap::Parser;
 
 mod console;
 mod network;
-use rustyline::{DefaultEditor, Config, history::FileHistory};
+use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -22,15 +22,28 @@ struct MainCommand {
 fn main() {
     let args = MainCommand::parse();
 
-    let config = Config::builder().auto_add_history(true).build();
+    let config = Config::builder()
+        .history_ignore_space(true)
+        .auto_add_history(true)
+        .build();
     let history = FileHistory::with_config(config);
 
     let mut rl = DefaultEditor::with_history(config, history).unwrap();
     let mut printer = rl.create_external_printer().unwrap();
 
     thread::spawn(move || loop {
-        let input = rl.readline("").unwrap();
-        Console::input(input);
+        let readline = rl.readline("");
+        match readline {
+            Ok(input) => {
+                Console::input(input);
+            }
+            Err(ReadlineError::Interrupted) => {
+                println!("Interrupted");
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+            }
+        }
     });
 
     println!("HonnyCraft Server version {}", VERSION);
