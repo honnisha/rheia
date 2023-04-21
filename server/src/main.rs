@@ -3,7 +3,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread,
+    thread, time::Duration,
 };
 
 use crate::{console::console_handler::Console, network::server::NetworkServer};
@@ -59,12 +59,16 @@ fn main() {
         }
     });
 
+    thread::spawn(move || loop {
+        Console::update(&mut printer);
+        thread::sleep(Duration::from_millis(50));
+    });
+
     println!("HonnyCraft Server version {}", VERSION);
     let ip_port = format!("{}:{}", args.ip, args.port);
 
     let mut server = NetworkServer::init(ip_port);
     loop {
-        Console::update(&mut printer);
         if SERVER_ACTIVE.load(Ordering::Relaxed) {
             server.update();
         } else {

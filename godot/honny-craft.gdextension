@@ -2,6 +2,6 @@
 entry_symbol = "gdext_rust_init"
 
 [libraries]
-linux.64 = "res://../rust/target/debug/libhonny_craft.so"
-macos.64 = "res://../rust/target/debug/libhonny_craft.dylib"
-windows.64 = "res://../rust/target/debug/libhonny_craft.dll"
+linux.64 = "res://../target/debug/libhonny_craft.so"
+macos.64 = "res://../target/debug/libhonny_craft.dylib"
+windows.64 = "res://../target/debug/libhonny_craft.dll"

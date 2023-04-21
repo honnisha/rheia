@@ -10,10 +10,6 @@ lazy_static! {
 }
 
 impl Console {
-    pub fn init() -> Self {
-        Console {}
-    }
-
     pub fn send_message(message: String) {
         CONSOLE_OUTPUT_CHANNEL.0.send(message).unwrap();
     }
