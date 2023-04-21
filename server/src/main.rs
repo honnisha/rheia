@@ -1,10 +1,17 @@
-use std::thread;
+use std::{
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    thread,
+};
 
 use crate::{console::console_handler::Console, network::server::NetworkServer};
 use clap::Parser;
 
 mod console;
 mod network;
+use lazy_static::lazy_static;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,6 +26,10 @@ struct MainCommand {
     port: String,
 }
 
+lazy_static! {
+    pub static ref SERVER_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
+}
+
 fn main() {
     let args = MainCommand::parse();
 
@@ -31,6 +42,7 @@ fn main() {
     let mut rl = DefaultEditor::with_history(config, history).unwrap();
     let mut printer = rl.create_external_printer().unwrap();
 
+    let server_active = SERVER_ACTIVE.clone();
     thread::spawn(move || loop {
         let readline = rl.readline("");
         match readline {
@@ -39,6 +51,8 @@ fn main() {
             }
             Err(ReadlineError::Interrupted) => {
                 println!("Interrupted");
+                server_active.store(false, Ordering::Relaxed);
+                break;
             }
             Err(e) => {
                 println!("Error: {:?}", e);
@@ -51,7 +65,11 @@ fn main() {
 
     let mut server = NetworkServer::init(ip_port);
     loop {
-        server.update();
         Console::update(&mut printer);
+        if SERVER_ACTIVE.load(Ordering::Relaxed) {
+            server.update();
+        } else {
+            server.stop();
+        }
     }
 }

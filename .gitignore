@@ -1,3 +1,4 @@
 .directory
 client/rust/target/*
 server/target/*
+target/*

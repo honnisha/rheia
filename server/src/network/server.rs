@@ -73,4 +73,8 @@ impl NetworkServer {
         self.server.send_packets().unwrap();
         thread::sleep(Duration::from_millis(50));
     }
+
+    pub fn stop(&mut self) {
+        println!("Stop the server");
+    }
 }
