@@ -114,46 +114,4 @@ impl ScriptsManager {
             }
         }
     }
-
-    #[allow(unused_must_use)]
-    pub fn run_command(&mut self, command: String) -> bool {
-        let re = Regex::new(REGEX_COMMAND).unwrap();
-        let command_sequence: Vec<String> = re.find_iter(&command).map(|e| e.as_str().to_string()).collect();
-        if command_sequence.len() == 0 {
-            return false;
-        }
-        let lead_command = command_sequence[0].clone();
-
-        let attrs = vec![Dynamic::from(command_sequence.clone())];
-
-        for (_, script) in self.scripts.iter_mut() {
-
-            let option_fn = script.get_scope_instance().borrow().get_command(lead_command.to_string());
-            if let Some((fn_name, mut command)) = option_fn {
-                match command.clone().try_get_matches_from(&command_sequence) {
-                    Ok(_a) => {
-                    },
-                    Err(e) => {
-                        match e.kind() {
-                            ErrorKind::DisplayHelp | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
-                                let mut buf = Vec::new();
-                                command.write_help(&mut buf).unwrap();
-                                Console::send_message(String::from_utf8(buf).unwrap());
-                            },
-                            _ => {
-                                Console::send_message(format!("[color=#DE4747]{}[/color]", e.render().to_string()));
-                                println!("Error command checker: {:?}", e);
-                            },
-                        };
-                        return true;
-                    }
-                }
-
-                let bind = EmptyEvent {};
-                script.run_fn(&self.rhai_engine, &fn_name, &attrs, &mut to_dynamic(bind).unwrap());
-                return true;
-            }
-        }
-        false
-    }
 }

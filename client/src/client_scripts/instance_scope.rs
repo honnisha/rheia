@@ -1,11 +1,7 @@
-use clap::Command;
-use rhai::serde::from_dynamic;
-use rhai::{Dynamic, FnPtr};
+use rhai::FnPtr;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::console::command_info::CommandInfo;
 use crate::console::console_handler::Console;
 
 pub struct ScriptInstanceScope {
@@ -13,9 +9,6 @@ pub struct ScriptInstanceScope {
 
     // Callback slug, function handler name
     callbacks: Vec<(String, String)>,
-
-    // Function handler name,
-    commands: HashMap<String, Command>,
 }
 
 pub type SharedScriptInstanceScope = Rc<RefCell<ScriptInstanceScope>>;
@@ -30,20 +23,10 @@ impl ScriptInstanceScope {
         None
     }
 
-    pub fn get_command(&self, lead_command: String) -> Option<(String, Command)> {
-        for (fn_name, command_info) in self.commands.iter() {
-            if command_info.get_name() == lead_command {
-                return Some((fn_name.clone(), command_info.clone()));
-            }
-        }
-        None
-    }
-
     pub fn new(slug: String) -> Self {
         ScriptInstanceScope {
             slug: slug,
             callbacks: Vec::new(),
-            commands: HashMap::new(),
         }
     }
 
@@ -59,18 +42,6 @@ impl ScriptInstanceScope {
         }
 
         self.callbacks.push((event_slug, callback.fn_name().to_string()));
-        return Ok(());
-    }
-
-    pub fn add_command(&mut self, callback: &FnPtr, command_info: Dynamic) -> Result<(), String> {
-        let info: CommandInfo = match from_dynamic(&command_info) {
-            Ok(ci) => ci,
-            Err(e) => {
-                return Err(format!("CommandInfo for:\"{}\" error: {}", callback, e,));
-            }
-        };
-        let fn_name = callback.fn_name().to_string();
-        self.commands.insert(fn_name, info.eval());
         return Ok(());
     }
 

@@ -17,15 +17,6 @@ pub mod main_api {
     }
 
     #[rhai_fn(pure)]
-    pub fn register_command(main: &mut Main, callback: FnPtr, command_info: Dynamic) {
-        let add_result = main.borrow_mut().add_command(&callback, command_info);
-        if add_result.is_err() {
-            console(main, format!("register_command error: {:?}", add_result.err().unwrap()));
-            return;
-        }
-    }
-
-    #[rhai_fn(pure)]
     pub fn get_slug(main: &mut Main) -> String {
         main.borrow().get_slug().clone()
     }
