@@ -1,5 +1,6 @@
-use common::network_messages::ClientLogin;
-use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
+use bincode::Options;
+use common::network_messages::{ClentMessages, ClientLogin, ServerMessages};
+use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig, DefaultChannel};
 use std::time::Duration;
 use std::{net::UdpSocket, time::SystemTime};
 
@@ -15,9 +16,7 @@ fn get_network_client(ip_port: String, login: ClientLogin) -> RenetClient {
 
     let connection_config = RenetConnectionConfig::default();
 
-    let current_time = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap();
+    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
 
     let client_id = current_time.as_millis() as u64;
 
@@ -50,13 +49,16 @@ impl NetworkClient {
 
         if self.client.is_connected() {
             while let Some(message) = self.client.receive_message(CHANNEL_ID) {
-                let data: ClentMessages = match bincode::options().deserialize(&message) {
+                let data: ServerMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
                         Console::send_message(format!("Can't read a message: {:?}", e));
                         continue;
-                    },
+                    }
                 };
+                match data {
+                    ServerMessages::ConsoleOutput { text } => Console::send_message(text),
+                }
             }
         }
         self.client.send_packets().unwrap();
@@ -65,5 +67,14 @@ impl NetworkClient {
     pub fn disconnect(&mut self) {
         self.client.disconnect();
         Console::send_message("Disconnected from the server".to_string());
+    }
+
+    pub fn send_console_command(&mut self, command: String) {
+        match bincode::options().serialize(&ClentMessages::ConsoleCommand { command }) {
+            Ok(message) => self.client.send_message(DefaultChannel::Reliable, message),
+            Err(e) => {
+                Console::send_message(format!("Error console command send: {:?}", e));
+            }
+        }
     }
 }

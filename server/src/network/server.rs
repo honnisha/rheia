@@ -1,9 +1,6 @@
 use bincode::Options;
-use common::network_messages::{ClentMessages, ClientLogin, ServerMessages};
-use renet::{
-    DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig,
-    ServerEvent,
-};
+use common::network_messages::{ClentMessages, ClientLogin};
+use renet::{DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use std::{
     collections::HashMap,
     net::UdpSocket,
@@ -21,11 +18,8 @@ fn get_network_server(ip_port: String) -> RenetServer {
     let server_addr = ip_port.parse().unwrap();
     let socket = UdpSocket::bind(server_addr).unwrap();
 
-    let server_config =
-        ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
-    let current_time = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap();
+    let server_config = ServerConfig::new(64, PROTOCOL_ID, server_addr, ServerAuthentication::Unsecure);
+    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let connection_config = RenetConnectionConfig::default();
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
@@ -62,26 +56,17 @@ impl NetworkServer {
                 ServerEvent::ClientConnected(client_id, user_data) => {
                     let login = ClientLogin::from_user_data(&user_data).0;
                     self.logins.insert(client_id, login);
-                    Console::send_message(format!(
-                        "Client \"{}\" connected",
-                        self.get_login(client_id)
-                    ));
+                    Console::send_message(format!("Client \"{}\" connected", self.get_login(client_id)));
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
-                    Console::send_message(format!(
-                        "Client \"{}\" disconnected",
-                        self.get_login(client_id)
-                    ));
+                    Console::send_message(format!("Client \"{}\" disconnected", self.get_login(client_id)));
                 }
             }
         }
 
         for client_id in self.server.clients_id().into_iter() {
-            while let Some(message) = self
-                .server
-                .receive_message(client_id, DefaultChannel::Reliable)
-            {
-                let data: ServerMessages = match bincode::options().deserialize(&message) {
+            while let Some(message) = self.server.receive_message(client_id, DefaultChannel::Reliable) {
+                let data: ClentMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
                         Console::send_message(format!("Can't read a message: {:?}", e));
@@ -89,12 +74,8 @@ impl NetworkServer {
                     }
                 };
                 match data {
-                    ServerMessages::ConsoleCommand { command } => {
-                        Console::send_message(format!(
-                            "Console sended {}: {}",
-                            self.get_login(client_id),
-                            command
-                        ));
+                    ClentMessages::ConsoleCommand { command } => {
+                        Console::send_message(format!("Console sended {}: {}", self.get_login(client_id), command));
                     }
                 }
             }

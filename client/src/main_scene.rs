@@ -27,11 +27,10 @@ impl Main {
             return;
         }
         let finded = self.scripts_manager.run_command(command.clone());
-        if !finded {
-            Console::send_message(format!(
-                "[color=#DE4747]Command \"{}\" not found[/color]",
-                command
-            ));
+        if finded { return; }
+
+        if let Some(client) = self.client.as_mut() {
+            client.send_console_command(command);
         }
     }
 }
