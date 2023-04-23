@@ -2,10 +2,13 @@ use renet::NETCODE_USER_DATA_BYTES;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum NetworkMessages {
-    ClientConnected { client_id: u64, username: String },
-    ClientDisconnected { client_id: u64 },
+pub enum ClentMessages {
     ConsoleCommand { command: String },
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ServerMessages {
+    ConsoleOutput { text: String },
 }
 
 // Helper struct to pass an username in user data inside the ConnectToken

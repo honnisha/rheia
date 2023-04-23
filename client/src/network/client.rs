@@ -44,23 +44,21 @@ impl NetworkClient {
     }
 
     pub fn update(&mut self, delta: f64) {
-        // Receive new messages and update client
         if let Err(e) = self.client.update(Duration::from_secs_f64(delta)) {
             panic!("Connection error: {}", e);
         }
 
         if self.client.is_connected() {
-            // Receive message from server
             while let Some(message) = self.client.receive_message(CHANNEL_ID) {
-                // Handle received message
+                let data: ClentMessages = match bincode::options().deserialize(&message) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        Console::send_message(format!("Can't read a message: {:?}", e));
+                        continue;
+                    },
+                };
             }
-
-            // Send message
-            self.client
-                .send_message(CHANNEL_ID, "client text".as_bytes().to_vec());
         }
-
-        // Send packets to server
         self.client.send_packets().unwrap();
     }
 
