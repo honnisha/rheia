@@ -3,7 +3,8 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread, time::Duration,
+    thread,
+    time::Duration,
 };
 
 use crate::{console::console_handler::Console, network::server::NetworkServer};

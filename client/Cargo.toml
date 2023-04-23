@@ -8,6 +8,8 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
+common = { path = "../common" }
+
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master"}
 
 rand = "0.8"

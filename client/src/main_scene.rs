@@ -1,8 +1,10 @@
 use crate::client_scripts::scripts_manager::ScriptsManager;
-use crate::console::console_handler::{Console};
+use crate::console::console_handler::Console;
 use crate::network::client::NetworkClient;
 use godot::engine::Engine;
 use godot::prelude::*;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -26,7 +28,10 @@ impl Main {
         }
         let finded = self.scripts_manager.run_command(command.clone());
         if !finded {
-            Console::send_message(format!("[color=#DE4747]Command \"{}\" not found[/color]", command));
+            Console::send_message(format!(
+                "[color=#DE4747]Command \"{}\" not found[/color]",
+                command
+            ));
         }
     }
 }
@@ -42,7 +47,7 @@ impl NodeVirtual for Main {
     }
 
     fn ready(&mut self) {
-        godot_print!("Start loading main scene;");
+        godot_print!("Start loading main scene; Version: {}", VERSION);
         if Engine::singleton().is_editor_hint() {
             return;
         }
@@ -50,7 +55,10 @@ impl NodeVirtual for Main {
         self.scripts_manager.rescan_scripts();
         godot_print!("Main scene loaded;");
 
-        self.client = Some(NetworkClient::init("127.0.0.1:14191".to_string()));
+        self.client = Some(NetworkClient::init(
+            "127.0.0.1:14191".to_string(),
+            "TestUser".to_string(),
+        ));
     }
 
     fn process(&mut self, delta: f64) {
@@ -58,13 +66,13 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        if let Some(mut client) = self.client.as_mut() {
+        if let Some(client) = self.client.as_mut() {
             client.update(delta);
         }
     }
 
     fn exit_tree(&mut self) {
-        if let Some(mut client) = self.client.as_mut() {
+        if let Some(client) = self.client.as_mut() {
             client.disconnect();
         }
     }

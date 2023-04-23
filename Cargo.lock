@@ -495,6 +495,10 @@ checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
 [[package]]
 name = "common"
 version = "0.1.0"
+dependencies = [
+ "renet",
+ "serde",
+]
 
 [[package]]
 name = "console_error_panic_hook"
@@ -1327,6 +1331,7 @@ dependencies = [
  "bracket-noise",
  "bracket-random",
  "clap",
+ "common",
  "crossbeam",
  "crossbeam-channel",
  "fastnbt",
@@ -1355,6 +1360,7 @@ dependencies = [
 name = "honny-craft-server"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "bracket-lib",
  "bracket-noise",
  "bracket-random",
