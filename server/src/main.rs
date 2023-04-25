@@ -1,3 +1,10 @@
+use crate::{
+    console::console_handler::{Console, ConsoleHandler},
+    network::server::NetworkServer, client_resources::resources_manager::ResourceManager,
+};
+use clap::Parser;
+use lazy_static::lazy_static;
+use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor};
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -7,13 +14,9 @@ use std::{
     time::Duration,
 };
 
-use crate::{console::console_handler::{Console, ConsoleHandler}, network::server::NetworkServer};
-use clap::Parser;
-
+mod client_resources;
 mod console;
 mod network;
-use lazy_static::lazy_static;
-use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -31,12 +34,12 @@ pub type ConsoleHandlerRef = Arc<Mutex<ConsoleHandler>>;
 
 lazy_static! {
     pub static ref SERVER_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
-
     pub static ref CONSOLE_HANDLER: ConsoleHandlerRef = Arc::new(Mutex::new(ConsoleHandler::init()));
 }
 
 fn main() {
     let args = MainCommand::parse();
+    let mut resource_manager = ResourceManager::new();
 
     let config = Config::builder()
         .history_ignore_space(true)
@@ -72,10 +75,12 @@ fn main() {
         thread::sleep(Duration::from_millis(50));
     });
 
-    println!("HonnyCraft Server version {}", VERSION);
+    Console::send_message(format!("HonnyCraft Server version {}", VERSION));
     let ip_port = format!("{}:{}", args.ip, args.port);
 
     let mut server = NetworkServer::init(ip_port);
+
+    resource_manager.rescan_scripts();
     loop {
         if SERVER_ACTIVE.load(Ordering::Relaxed) {
             server.update();

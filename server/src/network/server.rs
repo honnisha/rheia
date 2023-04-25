@@ -136,6 +136,6 @@ impl NetworkServer {
     }
 
     pub fn stop(&mut self) {
-        println!("Stopping the server");
+        Console::send_message("Stopping the server".to_string());
     }
 }

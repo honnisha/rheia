@@ -1455,6 +1455,7 @@ dependencies = [
  "renet",
  "rustyline",
  "serde",
+ "serde_yaml",
 ]
 
 [[package]]

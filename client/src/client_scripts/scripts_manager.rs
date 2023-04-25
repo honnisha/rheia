@@ -44,65 +44,6 @@ impl ScriptsManager {
         }
     }
 
-    pub fn rescan_scripts(&mut self) {
-        let mut path = env::current_dir().unwrap().clone();
-        path.pop();
-        path.push("resources");
-        let path_str = path.into_os_string().into_string().unwrap();
-        Console::send_message(format!("▼ Rescan resources folders inside: {}", path_str));
-
-        let paths = match fs::read_dir(path_str) {
-            Ok(p) => p,
-            Err(e) => {
-                Console::send_message(format!("Error: {}", e));
-                return ();
-            }
-        };
-
-        for path in paths {
-            let current_path = path.unwrap().path();
-
-            let manifest_path = format!("{}/manifest.yml", current_path.display());
-
-            let data = match fs::read_to_string(manifest_path.clone()) {
-                Ok(d) => d,
-                Err(e) => {
-                    Console::send_message(format!("□ error with manifest file {}: {}", manifest_path, e));
-                    continue;
-                }
-            };
-
-            let manifest_result: Result<Manifest, Error> = serde_yaml::from_str(&data);
-            let manifest = match manifest_result {
-                Ok(m) => m,
-                Err(e) => {
-                    Console::send_message(format!("□ error with parse manifest yaml {}: {}", manifest_path, e));
-                    continue;
-                }
-            };
-            self.load_manifest(manifest, current_path.display().to_string());
-        }
-    }
-
-    pub fn load_manifest(&mut self, manifest: Manifest, path: String) {
-        let mut script_instance = ScriptInstance::from_manifest(&manifest, path);
-        match script_instance.try_to_load(&mut self.rhai_engine, &manifest.client_scripts) {
-            Ok(()) => (),
-            Err(e) => {
-                Console::send_message(format!("□ Error with manifest: {}", e));
-                return ();
-            }
-        };
-
-        self.scripts.insert(manifest.slug, script_instance);
-        Console::send_message(format!(
-            "■ loaded resource \"{}\" author:\"{}\" version:{}",
-            manifest.title,
-            manifest.autor,
-            manifest.version
-        ));
-    }
-
     #[allow(unused_must_use)]
     pub fn run_event(&mut self, event_slug: String, attrs: Vec<Dynamic>) {
         for (_, script) in self.scripts.iter_mut() {
