@@ -12,6 +12,7 @@ pub struct ResourceManifest {
     pub client_scripts: Vec<String>,
 }
 
+/// scripts: short_path, code
 pub struct ResourceInstance {
     slug: String,
     title: String,
@@ -32,6 +33,9 @@ impl ResourceInstance {
     }
     pub fn get_version(&self) -> &String {
         &self.version
+    }
+    pub fn get_scripts_count(&self) -> usize {
+        self.scripts.len()
     }
 
     pub fn from_manifest(manifest: &ResourceManifest, path: PathBuf) -> Result<Self, String> {

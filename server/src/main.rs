@@ -58,7 +58,9 @@ fn main() {
         let readline = rl.readline("");
         match readline {
             Ok(input) => {
-                c.lock().unwrap().execute_command(&console, input);
+                if input.len() > 0 {
+                    c.lock().unwrap().execute_command(&console, input);
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 server_active.store(false, Ordering::Relaxed);
@@ -86,6 +88,9 @@ fn main() {
             server.update();
         } else {
             server.stop();
+
+            // Wait console
+            thread::sleep(Duration::from_millis(50));
             break;
         }
     }

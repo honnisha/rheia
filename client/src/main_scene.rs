@@ -1,4 +1,4 @@
-use crate::client_scripts::scripts_manager::ScriptsManager;
+use crate::client_scripts::resource_manager::ScriptsManager;
 use crate::console::console_handler::Console;
 use crate::network::client::NetworkClient;
 use godot::engine::Engine;
@@ -11,7 +11,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Main {
     #[base]
     base: Base<Node>,
-    scripts_manager: ScriptsManager,
+    resource_manager: ScriptsManager,
     client: Option<NetworkClient>,
 }
 
@@ -37,19 +37,17 @@ impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
         Main {
             base,
-            scripts_manager: ScriptsManager::new(),
+            resource_manager: ScriptsManager::new(),
             client: None,
         }
     }
 
     fn ready(&mut self) {
-        godot_print!("Start loading main scene; Version: {}", VERSION);
+        godot_print!("loading HonnyCraft version: {}", VERSION);
+
         if Engine::singleton().is_editor_hint() {
             return;
         }
-
-        self.scripts_manager.rescan_scripts();
-        godot_print!("Main scene loaded;");
 
         self.client = Some(NetworkClient::init(
             "127.0.0.1:14191".to_string(),

@@ -63,11 +63,12 @@ impl ResourceManager {
                 }
             };
             Console::send_message(format!(
-                "□ Resource \"{}\" loaded; Title: \"{}\" Version: \"{}\" Author: \"{}\"",
+                "□ Resource \"{}\"; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),
                 resource_instance.get_version(),
                 resource_instance.get_autor(),
+                resource_instance.get_scripts_count(),
             ));
             self.resources.insert(manifest.slug, resource_instance);
         }
