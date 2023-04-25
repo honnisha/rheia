@@ -1,5 +1,5 @@
 use bincode::Options;
-use common::network_messages::{ClentMessages, ClientLogin};
+use common::network_messages::{ClentMessages, ClientLogin, ServerMessages};
 use lazy_static::lazy_static;
 use renet::{DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use std::{
@@ -10,7 +10,7 @@ use std::{
 };
 
 use super::player::Player;
-use crate::console::console_handler::Console;
+use crate::{console::console_handler::Console, client_resources::resources_manager::ResourceManager};
 use crate::CONSOLE_HANDLER;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
@@ -67,7 +67,7 @@ impl NetworkServer {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, resource_manager: &ResourceManager) {
         // Receive new messages and update clients
         let now = Instant::now();
         self.server.update(now - self.last_updated).unwrap();
@@ -86,6 +86,7 @@ impl NetworkServer {
                         "Client \"{}\" connected",
                         self.get_player(client_id).get_login()
                     ));
+                    self.send_resources(client_id, resource_manager);
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
                     Console::send_message(format!(
@@ -119,13 +120,34 @@ impl NetworkServer {
                             .lock()
                             .unwrap()
                             .execute_command(self.get_player(client_id), command);
-                    }
+                    },
+                    ClentMessages::LoadResourceError { text } => {
+                        Console::send_message(format!("User \"{}\" get resource error: {}", self.get_player(client_id).get_login(), text));
+                    },
                 }
             }
         }
 
         self.server.send_packets().unwrap();
         thread::sleep(Duration::from_millis(50));
+    }
+
+    fn send_resources(&mut self, client_id: u64, resource_manager: &ResourceManager) {
+        for (slug, resource_instance) in resource_manager.get_resources().iter() {
+
+            let data = ServerMessages::LoadResource {
+                slug: slug.clone(),
+                scripts: resource_instance.get_client_scripts().clone(),
+            };
+            let message = match bincode::options().serialize(&data) {
+                Ok(m) => m,
+                Err(_) => {
+                    Console::send_message(format!("Error serialize resource {}", slug));
+                    continue;
+                },
+            };
+            self.server.send_message(client_id, DefaultChannel::Reliable, message);
+        }
     }
 
     pub fn send_console_message(client_id: u64, message: Vec<u8>) {

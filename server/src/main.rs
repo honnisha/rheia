@@ -85,7 +85,7 @@ fn main() {
     resource_manager.rescan_scripts();
     loop {
         if SERVER_ACTIVE.load(Ordering::Relaxed) {
-            server.update();
+            server.update(&resource_manager);
         } else {
             server.stop();
 

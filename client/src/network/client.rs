@@ -4,6 +4,7 @@ use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig, DefaultCha
 use std::time::Duration;
 use std::{net::UdpSocket, time::SystemTime};
 
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 
 pub const PROTOCOL_ID: u64 = 7;
@@ -31,24 +32,35 @@ fn get_network_client(ip_port: String, login: ClientLogin) -> RenetClient {
 }
 
 pub struct NetworkClient {
-    client: RenetClient,
+    client: Option<RenetClient>,
 }
 
 impl NetworkClient {
-    pub fn init(ip_port: String, login: String) -> Self {
-        Console::send_message(format!("Start network client for {}", ip_port));
+    pub fn init() -> Self {
         NetworkClient {
-            client: get_network_client(ip_port, ClientLogin(login)),
+            client: None,
         }
     }
 
-    pub fn update(&mut self, delta: f64) {
-        if let Err(e) = self.client.update(Duration::from_secs_f64(delta)) {
+    pub fn create_client(&mut self, ip_port: String, login: String) {
+        Console::send_message(format!("Start network client for {}", ip_port));
+        self.client = Some(get_network_client(ip_port, ClientLogin(login)));
+    }
+
+    fn get_client(&mut self) -> &mut RenetClient {
+        match self.client.as_mut() {
+            Some(c) => c,
+            None => panic!("client is not inited"),
+        }
+    }
+
+    pub fn update(&mut self, delta: f64, resource_manager: &mut ResourceManager) {
+        if let Err(e) = self.get_client().update(Duration::from_secs_f64(delta)) {
             panic!("Connection error: {}", e);
         }
 
-        if self.client.is_connected() {
-            while let Some(message) = self.client.receive_message(CHANNEL_ID) {
+        if self.get_client().is_connected() {
+            while let Some(message) = self.get_client().receive_message(CHANNEL_ID) {
                 let data: ServerMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
@@ -58,22 +70,46 @@ impl NetworkClient {
                 };
                 match data {
                     ServerMessages::ConsoleOutput { text } => Console::send_message(text),
+                    ServerMessages::ResourceCallbackTrigger { callback_name, args } => {
+                        resource_manager.run_event(&callback_name, &args);
+                    },
+                    ServerMessages::LoadResource { slug, scripts } => {
+                        match resource_manager.try_load(&slug, scripts) {
+                            Ok(()) => {
+                                Console::send_message(format!("Loaded resource \"{}\"", slug));
+                            },
+                            Err(e) => {
+                                Console::send_message(format!("Resource error: {}", e));
+                                self.send_resource_load_error(e);
+                            },
+                        }
+                    },
+
                 }
             }
         }
-        self.client.send_packets().unwrap();
+        self.get_client().send_packets().unwrap();
     }
 
     pub fn disconnect(&mut self) {
-        self.client.disconnect();
+        self.get_client().disconnect();
         Console::send_message("Disconnected from the server".to_string());
+    }
+
+    pub fn send_resource_load_error(&mut self, error: String) {
+        match bincode::options().serialize(&ClentMessages::LoadResourceError { text: error }) {
+            Ok(message) => self.get_client().send_message(DefaultChannel::Reliable, message),
+            Err(e) => {
+                Console::send_message(format!("Error serialize resource load error: {}", e));
+            }
+        }
     }
 
     pub fn send_console_command(&mut self, command: String) {
         match bincode::options().serialize(&ClentMessages::ConsoleCommand { command }) {
-            Ok(message) => self.client.send_message(DefaultChannel::Reliable, message),
+            Ok(message) => self.get_client().send_message(DefaultChannel::Reliable, message),
             Err(e) => {
-                Console::send_message(format!("Error console command send: {:?}", e));
+                Console::send_message(format!("Error console command send: {}", e));
             }
         }
     }

@@ -18,11 +18,14 @@ impl ScriptInstance {
 
     pub fn try_to_load(
         rhai_engine: &mut Engine,
-        slug: String,
+        slug: &String,
         source_file: String,
         code: String,
     ) -> Result<Self, String> {
         let mut scope = Scope::new();
+        let shared_controller = ScriptInstanceScope::new(slug.clone());
+        let scope_instance = Rc::new(RefCell::new(shared_controller));
+        scope.push_constant("Main", scope_instance.clone());
 
         let mut ast = match rhai_engine.compile(&code) {
             Ok(a) => a,
@@ -30,7 +33,7 @@ impl ScriptInstance {
                 return Err(format!("rhai \"{}\" syntax error: {}", source_file, e).into());
             }
         };
-        ast.set_source(ImmutableString::from(&slug));
+        ast.set_source(ImmutableString::from(slug));
         match rhai_engine.run_ast_with_scope(&mut scope, &ast) {
             Ok(()) => (),
             Err(e) => {
@@ -38,17 +41,11 @@ impl ScriptInstance {
             }
         };
 
-        let shared_controller = ScriptInstanceScope::new(slug.clone());
-        let script_instance = ScriptInstance {
+        Ok(ScriptInstance {
             ast: ast,
             scope: scope,
-            scope_instance: Rc::new(RefCell::new(shared_controller)),
-        };
-        script_instance
-            .scope
-            .push_constant("Main", script_instance.scope_instance.clone());
-
-        Ok(script_instance)
+            scope_instance: scope_instance,
+        })
     }
 
     pub fn run_fn(

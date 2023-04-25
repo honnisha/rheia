@@ -38,6 +38,10 @@ impl ResourceInstance {
         self.scripts.len()
     }
 
+    pub fn get_client_scripts(&self) -> &HashMap<String, String> {
+        &self.scripts
+    }
+
     pub fn from_manifest(manifest: &ResourceManifest, path: PathBuf) -> Result<Self, String> {
         let mut inst = ResourceInstance {
             slug: manifest.slug.clone(),

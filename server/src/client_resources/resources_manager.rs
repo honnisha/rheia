@@ -19,6 +19,10 @@ impl ResourceManager {
         }
     }
 
+    pub fn get_resources(&self) -> &HashMap<String, ResourceInstance> {
+        &self.resources
+    }
+
     pub fn rescan_scripts(&mut self) {
         let mut path = env::current_dir().unwrap().clone();
         path.push("resources");

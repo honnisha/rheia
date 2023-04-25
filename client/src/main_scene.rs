@@ -1,8 +1,11 @@
-use crate::client_scripts::resource_manager::ScriptsManager;
+use std::sync::{Arc, Mutex, MutexGuard};
+
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::network::client::NetworkClient;
 use godot::engine::Engine;
 use godot::prelude::*;
+use lazy_static::lazy_static;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -11,24 +14,24 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Main {
     #[base]
     base: Base<Node>,
-    resource_manager: ScriptsManager,
-    client: Option<NetworkClient>,
+    resource_manager: ResourceManager,
+}
+
+lazy_static! {
+    static ref NETWORK_CLIENT: Arc<Mutex<NetworkClient>> = Arc::new(Mutex::new(NetworkClient::init()));
 }
 
 #[godot_api]
 impl Main {
-    //self.scripts_manager.run_event(
-    //    "onConsoleCommand".to_string(),
-    //    vec![Dynamic::from(new_text.to_string())],
-    //);
-
     fn handle_console_command(&mut self, command: String) {
         if command.len() == 0 {
             return;
         }
-        if let Some(client) = self.client.as_mut() {
-            client.send_console_command(command);
-        }
+        Main::get_client().send_console_command(command);
+    }
+
+    pub fn get_client() -> MutexGuard<'static, NetworkClient> {
+        NETWORK_CLIENT.lock().unwrap()
     }
 }
 
@@ -37,22 +40,21 @@ impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
         Main {
             base,
-            resource_manager: ScriptsManager::new(),
-            client: None,
+            resource_manager: ResourceManager::new(),
         }
     }
 
     fn ready(&mut self) {
-        godot_print!("loading HonnyCraft version: {}", VERSION);
+        godot_print!("Loading HonnyCraft version: {}", VERSION);
 
         if Engine::singleton().is_editor_hint() {
             return;
         }
 
-        self.client = Some(NetworkClient::init(
+        NETWORK_CLIENT.lock().unwrap().create_client(
             "127.0.0.1:14191".to_string(),
             "TestUser".to_string(),
-        ));
+        );
     }
 
     fn process(&mut self, delta: f64) {
@@ -60,14 +62,10 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        if let Some(client) = self.client.as_mut() {
-            client.update(delta);
-        }
+        Main::get_client().update(delta, &mut self.resource_manager);
     }
 
     fn exit_tree(&mut self) {
-        if let Some(client) = self.client.as_mut() {
-            client.disconnect();
-        }
+        Main::get_client().disconnect();
     }
 }

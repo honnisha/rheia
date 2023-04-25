@@ -3,6 +3,9 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::ExternalPrinter;
 
+
+pub const _REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
+
 lazy_static! {
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();

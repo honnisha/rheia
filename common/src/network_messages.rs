@@ -1,14 +1,28 @@
+use std::collections::HashMap;
+
 use renet::NETCODE_USER_DATA_BYTES;
 use serde::{Deserialize, Serialize};
+use rhai::Dynamic;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ClentMessages {
     ConsoleCommand { command: String },
+    LoadResourceError { text: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessages {
-    ConsoleOutput { text: String },
+    ConsoleOutput {
+        text: String
+    },
+    ResourceCallbackTrigger {
+        callback_name: String,
+        args: Vec<Dynamic>,
+    },
+    LoadResource {
+        slug: String,
+        scripts: HashMap<String, String>
+    }
 }
 
 // Helper struct to pass an username in user data inside the ConnectToken
