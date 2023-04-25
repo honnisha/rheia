@@ -1,5 +1,6 @@
 use bincode::Options;
 use common::network_messages::{ClentMessages, ClientLogin};
+use lazy_static::lazy_static;
 use renet::{DefaultChannel, RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use std::{
     collections::HashMap,
@@ -8,13 +9,14 @@ use std::{
     time::{Duration, Instant, SystemTime},
 };
 
+use super::player::Player;
 use crate::console::console_handler::Console;
+use crate::CONSOLE_HANDLER;
+use crossbeam_channel::{unbounded, Receiver, Sender};
 
 const PROTOCOL_ID: u64 = 7;
 
 fn get_network_server(ip_port: String) -> RenetServer {
-    //let socket = UdpSocket::bind(ip_port.clone()).unwrap();
-    //let server_addr = socket.local_addr().unwrap();
     let server_addr = ip_port.parse().unwrap();
     let socket = UdpSocket::bind(server_addr).unwrap();
 
@@ -27,12 +29,33 @@ fn get_network_server(ip_port: String) -> RenetServer {
 pub struct NetworkServer {
     server: RenetServer,
     last_updated: Instant,
-    logins: HashMap<u64, String>,
+    players: HashMap<u64, Player>,
+}
+
+struct ConsoleOutput {
+    client_id: u64,
+    message: Vec<u8>,
+}
+
+impl ConsoleOutput {
+    pub fn init(client_id: u64, message: Vec<u8>) -> Self {
+        ConsoleOutput {
+            client_id: client_id,
+            message: message,
+        }
+    }
+}
+
+unsafe impl Send for ConsoleOutput {}
+unsafe impl Sync for ConsoleOutput {}
+
+lazy_static! {
+    static ref NETWORK_CONSOLE_OUTPUT: (Sender<ConsoleOutput>, Receiver<ConsoleOutput>) = unbounded();
 }
 
 impl NetworkServer {
-    fn get_login(&self, client_id: u64) -> &String {
-        &self.logins[&client_id]
+    fn get_player(&self, client_id: u64) -> &Player {
+        &self.players[&client_id]
     }
 
     pub fn init(ip_port: String) -> Self {
@@ -40,7 +63,7 @@ impl NetworkServer {
         NetworkServer {
             server: get_network_server(ip_port),
             last_updated: Instant::now(),
-            logins: HashMap::new(),
+            players: HashMap::new(),
         }
     }
 
@@ -55,13 +78,30 @@ impl NetworkServer {
             match event {
                 ServerEvent::ClientConnected(client_id, user_data) => {
                     let login = ClientLogin::from_user_data(&user_data).0;
-                    self.logins.insert(client_id, login);
-                    Console::send_message(format!("Client \"{}\" connected", self.get_login(client_id)));
+
+                    let player = Player::init(login, client_id.clone());
+                    self.players.insert(client_id, player);
+
+                    Console::send_message(format!(
+                        "Client \"{}\" connected",
+                        self.get_player(client_id).get_login()
+                    ));
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
-                    Console::send_message(format!("Client \"{}\" disconnected", self.get_login(client_id)));
+                    Console::send_message(format!(
+                        "Client \"{}\" disconnected",
+                        self.get_player(client_id).get_login()
+                    ));
                 }
             }
+        }
+
+        for console_output in NETWORK_CONSOLE_OUTPUT.1.try_iter() {
+            self.server.send_message(
+                console_output.client_id,
+                DefaultChannel::Reliable,
+                console_output.message,
+            );
         }
 
         for client_id in self.server.clients_id().into_iter() {
@@ -75,23 +115,24 @@ impl NetworkServer {
                 };
                 match data {
                     ClentMessages::ConsoleCommand { command } => {
-                        Console::send_message(format!("Console sended {}: {}", self.get_login(client_id), command));
+                        CONSOLE_HANDLER
+                            .lock()
+                            .unwrap()
+                            .execute_command(self.get_player(client_id), command);
                     }
                 }
             }
         }
 
-        // Send a text message for all clients
-        //self.server
-        //    .broadcast_message(DefaultChannel::Reliable, "server message".as_bytes().to_vec());
-
-        // Send message to only one client
-        //let client_id = ...;
-        //server.send_message(client_id, channel_id, "server message".as_bytes().to_vec());
-
-        // Send packets to clients
         self.server.send_packets().unwrap();
         thread::sleep(Duration::from_millis(50));
+    }
+
+    pub fn send_console_message(client_id: u64, message: Vec<u8>) {
+        NETWORK_CONSOLE_OUTPUT
+            .0
+            .send(ConsoleOutput::init(client_id, message))
+            .unwrap();
     }
 
     pub fn stop(&mut self) {

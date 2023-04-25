@@ -1,13 +1,13 @@
 use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc,
+        Arc, Mutex,
     },
     thread,
     time::Duration,
 };
 
-use crate::{console::console_handler::Console, network::server::NetworkServer};
+use crate::{console::console_handler::{Console, ConsoleHandler}, network::server::NetworkServer};
 use clap::Parser;
 
 mod console;
@@ -27,8 +27,12 @@ struct MainCommand {
     port: String,
 }
 
+pub type ConsoleHandlerRef = Arc<Mutex<ConsoleHandler>>;
+
 lazy_static! {
     pub static ref SERVER_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
+
+    pub static ref CONSOLE_HANDLER: ConsoleHandlerRef = Arc::new(Mutex::new(ConsoleHandler::init()));
 }
 
 fn main() {
@@ -44,11 +48,14 @@ fn main() {
     let mut printer = rl.create_external_printer().unwrap();
 
     let server_active = SERVER_ACTIVE.clone();
+    let c = CONSOLE_HANDLER.clone();
     thread::spawn(move || loop {
+        let console = Console::init();
+
         let readline = rl.readline("");
         match readline {
             Ok(input) => {
-                Console::input(input);
+                c.lock().unwrap().execute_command(&console, input);
             }
             Err(ReadlineError::Interrupted) => {
                 server_active.store(false, Ordering::Relaxed);
