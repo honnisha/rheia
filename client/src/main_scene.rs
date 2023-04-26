@@ -58,6 +58,10 @@ impl NodeVirtual for Main {
     }
 
     fn process(&mut self, delta: f64) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         for message in Console::get_input_receiver().try_iter() {
             self.handle_console_command(message);
         }
@@ -66,6 +70,10 @@ impl NodeVirtual for Main {
     }
 
     fn exit_tree(&mut self) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         Main::get_client().disconnect();
     }
 }

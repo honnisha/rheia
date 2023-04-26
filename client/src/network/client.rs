@@ -50,7 +50,7 @@ impl NetworkClient {
     fn get_client(&mut self) -> &mut RenetClient {
         match self.client.as_mut() {
             Some(c) => c,
-            None => panic!("client is not inited"),
+            None => panic!("client is not initialized"),
         }
     }
 
