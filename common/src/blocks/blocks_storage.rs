@@ -1,8 +1,6 @@
 use strum_macros::EnumIter;
 
-use crate::utils::mesh::block_mesh::VoxelVisibility;
-
-use super::block_type_info::BlockTypeInfo;
+use super::{block_type_info::BlockTypeInfo, voxel_visibility::VoxelVisibility};
 
 
 #[derive(Debug, Clone, Copy, Eq, EnumIter)]

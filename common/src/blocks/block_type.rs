@@ -1,8 +1,7 @@
-use crate::utils::mesh::block_mesh::{Voxel, VoxelVisibility};
-
 use super::{
     block_type_info::BlockTypeInfo,
     blocks_storage::{get_block_type_info, BlockType},
+    voxel_visibility::{Voxel, VoxelVisibility},
 };
 
 impl BlockType {

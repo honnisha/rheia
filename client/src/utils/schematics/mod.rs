@@ -1,3 +1,4 @@
+use common::blocks::block_info::BlockInfo;
 use fastnbt::{ByteArray, IntArray, Value};
 use flate2::read::GzDecoder;
 use ndshape::ConstShape;
@@ -7,7 +8,7 @@ use std::time::Instant;
 use std::{collections::HashMap, io::Read, path::PathBuf};
 
 use crate::world::chunks::chunk_info::{ChunkInfo, ChunkShape};
-use crate::world::{blocks::minecraft_types::block_type_from_minecraft_name, chunks::block_info::BlockInfo};
+use common::blocks::minecraft_types::block_type_from_minecraft_name;
 
 // https://github.com/SpongePowered/Schematic-Specification
 
@@ -187,8 +188,7 @@ mod tests {
 
     use fastnbt::Value;
 
-    use crate::world::blocks::blocks_storage::BlockType;
-    use crate::world::chunks::block_info::BlockInfo;
+    use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
 
     use super::{convert_schem_to_blockinfo, load_schem_data};
 

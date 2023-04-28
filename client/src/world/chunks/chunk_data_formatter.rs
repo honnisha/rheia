@@ -1,10 +1,5 @@
-use crate::{
-    utils::mesh::block_mesh::VoxelVisibility,
-    world::{
-        blocks::blocks_storage::BlockType,
-        chunks::chunk_info::{ChunkBordersShape, ChunkShape},
-    },
-};
+use crate::world::chunks::chunk_info::{ChunkBordersShape, ChunkShape};
+use common::blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility};
 use ndshape::ConstShape;
 
 use super::{

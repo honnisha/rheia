@@ -1,4 +1,5 @@
-use crate::world::blocks::{block_type_info::BlockTypeInfo, blocks_storage::BlockType};
+use super::{blocks_storage::BlockType, block_type_info::BlockTypeInfo};
+
 
 #[derive(Debug, Copy)]
 pub struct BlockInfo {

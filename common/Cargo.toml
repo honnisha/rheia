@@ -13,3 +13,6 @@ renet = "0.0.11"
 
 # Scripts
 rhai = { version = "1.13.0", features = ["internals", "serde"] }
+
+strum = "0.24.1"
+strum_macros = "0.24.3"

@@ -1,3 +1,4 @@
+use common::blocks::blocks_storage::BlockType;
 use godot::{
     engine::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
@@ -8,8 +9,6 @@ use godot::{
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
 use strum::IntoEnumIterator;
-
-use crate::world::blocks::blocks_storage::BlockType;
 
 use super::texture_mapper::TextureMapper;
 

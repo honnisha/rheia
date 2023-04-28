@@ -3,11 +3,9 @@ use std::sync::{Arc, RwLock};
 use crate::{
     utils::mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
     utils::textures::texture_mapper::TextureMapper,
-    world::{
-        blocks::blocks_storage::BlockType,
-        chunks::chunk_info::{ChunkBordersShape, ChunkDataBordered},
-    },
+    world::chunks::chunk_info::{ChunkBordersShape, ChunkDataBordered},
 };
+use common::blocks::blocks_storage::BlockType;
 use godot::prelude::{Array, Gd};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{

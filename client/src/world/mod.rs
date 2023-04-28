@@ -3,12 +3,11 @@ use crate::{
     utils::schematics::{convert_schem_to_blockinfo, load_schem_data},
     world::chunks::chunks_manager::ChunksManager,
 };
+use common::blocks::block_info::BlockInfo;
+use common::blocks::blocks_storage::BlockType;
 use godot::{engine::Engine, prelude::*};
 use std::{collections::HashMap, env};
 
-use self::{blocks::blocks_storage::BlockType, chunks::block_info::BlockInfo};
-
-pub mod blocks;
 pub mod chunks;
 pub mod world_generator;
 
@@ -112,10 +111,7 @@ impl NodeVirtual for World {
             let modify_data = convert_schem_to_blockinfo(&[0_i32, 40_i32, 0_i32], &schem);
             let source_len = modify_data.len();
             self.modify_block_batch(modify_data);
-            println!(
-                "Schem {:?} pasted; blocks size: {}",
-                path, source_len
-            );
+            println!("Schem {:?} pasted; blocks size: {}", path, source_len);
         }
     }
 }

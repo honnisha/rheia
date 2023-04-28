@@ -1,7 +1,7 @@
 use super::{
-    bounds::assert_in_bounds, IdentityVoxel, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad,
-    Voxel, VoxelVisibility,
+    bounds::assert_in_bounds, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad,
 };
+use common::blocks::voxel_visibility::{Voxel, IdentityVoxel, VoxelVisibility};
 use ilattice::glam::UVec3;
 use ilattice::prelude::Extent;
 use ndshape::Shape;
@@ -90,9 +90,10 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{world::blocks::blocks_storage::BlockType, utils::mesh::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+    use crate::{utils::mesh::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
+    use common::blocks::blocks_storage::BlockType;
     use ndshape::{ConstShape, ConstShape3u32};
 
     #[test]

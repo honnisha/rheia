@@ -17,6 +17,7 @@ use std::{
 mod client_resources;
 mod console;
 mod network;
+mod worlds;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

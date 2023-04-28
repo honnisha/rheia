@@ -1,8 +1,6 @@
+use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
 use godot::prelude::Vector3;
 use ndshape::{ConstShape, ConstShape3u32};
-
-use super::block_info::BlockInfo;
-use crate::{world::blocks::blocks_storage::BlockType};
 
 pub const CHUNK_SIZE: i32 = 16_i32;
 

@@ -1,4 +1,5 @@
 use bracket_lib::random::RandomNumberGenerator;
+use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
 use godot::{
     engine::{node::InternalMode, Material},
     prelude::*,
@@ -19,12 +20,10 @@ use crate::{
         mesh::mesh_generator::{generate_chunk_geometry, Geometry},
         textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
     },
-    world::blocks::blocks_storage::BlockType,
     world::world_generator::WorldGenerator,
 };
 
 use super::{
-    block_info::BlockInfo,
     chunk::Chunk,
     chunk_data_formatter::{format_chunk_data_with_boundaries, get_boundaries_chunks},
     chunk_info::{ChunkInfo, ChunkShape, CHUNK_SIZE},
@@ -119,8 +118,7 @@ impl ChunksManager {
                                 }
                             }
                         }
-                    }
-                    else {
+                    } else {
                         continue;
                     }
                     // println!("Chunk loaded {:?}", chunk_pos);
@@ -166,31 +164,31 @@ impl ChunksManager {
         let texture_mapper = self.texture_mapper.clone();
 
         //rayon::spawn(move || {
-            let c = chunks_info.clone();
-            let mut ci = c.write().expect("MODIFY_BLOCK_BATCH excepts lock");
+        let c = chunks_info.clone();
+        let mut ci = c.write().expect("MODIFY_BLOCK_BATCH excepts lock");
 
-            let mut chunks_pos: Vec<[i32; 3]> = Vec::new();
+        let mut chunks_pos: Vec<[i32; 3]> = Vec::new();
 
-            for (chunk_pos, chunk_data) in data {
-                if let Some(info) = ci.get_mut(&chunk_pos) {
-                    for (block_local_pos, block_info) in chunk_data {
-                        info.set_block_by_local_pos(block_local_pos, block_info);
-                    }
-                    chunks_pos.push(chunk_pos);
-                } else {
-                    println!("MODIFY_BLOCK_BATCH Cant find ChunkInfo in {:?}", chunk_pos);
+        for (chunk_pos, chunk_data) in data {
+            if let Some(info) = ci.get_mut(&chunk_pos) {
+                for (block_local_pos, block_info) in chunk_data {
+                    info.set_block_by_local_pos(block_local_pos, block_info);
                 }
+                chunks_pos.push(chunk_pos);
+            } else {
+                println!("MODIFY_BLOCK_BATCH Cant find ChunkInfo in {:?}", chunk_pos);
             }
+        }
 
-            for chunk_pos in chunks_pos {
-                ChunksManager::update_chunk_mesh(
-                    chunks_info.clone(),
-                    chunk_pos.clone(),
-                    update_mesh_tx.clone(),
-                    texture_mapper.clone(),
-                );
-                //println!("update chunk mesh:{:?}", c);
-            }
+        for chunk_pos in chunks_pos {
+            ChunksManager::update_chunk_mesh(
+                chunks_info.clone(),
+                chunk_pos.clone(),
+                update_mesh_tx.clone(),
+                texture_mapper.clone(),
+            );
+            //println!("update chunk mesh:{:?}", c);
+        }
         //});
     }
 

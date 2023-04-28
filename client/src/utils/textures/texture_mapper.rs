@@ -1,5 +1,4 @@
-use crate::world::blocks::block_type_info::BlockTypeInfo;
-
+use common::blocks::block_type_info::BlockTypeInfo;
 
 #[derive(Debug)]
 pub struct TextureMapper {

@@ -533,6 +533,8 @@ dependencies = [
  "renet",
  "rhai",
  "serde",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
