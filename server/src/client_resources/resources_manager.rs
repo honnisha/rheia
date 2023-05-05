@@ -1,8 +1,9 @@
-use crate::console::console_handler::Console;
 use serde_yaml::Error;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+
+use crate::console::console_handler::ConsoleHandler;
 
 use super::resource_instance::ResourceInstance;
 use super::resource_instance::ResourceManifest;
@@ -27,12 +28,12 @@ impl ResourceManager {
         let mut path = env::current_dir().unwrap().clone();
         path.push("resources");
         let path_str = path.into_os_string().into_string().unwrap();
-        Console::send_message(format!("▼ Rescan resources folders inside: {}", path_str));
+        ConsoleHandler::send_message(format!("▼ Rescan resources folders inside: {}", path_str));
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                Console::send_message(format!("□ read directory \"{}\" error: {}", path_str, e));
+                ConsoleHandler::send_message(format!("□ read directory \"{}\" error: {}", path_str, e));
                 return ();
             }
         };
@@ -45,7 +46,7 @@ impl ResourceManager {
             let data = match fs::read_to_string(manifest_path.clone()) {
                 Ok(d) => d,
                 Err(e) => {
-                    Console::send_message(format!("□ error with manifest file {}: {}", manifest_path, e));
+                    ConsoleHandler::send_message(format!("□ error with manifest file {}: {}", manifest_path, e));
                     continue;
                 }
             };
@@ -54,7 +55,7 @@ impl ResourceManager {
             let manifest = match manifest_result {
                 Ok(m) => m,
                 Err(e) => {
-                    Console::send_message(format!("□ error with parse manifest yaml {}: {}", manifest_path, e));
+                    ConsoleHandler::send_message(format!("□ error with parse manifest yaml {}: {}", manifest_path, e));
                     continue;
                 }
             };
@@ -62,11 +63,11 @@ impl ResourceManager {
             let resource_instance = match ResourceInstance::from_manifest(&manifest, current_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    Console::send_message(format!("□ error with resource {}: {}", current_path.display(), e));
+                    ConsoleHandler::send_message(format!("□ error with resource {}: {}", current_path.display(), e));
                     continue;
                 }
             };
-            Console::send_message(format!(
+            ConsoleHandler::send_message(format!(
                 "□ Resource \"{}\"; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),

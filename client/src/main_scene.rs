@@ -3,7 +3,9 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::network::client::NetworkClient;
+use crate::world::World;
 use godot::engine::Engine;
+use godot::engine::node::InternalMode;
 use godot::prelude::*;
 use lazy_static::lazy_static;
 
@@ -15,6 +17,7 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     resource_manager: ResourceManager,
+    world: Option<Gd<World>>,
 }
 
 lazy_static! {
@@ -35,12 +38,31 @@ impl Main {
     }
 }
 
+impl Main {
+    pub fn get_resource_manager_mut(&mut self) -> &mut ResourceManager {
+        &mut self.resource_manager
+    }
+
+    pub fn load_world(&mut self, slug: String) {
+        let mut world = Gd::<World>::with_base(|base| World::create(base, slug));
+
+        let world_name = GodotString::from("World");
+        world.bind_mut().set_name(world_name.clone());
+
+        self.base.add_child(world.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.world = Some(self.base.get_node_as::<World>(world_name));
+
+        godot_print!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
+    }
+}
+
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
         Main {
             base,
             resource_manager: ResourceManager::new(),
+            world: None,
         }
     }
 
@@ -66,7 +88,7 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        Main::get_client().update(delta, &mut self.resource_manager);
+        Main::get_client().update(delta, self);
     }
 
     fn exit_tree(&mut self) {

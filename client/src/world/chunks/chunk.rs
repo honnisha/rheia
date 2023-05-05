@@ -16,6 +16,8 @@ pub struct Chunk {
     loaded: bool,
 }
 
+pub type ChunkPositionType = [i32; 3];
+
 #[godot_api]
 impl Chunk {
     pub fn create_mesh(&mut self, material: &Gd<Material>) {

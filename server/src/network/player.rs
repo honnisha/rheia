@@ -1,18 +1,18 @@
 use bincode::Options;
 use common::network_messages::ServerMessages;
 
-use crate::console::console_handler::{Console, ConsoleSender};
+use crate::console::{console_handler::ConsoleHandler, console_sender::ConsoleSender};
 
 use super::server::NetworkServer;
 
-pub struct Player {
+pub struct PlayerNetwork {
     login: String,
     client_id: u64,
 }
 
-impl Player {
+impl PlayerNetwork {
     pub fn init(login: String, client_id: u64) -> Self {
-        Player {
+        PlayerNetwork {
             login: login,
             client_id: client_id,
         }
@@ -23,7 +23,7 @@ impl Player {
     }
 }
 
-impl ConsoleSender for Player {
+impl ConsoleSender for PlayerNetwork {
     fn get_name(&self) -> &String {
         &self.login
     }
@@ -32,7 +32,7 @@ impl ConsoleSender for Player {
         match bincode::options().serialize(&ServerMessages::ConsoleOutput { text: message }) {
             Ok(message) => NetworkServer::send_console_message(self.client_id, message),
             Err(e) => {
-                Console::send_message(format!(
+                ConsoleHandler::send_message(format!(
                     "Error console message for login:{} error: {:?}",
                     self.get_login(),
                     e

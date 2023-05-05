@@ -4,7 +4,7 @@ use ndshape::ConstShape;
 
 use super::{
     chunk_info::{ChunkData, ChunkDataBordered, CHUNK_SIZE},
-    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO},
+    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO}, chunk::ChunkPositionType,
 };
 
 pub fn format_chunk_data_with_boundaries(
@@ -104,7 +104,7 @@ pub fn format_chunk_data_with_boundaries(
 }
 
 /// (axis, value, chunk_pos)
-pub fn get_boundaries_chunks(chunk_pos: &[i32; 3]) -> Vec<(i8, i32, [i32; 3])> {
+pub fn get_boundaries_chunks(chunk_pos: &ChunkPositionType) -> Vec<(i8, i32, [i32; 3])> {
     let mut result = Vec::with_capacity(6);
 
     for axis in 0_i8..3_i8 {

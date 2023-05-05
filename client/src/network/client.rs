@@ -4,8 +4,8 @@ use renet::{ClientAuthentication, RenetClient, RenetConnectionConfig, DefaultCha
 use std::time::Duration;
 use std::{net::UdpSocket, time::SystemTime};
 
-use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
+use crate::main_scene::Main;
 
 pub const PROTOCOL_ID: u64 = 7;
 pub const CHANNEL_ID: u8 = 0;
@@ -54,7 +54,7 @@ impl NetworkClient {
         }
     }
 
-    pub fn update(&mut self, delta: f64, resource_manager: &mut ResourceManager) {
+    pub fn update(&mut self, delta: f64, main_scene: &mut Main) {
         if let Err(e) = self.get_client().update(Duration::from_secs_f64(delta)) {
             panic!("Connection error: {}", e);
         }
@@ -71,10 +71,10 @@ impl NetworkClient {
                 match data {
                     ServerMessages::ConsoleOutput { text } => Console::send_message(text),
                     ServerMessages::ResourceCallbackTrigger { callback_name, args } => {
-                        resource_manager.run_event(&callback_name, &args);
+                        main_scene.get_resource_manager_mut().run_event(&callback_name, &args);
                     },
                     ServerMessages::LoadResource { slug, scripts } => {
-                        match resource_manager.try_load(&slug, scripts) {
+                        match main_scene.get_resource_manager_mut().try_load(&slug, scripts) {
                             Ok(()) => {
                                 Console::send_message(format!("Loaded resource \"{}\"", slug));
                             },

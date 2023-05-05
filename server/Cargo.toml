@@ -18,11 +18,14 @@ renet = "0.0.11"
 bincode = "1.3.1"
 
 # ECS
-hecs = "0.10.3"
+bevy_ecs = "0.10.1"
 
 # Async channels
 crossbeam = "0.8.2"
 crossbeam-channel = "0.5"
+
+# Single thread links
+send_wrapper = "0.6.0"
 
 # ARGS
 clap = { version = "4.2.1", features = ["string", "derive"] }

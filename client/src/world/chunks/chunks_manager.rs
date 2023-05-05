@@ -24,14 +24,14 @@ use crate::{
 };
 
 use super::{
-    chunk::Chunk,
+    chunk::{Chunk, ChunkPositionType},
     chunk_data_formatter::{format_chunk_data_with_boundaries, get_boundaries_chunks},
     chunk_info::{ChunkInfo, ChunkShape, CHUNK_SIZE},
 };
 
-pub type ChunksInfoType = Arc<RwLock<HashMap<[i32; 3], ChunkInfo>>>;
-pub type ChunksInfoLockRead<'a> = RwLockReadGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
-pub type ChunksInfoLockWrite<'a> = RwLockWriteGuard<'a, HashMap<[i32; 3], ChunkInfo>>;
+pub type ChunksInfoType = Arc<RwLock<HashMap<ChunkPositionType, ChunkInfo>>>;
+pub type ChunksInfoLockRead<'a> = RwLockReadGuard<'a, HashMap<ChunkPositionType, ChunkInfo>>;
+pub type ChunksInfoLockWrite<'a> = RwLockWriteGuard<'a, HashMap<ChunkPositionType, ChunkInfo>>;
 
 pub const WORLD_CHUNKS_FROM: i32 = 0_i32;
 pub const WORLD_CHUNKS_TO: i32 = 16_i32;
@@ -43,20 +43,41 @@ pub struct ChunksManager {
     base: Base<Node>,
 
     chunks_info: ChunksInfoType,
-    chunks_godot_ids: HashMap<[i32; 3], i64>,
+    chunks_godot_ids: HashMap<ChunkPositionType, i64>,
     world_generator: Arc<RwLock<WorldGenerator>>,
 
     texture_mapper: Arc<RwLock<TextureMapper>>,
     material: Gd<Material>,
 
-    update_mesh_tx: Sender<([i32; 3], Geometry)>,
-    update_mesh_rx: Receiver<([i32; 3], Geometry)>,
+    update_mesh_tx: Sender<(ChunkPositionType, Geometry)>,
+    update_mesh_rx: Receiver<(ChunkPositionType, Geometry)>,
 }
 
 #[godot_api]
 impl ChunksManager {}
 
 impl ChunksManager {
+    pub fn create(base: Base<Node>) -> Self {
+        let mut rng = RandomNumberGenerator::new();
+        let seed = rng.next_u64();
+        let mut texture_mapper = TextureMapper::new();
+
+        let (update_mesh_tx, update_mesh_rx) = mpsc::channel();
+
+        let texture = build_blocks_material(&mut texture_mapper);
+        ChunksManager {
+            base,
+            chunks_info: Arc::new(RwLock::new(HashMap::new())),
+            chunks_godot_ids: HashMap::new(),
+            world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
+            material: texture.duplicate(true).unwrap().cast::<Material>(),
+            texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+
+            update_mesh_tx: update_mesh_tx,
+            update_mesh_rx: update_mesh_rx,
+        }
+    }
+
     #[allow(unused_variables)]
     pub fn update_camera_position(&mut self, base: &mut Base<Node>, camera_position: Vector3) {
         let chunks_distance = 12;
@@ -135,7 +156,7 @@ impl ChunksManager {
         });
     }
 
-    pub fn modify_block(&self, global_pos: &[i32; 3], block_info: BlockInfo) {
+    pub fn modify_block(&self, global_pos: &ChunkPositionType, block_info: BlockInfo) {
         let chunk_pos = ChunkInfo::get_chunk_pos_by_global(global_pos);
 
         let mut ci = self.chunks_info.write().expect("MODIFY_BLOCK_BATCH excepts lock");
@@ -156,7 +177,7 @@ impl ChunksManager {
         );
     }
 
-    pub fn modify_block_batch(&mut self, data: HashMap<[i32; 3], HashMap<u32, BlockInfo>>) {
+    pub fn modify_block_batch(&mut self, data: HashMap<ChunkPositionType, HashMap<u32, BlockInfo>>) {
         println!("modify_block_batch: Start to update {} blocks", data.len());
 
         let chunks_info = self.chunks_info.clone();
@@ -167,7 +188,7 @@ impl ChunksManager {
         let c = chunks_info.clone();
         let mut ci = c.write().expect("MODIFY_BLOCK_BATCH excepts lock");
 
-        let mut chunks_pos: Vec<[i32; 3]> = Vec::new();
+        let mut chunks_pos: Vec<ChunkPositionType> = Vec::new();
 
         for (chunk_pos, chunk_data) in data {
             if let Some(info) = ci.get_mut(&chunk_pos) {
@@ -194,8 +215,8 @@ impl ChunksManager {
 
     fn update_chunk_mesh(
         chunks_info: ChunksInfoType,
-        chunk_pos: [i32; 3],
-        update_mesh_tx: Sender<([i32; 3], Geometry)>,
+        chunk_pos: ChunkPositionType,
+        update_mesh_tx: Sender<(ChunkPositionType, Geometry)>,
         texture_mapper: Arc<RwLock<TextureMapper>>,
     ) {
         let ci = match chunks_info.read() {
@@ -225,7 +246,7 @@ impl ChunksManager {
         }
     }
 
-    pub fn is_loaded(&mut self, chunk_pos: &[i32; 3]) -> bool {
+    pub fn is_loaded(&mut self, chunk_pos: &ChunkPositionType) -> bool {
         match self.chunks_godot_ids.get(chunk_pos) {
             Some(index) => match self.get_chunk_by_index(*index) {
                 Some(c) => c.bind().is_loaded(),
@@ -245,7 +266,7 @@ impl ChunksManager {
     pub fn load_chunk_data<'a>(
         world_generator: Arc<RwLock<WorldGenerator>>,
         ci_write: &mut ChunksInfoLockWrite,
-        chunk_pos: &[i32; 3],
+        chunk_pos: &ChunkPositionType,
     ) -> bool {
         let mut chunk_data = [BlockInfo::new(BlockType::Air); ChunkShape::SIZE as usize];
         let has_any_block = world_generator
@@ -256,7 +277,7 @@ impl ChunksManager {
         has_any_block
     }
 
-    pub fn spawn_chunk(&mut self, chunk_pos: &[i32; 3]) -> Gd<Chunk> {
+    pub fn spawn_chunk(&mut self, chunk_pos: &ChunkPositionType) -> Gd<Chunk> {
         let mut chunk = Gd::<Chunk>::with_base(|base| Chunk::create(base));
 
         let chunk_name = GodotString::from(format!("chunk_{}_{}_{}", chunk_pos[0], chunk_pos[1], chunk_pos[2]));
@@ -279,24 +300,7 @@ impl ChunksManager {
 #[godot_api]
 impl NodeVirtual for ChunksManager {
     fn init(base: Base<Node>) -> Self {
-        let mut rng = RandomNumberGenerator::new();
-        let seed = rng.next_u64();
-        let mut texture_mapper = TextureMapper::new();
-
-        let (update_mesh_tx, update_mesh_rx) = mpsc::channel();
-
-        let texture = build_blocks_material(&mut texture_mapper);
-        ChunksManager {
-            base,
-            chunks_info: Arc::new(RwLock::new(HashMap::new())),
-            chunks_godot_ids: HashMap::new(),
-            world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
-            material: texture.duplicate(true).unwrap().cast::<Material>(),
-            texture_mapper: Arc::new(RwLock::new(texture_mapper)),
-
-            update_mesh_tx: update_mesh_tx,
-            update_mesh_rx: update_mesh_rx,
-        }
+        ChunksManager::create(base)
     }
 
     #[allow(unused_variables)]

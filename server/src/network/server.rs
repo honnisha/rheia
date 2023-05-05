@@ -9,9 +9,10 @@ use std::{
     time::{Duration, Instant, SystemTime},
 };
 
-use super::player::Player;
-use crate::{console::console_handler::Console, client_resources::resources_manager::ResourceManager};
-use crate::CONSOLE_HANDLER;
+use super::player::PlayerNetwork;
+use crate::{
+    client_resources::resources_manager::ResourceManager, console::console_handler::ConsoleHandler, HonnyServer,
+};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 const PROTOCOL_ID: u64 = 7;
@@ -29,7 +30,7 @@ fn get_network_server(ip_port: String) -> RenetServer {
 pub struct NetworkServer {
     server: RenetServer,
     last_updated: Instant,
-    players: HashMap<u64, Player>,
+    players: HashMap<u64, PlayerNetwork>,
 }
 
 struct ConsoleOutput {
@@ -54,12 +55,12 @@ lazy_static! {
 }
 
 impl NetworkServer {
-    fn get_player(&self, client_id: u64) -> &Player {
+    fn get_player(&self, client_id: u64) -> &PlayerNetwork {
         &self.players[&client_id]
     }
 
     pub fn init(ip_port: String) -> Self {
-        Console::send_message(format!("Start network server for {}", ip_port));
+        ConsoleHandler::send_message(format!("Start network server for {}", ip_port));
         NetworkServer {
             server: get_network_server(ip_port),
             last_updated: Instant::now(),
@@ -67,7 +68,7 @@ impl NetworkServer {
         }
     }
 
-    pub fn update(&mut self, resource_manager: &ResourceManager) {
+    pub fn update(&mut self, honny_server: &mut HonnyServer) {
         // Receive new messages and update clients
         let now = Instant::now();
         self.server.update(now - self.last_updated).unwrap();
@@ -79,17 +80,17 @@ impl NetworkServer {
                 ServerEvent::ClientConnected(client_id, user_data) => {
                     let login = ClientLogin::from_user_data(&user_data).0;
 
-                    let player = Player::init(login, client_id.clone());
+                    let player = PlayerNetwork::init(login, client_id.clone());
                     self.players.insert(client_id, player);
 
-                    Console::send_message(format!(
+                    ConsoleHandler::send_message(format!(
                         "Client \"{}\" connected",
                         self.get_player(client_id).get_login()
                     ));
-                    self.send_resources(client_id, resource_manager);
+                    self.send_resources(client_id, honny_server.get_resource_manager());
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
-                    Console::send_message(format!(
+                    ConsoleHandler::send_message(format!(
                         "Client \"{}\" disconnected",
                         self.get_player(client_id).get_login()
                     ));
@@ -110,20 +111,21 @@ impl NetworkServer {
                 let data: ClentMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
-                        Console::send_message(format!("Can't read a message: {:?}", e));
+                        ConsoleHandler::send_message(format!("Can't read a message: {:?}", e));
                         continue;
                     }
                 };
                 match data {
                     ClentMessages::ConsoleCommand { command } => {
-                        CONSOLE_HANDLER
-                            .lock()
-                            .unwrap()
-                            .execute_command(self.get_player(client_id), command);
-                    },
+                        ConsoleHandler::execute_command(self.get_player(client_id), command);
+                    }
                     ClentMessages::LoadResourceError { text } => {
-                        Console::send_message(format!("User \"{}\" get resource error: {}", self.get_player(client_id).get_login(), text));
-                    },
+                        ConsoleHandler::send_message(format!(
+                            "User \"{}\" get resource error: {}",
+                            self.get_player(client_id).get_login(),
+                            text
+                        ));
+                    }
                 }
             }
         }
@@ -134,7 +136,6 @@ impl NetworkServer {
 
     fn send_resources(&mut self, client_id: u64, resource_manager: &ResourceManager) {
         for (slug, resource_instance) in resource_manager.get_resources().iter() {
-
             let data = ServerMessages::LoadResource {
                 slug: slug.clone(),
                 scripts: resource_instance.get_client_scripts().clone(),
@@ -142,9 +143,9 @@ impl NetworkServer {
             let message = match bincode::options().serialize(&data) {
                 Ok(m) => m,
                 Err(_) => {
-                    Console::send_message(format!("Error serialize resource {}", slug));
+                    ConsoleHandler::send_message(format!("Error serialize resource {}", slug));
                     continue;
-                },
+                }
             };
             self.server.send_message(client_id, DefaultChannel::Reliable, message);
         }
@@ -158,6 +159,6 @@ impl NetworkServer {
     }
 
     pub fn stop(&mut self) {
-        Console::send_message("Stopping the server\n".to_string());
+        ConsoleHandler::send_message("Stopping the server\n".to_string());
     }
 }

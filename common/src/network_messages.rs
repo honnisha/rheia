@@ -25,6 +25,11 @@ pub enum ServerMessages {
     }
 }
 
+pub struct EntityPosition {
+    world_slug: String,
+    location: [f32; 3],
+}
+
 // Helper struct to pass an username in user data inside the ConnectToken
 pub struct ClientLogin(pub String);
 

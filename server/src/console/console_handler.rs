@@ -1,8 +1,13 @@
+use std::{thread, time::Duration};
+
 use chrono::Local;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
-use rustyline::ExternalPrinter;
+use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
 
+use crate::HonnyServer;
+
+use super::console_sender::{Console, ConsoleSender};
 
 pub const _REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
 
@@ -11,20 +16,46 @@ lazy_static! {
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
 }
 
-pub trait ConsoleSender {
-    fn get_name(&self) -> &String;
-    fn send_console_message(&self, message: String);
-}
+pub struct ConsoleHandler {}
 
-pub struct Console {
-    name: String,
-}
+/// Read and write console std
+impl ConsoleHandler {
+    pub fn new() -> Self {
+        let config = Config::builder()
+            .history_ignore_space(true)
+            .auto_add_history(true)
+            .build();
+        let history = FileHistory::with_config(config);
 
-impl Console {
-    pub fn init() -> Self {
-        Console {
-            name: "Console".to_string(),
-        }
+        let mut rl = DefaultEditor::with_history(config, history).unwrap();
+        let mut printer = rl.create_external_printer().unwrap();
+
+        thread::spawn(move || loop {
+            let console = Console::init();
+
+            let readline = rl.readline("");
+            match readline {
+                Ok(input) => {
+                    if input.len() > 0 {
+                        ConsoleHandler::execute_command(&console, input);
+                    }
+                }
+                Err(ReadlineError::Interrupted) => {
+                    HonnyServer::stop_server();
+                    break;
+                }
+                Err(e) => {
+                    println!("Error: {:?}", e);
+                }
+            }
+        });
+
+        thread::spawn(move || loop {
+            ConsoleHandler::update(&mut printer);
+            thread::sleep(Duration::from_millis(50));
+        });
+
+        ConsoleHandler {}
     }
 
     pub fn send_message(message: String) {
@@ -39,26 +70,8 @@ impl Console {
                 .unwrap();
         }
     }
-}
 
-impl ConsoleSender for Console {
-    fn get_name(&self) -> &String {
-        &self.name
-    }
-
-    fn send_console_message(&self, message: String) {
-        Console::send_message(message)
-    }
-}
-
-pub struct ConsoleHandler {}
-
-impl ConsoleHandler {
-    pub fn init() -> Self {
-        ConsoleHandler {}
-    }
-
-    pub fn execute_command(&self, sender: &dyn ConsoleSender, _message: String) {
-        sender.send_console_message("Command not found".to_string());
+    pub fn execute_command(sender: &dyn ConsoleSender, message: String) {
+        sender.send_console_message(format!("Command \"{}\" not found", message));
     }
 }

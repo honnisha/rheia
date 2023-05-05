@@ -2,6 +2,8 @@ use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
 use godot::prelude::Vector3;
 use ndshape::{ConstShape, ConstShape3u32};
 
+use super::chunk::ChunkPositionType;
+
 pub const CHUNK_SIZE: i32 = 16_i32;
 
 pub type ChunkShape = ConstShape3u32<16, 16, 16>;
@@ -29,14 +31,14 @@ impl ChunkInfo {
         self.chunk_data[pos as usize] = block_info;
     }
 
-    pub fn set_block(&mut self, global_pos: &[i32; 3], block_info: BlockInfo) {
+    pub fn set_block(&mut self, global_pos: &ChunkPositionType, block_info: BlockInfo) {
         let local_pos = ChunkInfo::get_chunk_local_pos_from_global(global_pos);
         let i = ChunkShape::linearize(local_pos) as usize;
         self.chunk_data[i] = block_info;
     }
 
     // Get global position from chunk coordinate
-    pub fn get_chunk_pos_from_coordinate(position: &[i32; 3]) -> Vector3 {
+    pub fn get_chunk_pos_from_coordinate(position: &ChunkPositionType) -> Vector3 {
         // -1 because of chunk boundaries
         Vector3::new(
             position[0] as f32 * CHUNK_SIZE as f32 - 1_f32,
@@ -52,7 +54,7 @@ impl ChunkInfo {
         return p / CHUNK_SIZE;
     }
     /// Return chunk position from global coordinate
-    pub fn get_chunk_pos_by_global(p: &[i32; 3]) -> [i32; 3] {
+    pub fn get_chunk_pos_by_global(p: &ChunkPositionType) -> ChunkPositionType {
         [
             ChunkInfo::fix_chunk_loc_pos(p[0]),
             ChunkInfo::fix_chunk_loc_pos(p[1]),
@@ -68,7 +70,7 @@ impl ChunkInfo {
     }
     /// Return chunk local position
     /// by global coordinate
-    pub fn get_chunk_local_pos_from_global(p: &[i32; 3]) -> [u32; 3] {
+    pub fn get_chunk_local_pos_from_global(p: &ChunkPositionType) -> [u32; 3] {
         [
             ChunkInfo::fix_loc_pos(p[0]),
             ChunkInfo::fix_loc_pos(p[1]),
