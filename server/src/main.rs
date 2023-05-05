@@ -56,15 +56,15 @@ fn main() {
     let args = MainCommand::parse();
     ConsoleHandler::send_message(format!("HonnyCraft Server version {}", VERSION));
 
+    let ip_port = format!("{}:{}", args.ip, args.port);
+    let mut server = NetworkServer::init(ip_port);
+
     let mut honny_server = HonnyServer {
         worlds_manager: WorldsManager::new(),
         resource_manager: ResourceManager::new(),
         _console_handler: ConsoleHandler::new(),
     };
     honny_server.resource_manager.rescan_scripts();
-
-    let ip_port = format!("{}:{}", args.ip, args.port);
-    let mut server = NetworkServer::init(ip_port);
 
     loop {
         if SERVER_ACTIVE.load(Ordering::Relaxed) {
