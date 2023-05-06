@@ -1,3 +1,4 @@
+use bevy::prelude::Resource;
 use serde_yaml::Error;
 use std::collections::HashMap;
 use std::env;
@@ -9,6 +10,7 @@ use super::resource_instance::ResourceInstance;
 use super::resource_instance::ResourceManifest;
 
 /// resources: slug, ResourceInstance
+#[derive(Resource)]
 pub struct ResourceManager {
     resources: HashMap<String, ResourceInstance>,
 }

@@ -1,11 +1,12 @@
-use std::{thread, time::Duration};
+use std::{thread, time::Duration, sync::atomic::Ordering};
 
+use bevy::prelude::{Resource, Res};
 use chrono::Local;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
 
-use crate::HonnyServer;
+use crate::network::server::ServerRuntime;
 
 use super::console_sender::{Console, ConsoleSender};
 
@@ -16,11 +17,18 @@ lazy_static! {
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
 }
 
+#[derive(Resource)]
 pub struct ConsoleHandler {}
 
 /// Read and write console std
 impl ConsoleHandler {
     pub fn new() -> Self {
+        ConsoleHandler {}
+    }
+
+    pub fn run_handler(
+        server_runtime: &ServerRuntime,
+    ) {
         let config = Config::builder()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -30,6 +38,7 @@ impl ConsoleHandler {
         let mut rl = DefaultEditor::with_history(config, history).unwrap();
         let mut printer = rl.create_external_printer().unwrap();
 
+        let server_active = server_runtime.server_active.clone();
         thread::spawn(move || loop {
             let console = Console::init();
 
@@ -41,7 +50,7 @@ impl ConsoleHandler {
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
-                    HonnyServer::stop_server();
+                    server_active.store(false, Ordering::Relaxed);
                     break;
                 }
                 Err(e) => {
@@ -54,8 +63,6 @@ impl ConsoleHandler {
             ConsoleHandler::update(&mut printer);
             thread::sleep(Duration::from_millis(50));
         });
-
-        ConsoleHandler {}
     }
 
     pub fn send_message(message: String) {

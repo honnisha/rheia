@@ -1,20 +1,15 @@
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    thread,
-    time::Duration,
-};
-
-use crate::{
-    client_resources::resources_manager::ResourceManager, console::console_handler::ConsoleHandler,
-    network::server::NetworkServer,
-};
+use args::MainCommand;
+use bevy::time::TimePlugin;
+use bevy_app::App;
+use bevy_ecs::system::Resource;
 use clap::Parser;
-use lazy_static::lazy_static;
-use worlds::worlds_manager::WorldsManager;
 
+use client_resources::ResourcesPlugin;
+use network::NetworkPlugin;
+
+use crate::console::{console_handler::ConsoleHandler, ConsolePlugin};
+
+mod args;
 mod client_resources;
 mod console;
 mod network;
@@ -22,59 +17,33 @@ mod worlds;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct MainCommand {
-    #[arg(short, long, default_value_t = String::from("127.0.0.1"))]
-    ip: String,
-
-    #[arg(short, long, default_value_t = String::from("14191"))]
-    port: String,
+#[derive(Resource)]
+pub struct ServerSettings {
+    args: MainCommand,
 }
 
-lazy_static! {
-    static ref SERVER_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(true));
-}
-
-pub struct HonnyServer {
-    worlds_manager: WorldsManager,
-    resource_manager: ResourceManager,
-    _console_handler: ConsoleHandler,
-}
-
-impl HonnyServer {
-    pub fn get_resource_manager(&self) -> &ResourceManager {
-        &self.resource_manager
+impl ServerSettings {
+    pub fn get_args(&self) -> &MainCommand {
+        &self.args
     }
+}
 
-    pub fn stop_server() {
-        SERVER_ACTIVE.store(false, Ordering::Relaxed);
-    }
+pub fn console_send(message: String) {
+    ConsoleHandler::send_message(message);
 }
 
 fn main() {
-    let args = MainCommand::parse();
-    ConsoleHandler::send_message(format!("HonnyCraft Server version {}", VERSION));
-
-    let ip_port = format!("{}:{}", args.ip, args.port);
-    let mut server = NetworkServer::init(ip_port);
-
-    let mut honny_server = HonnyServer {
-        worlds_manager: WorldsManager::new(),
-        resource_manager: ResourceManager::new(),
-        _console_handler: ConsoleHandler::new(),
+    let server_settings = ServerSettings {
+        args: MainCommand::parse(),
     };
-    honny_server.resource_manager.rescan_scripts();
 
-    loop {
-        if SERVER_ACTIVE.load(Ordering::Relaxed) {
-            server.update(&mut honny_server);
-        } else {
-            server.stop();
+    console_send(format!("HonnyCraft Server version {}", VERSION));
 
-            // Wait console
-            thread::sleep(Duration::from_millis(50));
-            break;
-        }
-    }
+    App::new()
+        .add_plugin(TimePlugin::default())
+        .insert_resource(server_settings)
+        .add_plugin(NetworkPlugin::default())
+        .add_plugin(ResourcesPlugin::default())
+        .add_plugin(ConsolePlugin::default())
+        .run();
 }

@@ -1,3 +1,4 @@
+use bevy_ecs::system::Resource;
 use bincode::Options;
 use common::network_messages::{ClentMessages, ClientLogin, ServerMessages};
 use lazy_static::lazy_static;
@@ -6,13 +7,11 @@ use std::{
     collections::HashMap,
     net::UdpSocket,
     thread,
-    time::{Duration, Instant, SystemTime},
+    time::{Duration, SystemTime}, sync::{Arc, atomic::AtomicBool},
 };
 
 use super::player::PlayerNetwork;
-use crate::{
-    client_resources::resources_manager::ResourceManager, console::console_handler::ConsoleHandler, HonnyServer,
-};
+use crate::{client_resources::resources_manager::ResourceManager, console::console_handler::ConsoleHandler};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 const PROTOCOL_ID: u64 = 7;
@@ -27,10 +26,29 @@ fn get_network_server(ip_port: String) -> RenetServer {
     RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
 }
 
+#[derive(Resource)]
 pub struct NetworkServer {
     server: RenetServer,
-    last_updated: Instant,
     players: HashMap<u64, PlayerNetwork>,
+}
+
+impl NetworkServer {
+    pub fn get_server(&mut self) -> &mut RenetServer {
+        &mut self.server
+    }
+}
+
+#[derive(Resource)]
+pub struct ServerRuntime {
+    pub server_active: Arc<AtomicBool>,
+}
+
+impl ServerRuntime {
+    pub fn new() -> Self {
+        Self {
+            server_active: Arc::new(AtomicBool::new(true)),
+        }
+    }
 }
 
 struct ConsoleOutput {
@@ -63,16 +81,17 @@ impl NetworkServer {
         ConsoleHandler::send_message(format!("Start network server for {}", ip_port));
         NetworkServer {
             server: get_network_server(ip_port),
-            last_updated: Instant::now(),
             players: HashMap::new(),
         }
     }
 
-    pub fn update(&mut self, honny_server: &mut HonnyServer) {
+    pub fn update(
+        &mut self,
+        delta: Duration,
+        resource_manager: &ResourceManager,
+    ) {
         // Receive new messages and update clients
-        let now = Instant::now();
-        self.server.update(now - self.last_updated).unwrap();
-        self.last_updated = now;
+        self.server.update(delta).unwrap();
 
         // Check for client connections/disconnections
         while let Some(event) = self.server.get_event() {
@@ -87,7 +106,7 @@ impl NetworkServer {
                         "Client \"{}\" connected",
                         self.get_player(client_id).get_login()
                     ));
-                    self.send_resources(client_id, honny_server.get_resource_manager());
+                    self.send_resources(client_id, resource_manager);
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
                     ConsoleHandler::send_message(format!(
@@ -160,5 +179,6 @@ impl NetworkServer {
 
     pub fn stop(&mut self) {
         ConsoleHandler::send_message("Stopping the server\n".to_string());
+        thread::sleep(Duration::from_millis(50));
     }
 }
