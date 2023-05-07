@@ -6,6 +6,7 @@ use clap::Parser;
 
 use client_resources::ResourcesPlugin;
 use network::NetworkPlugin;
+use worlds::WorldsHandlerPlugin;
 
 use crate::console::{console_handler::ConsoleHandler, ConsolePlugin};
 
@@ -45,5 +46,6 @@ fn main() {
         .add_plugin(NetworkPlugin::default())
         .add_plugin(ResourcesPlugin::default())
         .add_plugin(ConsolePlugin::default())
+        .add_plugin(WorldsHandlerPlugin::default())
         .run();
 }

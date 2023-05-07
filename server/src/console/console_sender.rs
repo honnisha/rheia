@@ -1,4 +1,4 @@
-use super::console_handler::ConsoleHandler;
+use crate::console_send;
 
 pub trait ConsoleSender {
     fn get_name(&self) -> &String;
@@ -23,6 +23,6 @@ impl ConsoleSender for Console {
     }
 
     fn send_console_message(&self, message: String) {
-        ConsoleHandler::send_message(message)
+        console_send(message)
     }
 }

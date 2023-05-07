@@ -11,7 +11,7 @@ use std::{
 };
 
 use super::player::PlayerNetwork;
-use crate::{client_resources::resources_manager::ResourceManager, console::console_handler::ConsoleHandler};
+use crate::{client_resources::resources_manager::ResourceManager, console_send, console::console_handler::ConsoleHandler};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
 const PROTOCOL_ID: u64 = 7;
@@ -78,7 +78,7 @@ impl NetworkServer {
     }
 
     pub fn init(ip_port: String) -> Self {
-        ConsoleHandler::send_message(format!("Start network server for {}", ip_port));
+        console_send(format!("Start network server for {}", ip_port));
         NetworkServer {
             server: get_network_server(ip_port),
             players: HashMap::new(),
@@ -102,14 +102,14 @@ impl NetworkServer {
                     let player = PlayerNetwork::init(login, client_id.clone());
                     self.players.insert(client_id, player);
 
-                    ConsoleHandler::send_message(format!(
+                    console_send(format!(
                         "Client \"{}\" connected",
                         self.get_player(client_id).get_login()
                     ));
                     self.send_resources(client_id, resource_manager);
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
-                    ConsoleHandler::send_message(format!(
+                    console_send(format!(
                         "Client \"{}\" disconnected",
                         self.get_player(client_id).get_login()
                     ));
@@ -130,7 +130,7 @@ impl NetworkServer {
                 let data: ClentMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
-                        ConsoleHandler::send_message(format!("Can't read a message: {:?}", e));
+                        console_send(format!("Can't read a message: {:?}", e));
                         continue;
                     }
                 };
@@ -139,7 +139,7 @@ impl NetworkServer {
                         ConsoleHandler::execute_command(self.get_player(client_id), command);
                     }
                     ClentMessages::LoadResourceError { text } => {
-                        ConsoleHandler::send_message(format!(
+                        console_send(format!(
                             "User \"{}\" get resource error: {}",
                             self.get_player(client_id).get_login(),
                             text
@@ -162,7 +162,7 @@ impl NetworkServer {
             let message = match bincode::options().serialize(&data) {
                 Ok(m) => m,
                 Err(_) => {
-                    ConsoleHandler::send_message(format!("Error serialize resource {}", slug));
+                    console_send(format!("Error serialize resource {}", slug));
                     continue;
                 }
             };
@@ -178,7 +178,7 @@ impl NetworkServer {
     }
 
     pub fn stop(&mut self) {
-        ConsoleHandler::send_message("Stopping the server\n".to_string());
+        console_send("Stopping the server\n".to_string());
         thread::sleep(Duration::from_millis(50));
     }
 }

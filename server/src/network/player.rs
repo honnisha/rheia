@@ -1,7 +1,7 @@
 use bincode::Options;
 use common::network_messages::ServerMessages;
 
-use crate::console::{console_handler::ConsoleHandler, console_sender::ConsoleSender};
+use crate::{console::{console_sender::ConsoleSender}, console_send};
 
 use super::server::NetworkServer;
 
@@ -32,7 +32,7 @@ impl ConsoleSender for PlayerNetwork {
         match bincode::options().serialize(&ServerMessages::ConsoleOutput { text: message }) {
             Ok(message) => NetworkServer::send_console_message(self.client_id, message),
             Err(e) => {
-                ConsoleHandler::send_message(format!(
+                console_send(format!(
                     "Error console message for login:{} error: {:?}",
                     self.get_login(),
                     e
