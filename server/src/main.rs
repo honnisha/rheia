@@ -1,6 +1,6 @@
 use args::MainCommand;
 use bevy::time::TimePlugin;
-use bevy_app::{App, ScheduleRunnerPlugin};
+use bevy_app::{App};
 use bevy_ecs::system::Resource;
 use clap::Parser;
 
@@ -41,7 +41,6 @@ fn main() {
 
     App::new()
         .add_plugin(TimePlugin::default())
-        .add_plugin(ScheduleRunnerPlugin::default())
         .insert_resource(server_settings)
         .add_plugin(NetworkPlugin::default())
         .add_plugin(ResourcesPlugin::default())

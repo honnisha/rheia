@@ -8,4 +8,7 @@ pub struct MainCommand {
 
     #[arg(short, long, default_value_t = String::from("14191"))]
     pub port: String,
+
+    #[arg(short, long, default_value_t = 20)]
+    pub tick_rate: u32,
 }
