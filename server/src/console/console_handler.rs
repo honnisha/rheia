@@ -1,20 +1,18 @@
-use std::{thread, time::Duration, sync::atomic::Ordering};
+use std::{sync::atomic::Ordering, thread, time::Duration};
 
-use bevy::prelude::{Resource, Res};
+use bevy::prelude::Resource;
 use chrono::Local;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
-
-use crate::network::server::ServerRuntime;
 
 use super::console_sender::{Console, ConsoleSender};
 
 pub const _REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
 
 lazy_static! {
-    static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
-    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
+    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
 }
 
 #[derive(Resource)]
@@ -26,9 +24,7 @@ impl ConsoleHandler {
         ConsoleHandler {}
     }
 
-    pub fn run_handler(
-        server_runtime: &ServerRuntime,
-    ) {
+    pub fn run_handler() {
         let config = Config::builder()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -38,7 +34,6 @@ impl ConsoleHandler {
         let mut rl = DefaultEditor::with_history(config, history).unwrap();
         let mut printer = rl.create_external_printer().unwrap();
 
-        let server_active = server_runtime.server_active.clone();
         thread::spawn(move || loop {
             let console = Console::init();
 
@@ -50,7 +45,7 @@ impl ConsoleHandler {
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
-                    server_active.store(false, Ordering::Relaxed);
+                    //server_active.store(false, Ordering::Relaxed);
                     break;
                 }
                 Err(e) => {

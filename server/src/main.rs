@@ -5,7 +5,7 @@ use bevy_ecs::system::Resource;
 use clap::Parser;
 
 use client_resources::ResourcesPlugin;
-use network::NetworkPlugin;
+use crate::network::NetworkPlugin;
 use worlds::WorldsHandlerPlugin;
 
 use crate::console::{console_handler::ConsoleHandler, ConsolePlugin};
@@ -13,12 +13,12 @@ use crate::console::{console_handler::ConsoleHandler, ConsolePlugin};
 mod args;
 mod client_resources;
 mod console;
-mod network;
 mod worlds;
+mod network;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Resource)]
+#[derive(Resource, Clone, Debug)]
 pub struct ServerSettings {
     args: MainCommand,
 }
@@ -40,12 +40,13 @@ fn main() {
 
     console_send(format!("HonnyCraft Server version {}", VERSION));
 
-    App::new()
-        .add_plugin(TimePlugin::default())
-        .insert_resource(server_settings)
-        .add_plugin(NetworkPlugin::default())
-        .add_plugin(ResourcesPlugin::default())
-        .add_plugin(ConsolePlugin::default())
-        .add_plugin(WorldsHandlerPlugin::default())
-        .run();
+    let mut app = App::new();
+    app.add_plugin(TimePlugin::default());
+    app.insert_resource(server_settings);
+    app.add_plugin(ResourcesPlugin::default());
+    app.add_plugin(ConsolePlugin::default());
+    app.add_plugin(WorldsHandlerPlugin::default());
+
+    NetworkPlugin::build(&mut app);
+    app.run();
 }

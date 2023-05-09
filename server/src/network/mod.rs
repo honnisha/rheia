@@ -1,40 +1,66 @@
-use std::{sync::atomic::Ordering, time::Duration};
+use bevy_ecs::prelude::EventReader;
+use bincode::DefaultOptions;
+use serde::{Deserialize, Serialize};
 
-use bevy::{prelude::EventWriter, time::Time};
-use bevy_app::{App, AppExit, Plugin, ScheduleRunnerPlugin, ScheduleRunnerSettings};
-use bevy_ecs::{system::Res, system::{ResMut, SystemState, Query}, world::World, prelude::Entity};
+use bevy_app::{App, Plugin};
+use network::{
+    packet_length_serializer::LittleEndian, protocols::tcp::TcpProtocol, serializers::bincode::BincodeSerializer,
+    server::{ServerPlugin, NewConnectionEvent, PacketReceiveEvent}, ServerConfig,
+};
 
-use crate::{client_resources::resources_manager::ResourceManager, ServerSettings};
+use crate::{ServerSettings, console_send};
 
-use self::{server::{NetworkServer, ServerRuntime}};
+#[derive(Serialize, Deserialize, Debug)]
+enum ClientPacket {
+    String(String),
+}
 
-pub mod player;
-pub mod server;
+#[derive(Serialize, Deserialize, Debug)]
+enum ServerPacket {
+    String(String),
+}
+
+struct Config;
+
+impl ServerConfig for Config {
+    type ClientPacket = ClientPacket;
+    type ServerPacket = ServerPacket;
+    type Protocol = TcpProtocol;
+    type Serializer = BincodeSerializer<DefaultOptions>;
+    type LengthSerializer = LittleEndian<u32>;
+}
 
 pub struct NetworkPlugin;
 
-impl Default for NetworkPlugin {
-    fn default() -> Self {
-        Self {}
+impl NetworkPlugin {
+    pub fn build(app: &mut App) {
+        let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
+        let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
+
+        console_send(format!("Starting server on {}", ip_port));
+
+        app.add_plugin(ServerPlugin::<Config>::bind(ip_port));
+        app.add_system(new_connection_system);
+        app.add_system(packet_receive_system);
+        app.run();
     }
 }
 
-impl Plugin for NetworkPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(ServerRuntime::new());
+fn new_connection_system(mut events: EventReader<NewConnectionEvent<Config>>) {
+    for event in events.iter() {
+        event
+            .connection
+            .send(ServerPacket::String("Hello, Client!".to_string())).unwrap();
+    }
+}
 
-        let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
-
-        let tick_rate = server_settings.get_args().tick_rate;
-
-        let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
-        app.insert_resource(NetworkServer::init(ip_port));
-
-        let tick_period = Duration::from_secs_f64((tick_rate as f64).recip());
-        app.insert_resource(ScheduleRunnerSettings::run_loop(tick_period));
-        app.add_plugin(ScheduleRunnerPlugin);
-
-        app.add_system(NetworkServer::update_tick);
-        app.add_system(NetworkServer::stop);
+fn packet_receive_system(mut events: EventReader<PacketReceiveEvent<Config>>) {
+    for event in events.iter() {
+        match &event.packet {
+            ClientPacket::String(s) => println!("Got a message from a client: {}", s),
+        }
+        event
+            .connection
+            .send(ServerPacket::String("Hello, Client!".to_string())).unwrap();
     }
 }

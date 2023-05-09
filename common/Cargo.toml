@@ -16,3 +16,6 @@ rhai = { version = "1.13.0", features = ["internals", "serde"] }
 
 strum = "0.24.1"
 strum_macros = "0.24.3"
+
+downcast-rs = "1.2.0"
+typetag = "0.1.6"
