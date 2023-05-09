@@ -1,4 +1,6 @@
-use bevy_ecs::system::Resource;
+use bevy::time::Time;
+use bevy_app::AppExit;
+use bevy_ecs::{system::{Resource, ResMut, Res, Commands}, prelude::EventWriter, world::World};
 use bincode::Options;
 use common::network_messages::{ClentMessages, ClientLogin, ServerMessages};
 use lazy_static::lazy_static;
@@ -7,7 +9,7 @@ use std::{
     collections::HashMap,
     net::UdpSocket,
     thread,
-    time::{Duration, SystemTime}, sync::{Arc, atomic::AtomicBool},
+    time::{Duration, SystemTime}, sync::{Arc, atomic::{AtomicBool, Ordering}},
 };
 
 use super::player::PlayerNetwork;
@@ -85,28 +87,33 @@ impl NetworkServer {
         }
     }
 
-    pub fn update(
-        &mut self,
-        delta: Duration,
+    pub fn update_tick(
+        mut commands: Commands,
+        mut network_server: ResMut<NetworkServer>,
+        server_runtime: Res<ServerRuntime>,
         resource_manager: &ResourceManager,
+        time: Res<Time>,
     ) {
+        if !server_runtime.server_active.load(Ordering::Relaxed) {
+            return;
+        }
+
+        let mut server = network_server.get_server();
+
         // Receive new messages and update clients
-        self.server.update(delta).unwrap();
+        server.update(time.delta()).unwrap();
 
         // Check for client connections/disconnections
-        while let Some(event) = self.server.get_event() {
+        while let Some(event) = server.get_event() {
             match event {
                 ServerEvent::ClientConnected(client_id, user_data) => {
                     let login = ClientLogin::from_user_data(&user_data).0;
-
-                    let player = PlayerNetwork::init(login, client_id.clone());
-                    self.players.insert(client_id, player);
-
-                    console_send(format!(
-                        "Client \"{}\" connected",
-                        self.get_player(client_id).get_login()
+                    commands.spawn((
+                        PlayerNetwork::init(login.clone(), client_id.clone()),
                     ));
-                    self.send_resources(client_id, resource_manager);
+                    NetworkServer::send_resources(server, client_id, resource_manager);
+
+                    console_send(format!("Client \"{}\" connected", login));
                 }
                 ServerEvent::ClientDisconnected(client_id) => {
                     console_send(format!(
@@ -118,15 +125,15 @@ impl NetworkServer {
         }
 
         for console_output in NETWORK_CONSOLE_OUTPUT.1.try_iter() {
-            self.server.send_message(
+            server.send_message(
                 console_output.client_id,
                 DefaultChannel::Reliable,
                 console_output.message,
             );
         }
 
-        for client_id in self.server.clients_id().into_iter() {
-            while let Some(message) = self.server.receive_message(client_id, DefaultChannel::Reliable) {
+        for client_id in server.clients_id().into_iter() {
+            while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
                 let data: ClentMessages = match bincode::options().deserialize(&message) {
                     Ok(d) => d,
                     Err(e) => {
@@ -149,11 +156,11 @@ impl NetworkServer {
             }
         }
 
-        self.server.send_packets().unwrap();
-        thread::sleep(Duration::from_millis(50));
+        server.send_packets().unwrap();
+        //thread::sleep(Duration::from_millis(50));
     }
 
-    fn send_resources(&mut self, client_id: u64, resource_manager: &ResourceManager) {
+    fn send_resources(server: &mut RenetServer, client_id: u64, resource_manager: &ResourceManager) {
         for (slug, resource_instance) in resource_manager.get_resources().iter() {
             let data = ServerMessages::LoadResource {
                 slug: slug.clone(),
@@ -166,7 +173,7 @@ impl NetworkServer {
                     continue;
                 }
             };
-            self.server.send_message(client_id, DefaultChannel::Reliable, message);
+            server.send_message(client_id, DefaultChannel::Reliable, message);
         }
     }
 
@@ -177,8 +184,13 @@ impl NetworkServer {
             .unwrap();
     }
 
-    pub fn stop(&mut self) {
+    pub fn stop(
+        mut network_server: ResMut<NetworkServer>,
+        server_runtime: Res<ServerRuntime>,
+        mut exit: EventWriter<AppExit>,
+    ) {
         console_send("Stopping the server\n".to_string());
         thread::sleep(Duration::from_millis(50));
+        exit.send(AppExit);
     }
 }

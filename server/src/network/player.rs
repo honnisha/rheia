@@ -1,10 +1,12 @@
+use bevy_ecs::prelude::Bundle;
 use bincode::Options;
 use common::network_messages::ServerMessages;
 
-use crate::{console::{console_sender::ConsoleSender}, console_send};
+use crate::{console::console_sender::ConsoleSender, console_send};
 
 use super::server::NetworkServer;
 
+#[derive(Bundle)]
 pub struct PlayerNetwork {
     login: String,
     client_id: u64,

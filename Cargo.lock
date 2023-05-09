@@ -52,7 +52,7 @@ dependencies = [
  "accesskit",
  "accesskit_macos",
  "accesskit_windows",
- "winit 0.28.4",
+ "winit 0.28.5",
 ]
 
 [[package]]
@@ -798,7 +798,7 @@ dependencies = [
  "raw-window-handle 0.5.2",
  "wasm-bindgen",
  "web-sys",
- "winit 0.28.4",
+ "winit 0.28.5",
 ]
 
 [[package]]
@@ -2170,7 +2170,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -2179,7 +2179,7 @@ dependencies = [
 [[package]]
 name = "godot-bindings"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "godot4-prebuilt",
 ]
@@ -2187,7 +2187,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "godot-bindings",
  "heck",
@@ -2199,7 +2199,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "glam 0.23.0",
  "godot-codegen",
@@ -2209,7 +2209,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -2219,7 +2219,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#e27a69ee70739b948fef241a20a053dc108099c5"
+source = "git+https://github.com/godot-rust/gdext?branch=master#c0935ac122dd94983f0f790cd07d6c7629a7429e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2596,9 +2596,9 @@ checksum = "03087c2bad5e1034e8cace5926dec053fb3790248370865f5117a7d0213354c8"
 
 [[package]]
 name = "libc"
-version = "0.2.142"
+version = "0.2.144"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a987beff54b60ffa6d51982e1aa1146bc42f19bd26be28b0586f252fccf5317"
+checksum = "2b00cc1c228a6782d0f076e7b232802e0c5689d41bb5df366f2a6b6621cfdfe1"
 
 [[package]]
 name = "libloading"
@@ -3348,9 +3348,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.26"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4424af4bf778aae2051a77b60283332f386554255d722233d09fbfc7e30da2fc"
+checksum = "8f4f29d145265ec1c483c7c654450edde0bfe043d3938d6972630663356d9500"
 dependencies = [
  "proc-macro2",
 ]
@@ -3703,9 +3703,9 @@ checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
 
 [[package]]
 name = "serde"
-version = "1.0.160"
+version = "1.0.162"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2f3770c8bce3bcda7e149193a069a0f4365bda1fa5cd88e03bca26afc1216c"
+checksum = "71b2f6e1ab5c2b98c05f0f35b236b22e8df7ead6ffbf51d7808da7f8817e7ab6"
 dependencies = [
  "serde_derive",
 ]
@@ -3721,9 +3721,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.160"
+version = "1.0.162"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
+checksum = "a2a0814352fd64b58489904a44ea8d90cb1a91dcb6b4f5ebabc32c8318e93cb6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4906,9 +4906,9 @@ dependencies = [
 
 [[package]]
 name = "winit"
-version = "0.28.4"
+version = "0.28.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "654fd36bd7ea8681c03b70b0748b749d3fe230063c06b3db3ba2af284065a468"
+checksum = "94c9651471cd576737671fbf7081edfea43de3e06846dd9bd4e49ea803c9f55f"
 dependencies = [
  "android-activity",
  "bitflags",
@@ -4971,9 +4971,9 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.8.5"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "374b609fb36c36ce3501094dc0548f7df5d8d102224b65bc59812e4a5425d571"
+checksum = "4f20f14e2bd1fef6ec891d50dbb37c7290a0568a6bbd9020bf62010d02b6f80e"
 
 [[package]]
 name = "zeroize"

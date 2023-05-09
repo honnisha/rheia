@@ -2,11 +2,11 @@ use std::{sync::atomic::Ordering, time::Duration};
 
 use bevy::{prelude::EventWriter, time::Time};
 use bevy_app::{App, AppExit, Plugin, ScheduleRunnerPlugin, ScheduleRunnerSettings};
-use bevy_ecs::{system::Res, system::ResMut};
+use bevy_ecs::{system::Res, system::{ResMut, SystemState, Query}, world::World, prelude::Entity};
 
 use crate::{client_resources::resources_manager::ResourceManager, ServerSettings};
 
-use self::server::{NetworkServer, ServerRuntime};
+use self::{server::{NetworkServer, ServerRuntime}};
 
 pub mod player;
 pub mod server;
@@ -34,24 +34,7 @@ impl Plugin for NetworkPlugin {
         app.insert_resource(ScheduleRunnerSettings::run_loop(tick_period));
         app.add_plugin(ScheduleRunnerPlugin);
 
-        app.add_system(Self::update_tick);
-    }
-}
-
-impl NetworkPlugin {
-    pub fn update_tick(
-        mut network_server: ResMut<NetworkServer>,
-        resource_manager: Res<ResourceManager>,
-        server_runtime: Res<ServerRuntime>,
-
-        time: Res<Time>,
-        mut exit: EventWriter<AppExit>,
-    ) {
-        if server_runtime.server_active.load(Ordering::Relaxed) {
-            network_server.update(time.delta(), resource_manager.as_ref());
-        } else {
-            network_server.stop();
-            exit.send(AppExit);
-        }
+        app.add_system(NetworkServer::update_tick);
+        app.add_system(NetworkServer::stop);
     }
 }

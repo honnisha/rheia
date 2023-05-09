@@ -1,6 +1,6 @@
 use args::MainCommand;
 use bevy::time::TimePlugin;
-use bevy_app::{App};
+use bevy_app::App;
 use bevy_ecs::system::Resource;
 use clap::Parser;
 
