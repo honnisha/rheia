@@ -7,9 +7,10 @@ use bevy_app::{App, ScheduleRunnerPlugin};
 use bevy_ecs::system::Resource;
 use clap::Parser;
 use log::{info, LevelFilter};
+use ::network::runtime_plugin::RuntimePlugin;
 
 use crate::network::NetworkPlugin;
-use crate::{logger::CONSOLE_LOGGER, network::runtime::RuntimePlugin};
+use crate::{logger::CONSOLE_LOGGER};
 use client_resources::ResourcesPlugin;
 use worlds::WorldsHandlerPlugin;
 
@@ -54,10 +55,9 @@ fn main() {
 
     app.insert_resource(server_settings);
     app.add_plugin(RuntimePlugin::default());
+    NetworkPlugin::build(&mut app);
     app.add_plugin(ResourcesPlugin::default());
     app.add_plugin(ConsolePlugin::default());
     app.add_plugin(WorldsHandlerPlugin::default());
-
-    NetworkPlugin::build(&mut app);
     app.run();
 }

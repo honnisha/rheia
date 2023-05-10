@@ -1,8 +1,7 @@
 //! Server part of the plugin. You can enable it by adding `server` feature.
 
-use core::default::Default;
 use bevy::app::AppExit;
-use futures::executor;
+use core::default::Default;
 use std::marker::PhantomData;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
@@ -16,6 +15,7 @@ use crate::connection::{
     RawConnection,
 };
 use crate::protocol::{Listener, NetworkStream, Protocol, ReadStream, ReceiveError, WriteStream};
+use crate::runtime_plugin::RuntimePlugin;
 use crate::{ServerConfig, SystemSets};
 
 /// Server-side connection to a server.
@@ -151,20 +151,7 @@ fn create_setup_system<Config: ServerConfig>(address: SocketAddr) -> impl Fn(Com
         commands.insert_resource(DisconnectionReceiver::<Config>(disc_rx));
         commands.insert_resource(PacketReceiver::<Config>(pack_rx));
 
-            // New connections
-        let listener = match executor::block_on(Config::Protocol::bind(address)) {
-            Ok(l) => l,
-            Err(e) => {
-                log::error!("Network address {} error: {}", address, e);
-                commands.add(|world: &mut World| {
-                    world.send_event(AppExit)
-                });
-                return;
-            },
-        };
-
         std::thread::spawn(move || {
-
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
@@ -237,6 +224,16 @@ fn create_setup_system<Config: ServerConfig>(address: SocketAddr) -> impl Fn(Com
                             });
                         }
                     });
+
+                    // New connections
+                    let listener = match Config::Protocol::bind(address).await {
+                        Ok(l) => l,
+                        Err(e) => {
+                            log::error!("Network address {} error: {}", address, e);
+                            RuntimePlugin::stop();
+                            return;
+                        },
+                    };
 
                     loop {
                         select! {

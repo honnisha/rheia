@@ -27,6 +27,7 @@ tokio = { version = "1.28.0", features = [
 ] }
 async-trait = "0.1"
 futures = { version = "0.3" }
+lazy_static = "1.4.0"
 
 [features]
 serializer_bincode = ["bincode"]

@@ -8,4 +8,7 @@ pub struct MainCommand {
 
     #[arg(short, long, default_value_t = String::from("14191"))]
     pub port: String,
+
+    #[arg(long, default_value_t = 512)]
+    pub max_packet_size: usize,
 }

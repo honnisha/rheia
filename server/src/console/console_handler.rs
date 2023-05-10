@@ -4,9 +4,8 @@ use bevy::prelude::Resource;
 use chrono::Local;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use network::runtime_plugin::RuntimePlugin;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
-
-use crate::network::runtime::RuntimePlugin;
 
 use super::console_sender::{Console, ConsoleSender};
 
@@ -30,6 +29,7 @@ impl ConsoleHandler {
         let config = Config::builder()
             .history_ignore_space(true)
             .auto_add_history(true)
+            .edit_mode(rustyline::EditMode::Emacs)
             .build();
         let history = FileHistory::with_config(config);
 
@@ -47,7 +47,7 @@ impl ConsoleHandler {
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
-                    RuntimePlugin::stop_server();
+                    RuntimePlugin::stop();
                     break;
                 }
                 Err(e) => {
@@ -72,6 +72,7 @@ impl ConsoleHandler {
             printer
                 .print(format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message))
                 .unwrap();
+            thread::sleep(Duration::from_millis(1));
         }
     }
 

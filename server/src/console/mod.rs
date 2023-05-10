@@ -1,5 +1,4 @@
-use bevy::prelude::{resource_exists, IntoSystemConfig, Res};
-use bevy_app::{App, CoreSchedule, IntoSystemAppConfig, Plugin, StartupSet};
+use bevy_app::{App, Plugin};
 
 use self::console_handler::ConsoleHandler;
 
@@ -17,10 +16,6 @@ impl Default for ConsolePlugin {
 impl Plugin for ConsolePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ConsoleHandler::new());
-        app.add_system(
-            ConsoleHandler::run_handler
-                .in_schedule(CoreSchedule::Startup)
-                .in_base_set(StartupSet::PostStartup), //.run_if(resource_exists::<ServerRuntime>()),
-        );
+        app.add_startup_system(ConsoleHandler::run_handler);
     }
 }

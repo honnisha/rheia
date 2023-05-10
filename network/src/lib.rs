@@ -1,13 +1,11 @@
-#![deny(rustdoc::broken_intra_doc_links)]
-#![cfg_attr(not(debug_assertions), deny(missing_docs))]
-#![cfg_attr(not(doctest), doc = include_str!("../README.md"))]
-
 use std::fmt::Debug;
 
 use crate::packet_length_serializer::PacketLengthSerializer;
 use crate::protocol::Protocol;
 use crate::serializer::Serializer;
 use bevy::prelude::SystemSet;
+
+pub mod runtime_plugin;
 
 #[cfg(feature = "client")]
 pub mod client;

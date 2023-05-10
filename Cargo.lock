@@ -2529,7 +2529,6 @@ dependencies = [
  "send_wrapper 0.6.0",
  "serde",
  "serde_yaml",
- "thiserror",
  "tokio",
  "uuid",
 ]
@@ -3051,6 +3050,7 @@ dependencies = [
  "byteorder",
  "dashmap",
  "futures 0.3.28",
+ "lazy_static",
  "log",
  "serde",
  "tokio",

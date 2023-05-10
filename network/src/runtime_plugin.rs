@@ -1,7 +1,6 @@
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
-use bevy_app::{Plugin, App, AppExit};
-use bevy_ecs::prelude::EventWriter;
+use bevy::{prelude::{Plugin, EventWriter, App, IntoSystemConfig, CoreSet}, app::AppExit};
 use lazy_static::lazy_static;
 
 
@@ -17,14 +16,14 @@ impl RuntimePlugin {
         SERVER_ACTIVE.load(Ordering::Relaxed)
     }
 
-    pub fn stop_server() {
+    pub fn stop() {
         SERVER_ACTIVE.store(false, Ordering::Relaxed);
     }
 }
 
 impl Plugin for RuntimePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(update_runtime);
+        app.add_system(update_runtime.in_base_set(CoreSet::First));
     }
 }
 
