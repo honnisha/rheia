@@ -1,10 +1,9 @@
 use bevy::prelude::Resource;
+use log::info;
 use serde_yaml::Error;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-
-use crate::console_send;
 
 use super::resource_instance::ResourceInstance;
 use super::resource_instance::ResourceManifest;
@@ -30,12 +29,12 @@ impl ResourceManager {
         let mut path = env::current_dir().unwrap().clone();
         path.push("resources");
         let path_str = path.into_os_string().into_string().unwrap();
-        console_send(format!("▼ Rescan resources folders inside: {}", path_str));
+        info!("▼ Rescan resources folders inside: {}", path_str);
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                console_send(format!("□ read directory \"{}\" error: {}", path_str, e));
+                info!("□ read directory \"{}\" error: {}", path_str, e);
                 return ();
             }
         };
@@ -48,7 +47,7 @@ impl ResourceManager {
             let data = match fs::read_to_string(manifest_path.clone()) {
                 Ok(d) => d,
                 Err(e) => {
-                    console_send(format!("□ error with manifest file {}: {}", manifest_path, e));
+                    info!("□ error with manifest file {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -57,7 +56,7 @@ impl ResourceManager {
             let manifest = match manifest_result {
                 Ok(m) => m,
                 Err(e) => {
-                    console_send(format!("□ error with parse manifest yaml {}: {}", manifest_path, e));
+                    info!("□ error with parse manifest yaml {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -65,18 +64,18 @@ impl ResourceManager {
             let resource_instance = match ResourceInstance::from_manifest(&manifest, current_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    console_send(format!("□ error with resource {}: {}", current_path.display(), e));
+                    info!("□ error with resource {}: {}", current_path.display(), e);
                     continue;
                 }
             };
-            console_send(format!(
+            info!(
                 "□ Resource \"{}\"; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),
                 resource_instance.get_version(),
                 resource_instance.get_autor(),
                 resource_instance.get_scripts_count(),
-            ));
+            );
             self.resources.insert(manifest.slug, resource_instance);
         }
     }

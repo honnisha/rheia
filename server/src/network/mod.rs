@@ -1,14 +1,20 @@
 use bevy_ecs::prelude::EventReader;
 use bincode::DefaultOptions;
+use log::info;
 use serde::{Deserialize, Serialize};
 
-use bevy_app::{App, Plugin};
+use bevy_app::{App, AppExit};
 use network::{
-    packet_length_serializer::LittleEndian, protocols::tcp::TcpProtocol, serializers::bincode::BincodeSerializer,
-    server::{ServerPlugin, NewConnectionEvent, PacketReceiveEvent}, ServerConfig,
+    packet_length_serializer::LittleEndian,
+    protocols::tcp::TcpProtocol,
+    serializers::bincode::BincodeSerializer,
+    server::{NewConnectionEvent, PacketReceiveEvent, ServerPlugin},
+    ServerConfig,
 };
 
-use crate::{ServerSettings, console_send};
+use crate::{ServerSettings};
+
+pub mod runtime;
 
 #[derive(Serialize, Deserialize, Debug)]
 enum ClientPacket {
@@ -37,20 +43,24 @@ impl NetworkPlugin {
         let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
-        console_send(format!("Starting server on {}", ip_port));
+        info!("Starting server on {}", ip_port);
 
         app.add_plugin(ServerPlugin::<Config>::bind(ip_port));
         app.add_system(new_connection_system);
         app.add_system(packet_receive_system);
+        app.add_system(stop_server);
         app.run();
     }
 }
+
+fn stop_server(_exit: EventReader<AppExit>) {}
 
 fn new_connection_system(mut events: EventReader<NewConnectionEvent<Config>>) {
     for event in events.iter() {
         event
             .connection
-            .send(ServerPacket::String("Hello, Client!".to_string())).unwrap();
+            .send(ServerPacket::String("Hello, Client!".to_string()))
+            .unwrap();
     }
 }
 
@@ -61,6 +71,7 @@ fn packet_receive_system(mut events: EventReader<PacketReceiveEvent<Config>>) {
         }
         event
             .connection
-            .send(ServerPacket::String("Hello, Client!".to_string())).unwrap();
+            .send(ServerPacket::String("Hello, Client!".to_string()))
+            .unwrap();
     }
 }

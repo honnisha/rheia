@@ -39,7 +39,7 @@ pub trait Protocol: Send + Sync + 'static {
 
 /// A listener that accepts connections from clients.
 #[async_trait]
-pub trait Listener {
+pub trait Listener: Send + Sync {
     /// A [`ServerStream`] that is returned by [`Self::accept()`]
     type Stream: ServerStream;
 

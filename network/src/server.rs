@@ -1,6 +1,8 @@
 //! Server part of the plugin. You can enable it by adding `server` feature.
 
 use core::default::Default;
+use bevy::app::AppExit;
+use futures::executor;
 use std::marker::PhantomData;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
@@ -10,8 +12,8 @@ use tokio::select;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use crate::connection::{
-    max_packet_size_warning_system, set_max_packet_size_system, ConnectionId, DisconnectTask,
-    EcsConnection, RawConnection,
+    max_packet_size_warning_system, set_max_packet_size_system, ConnectionId, DisconnectTask, EcsConnection,
+    RawConnection,
 };
 use crate::protocol::{Listener, NetworkStream, Protocol, ReadStream, ReceiveError, WriteStream};
 use crate::{ServerConfig, SystemSets};
@@ -56,9 +58,7 @@ impl<Config: ServerConfig> Plugin for ServerPlugin<Config> {
         app.add_event::<PacketReceiveEvent<Config>>();
         app.insert_resource(ServerConnections::<Config>::new());
         app.add_startup_system(create_setup_system::<Config>(self.address));
-        app.add_startup_system(
-            max_packet_size_warning_system.in_set(SystemSets::MaxPacketSizeWarning),
-        );
+        app.add_startup_system(max_packet_size_warning_system.in_set(SystemSets::MaxPacketSizeWarning));
         app.add_system(set_max_packet_size_system.in_set(SystemSets::SetMaxPacketSize));
         app.add_system(
             accept_new_connections::<Config>
@@ -101,28 +101,19 @@ impl<Config: ServerConfig> ServerPlugin<Config> {
 }
 
 #[derive(Resource)]
-struct ConnectionReceiver<Config: ServerConfig>(
-    UnboundedReceiver<(SocketAddr, ServerConnection<Config>)>,
-);
+struct ConnectionReceiver<Config: ServerConfig>(UnboundedReceiver<(SocketAddr, ServerConnection<Config>)>);
 
 #[allow(clippy::type_complexity)]
 #[derive(Resource)]
 struct DisconnectionReceiver<Config: ServerConfig>(
     UnboundedReceiver<(
-        ReceiveError<
-            Config::ClientPacket,
-            Config::ServerPacket,
-            Config::Serializer,
-            Config::LengthSerializer,
-        >,
+        ReceiveError<Config::ClientPacket, Config::ServerPacket, Config::Serializer, Config::LengthSerializer>,
         ServerConnection<Config>,
     )>,
 );
 
 #[derive(Resource)]
-struct PacketReceiver<Config: ServerConfig>(
-    UnboundedReceiver<(ServerConnection<Config>, Config::ClientPacket)>,
-);
+struct PacketReceiver<Config: ServerConfig>(UnboundedReceiver<(ServerConnection<Config>, Config::ClientPacket)>);
 
 fn create_setup_system<Config: ServerConfig>(address: SocketAddr) -> impl Fn(Commands) {
     #[cfg(target_family = "wasm")]
@@ -160,7 +151,20 @@ fn create_setup_system<Config: ServerConfig>(address: SocketAddr) -> impl Fn(Com
         commands.insert_resource(DisconnectionReceiver::<Config>(disc_rx));
         commands.insert_resource(PacketReceiver::<Config>(pack_rx));
 
+            // New connections
+        let listener = match executor::block_on(Config::Protocol::bind(address)) {
+            Ok(l) => l,
+            Err(e) => {
+                log::error!("Network address {} error: {}", address, e);
+                commands.add(|world: &mut World| {
+                    world.send_event(AppExit)
+                });
+                return;
+            },
+        };
+
         std::thread::spawn(move || {
+
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
@@ -234,11 +238,6 @@ fn create_setup_system<Config: ServerConfig>(address: SocketAddr) -> impl Fn(Com
                         }
                     });
 
-                    // New connections
-                    let listener = Config::Protocol::bind(address)
-                        .await
-                        .expect("Couldn't create listener");
-
                     loop {
                         select! {
                             Ok(connection) = listener.accept() => {
@@ -292,12 +291,7 @@ pub struct NewConnectionEvent<Config: ServerConfig> {
 /// A client disconnected.
 pub struct DisconnectionEvent<Config: ServerConfig> {
     /// The error.
-    pub error: ReceiveError<
-        Config::ClientPacket,
-        Config::ServerPacket,
-        Config::Serializer,
-        Config::LengthSerializer,
-    >,
+    pub error: ReceiveError<Config::ClientPacket, Config::ServerPacket, Config::Serializer, Config::LengthSerializer>,
     /// The connection.
     pub connection: ServerConnection<Config>,
 }
@@ -315,10 +309,7 @@ fn accept_new_connections<Config: ServerConfig>(
     mut event_writer: EventWriter<NewConnectionEvent<Config>>,
 ) {
     while let Ok((address, connection)) = receiver.0.try_recv() {
-        event_writer.send(NewConnectionEvent {
-            connection,
-            address,
-        })
+        event_writer.send(NewConnectionEvent { connection, address })
     }
 }
 

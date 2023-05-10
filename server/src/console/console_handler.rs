@@ -1,10 +1,12 @@
-use std::{sync::atomic::Ordering, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use bevy::prelude::Resource;
 use chrono::Local;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
+
+use crate::network::runtime::RuntimePlugin;
 
 use super::console_sender::{Console, ConsoleSender};
 
@@ -45,7 +47,7 @@ impl ConsoleHandler {
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
-                    //server_active.store(false, Ordering::Relaxed);
+                    RuntimePlugin::stop_server();
                     break;
                 }
                 Err(e) => {

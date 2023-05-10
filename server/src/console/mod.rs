@@ -18,15 +18,9 @@ impl Plugin for ConsolePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ConsoleHandler::new());
         app.add_system(
-            Self::start
+            ConsoleHandler::run_handler
                 .in_schedule(CoreSchedule::Startup)
                 .in_base_set(StartupSet::PostStartup), //.run_if(resource_exists::<ServerRuntime>()),
         );
-    }
-}
-
-impl ConsolePlugin {
-    fn start() {
-        ConsoleHandler::run_handler()
     }
 }
