@@ -58,7 +58,6 @@ impl NetworkPlugin {
 fn stop_server(mut exit: EventReader<AppExit>) {
     for _e in exit.iter() {
         info!("Stopping the server");
-        info!("Stopping the server");
         thread::sleep(Duration::from_millis(50));
     }
 }

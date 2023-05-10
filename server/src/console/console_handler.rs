@@ -63,15 +63,20 @@ impl ConsoleHandler {
     }
 
     pub fn send_message(message: String) {
-        CONSOLE_OUTPUT_CHANNEL.0.send(message).unwrap();
+        let date = Local::now();
+        let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
+
+        if RuntimePlugin::is_active() {
+            CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
+        }
+        else {
+            println!("{}", m);
+        }
     }
 
     pub fn update(printer: &mut dyn ExternalPrinter) {
         for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
-            let date = Local::now();
-            printer
-                .print(format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message))
-                .unwrap();
+            printer.print(message).unwrap();
             thread::sleep(Duration::from_millis(1));
         }
     }
