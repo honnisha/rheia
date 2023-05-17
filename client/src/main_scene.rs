@@ -1,13 +1,12 @@
-use std::sync::{Arc, Mutex, MutexGuard};
-
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
-use crate::network::client::NetworkClient;
+use crate::logger::CONSOLE_LOGGER;
+use crate::network::client::NetworkContainer;
 use crate::world::World;
-use godot::engine::Engine;
 use godot::engine::node::InternalMode;
+use godot::engine::Engine;
 use godot::prelude::*;
-use lazy_static::lazy_static;
+use log::{info, LevelFilter};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -20,21 +19,13 @@ pub struct Main {
     world: Option<Gd<World>>,
 }
 
-lazy_static! {
-    static ref NETWORK_CLIENT: Arc<Mutex<NetworkClient>> = Arc::new(Mutex::new(NetworkClient::init()));
-}
-
 #[godot_api]
 impl Main {
     fn handle_console_command(&mut self, command: String) {
         if command.len() == 0 {
             return;
         }
-        Main::get_client().send_console_command(command);
-    }
-
-    pub fn get_client() -> MutexGuard<'static, NetworkClient> {
-        NETWORK_CLIENT.lock().unwrap()
+        NetworkContainer::send_console_command(command);
     }
 }
 
@@ -49,7 +40,8 @@ impl Main {
         let world_name = GodotString::from("World");
         world.bind_mut().set_name(world_name.clone());
 
-        self.base.add_child(world.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.base
+            .add_child(world.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
         self.world = Some(self.base.get_node_as::<World>(world_name));
 
         godot_print!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
@@ -67,16 +59,16 @@ impl NodeVirtual for Main {
     }
 
     fn ready(&mut self) {
-        godot_print!("Loading HonnyCraft version: {}", VERSION);
+        log::set_logger(&CONSOLE_LOGGER).unwrap();
+        log::set_max_level(LevelFilter::Info);
+
+        info!("Loading HonnyCraft version: {}", VERSION);
 
         if Engine::singleton().is_editor_hint() {
             return;
         }
 
-        NETWORK_CLIENT.lock().unwrap().create_client(
-            "127.0.0.1:14191".to_string(),
-            "TestUser".to_string(),
-        );
+        NetworkContainer::create_client("127.0.0.1:14191".to_string());
     }
 
     fn process(&mut self, delta: f64) {
@@ -88,7 +80,7 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        Main::get_client().update(delta, self);
+        NetworkContainer::update(delta, self);
     }
 
     fn exit_tree(&mut self) {
@@ -96,6 +88,6 @@ impl NodeVirtual for Main {
             return;
         }
 
-        Main::get_client().disconnect();
+        NetworkContainer::disconnect();
     }
 }

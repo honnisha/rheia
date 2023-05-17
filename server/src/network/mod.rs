@@ -3,7 +3,6 @@ use std::{time::Duration, thread};
 use bevy_ecs::{prelude::EventReader, schedule::IntoSystemConfig};
 use bincode::DefaultOptions;
 use log::info;
-use serde::{Deserialize, Serialize};
 
 use bevy_app::{App, AppExit, CoreSet};
 use network::{
@@ -11,20 +10,10 @@ use network::{
     protocols::tcp::TcpProtocol,
     serializers::bincode::BincodeSerializer,
     server::{NewConnectionEvent, PacketReceiveEvent, ServerPlugin},
-    ServerConfig, connection::MaxPacketSize,
+    ServerConfig, connection::MaxPacketSize, ClientPacket, ServerPacket,
 };
 
 use crate::{ServerSettings};
-
-#[derive(Serialize, Deserialize, Debug)]
-enum ClientPacket {
-    String(String),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-enum ServerPacket {
-    String(String),
-}
 
 struct Config;
 

@@ -4,8 +4,7 @@ use crate::packet_length_serializer::PacketLengthSerializer;
 use crate::protocol::Protocol;
 use crate::serializer::Serializer;
 use bevy::prelude::SystemSet;
-
-pub mod runtime_plugin;
+use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "client")]
 pub mod client;
@@ -17,6 +16,7 @@ pub mod serializer;
 pub mod serializers;
 #[cfg(feature = "server")]
 pub mod server;
+pub mod runtime_plugin;
 
 // Tests work fine on my pc but fail on CI, idk how to make them pass, networking speed depends on machine
 // #[cfg(test)]
@@ -68,4 +68,14 @@ pub trait ClientConfig: Send + Sync + 'static {
     type Serializer: Serializer<Self::ServerPacket, Self::ClientPacket> + Default;
     /// A packet length serializer
     type LengthSerializer: PacketLengthSerializer + Default;
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ClientPacket {
+    String(String),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ServerPacket {
+    String(String),
 }
