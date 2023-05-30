@@ -38,6 +38,7 @@ impl<Config: ClientConfig> std::ops::DerefMut for ClientConnections<Config> {
     }
 }
 
+#[allow(type_alias_bounds)]
 pub type ErrorType<Config: ClientConfig> =
     ReceiveError<Config::ServerPacket, Config::ClientPacket, Config::Serializer, Config::LengthSerializer>;
 

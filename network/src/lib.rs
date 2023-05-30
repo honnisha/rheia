@@ -70,12 +70,14 @@ pub trait ClientConfig: Send + Sync + 'static {
     type LengthSerializer: PacketLengthSerializer + Default;
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ClientPacket {
-    String(String),
+    KeepAlive,
+    ConsoleInput(String),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ServerPacket {
-    String(String),
+    KeepAlive,
+    ConsoleOutput(String),
 }

@@ -1,4 +1,4 @@
-use std::{time::Duration, thread};
+use std::{thread, time::Duration};
 
 use bevy_ecs::{prelude::EventReader, schedule::IntoSystemConfig};
 use bincode::DefaultOptions;
@@ -6,16 +6,19 @@ use log::info;
 
 use bevy_app::{App, AppExit, CoreSet};
 use network::{
+    connection::MaxPacketSize,
     packet_length_serializer::LittleEndian,
     protocols::tcp::TcpProtocol,
     serializers::bincode::BincodeSerializer,
-    server::{NewConnectionEvent, PacketReceiveEvent, ServerPlugin},
-    ServerConfig, connection::MaxPacketSize, ClientPacket, ServerPacket,
+    server::{NewConnectionEvent, PacketReceiveEvent, ServerPlugin, DisconnectionEvent},
+    ClientPacket, ServerConfig, ServerPacket,
 };
 
-use crate::{ServerSettings};
+use crate::{network::keep_alive::ServerKeepAliveMap, ServerSettings};
 
-struct Config;
+pub mod keep_alive;
+
+pub(crate) struct Config;
 
 impl ServerConfig for Config {
     type ClientPacket = ClientPacket;
@@ -40,7 +43,10 @@ impl NetworkPlugin {
         app.add_plugin(ServerPlugin::<Config>::bind(ip_port));
         app.add_system(new_connection_system);
         app.add_system(packet_receive_system);
+        app.add_system(disconnect_system);
         app.add_system(stop_server.in_base_set(CoreSet::PostUpdate));
+
+        ServerKeepAliveMap::<Config>::build(app);
     }
 }
 
@@ -53,21 +59,21 @@ fn stop_server(mut exit: EventReader<AppExit>) {
 
 fn new_connection_system(mut events: EventReader<NewConnectionEvent<Config>>) {
     for event in events.iter() {
-        event
-            .connection
-            .send(ServerPacket::String("Hello, Client!".to_string()))
-            .unwrap();
+        info!("Player ip:{:?} connected", event.connection.peer_addr());
+    }
+}
+
+fn disconnect_system(mut events: EventReader<DisconnectionEvent<Config>>) {
+    for event in events.iter() {
+        info!("Player ip:{:?} disconnected", event.connection.peer_addr());
     }
 }
 
 fn packet_receive_system(mut events: EventReader<PacketReceiveEvent<Config>>) {
     for event in events.iter() {
         match &event.packet {
-            ClientPacket::String(s) => println!("Got a message from a client: {}", s),
+            ClientPacket::ConsoleInput(s) => info!("Console input: {}", s),
+            _ => {},
         }
-        event
-            .connection
-            .send(ServerPacket::String("Hello, Client!".to_string()))
-            .unwrap();
     }
 }

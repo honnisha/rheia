@@ -50,11 +50,11 @@ impl NetworkContainer {
         network_handler.client.connect(address);
     }
 
-    pub fn update(delta: f64, main_scene: &mut Main) {
+    pub fn update(_delta: f64, _main_scene: &mut Main) {
         let mut container = NETWORK_CONTAINER.lock().unwrap();
 
         // connection_establish_system
-        while let Ok((address, connection)) = container.client.connection_receiver_rx.try_recv() {
+        while let Ok((_address, connection)) = container.client.connection_receiver_rx.try_recv() {
             container.client.connections.push(connection.clone());
             info!("Connected successfully");
         }
@@ -62,7 +62,7 @@ impl NetworkContainer {
         // connection_remove_system
         while let Ok((error, address)) = container.client.disconnection_receiver_rx.try_recv() {
             container.client.connections.retain(|conn| conn.peer_addr() != address);
-            info!("Connection error: {:?}", error);
+            info!("Disconnected: {:?}", error);
         }
 
         // packet_receive_system
@@ -71,5 +71,5 @@ impl NetworkContainer {
 
     pub fn disconnect() {}
 
-    pub fn send_console_command(command: String) {}
+    pub fn send_console_command(_command: String) {}
 }
