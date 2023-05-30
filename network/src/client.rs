@@ -22,6 +22,14 @@ impl<Config: ClientConfig> ClientConnections<Config> {
     fn new() -> Self {
         Self(Vec::new())
     }
+
+    pub fn get_connection(&mut self) -> Option<&ClientConnection<Config>> {
+        self.0.first()
+    }
+
+    pub fn has_connection(&mut self) -> bool {
+        self.0.len() > 0
+    }
 }
 
 impl<Config: ClientConfig> std::ops::Deref for ClientConnections<Config> {

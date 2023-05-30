@@ -1,22 +1,23 @@
-use std::{
-    net::ToSocketAddrs,
-    sync::{Arc, Mutex},
-};
-use log::info;
 use crate::main_scene::Main;
 use bincode::DefaultOptions;
 use lazy_static::lazy_static;
+use log::info;
 use network::packet_length_serializer::LittleEndian;
 use network::{
     client::ClientNetwork, protocols::tcp::TcpProtocol, serializers::bincode::BincodeSerializer, ClientConfig,
     ClientPacket, ServerPacket,
+};
+use std::{
+    net::ToSocketAddrs,
+    sync::{Arc, Mutex},
+    time::Duration,
 };
 
 lazy_static! {
     static ref NETWORK_CONTAINER: Arc<Mutex<NetworkContainer>> = Arc::new(Mutex::new(NetworkContainer::new()));
 }
 
-struct Config;
+pub(crate) struct Config;
 
 impl ClientConfig for Config {
     type ClientPacket = ClientPacket;
@@ -28,12 +29,21 @@ impl ClientConfig for Config {
 
 pub struct NetworkContainer {
     client: ClientNetwork<Config>,
+
+    keepalive_delay: Duration,
+    keepalive_runtime_timer: Duration,
+    keepalive_server_limit: Duration,
+    keepalive_server_timer: Duration,
 }
 
 impl NetworkContainer {
     pub fn new() -> Self {
         NetworkContainer {
             client: ClientNetwork::<Config>::init(),
+            keepalive_delay: Duration::from_secs_f32(0.5),
+            keepalive_runtime_timer: Duration::from_secs_f32(0.0),
+            keepalive_server_limit: Duration::from_secs_f32(5.0),
+            keepalive_server_timer: Duration::from_secs_f32(0.0),
         }
     }
 
@@ -50,8 +60,25 @@ impl NetworkContainer {
         network_handler.client.connect(address);
     }
 
-    pub fn update(_delta: f64, _main_scene: &mut Main) {
+    pub fn update(delta: f64, _main_scene: &mut Main) {
         let mut container = NETWORK_CONTAINER.lock().unwrap();
+
+        if container.client.connections.has_connection() {
+
+            // Keep alive
+            container.keepalive_runtime_timer += Duration::from_secs_f64(delta);
+            if container.keepalive_runtime_timer >= container.keepalive_delay {
+                let connection = container.client.connections.get_connection().unwrap();
+                connection.send(ClientPacket::KeepAlive).unwrap();
+                container.keepalive_runtime_timer = Duration::from_secs_f32(0.0);
+            }
+
+            // Check timeout from server
+            container.keepalive_server_timer += Duration::from_secs_f64(delta);
+            if container.keepalive_server_timer >= container.keepalive_server_limit {
+                info!("Disconnected: time out");
+            }
+        }
 
         // connection_establish_system
         while let Ok((_address, connection)) = container.client.connection_receiver_rx.try_recv() {
@@ -66,7 +93,12 @@ impl NetworkContainer {
         }
 
         // packet_receive_system
-        while let Ok((_connection, packet)) = container.client.packet_receiver_rx.try_recv() {}
+        while let Ok((_connection, packet)) = container.client.packet_receiver_rx.try_recv() {
+            match packet {
+                ServerPacket::KeepAlive => container.keepalive_server_timer = Duration::from_secs_f32(0.0),
+                ServerPacket::ConsoleOutput(message) => info!("{}", message),
+            }
+        }
     }
 
     pub fn disconnect() {}

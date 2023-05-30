@@ -8,7 +8,8 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::schedule::IntoSystemConfig;
 use bevy_ecs::system::{Res, Resource};
 use dashmap::DashMap;
-use network::server::{PacketReceiveEvent, NewConnectionEvent};
+use log::info;
+use network::server::{NewConnectionEvent, PacketReceiveEvent};
 use network::ClientPacket;
 use network::{connection::ConnectionId, server::ServerConnections, ServerConfig, ServerPacket};
 
@@ -40,10 +41,10 @@ impl<Config: ServerConfig> ServerKeepAliveMap<Config> {
 
 fn server_accept_new_connections(
     mut event_reader: EventReader<NewConnectionEvent<Config>>,
-    keep_alive_map: Res<ServerKeepAliveMap<Config>>,
+    server_keepalive_map: Res<ServerKeepAliveMap<Config>>,
 ) {
     for event in event_reader.iter() {
-        keep_alive_map
+        server_keepalive_map
             .map
             .insert(event.connection.id(), Timer::from_seconds(1.0, TimerMode::Once));
     }
@@ -68,7 +69,7 @@ fn server_remove_timed_out_clients(
                 .map
                 .get_mut(&event.connection.id())
                 .expect("keepalive not found")
-                .reset()
+                .reset();
         }
     }
     for connection in &**lobby_connections {
