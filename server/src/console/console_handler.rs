@@ -37,13 +37,13 @@ impl ConsoleHandler {
         let mut printer = rl.create_external_printer().unwrap();
 
         thread::spawn(move || loop {
-            let console = Console::init();
+            let console = Console::default();
 
             let readline = rl.readline("");
             match readline {
                 Ok(input) => {
                     if input.len() > 0 {
-                        ConsoleHandler::execute_command(&console, input);
+                        ConsoleHandler::execute_command(&console, &input);
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
@@ -81,7 +81,7 @@ impl ConsoleHandler {
         }
     }
 
-    pub fn execute_command(sender: &dyn ConsoleSender, message: String) {
+    pub fn execute_command(sender: &dyn ConsoleSender, message: &String) {
         sender.send_console_message(format!("Command \"{}\" not found", message));
     }
 }

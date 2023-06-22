@@ -7,14 +7,11 @@ use network::{
     client::ClientNetwork, protocols::tcp::TcpProtocol, serializers::bincode::BincodeSerializer, ClientConfig,
     ClientPacket, ServerPacket,
 };
-use std::{
-    net::ToSocketAddrs,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::sync::RwLock;
+use std::{net::ToSocketAddrs, sync::Arc, time::Duration};
 
 lazy_static! {
-    static ref NETWORK_CONTAINER: Arc<Mutex<NetworkContainer>> = Arc::new(Mutex::new(NetworkContainer::new()));
+    static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::new()));
 }
 
 pub(crate) struct Config;
@@ -55,16 +52,15 @@ impl NetworkContainer {
             .next()
             .expect("Invalid address");
 
-        let mut network_handler = NETWORK_CONTAINER.lock().unwrap();
+        let mut network_handler = NETWORK_CONTAINER.write().unwrap();
 
         network_handler.client.connect(address);
     }
 
     pub fn update(delta: f64, _main_scene: &mut Main) {
-        let mut container = NETWORK_CONTAINER.lock().unwrap();
+        let mut container = NETWORK_CONTAINER.write().unwrap();
 
         if container.client.connections.has_connection() {
-
             // Keep alive
             container.keepalive_runtime_timer += Duration::from_secs_f64(delta);
             if container.keepalive_runtime_timer >= container.keepalive_delay {
@@ -101,7 +97,17 @@ impl NetworkContainer {
         }
     }
 
-    pub fn disconnect() {}
+    pub fn disconnect() {
+        let mut container = NETWORK_CONTAINER.write().unwrap();
+        if let Some(c) = container.client.connections.get_connection() {
+            c.disconnect();
+        }
+    }
 
-    pub fn send_console_command(_command: String) {}
+    pub fn send_console_command(command: String) {
+        let mut container = NETWORK_CONTAINER.write().unwrap();
+        if let Some(c) = container.client.connections.get_connection() {
+            c.send(ClientPacket::ConsoleInput(command)).unwrap();
+        }
+    }
 }

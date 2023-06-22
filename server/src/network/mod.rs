@@ -1,24 +1,27 @@
-use std::{thread, time::Duration};
-
 use bevy_ecs::{prelude::EventReader, schedule::IntoSystemConfig};
 use bincode::DefaultOptions;
 use log::info;
+use std::{thread, time::Duration};
 
 use bevy_app::{App, AppExit, CoreSet};
 use network::{
-    connection::MaxPacketSize,
+    connection::{EcsConnection, MaxPacketSize},
     packet_length_serializer::LittleEndian,
     protocols::tcp::TcpProtocol,
     serializers::bincode::BincodeSerializer,
-    server::{NewConnectionEvent, PacketReceiveEvent, ServerPlugin, DisconnectionEvent},
+    server::{DisconnectionEvent, NewConnectionEvent, PacketReceiveEvent, ServerPlugin},
     ClientPacket, ServerConfig, ServerPacket,
 };
 
-use crate::{network::keep_alive::ServerKeepAliveMap, ServerSettings};
+use crate::{
+    console::{console_handler::ConsoleHandler, console_sender::ConsoleSender},
+    network::keep_alive::ServerKeepAliveMap,
+    ServerSettings,
+};
 
 pub mod keep_alive;
 
-pub(crate) struct Config;
+pub struct Config;
 
 impl ServerConfig for Config {
     type ClientPacket = ClientPacket;
@@ -29,6 +32,12 @@ impl ServerConfig for Config {
 }
 
 pub struct NetworkPlugin;
+
+impl ConsoleSender for EcsConnection<<Config as ServerConfig>::ServerPacket> {
+    fn send_console_message(&self, message: String) {
+        self.send(ServerPacket::ConsoleOutput(message)).unwrap();
+    }
+}
 
 impl NetworkPlugin {
     pub fn build(app: &mut App) {
@@ -72,8 +81,8 @@ fn disconnect_system(mut events: EventReader<DisconnectionEvent<Config>>) {
 fn packet_receive_system(mut events: EventReader<PacketReceiveEvent<Config>>) {
     for event in events.iter() {
         match &event.packet {
-            ClientPacket::ConsoleInput(s) => info!("Console input: {}", s),
-            _ => {},
+            ClientPacket::ConsoleInput(message) => ConsoleHandler::execute_command(&event.connection, message),
+            _ => {}
         }
     }
 }

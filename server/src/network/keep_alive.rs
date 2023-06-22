@@ -8,7 +8,6 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::schedule::IntoSystemConfig;
 use bevy_ecs::system::{Res, Resource};
 use dashmap::DashMap;
-use log::info;
 use network::server::{NewConnectionEvent, PacketReceiveEvent};
 use network::ClientPacket;
 use network::{connection::ConnectionId, server::ServerConnections, ServerConfig, ServerPacket};
@@ -46,7 +45,7 @@ fn server_accept_new_connections(
     for event in event_reader.iter() {
         server_keepalive_map
             .map
-            .insert(event.connection.id(), Timer::from_seconds(1.0, TimerMode::Once));
+            .insert(event.connection.id(), Timer::from_seconds(5.0, TimerMode::Once));
     }
 }
 
