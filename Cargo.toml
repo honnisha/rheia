@@ -3,6 +3,5 @@ members = [
     "client",
     "server",
     "common",
-    "network",
 ]
 resolver = "2"

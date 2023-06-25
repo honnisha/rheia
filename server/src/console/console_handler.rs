@@ -4,8 +4,9 @@ use bevy::prelude::Resource;
 use chrono::Local;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
-use network::runtime_plugin::RuntimePlugin;
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
+
+use crate::network::runtime_plugin::RuntimePlugin;
 
 use super::console_sender::{Console, ConsoleSender};
 
@@ -81,7 +82,7 @@ impl ConsoleHandler {
         }
     }
 
-    pub fn execute_command(sender: &dyn ConsoleSender, message: &String) {
-        sender.send_console_message(format!("Command \"{}\" not found", message));
+    pub fn execute_command(sender: &dyn ConsoleSender, command: &String) {
+        sender.send_console_message(format!("Command \"{}\" not found", command));
     }
 }

@@ -1,113 +1,107 @@
 use crate::main_scene::Main;
-use bincode::DefaultOptions;
+use bincode::Options;
+use common::network::ClientChannel;
+use common::network::ClientMessages;
+use common::network::PROTOCOL_ID;
+use common::network::ServerMessages;
+use godot::engine::Engine;
 use lazy_static::lazy_static;
 use log::info;
-use network::packet_length_serializer::LittleEndian;
-use network::{
-    client::ClientNetwork, protocols::tcp::TcpProtocol, serializers::bincode::BincodeSerializer, ClientConfig,
-    ClientPacket, ServerPacket,
-};
+use renet::transport::ClientAuthentication;
+use renet::transport::NetcodeClientTransport;
+use renet::DefaultChannel;
+use renet::{ConnectionConfig, RenetClient};
+use std::net::UdpSocket;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::sync::Arc;
 use std::sync::RwLock;
-use std::{net::ToSocketAddrs, sync::Arc, time::Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 lazy_static! {
     static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::new()));
 }
 
-pub(crate) struct Config;
-
-impl ClientConfig for Config {
-    type ClientPacket = ClientPacket;
-    type ServerPacket = ServerPacket;
-    type Protocol = TcpProtocol;
-    type Serializer = BincodeSerializer<DefaultOptions>;
-    type LengthSerializer = LittleEndian<u32>;
-}
-
 pub struct NetworkContainer {
-    client: ClientNetwork<Config>,
-
-    keepalive_delay: Duration,
-    keepalive_runtime_timer: Duration,
-    keepalive_server_limit: Duration,
-    keepalive_server_timer: Duration,
+    pub client: Option<Arc<RwLock<RenetClient>>>,
+    pub transport: Option<Arc<RwLock<NetcodeClientTransport>>>,
 }
 
 impl NetworkContainer {
     pub fn new() -> Self {
         NetworkContainer {
-            client: ClientNetwork::<Config>::init(),
-            keepalive_delay: Duration::from_secs_f32(0.5),
-            keepalive_runtime_timer: Duration::from_secs_f32(0.0),
-            keepalive_server_limit: Duration::from_secs_f32(5.0),
-            keepalive_server_timer: Duration::from_secs_f32(0.0),
+            client: None,
+            transport: None,
         }
     }
 
     pub fn create_client(ip_port: String) {
         info!("Connecting to the server at {}", ip_port);
-        let address = ip_port
-            .to_socket_addrs()
-            .expect("Invalid address")
-            .next()
-            .expect("Invalid address");
-
         let mut network_handler = NETWORK_CONTAINER.write().unwrap();
 
-        network_handler.client.connect(address);
+        network_handler.client = Some(Arc::new(RwLock::new(RenetClient::new(ConnectionConfig::default()))));
+
+        // Setup transport layer
+        // const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1), 5000));
+        let server_addr = ip_port.clone().parse().unwrap();
+        let socket = match UdpSocket::bind("127.0.0.1:0") {
+            Ok(s) => s,
+            Err(e) => {
+                info!("IP {} error: {}", ip_port, e);
+                return;
+            },
+        };
+        let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        let client_id: u64 = 0;
+        let authentication = ClientAuthentication::Unsecure {
+            server_addr: server_addr,
+            client_id,
+            user_data: None,
+            protocol_id: PROTOCOL_ID,
+        };
+
+        network_handler.transport = Some(Arc::new(RwLock::new(
+            NetcodeClientTransport::new(current_time, authentication, socket).unwrap(),
+        )));
     }
 
     pub fn update(delta: f64, _main_scene: &mut Main) {
-        let mut container = NETWORK_CONTAINER.write().unwrap();
+        let delta_time = Duration::from_secs_f64(delta);
+        let container = NETWORK_CONTAINER.read().unwrap();
 
-        if container.client.connections.has_connection() {
-            // Keep alive
-            container.keepalive_runtime_timer += Duration::from_secs_f64(delta);
-            if container.keepalive_runtime_timer >= container.keepalive_delay {
-                let connection = container.client.connections.get_connection().unwrap();
-                connection.send(ClientPacket::KeepAlive).unwrap();
-                container.keepalive_runtime_timer = Duration::from_secs_f32(0.0);
-            }
+        let mut client = container.client.as_ref().unwrap().write().unwrap();
+        let mut transport = container.transport.as_ref().unwrap().write().unwrap();
 
-            // Check timeout from server
-            container.keepalive_server_timer += Duration::from_secs_f64(delta);
-            if container.keepalive_server_timer >= container.keepalive_server_limit {
-                info!("Disconnected: time out");
-            }
-        }
+        client.update(delta_time);
+        transport.update(delta_time, &mut client).unwrap();
 
-        // connection_establish_system
-        while let Ok((_address, connection)) = container.client.connection_receiver_rx.try_recv() {
-            container.client.connections.push(connection.clone());
-            info!("Connected successfully");
-        }
-
-        // connection_remove_system
-        while let Ok((error, address)) = container.client.disconnection_receiver_rx.try_recv() {
-            container.client.connections.retain(|conn| conn.peer_addr() != address);
-            info!("Disconnected: {:?}", error);
-        }
-
-        // packet_receive_system
-        while let Ok((_connection, packet)) = container.client.packet_receiver_rx.try_recv() {
-            match packet {
-                ServerPacket::KeepAlive => container.keepalive_server_timer = Duration::from_secs_f32(0.0),
-                ServerPacket::ConsoleOutput(message) => info!("{}", message),
+        if !client.is_disconnected() {
+            while let Some(message) = client.receive_message(DefaultChannel::ReliableOrdered) {
+                let message: ServerMessages = bincode::options().deserialize(&message).unwrap();
+                match message {
+                    ServerMessages::ConsoleOutput { command } => {
+                        info!("{}", command);
+                    }
+                }
             }
         }
+
+        transport.send_packets(&mut client).unwrap();
     }
 
     pub fn disconnect() {
-        let mut container = NETWORK_CONTAINER.write().unwrap();
-        if let Some(c) = container.client.connections.get_connection() {
-            c.disconnect();
-        }
+        let container = NETWORK_CONTAINER.read().unwrap();
+
+        let mut client = container.client.as_ref().unwrap().write().unwrap();
+        client.disconnect();
     }
 
     pub fn send_console_command(command: String) {
-        let mut container = NETWORK_CONTAINER.write().unwrap();
-        if let Some(c) = container.client.connections.get_connection() {
-            c.send(ClientPacket::ConsoleInput(command)).unwrap();
-        }
+        let container = NETWORK_CONTAINER.read().unwrap();
+
+        let mut client = container.client.as_ref().unwrap().write().unwrap();
+        let input = ClientMessages::ConsoleInput { command: command };
+        let command_message = bincode::serialize(&input).unwrap();
+        client.send_message(ClientChannel::ClientMessages, command_message);
     }
 }

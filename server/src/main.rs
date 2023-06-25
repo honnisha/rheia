@@ -7,10 +7,8 @@ use bevy_app::{App, ScheduleRunnerPlugin};
 use bevy_ecs::system::Resource;
 use clap::Parser;
 use log::{info, LevelFilter};
-use ::network::runtime_plugin::RuntimePlugin;
 
-use crate::network::NetworkPlugin;
-use crate::{logger::CONSOLE_LOGGER};
+use crate::{logger::CONSOLE_LOGGER, network::{server::NetworkPlugin, runtime_plugin::RuntimePlugin}};
 use client_resources::ResourcesPlugin;
 use worlds::WorldsHandlerPlugin;
 
