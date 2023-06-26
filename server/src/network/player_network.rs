@@ -1,5 +1,7 @@
 use crate::console::console_sender::ConsoleSender;
 
+use super::server::NetworkPlugin;
+
 pub struct PlayerNetwork {
     client_id: u64,
     login: String,
@@ -20,6 +22,6 @@ impl PlayerNetwork {
 
 impl ConsoleSender for PlayerNetwork {
     fn send_console_message(&self, message: String) {
-
+        NetworkPlugin::send_console_output(self.client_id.clone(), message);
     }
 }

@@ -8,6 +8,7 @@ use common::network::ServerChannel;
 use common::network::ServerMessages;
 use common::network::PROTOCOL_ID;
 use lazy_static::lazy_static;
+use log::error;
 use log::info;
 use renet::transport::ClientAuthentication;
 use renet::transport::NetcodeClientTransport;
@@ -78,11 +79,17 @@ impl NetworkContainer {
         transport.update(delta_time, &mut client).unwrap();
 
         if !client.is_disconnected() {
-            while let Some(message) = client.receive_message(ServerChannel::Messages) {
-                let message: ServerMessages = bincode::options().deserialize(&message).unwrap();
-                match message {
-                    ServerMessages::ConsoleOutput { command } => {
-                        info!("{}", command);
+            while let Some(server_message) = client.receive_message(ServerChannel::Messages) {
+                let decoded: ServerMessages = match bincode::deserialize(&server_message) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        error!("Decode server message error: {}", e);
+                        continue;
+                    }
+                };
+                match decoded {
+                    ServerMessages::ConsoleOutput { message } => {
+                        info!("{}", message);
                     }
                 }
             }

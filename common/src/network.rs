@@ -44,7 +44,7 @@ pub enum ServerChannel {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessages {
-    ConsoleOutput { command: String },
+    ConsoleOutput { message: String },
 }
 
 impl From<ServerChannel> for u8 {

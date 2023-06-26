@@ -1,7 +1,7 @@
 use bevy_app::App;
 use bevy_ecs::{
     prelude::EventReader,
-    system::{ResMut, Resource, Res},
+    system::{Res, ResMut, Resource},
 };
 use bevy_renet::{
     renet::{
@@ -11,8 +11,13 @@ use bevy_renet::{
     transport::NetcodeServerPlugin,
     RenetServerPlugin,
 };
-use common::network::{connection_config, ClientMessages, PROTOCOL_ID, ClientChannel, Login};
+use common::network::{
+    connection_config, ClientChannel, ClientMessages, Login, ServerChannel, ServerMessages, PROTOCOL_ID,
+};
 use dashmap::DashMap;
+use flume::{Receiver, Sender};
+use lazy_static::lazy_static;
+use log::error;
 use log::info;
 use std::{net::UdpSocket, time::SystemTime};
 
@@ -50,6 +55,10 @@ impl Players {
     }
 }
 
+lazy_static! {
+    static ref CONSOLE_OUTPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
+}
+
 impl NetworkPlugin {
     pub fn build(app: &mut App) {
         let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
@@ -80,15 +89,34 @@ impl NetworkPlugin {
 
         app.add_system(receive_message_system);
         app.add_system(handle_events_system);
+        app.add_system(send_messages);
+    }
+
+    pub(crate) fn send_console_output(client_id: u64, message: String) {
+        CONSOLE_OUTPUT.0.send((client_id, message)).unwrap();
+    }
+}
+
+fn send_messages(mut server: ResMut<RenetServer>) {
+    for (client_id, message) in CONSOLE_OUTPUT.1.try_iter() {
+        let input = ServerMessages::ConsoleOutput { message: message };
+        let encoded = bincode::serialize(&input).unwrap();
+        server.send_message(client_id, ServerChannel::Messages, encoded);
     }
 }
 
 fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>) {
     // Send a text message for all clients
     for client_id in server.clients_id().into_iter() {
-        while let Some(message) = server.receive_message(client_id, ClientChannel::Messages) {
-            let command: ClientMessages = bincode::deserialize(&message).unwrap();
-            match command {
+        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Messages) {
+            let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+                Ok(d) => d,
+                Err(e) => {
+                    error!("Decode client message error: {}", e);
+                    continue;
+                }
+            };
+            match decoded {
                 ClientMessages::ConsoleInput { command } => {
                     let player_info = players.get_mut(&client_id);
                     ConsoleHandler::execute_command(player_info.value(), &command);
