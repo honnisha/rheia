@@ -4,9 +4,10 @@ use godot::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
         Engine, Image, ImageTexture, StandardMaterial3D, Texture2D,
     },
-    prelude::{godot_error, godot_print, try_load, Gd, PackedByteArray, StringName, ToVariant},
+    prelude::{try_load, Gd, PackedByteArray, StringName, ToVariant},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
+use log::error;
 use std::io::Cursor;
 use strum::IntoEnumIterator;
 
@@ -25,7 +26,7 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
         //let image = match Image::load_from_file(GodotString::from(&path)) {
         Some(t) => t.get_image().unwrap(),
         None => {
-            godot_print!("Can't load texture \"{}\"; not found;", path);
+            error!("Can't load texture \"{}\"; not found;", path);
             return;
         }
     };
@@ -34,7 +35,7 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
     let image_png = match image::load_from_memory(&b.to_vec()) {
         Ok(t) => t,
         Err(e) => {
-            godot_error!("Can't load texture \"{}\"; error: {:?}", path, e);
+            error!("Can't load texture \"{}\"; error: {:?}", path, e);
             return;
         }
     };

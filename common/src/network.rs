@@ -1,8 +1,8 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use bevy_renet::renet::{transport::NETCODE_KEY_BYTES, ChannelConfig, ConnectionConfig, SendType};
 use renet::transport::NETCODE_USER_DATA_BYTES;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub const PRIVATE_KEY: &[u8; NETCODE_KEY_BYTES] = b"an example very very secret key."; // 32-bytes
 pub const PROTOCOL_ID: u64 = 7;
@@ -26,15 +26,13 @@ impl From<ClientChannel> for u8 {
 
 impl ClientChannel {
     pub fn channels_config() -> Vec<ChannelConfig> {
-        vec![
-            ChannelConfig {
-                channel_id: Self::Messages.into(),
-                max_memory_usage_bytes: 5 * 1024 * 1024,
-                send_type: SendType::ReliableOrdered {
-                    resend_time: Duration::ZERO,
-                },
+        vec![ChannelConfig {
+            channel_id: Self::Messages.into(),
+            max_memory_usage_bytes: 5 * 1024 * 1024,
+            send_type: SendType::ReliableOrdered {
+                resend_time: Duration::ZERO,
             },
-        ]
+        }]
     }
 }
 
@@ -44,7 +42,13 @@ pub enum ServerChannel {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessages {
-    ConsoleOutput { message: String },
+    ConsoleOutput {
+        message: String,
+    },
+    Resource {
+        slug: String,
+        scripts: HashMap<String, String>,
+    },
 }
 
 impl From<ServerChannel> for u8 {
@@ -57,13 +61,11 @@ impl From<ServerChannel> for u8 {
 
 impl ServerChannel {
     pub fn channels_config() -> Vec<ChannelConfig> {
-        vec![
-            ChannelConfig {
-                channel_id: Self::Messages.into(),
-                max_memory_usage_bytes: 10 * 1024 * 1024,
-                send_type: SendType::Unreliable,
-            },
-        ]
+        vec![ChannelConfig {
+            channel_id: Self::Messages.into(),
+            max_memory_usage_bytes: 10 * 1024 * 1024,
+            send_type: SendType::Unreliable,
+        }]
     }
 }
 

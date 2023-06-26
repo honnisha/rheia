@@ -21,7 +21,11 @@ use log::error;
 use log::info;
 use std::{net::UdpSocket, time::SystemTime};
 
-use crate::{console::console_handler::ConsoleHandler, ServerSettings};
+use crate::{
+    client_resources::resources_manager::{self, ResourceManager},
+    console::console_handler::ConsoleHandler,
+    ServerSettings,
+};
 
 use super::player_network::PlayerNetwork;
 
@@ -95,6 +99,21 @@ impl NetworkPlugin {
     pub(crate) fn send_console_output(client_id: u64, message: String) {
         CONSOLE_OUTPUT.0.send((client_id, message)).unwrap();
     }
+
+    pub(crate) fn send_resources(
+        client_id: &u64,
+        resources_manager: &Res<ResourceManager>,
+        server: &mut ResMut<RenetServer>,
+    ) {
+        for resource in resources_manager.get_resources().values() {
+            let input = ServerMessages::Resource {
+                slug: resource.get_slug().clone(),
+                scripts: resource.get_client_scripts().clone(),
+            };
+            let encoded = bincode::serialize(&input).unwrap();
+            server.send_message(client_id.clone(), ServerChannel::Messages, encoded);
+        }
+    }
 }
 
 fn send_messages(mut server: ResMut<RenetServer>) {
@@ -127,9 +146,11 @@ fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>
 }
 
 fn handle_events_system(
+    mut server: ResMut<RenetServer>,
     mut server_events: EventReader<ServerEvent>,
     mut players: ResMut<Players>,
     transport: Res<NetcodeServerTransport>,
+    resources_manager: Res<ResourceManager>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -137,12 +158,13 @@ fn handle_events_system(
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
                 players.add(client_id, login.clone());
-                info!("Client login: \"{login}\" connected");
+                info!("Connected login \"{login}\"");
+                NetworkPlugin::send_resources(&client_id, &resources_manager, &mut server)
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
                 let login = players.get_mut(client_id).value().get_login().clone();
                 players.remove(client_id);
-                info!("Client login: \"{login}\" disconnected: {reason}");
+                info!("Disconnected login \"{login}\" reason {reason}");
             }
         }
     }

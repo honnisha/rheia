@@ -6,7 +6,7 @@ use crate::world::World;
 use godot::engine::node::InternalMode;
 use godot::engine::Engine;
 use godot::prelude::*;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -44,7 +44,11 @@ impl Main {
             .add_child(world.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
         self.world = Some(self.base.get_node_as::<World>(world_name));
 
-        godot_print!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
+        info!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
+    }
+
+    pub fn close() {
+        Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit(0_i64);
     }
 }
 
@@ -68,7 +72,13 @@ impl NodeVirtual for Main {
             return;
         }
 
-        NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string());
+        match NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Network connection error: {}", e);
+                Main::close();
+            }
+        };
     }
 
     fn process(&mut self, delta: f64) {
@@ -80,7 +90,13 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        NetworkContainer::update(delta, self);
+        match NetworkContainer::update(delta, self) {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Network error: {}", e);
+                Main::close();
+            }
+        }
     }
 
     fn exit_tree(&mut self) {

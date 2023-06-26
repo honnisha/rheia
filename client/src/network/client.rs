@@ -1,5 +1,4 @@
 use crate::main_scene::Main;
-use bincode::Options;
 use common::network::connection_config;
 use common::network::ClientChannel;
 use common::network::ClientMessages;
@@ -38,7 +37,7 @@ impl Default for NetworkContainer {
 }
 
 impl NetworkContainer {
-    pub fn create_client(ip_port: String, login: String) {
+    pub fn create_client(ip_port: String, login: String) -> Result<(), String> {
         info!("Connecting to the server at {}", ip_port);
         let mut network_handler = NETWORK_CONTAINER.write().unwrap();
 
@@ -50,8 +49,7 @@ impl NetworkContainer {
         let socket = match UdpSocket::bind("127.0.0.1:0") {
             Ok(s) => s,
             Err(e) => {
-                info!("IP {} error: {}", ip_port, e);
-                return;
+                return Err(format!("IP {} error: {}", ip_port, e));
             }
         };
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
@@ -66,9 +64,11 @@ impl NetworkContainer {
         network_handler.transport = Some(Arc::new(RwLock::new(
             NetcodeClientTransport::new(current_time, authentication, socket).unwrap(),
         )));
+
+        Ok(())
     }
 
-    pub fn update(delta: f64, _main_scene: &mut Main) {
+    pub fn update(delta: f64, main_scene: &mut Main) -> Result<(), String> {
         let delta_time = Duration::from_secs_f64(delta);
         let container = NETWORK_CONTAINER.read().unwrap();
 
@@ -90,20 +90,39 @@ impl NetworkContainer {
                 match decoded {
                     ServerMessages::ConsoleOutput { message } => {
                         info!("{}", message);
-                    }
+                    },
+                    ServerMessages::Resource { slug, scripts } => {
+                        let resource_manager = main_scene.get_resource_manager_mut();
+                        info!("Start loading client resource slug:\"{}\"", slug);
+                        match resource_manager.try_load(&slug, scripts) {
+                            Ok(_) => {
+                                info!("Client resource slug:\"{}\" loaded", slug);
+                            },
+                            Err(e) => {
+                                error!("Client resource slug:\"{}\" error: {}", slug, e);
+                            },
+                        }
+                    },
                 }
             }
         }
 
-        transport.send_packets(&mut client).unwrap();
+        match transport.send_packets(&mut client) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                Err(e.to_string())
+            }
+        }
     }
 
     pub fn disconnect() {
         let container = NETWORK_CONTAINER.read().unwrap();
 
         let mut transport = container.transport.as_ref().unwrap().write().unwrap();
-        transport.disconnect();
-        info!("{}", "Disconnected from the server");
+        if transport.is_connected() {
+            transport.disconnect();
+            info!("{}", "Disconnected from the server");
+        }
     }
 
     pub fn send_console_command(command: String) {
