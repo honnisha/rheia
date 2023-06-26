@@ -1,25 +1,25 @@
 use crate::main_scene::Main;
 use bincode::Options;
+use common::network::connection_config;
 use common::network::ClientChannel;
 use common::network::ClientMessages;
-use common::network::PROTOCOL_ID;
+use common::network::Login;
+use common::network::ServerChannel;
 use common::network::ServerMessages;
-use godot::engine::Engine;
+use common::network::PROTOCOL_ID;
 use lazy_static::lazy_static;
 use log::info;
 use renet::transport::ClientAuthentication;
 use renet::transport::NetcodeClientTransport;
-use renet::DefaultChannel;
-use renet::{ConnectionConfig, RenetClient};
+use renet::RenetClient;
 use std::net::UdpSocket;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Duration;
 use std::time::SystemTime;
 
 lazy_static! {
-    static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::new()));
+    static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::default()));
 }
 
 pub struct NetworkContainer {
@@ -27,36 +27,38 @@ pub struct NetworkContainer {
     pub transport: Option<Arc<RwLock<NetcodeClientTransport>>>,
 }
 
-impl NetworkContainer {
-    pub fn new() -> Self {
+impl Default for NetworkContainer {
+    fn default() -> Self {
         NetworkContainer {
             client: None,
             transport: None,
         }
     }
+}
 
-    pub fn create_client(ip_port: String) {
+impl NetworkContainer {
+    pub fn create_client(ip_port: String, login: String) {
         info!("Connecting to the server at {}", ip_port);
         let mut network_handler = NETWORK_CONTAINER.write().unwrap();
 
-        network_handler.client = Some(Arc::new(RwLock::new(RenetClient::new(ConnectionConfig::default()))));
+        let client = RenetClient::new(connection_config());
+        network_handler.client = Some(Arc::new(RwLock::new(client)));
 
         // Setup transport layer
-        // const SERVER_ADDR: SocketAddr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1), 5000));
         let server_addr = ip_port.clone().parse().unwrap();
         let socket = match UdpSocket::bind("127.0.0.1:0") {
             Ok(s) => s,
             Err(e) => {
                 info!("IP {} error: {}", ip_port, e);
                 return;
-            },
+            }
         };
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-        let client_id: u64 = 0;
+        let client_id = current_time.as_millis() as u64;
         let authentication = ClientAuthentication::Unsecure {
             server_addr: server_addr,
             client_id,
-            user_data: None,
+            user_data: Some(Login(login).to_netcode_user_data()),
             protocol_id: PROTOCOL_ID,
         };
 
@@ -76,7 +78,7 @@ impl NetworkContainer {
         transport.update(delta_time, &mut client).unwrap();
 
         if !client.is_disconnected() {
-            while let Some(message) = client.receive_message(DefaultChannel::ReliableOrdered) {
+            while let Some(message) = client.receive_message(ServerChannel::Messages) {
                 let message: ServerMessages = bincode::options().deserialize(&message).unwrap();
                 match message {
                     ServerMessages::ConsoleOutput { command } => {
@@ -92,8 +94,9 @@ impl NetworkContainer {
     pub fn disconnect() {
         let container = NETWORK_CONTAINER.read().unwrap();
 
-        let mut client = container.client.as_ref().unwrap().write().unwrap();
-        client.disconnect();
+        let mut transport = container.transport.as_ref().unwrap().write().unwrap();
+        transport.disconnect();
+        info!("{}", "Disconnected from the server");
     }
 
     pub fn send_console_command(command: String) {
@@ -102,6 +105,6 @@ impl NetworkContainer {
         let mut client = container.client.as_ref().unwrap().write().unwrap();
         let input = ClientMessages::ConsoleInput { command: command };
         let command_message = bincode::serialize(&input).unwrap();
-        client.send_message(ClientChannel::ClientMessages, command_message);
+        client.send_message(ClientChannel::Messages, command_message);
     }
 }

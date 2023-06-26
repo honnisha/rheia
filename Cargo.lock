@@ -2408,6 +2408,7 @@ dependencies = [
  "bracket-lib",
  "bracket-noise",
  "bracket-random",
+ "chrono",
  "common",
  "crossbeam",
  "crossbeam-channel",

@@ -6,15 +6,14 @@ use bevy_ecs::{
 use bevy_renet::{
     renet::{
         transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
-        DefaultChannel, RenetServer, ServerEvent,
+        RenetServer, ServerEvent,
     },
     transport::NetcodeServerPlugin,
     RenetServerPlugin,
 };
-use common::network::{connection_config, ClientMessages, PROTOCOL_ID};
+use common::network::{connection_config, ClientMessages, PROTOCOL_ID, ClientChannel, Login};
 use dashmap::DashMap;
 use log::info;
-use parking_lot::{MappedMutexGuard, Mutex, MutexGuard};
 use std::{net::UdpSocket, time::SystemTime};
 
 use crate::{console::console_handler::ConsoleHandler, ServerSettings};
@@ -37,9 +36,9 @@ impl Default for Players {
 }
 
 impl Players {
-    pub fn add(&mut self, client_id: &u64) {
+    pub fn add(&mut self, client_id: &u64, login: String) {
         self.players
-            .insert(client_id.clone(), PlayerNetwork::new(client_id.clone()));
+            .insert(client_id.clone(), PlayerNetwork::new(client_id.clone(), login));
     }
 
     pub fn remove(&mut self, client_id: &u64) {
@@ -87,7 +86,7 @@ impl NetworkPlugin {
 fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>) {
     // Send a text message for all clients
     for client_id in server.clients_id().into_iter() {
-        while let Some(message) = server.receive_message(client_id, DefaultChannel::ReliableOrdered) {
+        while let Some(message) = server.receive_message(client_id, ClientChannel::Messages) {
             let command: ClientMessages = bincode::deserialize(&message).unwrap();
             match command {
                 ClientMessages::ConsoleInput { command } => {
@@ -99,16 +98,23 @@ fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>
     }
 }
 
-fn handle_events_system(mut server_events: EventReader<ServerEvent>, mut players: ResMut<Players>) {
+fn handle_events_system(
+    mut server_events: EventReader<ServerEvent>,
+    mut players: ResMut<Players>,
+    transport: Res<NetcodeServerTransport>,
+) {
     for event in server_events.iter() {
         match event {
             ServerEvent::ClientConnected { client_id } => {
-                players.add(client_id);
-                info!("Client {client_id} connected");
+                let user_data = transport.user_data(client_id.clone()).unwrap();
+                let login = Login::from_user_data(&user_data).0;
+                players.add(client_id, login.clone());
+                info!("Client login: \"{login}\" connected");
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
+                let login = players.get_mut(client_id).value().get_login().clone();
                 players.remove(client_id);
-                info!("Client {client_id} disconnected: {reason}");
+                info!("Client login: \"{login}\" disconnected: {reason}");
             }
         }
     }

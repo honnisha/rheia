@@ -1,3 +1,4 @@
+use chrono::Local;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use godot::{
     engine::{Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
@@ -30,8 +31,11 @@ impl Console {
     }
 
     pub fn send_message(message: String) {
-        godot_print!("{}", message);
-        CONSOLE_OUTPUT_CHANNEL.0.send(message).unwrap();
+        let date = Local::now();
+        let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
+
+        godot_print!("{}", m);
+        CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
     }
 
     fn append_text(&mut self, message: String) {

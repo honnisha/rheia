@@ -68,7 +68,7 @@ impl NodeVirtual for Main {
             return;
         }
 
-        NetworkContainer::create_client("127.0.0.1:14191".to_string());
+        NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string());
     }
 
     fn process(&mut self, delta: f64) {
@@ -89,5 +89,6 @@ impl NodeVirtual for Main {
         }
 
         NetworkContainer::disconnect();
+        info!("{}", "Exiting the game");
     }
 }
