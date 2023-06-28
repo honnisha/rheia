@@ -49,6 +49,10 @@ pub enum ServerMessages {
         slug: String,
         scripts: HashMap<String, String>,
     },
+    Teleport {
+        world_slug: String,
+        location: [f32; 3],
+    },
 }
 
 impl From<ServerChannel> for u8 {
@@ -83,7 +87,7 @@ impl Login {
     pub fn to_netcode_user_data(&self) -> [u8; NETCODE_USER_DATA_BYTES] {
         let mut user_data = [0u8; NETCODE_USER_DATA_BYTES];
         if self.0.len() > NETCODE_USER_DATA_BYTES - 8 {
-            panic!("Username is too big");
+            panic!("Login is too big");
         }
         user_data[0] = self.0.len() as u8;
         user_data[1..self.0.len() + 1].copy_from_slice(self.0.as_bytes());
@@ -95,7 +99,7 @@ impl Login {
         let mut len = user_data[0] as usize;
         len = len.min(NETCODE_USER_DATA_BYTES - 1);
         let data = user_data[1..len + 1].to_vec();
-        let username = String::from_utf8(data).unwrap_or("unknown".to_string());
-        Self(username)
+        let login = String::from_utf8(data).unwrap_or("unknown".to_string());
+        Self(login)
     }
 }

@@ -69,7 +69,7 @@ impl CommandsHandler {
                             sender.send_console_message(String::from_utf8(buf).unwrap())
                         }
                         _ => {
-                            info!("{}", e.render().to_string());
+                            sender.send_console_message(e.render().to_string());
                         }
                     };
                     return;
