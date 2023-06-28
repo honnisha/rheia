@@ -5,6 +5,7 @@ use godot::{
     prelude::*,
 };
 use lazy_static::lazy_static;
+use log::info;
 
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
@@ -116,7 +117,7 @@ impl NodeVirtual for Console {
         }
     }
     fn ready(&mut self) {
-        godot_print!("Start loading console;");
+        info!("Start loading console;");
         match self.base.try_get_node_as::<RichTextLabel>(
             "VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText",
         ) {
@@ -176,7 +177,7 @@ impl NodeVirtual for Console {
             }
         };
         self.base.set_visible(false);
-        godot_print!("Console successfily loaded;");
+        info!("Console successfily loaded;");
     }
 
     #[allow(unused_variables)]
