@@ -20,6 +20,7 @@ mod console;
 mod logger;
 mod network;
 mod worlds;
+mod entities;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -52,10 +53,10 @@ fn main() {
     app.add_plugin(ScheduleRunnerPlugin::default());
 
     app.insert_resource(server_settings);
+    app.add_plugin(ConsolePlugin::default());
     app.add_plugin(RuntimePlugin::default());
     NetworkPlugin::build(&mut app);
     app.add_plugin(ResourcesPlugin::default());
-    app.add_plugin(ConsolePlugin::default());
     app.add_plugin(WorldsHandlerPlugin::default());
     app.run();
 }

@@ -1,6 +1,6 @@
 use std::{thread, time::Duration};
 
-use bevy::prelude::Resource;
+use bevy_ecs::world::World;
 use chrono::Local;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -8,24 +8,20 @@ use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEdito
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
-use super::console_sender::{Console, ConsoleSender};
-
-pub const _REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
+use super::{console_sender::Console, commands_executer::CommandsHandler};
 
 lazy_static! {
+    // To handle output log from entire server and draw it on console
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
+
+    // Console input
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
 }
 
-#[derive(Resource)]
-pub struct ConsoleHandler {}
+pub struct ConsoleHandler;
 
 /// Read and write console std
 impl ConsoleHandler {
-    pub fn new() -> Self {
-        ConsoleHandler {}
-    }
-
     pub fn run_handler() {
         let config = Config::builder()
             .history_ignore_space(true)
@@ -38,13 +34,11 @@ impl ConsoleHandler {
         let mut printer = rl.create_external_printer().unwrap();
 
         thread::spawn(move || loop {
-            let console = Console::default();
-
             let readline = rl.readline("");
             match readline {
                 Ok(input) => {
                     if input.len() > 0 {
-                        ConsoleHandler::execute_command(&console, &input);
+                        CONSOLE_INPUT_CHANNEL.0.send(input.clone()).unwrap();
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
@@ -69,8 +63,7 @@ impl ConsoleHandler {
 
         if RuntimePlugin::is_active() {
             CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
-        }
-        else {
+        } else {
             println!("{}", m);
         }
     }
@@ -82,7 +75,10 @@ impl ConsoleHandler {
         }
     }
 
-    pub fn execute_command(sender: &dyn ConsoleSender, command: &String) {
-        sender.send_console_message(format!("Command \"{}\" not found", command));
+    pub fn handler_console_input(world: &mut World) {
+        for command in CONSOLE_INPUT_CHANNEL.1.try_iter() {
+            let sender = Console::default();
+            CommandsHandler::execute_command(world, &sender, &command);
+        }
     }
 }

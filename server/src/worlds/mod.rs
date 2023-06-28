@@ -1,10 +1,12 @@
 use bevy_app::{App, Plugin};
 
-use self::worlds_manager::WorldsManager;
+use crate::console::commands_executer::{CommandsHandler, CommandExecuter};
 
-pub mod entities;
+use self::{worlds_manager::WorldsManager, commands::{world_command, get_command_parser}};
+
 pub mod world_manager;
 pub mod worlds_manager;
+pub mod commands;
 
 pub struct WorldsHandlerPlugin;
 
@@ -16,6 +18,12 @@ impl Default for WorldsHandlerPlugin {
 
 impl Plugin for WorldsHandlerPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WorldsManager::new());
+        let mut commands_handler = app.world.get_resource_mut::<CommandsHandler>().unwrap();
+        commands_handler.add_command_executer(CommandExecuter::new(
+            get_command_parser(),
+            world_command,
+        ));
+
+        app.insert_resource(WorldsManager::default());
     }
 }

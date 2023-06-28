@@ -2,6 +2,7 @@ use bevy_app::App;
 use bevy_ecs::{
     prelude::EventReader,
     system::{Res, ResMut, Resource},
+    world::World,
 };
 use bevy_renet::{
     renet::{
@@ -21,11 +22,7 @@ use log::error;
 use log::info;
 use std::{net::UdpSocket, time::SystemTime};
 
-use crate::{
-    client_resources::resources_manager::{self, ResourceManager},
-    console::console_handler::ConsoleHandler,
-    ServerSettings,
-};
+use crate::{client_resources::resources_manager::ResourceManager, ServerSettings, console::commands_executer::CommandsHandler};
 
 use super::player_network::PlayerNetwork;
 
@@ -33,7 +30,7 @@ pub struct NetworkPlugin;
 
 #[derive(Resource)]
 pub struct Players {
-    players: DashMap<u64, PlayerNetwork>,
+    players: DashMap<u64, Box<PlayerNetwork>>,
 }
 
 impl Default for Players {
@@ -46,21 +43,24 @@ impl Default for Players {
 
 impl Players {
     pub fn add(&mut self, client_id: &u64, login: String) {
-        self.players
-            .insert(client_id.clone(), PlayerNetwork::new(client_id.clone(), login));
+        self.players.insert(
+            client_id.clone(),
+            Box::new(PlayerNetwork::new(client_id.clone(), login)),
+        );
     }
 
     pub fn remove(&mut self, client_id: &u64) {
         self.players.remove(client_id);
     }
 
-    fn get_mut(&self, key: &u64) -> dashmap::mapref::one::RefMut<'_, u64, PlayerNetwork> {
+    fn get_mut(&self, key: &u64) -> dashmap::mapref::one::RefMut<'_, u64, Box<PlayerNetwork>> {
         self.players.get_mut(key).unwrap()
     }
 }
 
 lazy_static! {
     static ref CONSOLE_OUTPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
+    static ref CONSOLE_INPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
 }
 
 impl NetworkPlugin {
@@ -94,6 +94,8 @@ impl NetworkPlugin {
         app.add_system(receive_message_system);
         app.add_system(handle_events_system);
         app.add_system(send_messages);
+
+        app.add_system(console_client_command_event);
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
@@ -124,8 +126,7 @@ fn send_messages(mut server: ResMut<RenetServer>) {
     }
 }
 
-fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>) {
-    // Send a text message for all clients
+fn receive_message_system(mut server: ResMut<RenetServer>) {
     for client_id in server.clients_id().into_iter() {
         while let Some(client_message) = server.receive_message(client_id, ClientChannel::Messages) {
             let decoded: ClientMessages = match bincode::deserialize(&client_message) {
@@ -137,11 +138,18 @@ fn receive_message_system(mut server: ResMut<RenetServer>, players: Res<Players>
             };
             match decoded {
                 ClientMessages::ConsoleInput { command } => {
-                    let player_info = players.get_mut(&client_id);
-                    ConsoleHandler::execute_command(player_info.value(), &command);
+                    CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
                 }
             }
         }
+    }
+}
+
+fn console_client_command_event(world: &mut World) {
+    for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
+        let players = world.resource::<Players>();
+        let player_info = players.get_mut(&client_id).value().clone();
+        CommandsHandler::execute_command(world, &*player_info, &command);
     }
 }
 

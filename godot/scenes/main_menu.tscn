@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://bry2vcihfohwx"]
+[gd_scene load_steps=3 format=3 uid="uid://bry2vcihfohwx"]
 
 [ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/menu_background.png" id="1_wc0lw"]
 [ext_resource type="Texture2D" uid="uid://bfv046ipbal3m" path="res://assets/gui/textures/logo.png" id="2_6cqpl"]
-[ext_resource type="PackedScene" uid="uid://dc00ydlsjrmtu" path="res://assets/gui/elements/button_node.tscn" id="3_ufea5"]
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -57,18 +56,34 @@ expand_mode = 1
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="HBoxContainer" type="HBoxContainer" parent="TextureRect/VBoxContainer/BottomHalf"]
-custom_minimum_size = Vector2(300, 50)
+[node name="VBoxContainer" type="VBoxContainer" parent="TextureRect/VBoxContainer/BottomHalf"]
 layout_mode = 1
-anchors_preset = 5
+anchors_preset = 13
 anchor_left = 0.5
 anchor_right = 0.5
+anchor_bottom = 1.0
 offset_left = -150.0
 offset_right = 150.0
-offset_bottom = 50.0
 grow_horizontal = 2
+grow_vertical = 2
 
-[node name="ButtonNode" parent="TextureRect/VBoxContainer/BottomHalf/HBoxContainer" instance=ExtResource("3_ufea5")]
+[node name="HBoxContainer" type="HBoxContainer" parent="TextureRect/VBoxContainer/BottomHalf/VBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+
+[node name="Multiplayer" type="Button" parent="TextureRect/VBoxContainer/BottomHalf/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 1
+theme_override_font_sizes/font_size = 20
+text = "Multiplayer"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="TextureRect/VBoxContainer/BottomHalf/VBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+
+[node name="Exit" type="Button" parent="TextureRect/VBoxContainer/BottomHalf/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Exit
+"
