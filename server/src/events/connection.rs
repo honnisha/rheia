@@ -14,7 +14,7 @@ pub struct PlayerConnectionEvent {
 
 impl PlayerConnectionEvent {
     pub fn new(player_network: Box<PlayerNetwork>) -> Self {
-        PlayerConnectionEvent { player_network }
+        Self { player_network }
     }
 }
 

@@ -24,7 +24,7 @@ use std::{net::UdpSocket, time::SystemTime};
 
 use crate::{
     client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler,
-    events::connection::{PlayerConnectionEvent, on_connection}, ServerSettings,
+    events::{connection::{PlayerConnectionEvent, on_connection}, disconnect::{PlayerDisconnectEvent, on_disconnect}}, ServerSettings,
 };
 
 use super::player_network::PlayerNetwork;
@@ -102,6 +102,9 @@ impl NetworkPlugin {
 
         app.add_event::<PlayerConnectionEvent>();
         app.add_system(on_connection);
+
+        app.add_event::<PlayerDisconnectEvent>();
+        app.add_system(on_disconnect);
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
@@ -165,6 +168,7 @@ fn handle_events_system(
     transport: Res<NetcodeServerTransport>,
 
     mut connection_events: EventWriter<PlayerConnectionEvent>,
+    mut disconnection_events: EventWriter<PlayerDisconnectEvent>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -172,12 +176,18 @@ fn handle_events_system(
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
                 players.add(client_id, login.clone());
-                connection_events.send(PlayerConnectionEvent::new(players.get(client_id).value().clone()));
+                connection_events.send(
+                    PlayerConnectionEvent::new(players.get(client_id).value().clone())
+                );
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
-                let login = players.get(client_id).value().get_login().clone();
+                disconnection_events.send(
+                    PlayerDisconnectEvent::new(
+                        players.get(client_id).value().clone(),
+                        reason.clone(),
+                    )
+                );
                 players.remove(client_id);
-                info!("Disconnected login \"{login}\" reason {reason}");
             }
         }
     }
