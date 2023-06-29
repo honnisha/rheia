@@ -1,6 +1,6 @@
 use bevy_app::App;
 use bevy_ecs::{
-    prelude::EventReader,
+    prelude::{EventReader, EventWriter},
     system::{Res, ResMut, Resource},
     world::World,
 };
@@ -22,7 +22,10 @@ use log::error;
 use log::info;
 use std::{net::UdpSocket, time::SystemTime};
 
-use crate::{client_resources::resources_manager::ResourceManager, ServerSettings, console::commands_executer::CommandsHandler};
+use crate::{
+    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler,
+    events::connection::{PlayerConnectionEvent, on_connection}, ServerSettings,
+};
 
 use super::player_network::PlayerNetwork;
 
@@ -53,8 +56,8 @@ impl Players {
         self.players.remove(client_id);
     }
 
-    fn get_mut(&self, key: &u64) -> dashmap::mapref::one::RefMut<'_, u64, Box<PlayerNetwork>> {
-        self.players.get_mut(key).unwrap()
+    fn get(&self, key: &u64) -> dashmap::mapref::one::Ref<'_, u64, Box<PlayerNetwork>> {
+        self.players.get(key).unwrap()
     }
 }
 
@@ -96,6 +99,9 @@ impl NetworkPlugin {
         app.add_system(send_messages);
 
         app.add_system(console_client_command_event);
+
+        app.add_event::<PlayerConnectionEvent>();
+        app.add_system(on_connection);
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
@@ -103,7 +109,7 @@ impl NetworkPlugin {
     }
 
     pub(crate) fn send_resources(
-        client_id: &u64,
+        player_network: Box<PlayerNetwork>,
         resources_manager: &Res<ResourceManager>,
         server: &mut ResMut<RenetServer>,
     ) {
@@ -113,7 +119,7 @@ impl NetworkPlugin {
                 scripts: resource.get_client_scripts().clone(),
             };
             let encoded = bincode::serialize(&input).unwrap();
-            server.send_message(client_id.clone(), ServerChannel::Messages, encoded);
+            server.send_message(player_network.get_client_id().clone(), ServerChannel::Messages, encoded);
         }
     }
 }
@@ -148,17 +154,17 @@ fn receive_message_system(mut server: ResMut<RenetServer>) {
 fn console_client_command_event(world: &mut World) {
     for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
         let players = world.resource::<Players>();
-        let player_info = players.get_mut(&client_id).value().clone();
+        let player_info = players.get(&client_id).value().clone();
         CommandsHandler::execute_command(world, &*player_info, &command);
     }
 }
 
 fn handle_events_system(
-    mut server: ResMut<RenetServer>,
     mut server_events: EventReader<ServerEvent>,
     mut players: ResMut<Players>,
     transport: Res<NetcodeServerTransport>,
-    resources_manager: Res<ResourceManager>,
+
+    mut connection_events: EventWriter<PlayerConnectionEvent>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -166,11 +172,10 @@ fn handle_events_system(
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
                 players.add(client_id, login.clone());
-                info!("Connected login \"{login}\"");
-                NetworkPlugin::send_resources(&client_id, &resources_manager, &mut server)
+                connection_events.send(PlayerConnectionEvent::new(players.get(client_id).value().clone()));
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
-                let login = players.get_mut(client_id).value().get_login().clone();
+                let login = players.get(client_id).value().get_login().clone();
                 players.remove(client_id);
                 info!("Disconnected login \"{login}\" reason {reason}");
             }

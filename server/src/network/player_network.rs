@@ -22,6 +22,10 @@ impl PlayerNetwork {
     pub fn get_login(&self) -> &String {
         &self.login
     }
+
+    pub fn get_client_id(&self) -> &u64 {
+        &self.client_id
+    }
 }
 
 impl Display for PlayerNetwork {

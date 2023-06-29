@@ -21,6 +21,7 @@ mod logger;
 mod network;
 mod worlds;
 mod entities;
+mod events;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
