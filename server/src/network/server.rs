@@ -1,6 +1,7 @@
 use bevy_app::App;
 use bevy_ecs::{
-    prelude::{EventReader, EventWriter},
+    prelude::{EventReader, EventWriter, Events},
+    schedule::IntoSystemConfig,
     system::{Res, ResMut, Resource},
     world::World,
 };
@@ -23,8 +24,13 @@ use log::info;
 use std::{net::UdpSocket, time::SystemTime};
 
 use crate::{
-    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler,
-    events::{connection::{PlayerConnectionEvent, on_connection}, disconnect::{PlayerDisconnectEvent, on_disconnect}}, ServerSettings,
+    client_resources::resources_manager::ResourceManager,
+    console::commands_executer::CommandsHandler,
+    events::{
+        connection::{on_connection, PlayerConnectionEvent},
+        disconnect::{on_disconnect, PlayerDisconnectEvent},
+    },
+    ServerSettings,
 };
 
 use super::player_network::PlayerNetwork;
@@ -61,9 +67,16 @@ impl Players {
     }
 }
 
+pub(crate) struct SendClientMessageEvent {
+    client_id: u64,
+    channel: u8,
+    bytes: Vec<u8>,
+}
+
 lazy_static! {
-    static ref CONSOLE_OUTPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
     static ref CONSOLE_INPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
+    // static ref CLIENT_MESSAGES_OUTPUT: Arc<RwLock<Events<SendClientMessageEvent>>> = Arc::new(RwLock::new(Events::<SendClientMessageEvent>::default()));
+    static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
 impl NetworkPlugin {
@@ -96,42 +109,49 @@ impl NetworkPlugin {
 
         app.add_system(receive_message_system);
         app.add_system(handle_events_system);
-        app.add_system(send_messages);
 
         app.add_system(console_client_command_event);
 
         app.add_event::<PlayerConnectionEvent>();
-        app.add_system(on_connection);
+        app.add_system(on_connection.after(handle_events_system));
 
         app.add_event::<PlayerDisconnectEvent>();
-        app.add_system(on_disconnect);
+        app.add_system(on_disconnect.after(handle_events_system));
+
+        app.add_event::<SendClientMessageEvent>();
+        app.add_system(send_client_messages.after(on_disconnect));
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
-        CONSOLE_OUTPUT.0.send((client_id, message)).unwrap();
+        let input = ServerMessages::ConsoleOutput { message: message };
+        let encoded = bincode::serialize(&input).unwrap();
+        NetworkPlugin::send_static_message(client_id, ServerChannel::Messages.into(), encoded)
     }
 
-    pub(crate) fn send_resources(
-        player_network: Box<PlayerNetwork>,
-        resources_manager: &Res<ResourceManager>,
-        server: &mut ResMut<RenetServer>,
-    ) {
+    pub(crate) fn send_resources(player_network: Box<PlayerNetwork>, resources_manager: &Res<ResourceManager>) {
         for resource in resources_manager.get_resources().values() {
             let input = ServerMessages::Resource {
                 slug: resource.get_slug().clone(),
                 scripts: resource.get_client_scripts().clone(),
             };
             let encoded = bincode::serialize(&input).unwrap();
-            server.send_message(player_network.get_client_id().clone(), ServerChannel::Messages, encoded);
+            NetworkPlugin::send_static_message(
+                player_network.get_client_id().clone(),
+                ServerChannel::Messages.into(),
+                encoded,
+            )
         }
     }
-}
 
-fn send_messages(mut server: ResMut<RenetServer>) {
-    for (client_id, message) in CONSOLE_OUTPUT.1.try_iter() {
-        let input = ServerMessages::ConsoleOutput { message: message };
-        let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(client_id, ServerChannel::Messages, encoded);
+    pub(crate) fn send_static_message(client_id: u64, channel: u8, bytes: Vec<u8>) {
+        CLIENT_MESSAGES_OUTPUT
+            .0
+            .send(SendClientMessageEvent {
+                client_id: client_id,
+                bytes: bytes,
+                channel: channel,
+            })
+            .unwrap();
     }
 }
 
@@ -176,19 +196,21 @@ fn handle_events_system(
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
                 players.add(client_id, login.clone());
-                connection_events.send(
-                    PlayerConnectionEvent::new(players.get(client_id).value().clone())
-                );
+                connection_events.send(PlayerConnectionEvent::new(players.get(client_id).value().clone()));
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
-                disconnection_events.send(
-                    PlayerDisconnectEvent::new(
-                        players.get(client_id).value().clone(),
-                        reason.clone(),
-                    )
-                );
+                disconnection_events.send(PlayerDisconnectEvent::new(
+                    players.get(client_id).value().clone(),
+                    reason.clone(),
+                ));
                 players.remove(client_id);
             }
         }
+    }
+}
+
+fn send_client_messages(mut server: ResMut<RenetServer>) {
+    for event in CLIENT_MESSAGES_OUTPUT.1.drain() {
+        server.send_message(event.client_id, event.channel, event.bytes);
     }
 }

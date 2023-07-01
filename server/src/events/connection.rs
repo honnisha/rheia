@@ -1,6 +1,5 @@
 use bevy_ecs::system::Res;
-use bevy_ecs::{prelude::EventReader, system::ResMut};
-use bevy_renet::renet::RenetServer;
+use bevy_ecs::{prelude::EventReader};
 use log::info;
 
 use crate::{
@@ -19,12 +18,11 @@ impl PlayerConnectionEvent {
 }
 
 pub fn on_connection(
-    mut server: ResMut<RenetServer>,
     mut connection_events: EventReader<PlayerConnectionEvent>,
     resources_manager: Res<ResourceManager>,
 ) {
     for event in connection_events.iter() {
         info!("Connected login \"{}\"", event.player_network.get_login());
-        NetworkPlugin::send_resources(event.player_network.clone(), &resources_manager, &mut server);
+        NetworkPlugin::send_resources(event.player_network.clone(), &resources_manager);
     }
 }

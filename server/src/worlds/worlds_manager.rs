@@ -17,6 +17,10 @@ impl Default for WorldsManager {
 }
 
 impl WorldsManager {
+    pub fn has_world_with_slug(&mut self, slug: &String) -> bool {
+        self.worlds.contains_key(slug)
+    }
+
     pub fn create_world(&mut self, slug: String) -> Result<(), String> {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
@@ -31,5 +35,9 @@ impl WorldsManager {
 
     pub fn get_worlds(&self) -> &DashMap<String, WorldManager> {
         &self.worlds
+    }
+
+    fn get_world_mut(&self, key: &String) -> dashmap::mapref::one::RefMut<'_, String, WorldManager> {
+        self.worlds.get_mut(key).unwrap()
     }
 }
