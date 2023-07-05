@@ -11,7 +11,10 @@ pub struct PlayerDisconnectEvent {
 
 impl PlayerDisconnectEvent {
     pub fn new(player_network: Box<PlayerNetwork>, reason: DisconnectReason) -> Self {
-        Self { player_network, reason }
+        Self {
+            player_network,
+            reason,
+        }
     }
 }
 

@@ -3,19 +3,23 @@ use std::fmt::Display;
 
 use crate::console::console_sender::{ConsoleSender, ConsoleSenderType};
 
-use super::server::NetworkPlugin;
+use super::server::{NetworkPlugin, ServerLock, TransferLock};
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct PlayerNetwork {
     client_id: u64,
     login: String,
+    server: ServerLock,
+    transport: TransferLock,
 }
 
 impl PlayerNetwork {
-    pub fn new(client_id: u64, login: String) -> Self {
+    pub fn new(client_id: u64, login: String, server: ServerLock, transport: TransferLock) -> Self {
         PlayerNetwork {
             client_id,
             login,
+            server,
+            transport,
         }
     }
 
@@ -27,8 +31,7 @@ impl PlayerNetwork {
         &self.client_id
     }
 
-    pub fn teleport(&mut self, world_slug: &String, x: f32, y: f32, z: f32) {
-    }
+    pub fn teleport(&mut self, world_slug: &String, x: f32, y: f32, z: f32) {}
 }
 
 impl Display for PlayerNetwork {

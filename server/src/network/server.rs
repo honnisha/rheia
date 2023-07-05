@@ -1,7 +1,8 @@
+use bevy::time::Time;
 use bevy_app::App;
 use bevy_ecs::{
-    prelude::{EventReader, EventWriter},
-    schedule::IntoSystemConfig,
+    prelude::{resource_exists, EventReader, EventWriter, Events},
+    schedule::{IntoSystemConfig, IntoSystemSetConfig, SystemSet},
     system::{Res, ResMut, Resource},
     world::World,
 };
@@ -13,8 +14,15 @@ use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
-use renet::{RenetServer, transport::{ServerConfig, ServerAuthentication, NetcodeServerTransport}, ServerEvent};
-use std::{net::UdpSocket, time::SystemTime};
+use renet::{
+    transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
+    RenetServer, ServerEvent,
+};
+use std::{
+    net::UdpSocket,
+    sync::{Arc, RwLock},
+    time::SystemTime,
+};
 
 use crate::{
     client_resources::resources_manager::ResourceManager,
@@ -23,7 +31,7 @@ use crate::{
         connection::{on_connection, PlayerConnectionEvent},
         disconnect::{on_disconnect, PlayerDisconnectEvent},
     },
-    ServerSettings, network::{renet_server::RenetServerPlugin, renet_transport::NetcodeServerPlugin},
+    ServerSettings,
 };
 
 use super::player_network::PlayerNetwork;
@@ -44,10 +52,10 @@ impl Default for Players {
 }
 
 impl Players {
-    pub fn add(&mut self, client_id: &u64, login: String) {
+    pub fn add(&mut self, client_id: &u64, login: String, server: ServerLock, transport: TransferLock) {
         self.players.insert(
             client_id.clone(),
-            Box::new(PlayerNetwork::new(client_id.clone(), login)),
+            Box::new(PlayerNetwork::new(client_id.clone(), login, server, transport)),
         );
     }
 
@@ -72,6 +80,20 @@ lazy_static! {
     static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
+pub type ServerLock = Arc<RwLock<RenetServer>>;
+pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
+
+#[derive(Resource)]
+pub struct NetworkContainer {
+    pub server: ServerLock,
+    pub transport: TransferLock,
+}
+
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
+pub enum NetworkSet {
+    Server,
+}
+
 impl NetworkPlugin {
     pub fn build(app: &mut App) {
         let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
@@ -79,11 +101,9 @@ impl NetworkPlugin {
 
         info!("Starting server on {}", ip_port);
 
-        app.add_plugin(RenetServerPlugin);
-        app.add_plugin(NetcodeServerPlugin);
+        app.init_resource::<Events<ServerEvent>>();
 
         let server = RenetServer::new(connection_config());
-        app.insert_resource(server);
 
         let public_addr = ip_port.parse().unwrap();
         let socket = UdpSocket::bind(public_addr).unwrap();
@@ -97,22 +117,28 @@ impl NetworkPlugin {
 
         let transport = NetcodeServerTransport::new(current_time, server_config, socket).unwrap();
 
-        app.insert_resource(transport);
+        app.insert_resource(NetworkContainer {
+            server: Arc::new(RwLock::new(server)),
+            transport: Arc::new(RwLock::new(transport)),
+        });
+
         app.insert_resource(Players::default());
 
-        app.add_system(receive_message_system);
-        app.add_system(handle_events_system);
+        app.configure_set(NetworkSet::Server.run_if(resource_exists::<NetworkContainer>()));
+
+        app.add_system(receive_message_system.in_set(NetworkSet::Server));
+        app.add_system(handle_events_system.in_set(NetworkSet::Server));
 
         app.add_system(console_client_command_event);
 
         app.add_event::<PlayerConnectionEvent>();
-        app.add_system(on_connection.after(handle_events_system));
+        app.add_system(on_connection.after(handle_events_system).in_set(NetworkSet::Server));
 
         app.add_event::<PlayerDisconnectEvent>();
-        app.add_system(on_disconnect.after(handle_events_system));
+        app.add_system(on_disconnect.after(handle_events_system).in_set(NetworkSet::Server));
 
         app.add_event::<SendClientMessageEvent>();
-        app.add_system(send_client_messages.after(on_disconnect));
+        app.add_system(send_client_messages.after(on_disconnect).in_set(NetworkSet::Server));
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
@@ -148,7 +174,19 @@ impl NetworkPlugin {
     }
 }
 
-fn receive_message_system(mut server: ResMut<RenetServer>) {
+fn receive_message_system(
+    network_container: Res<NetworkContainer>,
+    time: Res<Time>,
+    mut server_events: EventWriter<ServerEvent>,
+) {
+    let mut server = network_container.server.write().expect("poisoned");
+    let mut transport = network_container.transport.write().expect("poisoned");
+    server.update(time.delta());
+
+    if let Err(e) = transport.update(time.delta(), &mut server) {
+        error!("Transport error: {}", e.to_string());
+    }
+
     for client_id in server.clients_id().into_iter() {
         while let Some(client_message) = server.receive_message(client_id, ClientChannel::Messages) {
             let decoded: ClientMessages = match bincode::deserialize(&client_message) {
@@ -165,6 +203,12 @@ fn receive_message_system(mut server: ResMut<RenetServer>) {
             }
         }
     }
+
+    while let Some(event) = server.get_event() {
+        server_events.send(event);
+    }
+
+    transport.send_packets(&mut server);
 }
 
 fn console_client_command_event(world: &mut World) {
@@ -178,17 +222,24 @@ fn console_client_command_event(world: &mut World) {
 fn handle_events_system(
     mut server_events: EventReader<ServerEvent>,
     mut players: ResMut<Players>,
-    transport: Res<NetcodeServerTransport>,
+    network_container: Res<NetworkContainer>,
 
     mut connection_events: EventWriter<PlayerConnectionEvent>,
     mut disconnection_events: EventWriter<PlayerDisconnectEvent>,
 ) {
+    let transport = network_container.transport.read().expect("poisoned");
+
     for event in server_events.iter() {
         match event {
             ServerEvent::ClientConnected { client_id } => {
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
-                players.add(client_id, login.clone());
+                players.add(
+                    client_id,
+                    login.clone(),
+                    network_container.server.clone(),
+                    network_container.transport.clone(),
+                );
                 connection_events.send(PlayerConnectionEvent::new(players.get(client_id).value().clone()));
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
@@ -202,7 +253,8 @@ fn handle_events_system(
     }
 }
 
-fn send_client_messages(mut server: ResMut<RenetServer>) {
+fn send_client_messages(network_container: Res<NetworkContainer>) {
+    let mut server = network_container.server.write().expect("poisoned");
     for event in CLIENT_MESSAGES_OUTPUT.1.drain() {
         server.send_message(event.client_id, event.channel, event.bytes);
     }
