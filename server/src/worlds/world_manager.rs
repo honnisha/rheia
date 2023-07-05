@@ -16,4 +16,12 @@ impl WorldManager {
     pub fn get_slug(&self) -> &String {
         &self.slug
     }
+
+    pub fn get_world(&self) -> &World {
+        &self.world
+    }
+
+    pub fn get_world_mut(&mut self) -> &mut World {
+        &mut self.world
+    }
 }

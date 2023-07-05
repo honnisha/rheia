@@ -1,6 +1,11 @@
 use bevy::prelude::Resource;
 use dashmap::DashMap;
 
+use crate::{
+    entities::entity::{Indentifier, NetworkComponent, Position},
+    network::player_container::PlayerMut,
+};
+
 use super::world_manager::WorldManager;
 
 #[derive(Resource)]
@@ -10,9 +15,7 @@ pub struct WorldsManager {
 
 impl Default for WorldsManager {
     fn default() -> Self {
-        WorldsManager {
-            worlds: DashMap::new(),
-        }
+        WorldsManager { worlds: DashMap::new() }
     }
 }
 
@@ -37,11 +40,21 @@ impl WorldsManager {
         &self.worlds
     }
 
-    pub fn get_world(&self, key: &String) -> Option<dashmap::mapref::one::Ref<'_, String, WorldManager>> {
-        self.worlds.get(key)
+    pub fn _get_world_manager(&self, key: &String) -> dashmap::mapref::one::Ref<'_, String, WorldManager> {
+        self.worlds.get(key).unwrap()
     }
 
-    pub fn get_world_mut(&self, key: &String) -> Option<dashmap::mapref::one::RefMut<'_, String, WorldManager>> {
-        self.worlds.get_mut(key)
+    pub fn get_world_manager_mut(&self, key: &String) -> dashmap::mapref::one::RefMut<'_, String, WorldManager> {
+        self.worlds.get_mut(key).unwrap()
+    }
+
+    pub fn spawn(&mut self, player_network: &mut PlayerMut, world_slug: &String, x: f32, y: f32, z: f32) {
+        let mut world_manager = self.get_world_manager_mut(world_slug);
+        world_manager.get_world_mut().spawn((
+            Indentifier::default(),
+            Position::new(x, y, z),
+            NetworkComponent::new(player_network.get_client_id().clone()),
+        ));
+        player_network.current_world = Some(world_slug.clone());
     }
 }

@@ -1,3 +1,4 @@
+use bevy_ecs::change_detection::Mut;
 use bevy::time::Time;
 use bevy_app::App;
 use bevy_ecs::{
@@ -9,7 +10,6 @@ use bevy_ecs::{
 use common::network::{
     connection_config, ClientChannel, ClientMessages, Login, ServerChannel, ServerMessages, PROTOCOL_ID,
 };
-use dashmap::DashMap;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
@@ -26,47 +26,15 @@ use std::{
 
 use crate::{
     client_resources::resources_manager::ResourceManager,
-    console::commands_executer::CommandsHandler,
     events::{
         connection::{on_connection, PlayerConnectionEvent},
         disconnect::{on_disconnect, PlayerDisconnectEvent},
     },
-    ServerSettings,
+    network::player_container::Players,
+    ServerSettings, console::commands_executer::CommandsHandler,
 };
 
-use super::player_network::PlayerNetwork;
-
 pub struct NetworkPlugin;
-
-#[derive(Resource)]
-pub struct Players {
-    players: DashMap<u64, Box<PlayerNetwork>>,
-}
-
-impl Default for Players {
-    fn default() -> Self {
-        Players {
-            players: DashMap::new(),
-        }
-    }
-}
-
-impl Players {
-    pub fn add(&mut self, client_id: &u64, login: String, server: ServerLock, transport: TransferLock) {
-        self.players.insert(
-            client_id.clone(),
-            Box::new(PlayerNetwork::new(client_id.clone(), login, server, transport)),
-        );
-    }
-
-    pub fn remove(&mut self, client_id: &u64) {
-        self.players.remove(client_id);
-    }
-
-    fn get(&self, key: &u64) -> dashmap::mapref::one::Ref<'_, u64, Box<PlayerNetwork>> {
-        self.players.get(key).unwrap()
-    }
-}
 
 pub(crate) struct SendClientMessageEvent {
     client_id: u64,
@@ -147,18 +115,14 @@ impl NetworkPlugin {
         NetworkPlugin::send_static_message(client_id, ServerChannel::Messages.into(), encoded)
     }
 
-    pub(crate) fn send_resources(player_network: Box<PlayerNetwork>, resources_manager: &Res<ResourceManager>) {
+    pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
         for resource in resources_manager.get_resources().values() {
             let input = ServerMessages::Resource {
                 slug: resource.get_slug().clone(),
                 scripts: resource.get_client_scripts().clone(),
             };
             let encoded = bincode::serialize(&input).unwrap();
-            NetworkPlugin::send_static_message(
-                player_network.get_client_id().clone(),
-                ServerChannel::Messages.into(),
-                encoded,
-            )
+            NetworkPlugin::send_static_message(client_id.clone(), ServerChannel::Messages.into(), encoded)
         }
     }
 
@@ -212,11 +176,12 @@ fn receive_message_system(
 }
 
 fn console_client_command_event(world: &mut World) {
-    for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
-        let players = world.resource::<Players>();
-        let player_info = players.get(&client_id).value().clone();
-        CommandsHandler::execute_command(world, &*player_info, &command);
-    }
+    world.resource_scope(|world, mut players: Mut<Players>| {
+        for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
+            let player = players.get(&client_id);
+            CommandsHandler::execute_command(world, &player.to_owned(), &command);
+        }
+    });
 }
 
 fn handle_events_system(
@@ -234,20 +199,11 @@ fn handle_events_system(
             ServerEvent::ClientConnected { client_id } => {
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
-                players.add(
-                    client_id,
-                    login.clone(),
-                    network_container.server.clone(),
-                    network_container.transport.clone(),
-                );
-                connection_events.send(PlayerConnectionEvent::new(players.get(client_id).value().clone()));
+                players.add(client_id, login.clone());
+                connection_events.send(PlayerConnectionEvent::new(client_id.clone()));
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
-                disconnection_events.send(PlayerDisconnectEvent::new(
-                    players.get(client_id).value().clone(),
-                    reason.clone(),
-                ));
-                players.remove(client_id);
+                disconnection_events.send(PlayerDisconnectEvent::new(client_id.clone(), reason.clone()));
             }
         }
     }
