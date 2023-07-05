@@ -26,6 +26,9 @@ impl PlayerNetwork {
     pub fn get_client_id(&self) -> &u64 {
         &self.client_id
     }
+
+    pub fn teleport(&mut self, world_slug: &String, x: f32, y: f32, z: f32) {
+    }
 }
 
 impl Display for PlayerNetwork {

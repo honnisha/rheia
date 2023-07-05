@@ -1,17 +1,9 @@
 use bevy_app::App;
 use bevy_ecs::{
-    prelude::{EventReader, EventWriter, Events},
+    prelude::{EventReader, EventWriter},
     schedule::IntoSystemConfig,
     system::{Res, ResMut, Resource},
     world::World,
-};
-use bevy_renet::{
-    renet::{
-        transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
-        RenetServer, ServerEvent,
-    },
-    transport::NetcodeServerPlugin,
-    RenetServerPlugin,
 };
 use common::network::{
     connection_config, ClientChannel, ClientMessages, Login, ServerChannel, ServerMessages, PROTOCOL_ID,
@@ -21,6 +13,7 @@ use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
+use renet::{RenetServer, transport::{ServerConfig, ServerAuthentication, NetcodeServerTransport}, ServerEvent};
 use std::{net::UdpSocket, time::SystemTime};
 
 use crate::{
@@ -30,7 +23,7 @@ use crate::{
         connection::{on_connection, PlayerConnectionEvent},
         disconnect::{on_disconnect, PlayerDisconnectEvent},
     },
-    ServerSettings,
+    ServerSettings, network::{renet_server::RenetServerPlugin, renet_transport::NetcodeServerPlugin},
 };
 
 use super::player_network::PlayerNetwork;

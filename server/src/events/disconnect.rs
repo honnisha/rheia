@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::EventReader;
-use bevy_renet::renet::DisconnectReason;
 use log::info;
+use renet::DisconnectReason;
 
 use crate::network::player_network::PlayerNetwork;
 

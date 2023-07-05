@@ -17,7 +17,7 @@ impl Default for WorldsManager {
 }
 
 impl WorldsManager {
-    pub fn has_world_with_slug(&mut self, slug: &String) -> bool {
+    pub fn has_world_with_slug(&self, slug: &String) -> bool {
         self.worlds.contains_key(slug)
     }
 
@@ -37,7 +37,11 @@ impl WorldsManager {
         &self.worlds
     }
 
-    fn get_world_mut(&self, key: &String) -> dashmap::mapref::one::RefMut<'_, String, WorldManager> {
-        self.worlds.get_mut(key).unwrap()
+    pub fn get_world(&self, key: &String) -> Option<dashmap::mapref::one::Ref<'_, String, WorldManager>> {
+        self.worlds.get(key)
+    }
+
+    pub fn get_world_mut(&self, key: &String) -> Option<dashmap::mapref::one::RefMut<'_, String, WorldManager>> {
+        self.worlds.get_mut(key)
     }
 }
