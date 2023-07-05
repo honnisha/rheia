@@ -1,7 +1,6 @@
 use super::console_sender::ConsoleSenderType;
 use bevy_ecs::{system::Resource, world::World};
 use clap::{error::ErrorKind, Command, ArgMatches};
-use log::info;
 use regex::Regex;
 
 pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;

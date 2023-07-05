@@ -44,7 +44,7 @@ impl Players {
             Some(e) => {
                 e.write()
             },
-            None => panic!("no player"),
+            None => panic!("no player with client_id: {}", key),
         }
     }
 }

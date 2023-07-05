@@ -25,7 +25,7 @@ impl Position {
 
 #[derive(Component)]
 pub struct NetworkComponent {
-    client_id: u64,
+    pub client_id: u64,
 }
 
 impl NetworkComponent {

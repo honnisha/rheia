@@ -175,6 +175,7 @@ fn receive_message_system(
     transport.send_packets(&mut server);
 }
 
+#[allow(unused_mut)]
 fn console_client_command_event(world: &mut World) {
     world.resource_scope(|world, mut players: Mut<Players>| {
         for (client_id, command) in CONSOLE_INPUT.1.try_iter() {

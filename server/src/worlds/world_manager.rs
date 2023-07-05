@@ -17,7 +17,7 @@ impl WorldManager {
         &self.slug
     }
 
-    pub fn get_world(&self) -> &World {
+    pub fn _get_world(&self) -> &World {
         &self.world
     }
 
