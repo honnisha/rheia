@@ -40,15 +40,14 @@ impl Main {
         let world_name = GodotString::from("World");
         world.bind_mut().set_name(world_name.clone());
 
-        self.base
-            .add_child(world.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.base.add_child(world.upcast());
         self.world = Some(self.base.get_node_as::<World>(world_name));
 
         info!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
     }
 
     pub fn close() {
-        Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit(0_i64);
+        Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit();
     }
 }
 
@@ -73,7 +72,7 @@ impl NodeVirtual for Main {
         }
 
         match NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 error!("Network connection error: {}", e);
                 Main::close();
@@ -91,7 +90,7 @@ impl NodeVirtual for Main {
         }
 
         match NetworkContainer::update(delta, self) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 error!("Network error: {}", e);
                 Main::close();

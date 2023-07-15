@@ -79,22 +79,22 @@ pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardM
         return material;
     }
 
-    material.set_alpha_scissor_threshold(0_f64);
+    material.set_alpha_scissor_threshold(0_f32);
     material.set_alpha_antialiasing(AlphaAntiAliasing::ALPHA_ANTIALIASING_OFF);
 
     material.set_shading_mode(ShadingMode::SHADING_MODE_PER_PIXEL);
 
-    material.set_metallic(0_f64);
-    material.set_specular(0_f64);
+    material.set_metallic(0_f32);
+    material.set_specular(0_f32);
 
-    material.set_roughness(0_f64);
-    material.set_clearcoat(0.23_f64);
+    material.set_roughness(0_f32);
+    material.set_clearcoat(0.23_f32);
 
     material.set_texture_filter(TextureFilter::TEXTURE_FILTER_NEAREST);
-    material.set_ao_light_affect(1.0_f64);
+    material.set_ao_light_affect(1.0_f32);
     material.set(StringName::from("ao_enabled"), true.to_variant());
     material.set_depth_draw_mode(DepthDrawMode::DEPTH_DRAW_OPAQUE_ONLY);
-    material.set_refraction(0.27_f64);
+    material.set_refraction(0.27_f32);
 
     let mut pba = PackedByteArray::new();
     pba.extend(generate_texture(texture_mapper));

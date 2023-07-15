@@ -1,10 +1,10 @@
-use common::blocks::{blocks_storage::BlockType, block_info::BlockInfo};
 use bracket_noise::prelude::*;
+use common::{blocks::{block_info::BlockInfo, blocks_storage::BlockType}, CHUNK_SIZE};
 use ndshape::ConstShape;
 
 use crate::world::chunks::chunk_info::ChunkShape;
 
-use super::chunks::chunk_info::{CHUNK_SIZE, ChunkData};
+use super::chunks::chunk_info::ChunkData;
 
 pub struct WorldGenerator {
     noise: FastNoise,

@@ -11,6 +11,7 @@ use self::{
 pub mod commands;
 pub mod world_manager;
 pub mod worlds_manager;
+pub mod chunks;
 
 pub struct WorldsHandlerPlugin;
 

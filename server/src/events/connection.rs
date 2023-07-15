@@ -29,7 +29,7 @@ pub fn on_connection(
 
         let default_teleport = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_teleport) {
-            worlds_manager.spawn(&mut player, &default_teleport, 0_f32, 0_f32, 0_f32)
+            worlds_manager.spawn_player(&mut player, &default_teleport, 0_f32, 0_f32, 0_f32)
         }
     }
 }

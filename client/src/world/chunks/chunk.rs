@@ -26,8 +26,7 @@ impl Chunk {
 
         mesh.set_material_overlay(material.share());
 
-        self.base
-            .add_child(mesh.upcast(), true, InternalMode::INTERNAL_MODE_BACK);
+        self.base.add_child(mesh.upcast());
         let m = self.base.get_node_as::<MeshInstance3D>("ChunkMesh");
         self.mesh = Some(m);
     }

@@ -1,10 +1,8 @@
-use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
+use common::{blocks::{block_info::BlockInfo, blocks_storage::BlockType}, CHUNK_SIZE};
 use godot::prelude::Vector3;
 use ndshape::{ConstShape, ConstShape3u32};
 
 use super::chunk::ChunkPositionType;
-
-pub const CHUNK_SIZE: i32 = 16_i32;
 
 pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;

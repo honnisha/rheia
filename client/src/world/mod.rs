@@ -1,10 +1,7 @@
 use crate::world::chunks::chunks_manager::ChunksManager;
 use common::blocks::block_info::BlockInfo;
-use godot::{
-    engine::{node::InternalMode},
-    prelude::*,
-};
-use std::{collections::HashMap};
+use godot::{engine::node::InternalMode, prelude::*};
+use std::collections::HashMap;
 
 pub mod chunks;
 pub mod world_generator;
@@ -72,8 +69,7 @@ impl NodeVirtual for World {
         let chunks_manager_name = GodotString::from("ChunksManager");
         chunks_manager.bind_mut().set_name(chunks_manager_name.clone());
 
-        self.base
-            .add_child(chunks_manager.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.base.add_child(chunks_manager.upcast());
         self.chunks_manager = Some(self.base.get_node_as::<ChunksManager>(chunks_manager_name));
     }
 }

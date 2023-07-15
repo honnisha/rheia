@@ -1,10 +1,11 @@
 use crate::world::chunks::chunk_info::{ChunkBordersShape, ChunkShape};
-use common::blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility};
+use common::{blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility}, CHUNK_SIZE};
 use ndshape::ConstShape;
 
 use super::{
-    chunk_info::{ChunkData, ChunkDataBordered, CHUNK_SIZE},
-    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO}, chunk::ChunkPositionType,
+    chunk::ChunkPositionType,
+    chunk_info::{ChunkData, ChunkDataBordered},
+    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO},
 };
 
 pub fn format_chunk_data_with_boundaries(

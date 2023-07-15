@@ -103,6 +103,7 @@ impl NetworkContainer {
                             },
                         }
                     },
+                    ServerMessages::Teleport { world_slug, location } => todo!(),
                 }
             }
         }

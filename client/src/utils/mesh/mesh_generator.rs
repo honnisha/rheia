@@ -123,13 +123,7 @@ pub fn generate_chunk_geometry(texture_mapper: Arc<RwLock<TextureMapper>>, chunk
     arrays.set(mesh::ArrayType::ARRAY_NORMAL.ord() as usize, Variant::from(normals));
     arrays.set(mesh::ArrayType::ARRAY_TEX_UV.ord() as usize, Variant::from(uvs));
 
-    mesh_ist.add_surface_from_arrays(
-        mesh::PrimitiveType::PRIMITIVE_TRIANGLES,
-        arrays,
-        Default::default(),
-        Default::default(),
-        Default::default(),
-    );
+    mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::PRIMITIVE_TRIANGLES, arrays);
     //println!("generate_chunk_geometry data generated in {:.2?}", now.elapsed());
     Geometry { mesh_ist: mesh_ist }
 }

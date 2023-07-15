@@ -140,8 +140,7 @@ impl NodeVirtual for Console {
                 //);
                 self.console_input.as_mut().unwrap().connect(
                     "text_submitted".into(),
-                    Callable::from_object_method(self.base.share(), "text_submitted"),
-                    0,
+                    Callable::from_object_method(self.base.share(), "text_submitted")
                 );
             }
             _ => {
@@ -158,7 +157,6 @@ impl NodeVirtual for Console {
                 self.console_button.as_mut().unwrap().connect(
                     "pressed".into(),
                     Callable::from_object_method(self.base.share(), "button_pressed"),
-                    0,
                 );
             }
             _ => {
@@ -191,18 +189,18 @@ impl NodeVirtual for Console {
         }
 
         let input = Input::singleton();
-        if input.is_action_just_pressed("ui_toggle_console".into(), false) {
+        if input.is_action_just_pressed("ui_toggle_console".into()) {
             self.toggle_console();
         }
         if !self.active {
             return;
         }
 
-        if input.is_action_just_pressed("ui_up".into(), false) {
+        if input.is_action_just_pressed("ui_up".into()) {
             godot_print!("up");
-        } else if input.is_action_just_pressed("ui_down".into(), false) {
+        } else if input.is_action_just_pressed("ui_down".into()) {
             godot_print!("down");
-        } else if input.is_action_just_pressed("ui_focus_next".into(), false) {
+        } else if input.is_action_just_pressed("ui_focus_next".into()) {
             godot_print!("tab");
         }
     }

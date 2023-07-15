@@ -1,5 +1,8 @@
 use bracket_lib::random::RandomNumberGenerator;
-use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
+use common::{
+    blocks::{block_info::BlockInfo, blocks_storage::BlockType},
+    CHUNK_SIZE,
+};
 use godot::{
     engine::{node::InternalMode, Material},
     prelude::*,
@@ -26,7 +29,7 @@ use crate::{
 use super::{
     chunk::{Chunk, ChunkPositionType},
     chunk_data_formatter::{format_chunk_data_with_boundaries, get_boundaries_chunks},
-    chunk_info::{ChunkInfo, ChunkShape, CHUNK_SIZE},
+    chunk_info::{ChunkInfo, ChunkShape},
 };
 
 pub type ChunksInfoType = Arc<RwLock<HashMap<ChunkPositionType, ChunkInfo>>>;
@@ -70,7 +73,7 @@ impl ChunksManager {
             chunks_info: Arc::new(RwLock::new(HashMap::new())),
             chunks_godot_ids: HashMap::new(),
             world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
-            material: texture.duplicate(true).unwrap().cast::<Material>(),
+            material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
 
             update_mesh_tx: update_mesh_tx,
@@ -99,9 +102,9 @@ impl ChunksManager {
                 }
 
                 let chunk = self.spawn_chunk(&chunk_pos);
-                let index = chunk.bind().get_index(true).clone();
+                let index = chunk.bind().get_index().clone();
 
-                self.chunks_godot_ids.insert(chunk_pos.clone(), index);
+                self.chunks_godot_ids.insert(chunk_pos.clone(), index.into());
                 //println!("Chunk object spawned: {:?} index {}", chunk_pos, index);
 
                 if !self.is_loaded(&chunk_pos) {
@@ -257,7 +260,7 @@ impl ChunksManager {
     }
 
     pub fn get_chunk_by_index(&self, index: i64) -> Option<Gd<Chunk>> {
-        if let Some(n) = self.base.get_child(index, true) {
+        if let Some(n) = self.base.get_child(index.try_into().unwrap()) {
             return Some(n.cast::<Chunk>());
         }
         return None;
@@ -285,8 +288,7 @@ impl ChunksManager {
 
         let global_pos = ChunkInfo::get_chunk_pos_from_coordinate(&chunk_pos);
 
-        self.base
-            .add_child(chunk.upcast(), true, InternalMode::INTERNAL_MODE_FRONT);
+        self.base.add_child(chunk.upcast());
 
         let mut c = self.base.get_node_as::<Node3D>(&chunk_name);
 
