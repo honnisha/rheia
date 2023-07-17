@@ -1,11 +1,15 @@
+use super::chunks::chunks_map::LOADED_CHUNKS;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};
+use common::network::{ServerChannel, ServerMessages};
 use dashmap::DashMap;
-use log::info;
-use super::chunks::chunks_map::LOADED_CHUNKS;
+use log::{error, info};
 
-use crate::network::player_container::PlayerMut;
+use crate::network::{
+    player_container::{PlayerMut, Players},
+    server::NetworkContainer,
+};
 
 use super::world_manager::WorldManager;
 
@@ -77,9 +81,34 @@ pub fn update_world_chunks(mut worlds_manager: ResMut<WorldsManager>, time: Res<
     }
 }
 
-pub fn chunk_loaded_event_reader(mut worlds_manager: ResMut<WorldsManager>) {
+pub fn chunk_loaded_event_reader(
+    mut worlds_manager: ResMut<WorldsManager>,
+    players: Res<Players>,
+    network_container: Res<NetworkContainer>,
+) {
+    let mut server = network_container.server.write().expect("poisoned");
     for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {
-        info!("chunk_position: {}", chunk_position);
-        // let mut world = worlds_manager.get_world_manager_mut(world_slug);
+        let mut world = worlds_manager.get_world_manager_mut(&world_slug);
+
+        for client_id in server.clients_id() {
+            let player_chunks_positions = world.chunks.chunks_load_state.take_entity_tickets(client_id);
+            for player_chunks_watch in player_chunks_positions {
+                if let Some(c) = world.chunks.chunks.get(&player_chunks_watch) {
+                    info!("Chunk {} sended", chunk_position);
+
+                    let input = ServerMessages::ChunkSectionInfo {
+                        sections: c.sections.clone(),
+                        chunk_position: [chunk_position.x.clone(), chunk_position.z.clone()],
+                    };
+                    let encoded = bincode::serialize(&input).unwrap();
+                    server.send_message(client_id, ServerChannel::Messages, encoded);
+                } else {
+                    error!(
+                        "chunk_loaded_event_reader there is not chunk for player_chunks_watch:{}",
+                        player_chunks_watch
+                    );
+                }
+            }
+        }
     }
 }

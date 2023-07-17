@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
 use super::{block_type_info::BlockTypeInfo, voxel_visibility::VoxelVisibility};
 
 
-#[derive(Debug, Clone, Copy, Eq, EnumIter)]
+#[derive(Debug, Clone, Copy, Eq, EnumIter, Serialize, Deserialize)]
 #[repr(u16)]
 pub enum BlockType {
     Air,

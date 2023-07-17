@@ -14,7 +14,7 @@ use super::world_generator::WorldGenerator;
 pub struct WorldManager {
     slug: String,
     world: World,
-    chunks: ChunkMap,
+    pub(crate) chunks: ChunkMap,
     world_generator: Arc<RwLock<WorldGenerator>>,
 }
 

@@ -1,7 +1,8 @@
+use serde::{Serialize, Deserialize};
+
 use super::{blocks_storage::BlockType, block_type_info::BlockTypeInfo};
 
-
-#[derive(Debug, Copy)]
+#[derive(Debug, Copy, Serialize, Deserialize)]
 pub struct BlockInfo {
     block_type: BlockType,
 }

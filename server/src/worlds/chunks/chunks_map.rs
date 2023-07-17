@@ -1,18 +1,20 @@
-use ahash::AHashMap;
-use common::VERTICAL_SECTIONS;
+use ahash::{AHashMap, HashMapExt};
+use common::{network::ChunkDataType, VERTICAL_SECTIONS};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use spiral::ManhattanIterator;
 use std::{
+    collections::HashMap,
     fmt::{self, Display, Formatter},
-    time::Duration, sync::Arc,
+    sync::Arc,
+    time::Duration,
 };
 
 use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER, CHUNKS_DISTANCE};
 
-use super::{chunk_section::ChunkSection, chunks_load_state::ChunksLoadState};
+use super::chunks_load_state::ChunksLoadState;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, Hash)]
 pub struct ChunkPosition {
@@ -37,8 +39,8 @@ impl Display for ChunkPosition {
 /// and responsible for load/unload chunks
 #[derive(Default)]
 pub struct ChunkMap {
-    chunks: AHashMap<ChunkPosition, ChunkColumn>,
-    chunks_load_state: ChunksLoadState,
+    pub(crate) chunks: AHashMap<ChunkPosition, ChunkColumn>,
+    pub chunks_load_state: ChunksLoadState,
 }
 
 impl ChunkMap {
@@ -115,7 +117,7 @@ pub struct ChunkColumn {
     chunk_position: ChunkPosition,
     world_slug: String,
 
-    sections: [Option<ChunkSection>; VERTICAL_SECTIONS],
+    pub(crate) sections: [Option<ChunkDataType>; VERTICAL_SECTIONS],
     despawn_timer: Duration,
 }
 
@@ -131,8 +133,10 @@ impl ChunkColumn {
 
     pub(crate) fn load(&mut self, world_generator: Arc<RwLock<WorldGenerator>>) {
         for y in 0..VERTICAL_SECTIONS {
-            let mut chunk_section = ChunkSection::new();
-            world_generator.read().generate_chunk_data(&mut chunk_section.chunk_data, &self.chunk_position, y);
+            let mut chunk_section: ChunkDataType = HashMap::new();
+            world_generator
+                .read()
+                .generate_chunk_data(&mut chunk_section, &self.chunk_position, y);
             self.sections[y] = Some(chunk_section);
         }
         LOADED_CHUNKS

@@ -4,6 +4,8 @@ use bevy_renet::renet::{transport::NETCODE_KEY_BYTES, ChannelConfig, ConnectionC
 use renet::transport::NETCODE_USER_DATA_BYTES;
 use serde::{Deserialize, Serialize};
 
+use crate::{blocks::block_info::BlockInfo, VERTICAL_SECTIONS};
+
 pub const PRIVATE_KEY: &[u8; NETCODE_KEY_BYTES] = b"an example very very secret key."; // 32-bytes
 pub const PROTOCOL_ID: u64 = 7;
 
@@ -40,6 +42,9 @@ pub enum ServerChannel {
     Messages,
 }
 
+pub type BlockPositionType = [u8; 3];
+pub type ChunkDataType = HashMap<BlockPositionType, BlockInfo>;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessages {
     ConsoleOutput {
@@ -53,6 +58,11 @@ pub enum ServerMessages {
         world_slug: String,
         location: [f32; 3],
     },
+    ChunkSectionInfo {
+        // x, z
+        chunk_position: [i32; 2],
+        sections: [Option<ChunkDataType>; VERTICAL_SECTIONS]
+    }
 }
 
 impl From<ServerChannel> for u8 {

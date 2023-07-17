@@ -20,7 +20,6 @@ use crate::{
         mesh::mesh_generator::{generate_chunk_geometry, Geometry},
         textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper},
     },
-    world::world_generator::WorldGenerator,
 };
 
 use super::{
@@ -44,7 +43,6 @@ pub struct ChunksManager {
 
     chunks_info: ChunksInfoType,
     chunks_godot_ids: HashMap<ChunkPositionType, i64>,
-    world_generator: Arc<RwLock<WorldGenerator>>,
 
     texture_mapper: Arc<RwLock<TextureMapper>>,
     material: Gd<Material>,
@@ -69,7 +67,6 @@ impl ChunksManager {
             base,
             chunks_info: Arc::new(RwLock::new(HashMap::new())),
             chunks_godot_ids: HashMap::new(),
-            world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
 
@@ -111,7 +108,6 @@ impl ChunksManager {
         }
 
         let chunks_info = self.chunks_info.clone();
-        let world_generator = self.world_generator.clone();
         let update_mesh_tx = self.update_mesh_tx.clone();
         let texture_mapper = self.texture_mapper.clone();
         rayon::spawn(move || {
@@ -126,16 +122,15 @@ impl ChunksManager {
                             return;
                         }
                     };
-                    let has_any_block =
-                        ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &chunk_pos);
+                    ChunksManager::load_chunk_data(&mut ci_write, &chunk_pos);
 
-                    if has_any_block {
+                    if true {
                         // Load chunks in border
                         let boundary = get_boundaries_chunks(&chunk_pos);
                         for (_axis, _value, pos) in boundary {
                             if pos[1] < WORLD_CHUNKS_TO && pos[1] >= WORLD_CHUNKS_FROM {
                                 if !ci_write.contains_key(&pos) {
-                                    ChunksManager::load_chunk_data(world_generator.clone(), &mut ci_write, &pos);
+                                    ChunksManager::load_chunk_data(&mut ci_write, &pos);
                                 }
                             }
                         }
@@ -264,17 +259,11 @@ impl ChunksManager {
     }
 
     pub fn load_chunk_data<'a>(
-        world_generator: Arc<RwLock<WorldGenerator>>,
         ci_write: &mut ChunksInfoLockWrite,
         chunk_pos: &ChunkPositionType,
-    ) -> bool {
+    ) {
         let mut chunk_data = [BlockInfo::new(BlockType::Air); ChunkShape::SIZE as usize];
-        let has_any_block = world_generator
-            .read()
-            .unwrap()
-            .generate_chunk_data(&mut chunk_data, chunk_pos);
         ci_write.insert(*chunk_pos, ChunkInfo::new(chunk_data));
-        has_any_block
     }
 
     pub fn spawn_chunk(&mut self, chunk_pos: &ChunkPositionType) -> Gd<Chunk> {

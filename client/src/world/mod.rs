@@ -1,10 +1,9 @@
 use crate::world::chunks::chunks_manager::ChunksManager;
 use common::blocks::block_info::BlockInfo;
-use godot::{engine::node::InternalMode, prelude::*};
+use godot::prelude::*;
 use std::collections::HashMap;
 
 pub mod chunks;
-pub mod world_generator;
 
 #[derive(GodotClass)]
 #[class(base=Node)]

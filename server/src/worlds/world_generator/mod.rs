@@ -1,10 +1,10 @@
 use bracket_noise::prelude::*;
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
-    CHUNK_SIZE,
+    CHUNK_SIZE, network::ChunkDataType,
 };
 
-use super::chunks::{chunk_section::ChunkDataType, chunks_map::ChunkPosition};
+use super::chunks::chunks_map::ChunkPosition;
 
 pub struct WorldGenerator {
     noise: FastNoise,

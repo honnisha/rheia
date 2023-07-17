@@ -104,6 +104,9 @@ impl NetworkContainer {
                         }
                     },
                     ServerMessages::Teleport { world_slug, location } => todo!(),
+                    ServerMessages::ChunkSectionInfo { chunk_position, sections } => {
+                        info!("chunk revieved: {:?}", chunk_position);
+                    },
                 }
             }
         }
