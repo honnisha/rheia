@@ -51,3 +51,6 @@ bracket-random = "~0.8"
 # Schematics
 flate2 = "1.0"
 fastnbt = "2"
+
+# Miltithread heavy tasks
+rayon = "1.7"

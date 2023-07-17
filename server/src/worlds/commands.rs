@@ -1,4 +1,5 @@
 use bevy_ecs::world::World;
+use bracket_lib::random::RandomNumberGenerator;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use crate::console::console_sender::ConsoleSenderType;
@@ -37,7 +38,9 @@ pub(crate) fn world_command(world: &mut World, sender: &dyn ConsoleSenderType, a
         }
         Some(("create", create_matches)) => {
             let slug = create_matches.get_one::<String>("slug").unwrap();
-            match worlds_manager.create_world(slug.clone()) {
+            let mut rng = RandomNumberGenerator::new();
+            let seed = rng.next_u64();
+            match worlds_manager.create_world(slug.clone(), seed) {
                 Ok(_) => {
                     sender.send_console_message(format!("World \"{}\" was successfully created", slug));
                 }

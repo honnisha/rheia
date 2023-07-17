@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use args::MainCommand;
 use bevy::{
     prelude::{FrameCountPlugin, TaskPoolPlugin, TypeRegistrationPlugin},
@@ -5,6 +7,7 @@ use bevy::{
 };
 use bevy_app::{App, ScheduleRunnerPlugin};
 use bevy_ecs::system::Resource;
+
 use clap::Parser;
 use log::{info, LevelFilter};
 
@@ -24,6 +27,9 @@ mod entities;
 mod events;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub const CHUNKS_DISTANCE: u16 = 12;
+pub const CHUNKS_DESPAWN_TIMER: Duration = Duration::from_secs(5);
 
 #[derive(Resource, Clone, Debug)]
 pub struct ServerSettings {

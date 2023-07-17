@@ -3,10 +3,7 @@ use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
     CHUNK_SIZE,
 };
-use godot::{
-    engine::{node::InternalMode, Material},
-    prelude::*,
-};
+use godot::{engine::Material, prelude::*};
 use ndshape::ConstShape;
 use spiral::ManhattanIterator;
 use std::sync::{Arc, RwLock};

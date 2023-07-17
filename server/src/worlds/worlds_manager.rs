@@ -1,10 +1,15 @@
 use bevy::prelude::Resource;
+use bevy::time::Time;
+use bevy_ecs::system::{Res, ResMut};
 use dashmap::DashMap;
+use log::info;
+use super::chunks::chunks_map::LOADED_CHUNKS;
 
 use crate::network::player_container::PlayerMut;
 
 use super::world_manager::WorldManager;
 
+/// Contains and manages all worlds of the server
 #[derive(Resource)]
 pub struct WorldsManager {
     worlds: DashMap<String, WorldManager>,
@@ -21,11 +26,11 @@ impl WorldsManager {
         self.worlds.contains_key(slug)
     }
 
-    pub fn create_world(&mut self, slug: String) -> Result<(), String> {
+    pub fn create_world(&mut self, slug: String, seed: u64) -> Result<(), String> {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
         }
-        self.worlds.insert(slug.clone(), WorldManager::new(slug));
+        self.worlds.insert(slug.clone(), WorldManager::new(slug, seed));
         Ok(())
     }
 
@@ -35,6 +40,10 @@ impl WorldsManager {
 
     pub fn get_worlds(&self) -> &DashMap<String, WorldManager> {
         &self.worlds
+    }
+
+    pub fn get_worlds_mut(&mut self) -> &mut DashMap<String, WorldManager> {
+        &mut self.worlds
     }
 
     pub fn _get_world_manager(&self, key: &String) -> dashmap::mapref::one::Ref<'_, String, WorldManager> {
@@ -59,5 +68,18 @@ impl WorldsManager {
         let mut world_manager = self.get_world_manager_mut(&current_world);
         world_manager.despawn_player(player_network.get_client_id());
         player_network.current_world = None;
+    }
+}
+
+pub fn update_world_chunks(mut worlds_manager: ResMut<WorldsManager>, time: Res<Time>) {
+    for mut world in worlds_manager.get_worlds_mut().iter_mut() {
+        world.update_chunks(time.delta());
+    }
+}
+
+pub fn chunk_loaded_event_reader(mut worlds_manager: ResMut<WorldsManager>) {
+    for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {
+        info!("chunk_position: {}", chunk_position);
+        // let mut world = worlds_manager.get_world_manager_mut(world_slug);
     }
 }
