@@ -21,7 +21,7 @@ pub struct ChunkColumn {
     world_slug: String,
 
     sections: ArrayVec<ChunkDataType, VERTICAL_SECTIONS>,
-    despawn_timer: Duration,
+    despawn_timer: Arc<RwLock<Duration>>,
     loaded: bool,
 }
 
@@ -32,7 +32,7 @@ impl Display for ChunkColumn {
             "ChunkColumn{{x:{} z:{} despawn_timer:{}}}",
             self.chunk_position.x,
             self.chunk_position.z,
-            self.despawn_timer.as_secs_f32()
+            self.despawn_timer.read().as_secs_f32()
         )
     }
 }
@@ -41,40 +41,23 @@ impl ChunkColumn {
     pub(crate) fn new(chunk_position: ChunkPosition, world_slug: String) -> Self {
         Self {
             sections: Default::default(),
-            despawn_timer: Duration::ZERO,
+            despawn_timer: Arc::new(RwLock::new(Duration::ZERO)),
             chunk_position,
             world_slug,
             loaded: false,
         }
     }
 
-    pub(crate) fn get_despawn_timer(&self) -> &Duration {
-        &self.despawn_timer
+    pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {
+        *self.despawn_timer.read() >= duration
     }
 
-    pub(crate) fn set_despawn_timer(&mut self, new_despawn: Duration) {
-        self.despawn_timer = new_despawn;
+    pub(crate) fn set_despawn_timer(&self, new_despawn: Duration) {
+        *self.despawn_timer.write() = new_despawn;
     }
 
-    pub(crate) fn increase_despawn_timer(&mut self, new_despawn: Duration) {
-        self.despawn_timer += new_despawn;
-    }
-
-    pub(crate) fn load(&mut self, world_generator: Arc<RwLock<WorldGenerator>>) {
-        //load_chunk(world_generator, self.loaded.clone());
-
-        for y in 0..VERTICAL_SECTIONS {
-            let mut chunk_section: ChunkDataType = HashMap::new();
-            world_generator
-                .read()
-                .generate_chunk_data(&mut chunk_section, &self.chunk_position, y);
-            self.sections.push(chunk_section);
-        }
-        self.loaded = true;
-        LOADED_CHUNKS
-            .0
-            .send((self.world_slug.clone(), self.chunk_position.clone()))
-            .unwrap();
+    pub(crate) fn increase_despawn_timer(&self, new_despawn: Duration) {
+        *self.despawn_timer.write() += new_despawn;
     }
 
     pub(crate) fn build_network_format(&self) -> [ChunkDataType; VERTICAL_SECTIONS] {
@@ -82,5 +65,21 @@ impl ChunkColumn {
     }
 }
 
-//fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, loaded: Arc<AtomicBool>, chunk_position: ChunkPosition) {
-//}
+pub(crate) fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, chunk_column: Arc<RwLock<ChunkColumn>>) {
+    rayon::spawn(move || {
+        let mut chunk_column = chunk_column.write();
+
+        for y in 0..VERTICAL_SECTIONS {
+            let mut chunk_section: ChunkDataType = HashMap::new();
+            world_generator
+                .read()
+                .generate_chunk_data(&mut chunk_section, &chunk_column.chunk_position, y);
+            chunk_column.sections.push(chunk_section);
+        }
+        chunk_column.loaded = true;
+        LOADED_CHUNKS
+            .0
+            .send((chunk_column.world_slug.clone(), chunk_column.chunk_position.clone()))
+            .unwrap();
+    })
+}

@@ -1,33 +1,35 @@
 use ahash::AHashMap;
 use log::trace;
-use parking_lot::RwLock;
+use parking_lot::{RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
-use std::{
-    sync::Arc,
-    time::Duration,
+use std::{sync::Arc, time::Duration};
+
+use crate::{
+    worlds::{chunks::chunk_column::load_chunk, world_generator::WorldGenerator},
+    CHUNKS_DESPAWN_TIMER,
 };
 
-use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER};
-
-use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState, chunk_position::ChunkPosition};
+use super::{chunk_column::ChunkColumn, chunk_position::ChunkPosition, chunks_load_state::ChunksLoadState};
 
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks
 /// and responsible for load/unload chunks
 #[derive(Default)]
 pub struct ChunkMap {
-    chunks: AHashMap<ChunkPosition, ChunkColumn>,
+    chunks: AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>,
     chunks_load_state: ChunksLoadState,
 }
+
+pub type ChunkSectionType<'a> = RwLockReadGuard<'a, ChunkColumn>;
 
 impl ChunkMap {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<&ChunkColumn> {
+    pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(&c),
+            Some(c) => Some(c.read()),
             None => None,
         }
     }
@@ -67,8 +69,8 @@ impl ChunkMap {
                 self.chunks_load_state.insert_ticket(chunk_pos, client_id.clone());
 
                 // Update despawn timer
-                if let Some(c) = self.chunks.get_mut(&chunk_pos) {
-                    c.set_despawn_timer(Duration::ZERO);
+                if let Some(chunk_column) = self.chunks.get_mut(&chunk_pos) {
+                    chunk_column.read().set_despawn_timer(Duration::ZERO);
                 }
             }
         }
@@ -83,29 +85,30 @@ impl ChunkMap {
         // Update chunks despawn timer
         for (&chunk_pos, chunk_column) in self.chunks.iter_mut() {
             if self.chunks_load_state.num_tickets(&chunk_pos) == 0 {
-                chunk_column.increase_despawn_timer(delta);
+                chunk_column.read().increase_despawn_timer(delta);
             }
         }
 
         // Despawn chunks waiting for despawn
         self.chunks.retain(|&chunk_pos, chunk_column| {
-            let keep = chunk_column.get_despawn_timer() < &CHUNKS_DESPAWN_TIMER;
-            if !keep {
+            let for_despawn = chunk_column.read().is_for_despawn(CHUNKS_DESPAWN_TIMER);
+            if for_despawn {
                 trace!(target: "chunks", "Chunk {} despawned", chunk_pos);
             }
-            keep
+            !for_despawn
         });
 
         // Send to load new chunks
         for (chunk_pos, players) in self.chunks_load_state.by_chunk.iter() {
-            if players.len() == 0{
+            if players.len() == 0 {
                 continue;
             }
 
             if !self.chunks.contains_key(&chunk_pos) {
-                let mut chunk_column = ChunkColumn::new(chunk_pos.clone(), world_slug.clone());
+                let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk_pos.clone(), world_slug.clone())));
+
                 trace!(target: "chunks", "Send chunk {} to load", chunk_pos);
-                chunk_column.load(world_generator.clone());
+                load_chunk(world_generator.clone(), chunk_column.clone());
                 self.chunks.insert(chunk_pos.clone(), chunk_column);
             }
         }
@@ -155,7 +158,10 @@ mod tests {
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
         assert_eq!(chunk_map.chunks.len(), 1, "One chunk must be created");
 
-        chunk_map.chunks.get_mut(&pos).unwrap().set_despawn_timer(CHUNKS_DESPAWN_TIMER);
+        chunk_map
+            .get_chunk_column(&pos)
+            .unwrap()
+            .set_despawn_timer(CHUNKS_DESPAWN_TIMER);
 
         chunk_map.chunks_load_state.remove_ticket(pos.clone(), &client_id);
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
