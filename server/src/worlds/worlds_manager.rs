@@ -1,4 +1,4 @@
-use super::chunks::chunks_map::LOADED_CHUNKS;
+use super::chunks::chunk_column::LOADED_CHUNKS;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};

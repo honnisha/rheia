@@ -1,12 +1,8 @@
-use ahash::{AHashMap, HashMapExt};
-use common::{network::ChunkDataType, VERTICAL_SECTIONS};
-use flume::{Receiver, Sender};
-use lazy_static::lazy_static;
+use ahash::{AHashMap};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use spiral::ManhattanIterator;
 use std::{
-    collections::HashMap,
     fmt::{self, Display, Formatter},
     sync::Arc,
     time::Duration,
@@ -14,7 +10,7 @@ use std::{
 
 use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER, CHUNKS_DISTANCE};
 
-use super::chunks_load_state::ChunksLoadState;
+use super::{chunks_load_state::ChunksLoadState, chunk_column::ChunkColumn};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize, Hash)]
 pub struct ChunkPosition {
@@ -104,44 +100,5 @@ impl ChunkMap {
                 self.chunks.insert(chunk_pos.clone(), chunk_column);
             }
         }
-    }
-}
-
-/// world_slug, chunk_position
-pub type LoadedChunkType = (String, ChunkPosition);
-lazy_static! {
-    pub static ref LOADED_CHUNKS: (Sender<LoadedChunkType>, Receiver<LoadedChunkType>) = flume::unbounded();
-}
-
-pub struct ChunkColumn {
-    chunk_position: ChunkPosition,
-    world_slug: String,
-
-    pub(crate) sections: [Option<ChunkDataType>; VERTICAL_SECTIONS],
-    despawn_timer: Duration,
-}
-
-impl ChunkColumn {
-    fn new(chunk_position: ChunkPosition, world_slug: String) -> Self {
-        Self {
-            sections: Default::default(),
-            despawn_timer: Duration::ZERO,
-            chunk_position,
-            world_slug,
-        }
-    }
-
-    pub(crate) fn load(&mut self, world_generator: Arc<RwLock<WorldGenerator>>) {
-        for y in 0..VERTICAL_SECTIONS {
-            let mut chunk_section: ChunkDataType = HashMap::new();
-            world_generator
-                .read()
-                .generate_chunk_data(&mut chunk_section, &self.chunk_position, y);
-            self.sections[y] = Some(chunk_section);
-        }
-        LOADED_CHUNKS
-            .0
-            .send((self.world_slug.clone(), self.chunk_position.clone()))
-            .unwrap();
     }
 }
