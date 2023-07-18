@@ -1,13 +1,23 @@
+use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
-    CHUNK_SIZE, network::ChunkDataType,
+    network::ChunkDataType,
+    CHUNK_SIZE,
 };
 
 use super::chunks::chunks_map::ChunkPosition;
 
 pub struct WorldGenerator {
     noise: FastNoise,
+}
+
+impl Default for WorldGenerator {
+    fn default() -> Self {
+        let mut rng = RandomNumberGenerator::new();
+        let seed = rng.next_u64();
+        Self::new(seed)
+    }
 }
 
 impl WorldGenerator {

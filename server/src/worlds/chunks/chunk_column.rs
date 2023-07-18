@@ -3,6 +3,7 @@ use std::{sync::Arc, time::Duration, collections::HashMap};
 use common::{network::ChunkDataType, VERTICAL_SECTIONS};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use log::info;
 use parking_lot::RwLock;
 
 use crate::worlds::world_generator::WorldGenerator;

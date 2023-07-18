@@ -25,15 +25,19 @@ impl ChunksLoadState {
         vec_remove_item(self.by_client.get_mut(client_id).unwrap(), &chunk);
     }
 
-    pub fn num_tickets(&self, chunk: ChunkPosition) -> usize {
-        match self.by_chunk.get(&chunk) {
+    pub fn num_tickets(&self, chunk: &ChunkPosition) -> usize {
+        match self.by_chunk.get(chunk) {
             Some(vec) => vec.len(),
             None => 0,
         }
     }
 
-    pub fn take_entity_tickets(&mut self, client_id: u64) -> Vec<ChunkPosition> {
-        self.by_client.get_mut(&client_id).map(mem::take).unwrap_or_default()
+    pub fn take_chunks_clients(&mut self, chunk: &ChunkPosition) -> Vec<u64> {
+        self.by_chunk.get_mut(chunk).map(mem::take).unwrap_or_default()
+    }
+
+    pub fn take_entity_tickets(&mut self, client_id: &u64) -> Vec<ChunkPosition> {
+        self.by_client.get_mut(client_id).map(mem::take).unwrap_or_default()
     }
 
     pub fn remove_chunk(&mut self, pos: ChunkPosition) {
