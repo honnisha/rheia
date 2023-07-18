@@ -1,54 +1,39 @@
 use ahash::AHashMap;
 use log::trace;
 use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
 use spiral::ManhattanIterator;
 use std::{
-    fmt::{self, Display, Formatter},
     sync::Arc,
     time::Duration,
 };
 
 use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER};
 
-use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState};
-
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Hash)]
-pub struct ChunkPosition {
-    pub x: i32,
-    pub z: i32,
-}
-
-impl ChunkPosition {
-    pub const fn new(x: i32, z: i32) -> Self {
-        Self { x, z }
-    }
-}
-impl PartialEq for ChunkPosition {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.z == other.z
-    }
-}
-impl Eq for ChunkPosition {}
-
-impl Display for ChunkPosition {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "({}, {})", self.x, self.z)
-    }
-}
+use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState, chunk_position::ChunkPosition};
 
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks
 /// and responsible for load/unload chunks
 #[derive(Default)]
 pub struct ChunkMap {
-    pub(crate) chunks: AHashMap<ChunkPosition, ChunkColumn>,
-    pub chunks_load_state: ChunksLoadState,
+    chunks: AHashMap<ChunkPosition, ChunkColumn>,
+    chunks_load_state: ChunksLoadState,
 }
 
 impl ChunkMap {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<&ChunkColumn> {
+        match self.chunks.get(chunk_position) {
+            Some(c) => Some(&c),
+            None => None,
+        }
+    }
+
+    pub fn take_chunks_clients(&self, chunk_position: &ChunkPosition) -> Option<&Vec<u64>> {
+        self.chunks_load_state.take_chunks_clients(&chunk_position)
     }
 
     /// Trigered when player is move between chunks or spawns/despawns

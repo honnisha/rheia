@@ -2,7 +2,7 @@ use bevy_ecs::prelude::Component;
 use common::CHUNK_SIZE;
 use uuid::Uuid;
 
-use crate::worlds::chunks::chunks_map::ChunkPosition;
+use crate::worlds::chunks::chunk_position::ChunkPosition;
 
 #[derive(Component)]
 pub struct Indentifier(Uuid);

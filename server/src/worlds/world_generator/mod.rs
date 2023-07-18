@@ -6,7 +6,7 @@ use common::{
     CHUNK_SIZE,
 };
 
-use super::chunks::chunks_map::ChunkPosition;
+use super::chunks::chunk_position::ChunkPosition;
 
 pub struct WorldGenerator {
     noise: FastNoise,

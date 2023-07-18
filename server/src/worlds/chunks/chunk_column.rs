@@ -2,14 +2,13 @@ use crate::worlds::world_generator::WorldGenerator;
 use arrayvec::ArrayVec;
 use common::{network::ChunkDataType, VERTICAL_SECTIONS};
 use core::fmt;
-use std::sync::atomic::{AtomicBool, Ordering};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use super::chunks_map::ChunkPosition;
+use super::chunk_position::ChunkPosition;
 
 /// world_slug, chunk_position
 pub type LoadedChunkType = (String, ChunkPosition);
@@ -23,7 +22,7 @@ pub struct ChunkColumn {
 
     sections: ArrayVec<ChunkDataType, VERTICAL_SECTIONS>,
     despawn_timer: Duration,
-    loaded: Arc<AtomicBool>,
+    loaded: bool,
 }
 
 impl Display for ChunkColumn {
@@ -45,7 +44,7 @@ impl ChunkColumn {
             despawn_timer: Duration::ZERO,
             chunk_position,
             world_slug,
-            loaded: Arc::new(AtomicBool::new(false)),
+            loaded: false,
         }
     }
 
@@ -71,7 +70,7 @@ impl ChunkColumn {
                 .generate_chunk_data(&mut chunk_section, &self.chunk_position, y);
             self.sections.push(chunk_section);
         }
-        self.loaded.store(true, Ordering::Relaxed);
+        self.loaded = true;
         LOADED_CHUNKS
             .0
             .send((self.world_slug.clone(), self.chunk_position.clone()))
@@ -83,5 +82,5 @@ impl ChunkColumn {
     }
 }
 
-fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, loaded: Arc<AtomicBool>, chunk_position: ChunkPosition) {
-}
+//fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, loaded: Arc<AtomicBool>, chunk_position: ChunkPosition) {
+//}

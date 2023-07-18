@@ -4,10 +4,10 @@ use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};
 use common::network::{ServerChannel, ServerMessages};
 use dashmap::DashMap;
-use log::{error, info, trace};
+use log::{error, trace};
 
 use crate::network::{
-    player_container::{PlayerMut, Players},
+    player_container::{PlayerMut},
     server::NetworkContainer,
 };
 
@@ -50,7 +50,7 @@ impl WorldsManager {
         &mut self.worlds
     }
 
-    pub fn _get_world_manager(&self, key: &String) -> dashmap::mapref::one::Ref<'_, String, WorldManager> {
+    pub fn get_world_manager(&self, key: &String) -> dashmap::mapref::one::Ref<'_, String, WorldManager> {
         self.worlds.get(key).unwrap()
     }
 
@@ -89,20 +89,25 @@ pub fn chunk_loaded_event_reader(
 
     // Iterate loaded chunks
     for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {
-        let mut world = worlds_manager.get_world_manager_mut(&world_slug);
+        let world = worlds_manager.get_world_manager(&world_slug);
 
         // Get all clients which is waching this chunk
-        let watch_clients = world.chunks.chunks_load_state.take_chunks_clients(&chunk_position);
+        let watch_clients = match world.chunks.take_chunks_clients(&chunk_position) {
+            Some(v) => v,
+            None => {
+                panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
+            },
+        };
 
         if watch_clients.len() <= 0 {
             continue;
         }
 
         // Try to get chunk data
-        let encoded = match world.chunks.chunks.get(&chunk_position) {
-            Some(c) => {
+        let encoded = match world.chunks.get_chunk_column(&chunk_position) {
+            Some(chunk_column) => {
                 let input = ServerMessages::ChunkSectionInfo {
-                    sections: c.build_network_format(),
+                    sections: chunk_column.build_network_format(),
                     chunk_position: [chunk_position.x.clone(), chunk_position.z.clone()],
                 };
                 bincode::serialize(&input).unwrap()
@@ -117,7 +122,7 @@ pub fn chunk_loaded_event_reader(
         };
 
         for client_id in watch_clients {
-            server.send_message(client_id, ServerChannel::Messages, encoded.clone());
+            server.send_message(client_id.clone(), ServerChannel::Messages, encoded.clone());
             trace!(target: "network", "Send chunk {} to the client {}", chunk_position, client_id);
         }
     }

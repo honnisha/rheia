@@ -2,8 +2,9 @@ use ahash::AHashMap;
 use common::utils::vec_remove_item;
 use std::mem;
 
-use super::chunks_map::ChunkPosition;
+use super::chunk_position::ChunkPosition;
 
+/// Idia was taken from
 /// https://github.com/feather-rs/feather
 /// feather/common/src/chunk/loading.rs
 #[derive(Default)]
@@ -32,15 +33,23 @@ impl ChunksLoadState {
         }
     }
 
-    pub fn take_chunks_clients(&mut self, chunk: &ChunkPosition) -> Vec<u64> {
+    pub fn take_chunks_clients(&self, chunk: &ChunkPosition) -> Option<&Vec<u64>> {
+        match self.by_chunk.get(chunk) {
+            Some(v) => Some(&v),
+            None => None,
+        }
+    }
+
+    pub fn _take_chunks_clients_mut(&mut self, chunk: &ChunkPosition) -> Vec<u64> {
         self.by_chunk.get_mut(chunk).map(mem::take).unwrap_or_default()
     }
 
+    #[allow(dead_code)]
     pub fn take_entity_tickets(&mut self, client_id: &u64) -> Vec<ChunkPosition> {
         self.by_client.get_mut(client_id).map(mem::take).unwrap_or_default()
     }
 
-    pub fn remove_chunk(&mut self, pos: ChunkPosition) {
+    pub fn _remove_chunk(&mut self, pos: ChunkPosition) {
         self.by_chunk.remove(&pos);
     }
 }
