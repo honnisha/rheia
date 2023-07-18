@@ -43,7 +43,6 @@ impl ServerSettings {
 }
 
 fn main() {
-    env_logger::init();
     log::set_logger(&CONSOLE_LOGGER).unwrap();
     log::set_max_level(LevelFilter::Info);
 

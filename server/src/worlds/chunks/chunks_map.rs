@@ -83,7 +83,7 @@ impl ChunkMap {
 
                 // Update despawn timer
                 if let Some(c) = self.chunks.get_mut(&chunk_pos) {
-                    c.despawn_timer = Duration::ZERO;
+                    c.set_despawn_timer(Duration::ZERO);
                 }
             }
         }
@@ -98,13 +98,13 @@ impl ChunkMap {
         // Update chunks despawn timer
         for (&chunk_pos, chunk_column) in self.chunks.iter_mut() {
             if self.chunks_load_state.num_tickets(&chunk_pos) == 0 {
-                chunk_column.despawn_timer += delta;
+                chunk_column.increase_despawn_timer(delta);
             }
         }
 
         // Despawn chunks waiting for despawn
         self.chunks.retain(|&chunk_pos, chunk_column| {
-            let keep = chunk_column.despawn_timer < CHUNKS_DESPAWN_TIMER;
+            let keep = chunk_column.get_despawn_timer() < &CHUNKS_DESPAWN_TIMER;
             if !keep {
                 trace!(target: "chunks", "Chunk {} despawned", chunk_pos);
             }
@@ -112,7 +112,11 @@ impl ChunkMap {
         });
 
         // Send to load new chunks
-        for &chunk_pos in self.chunks_load_state.by_chunk.keys() {
+        for (chunk_pos, players) in self.chunks_load_state.by_chunk.iter() {
+            if players.len() == 0{
+                continue;
+            }
+
             if !self.chunks.contains_key(&chunk_pos) {
                 let mut chunk_column = ChunkColumn::new(chunk_pos.clone(), world_slug.clone());
                 trace!(target: "chunks", "Send chunk {} to load", chunk_pos);
@@ -130,7 +134,7 @@ mod tests {
     use parking_lot::RwLock;
     use std::time::Duration;
 
-    use crate::worlds::world_generator::WorldGenerator;
+    use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER};
 
     use super::{ChunkMap, ChunkPosition};
 
@@ -160,13 +164,20 @@ mod tests {
         let client_id = 0_u64;
         let pos = ChunkPosition::new(0, 0);
 
-        chunk_map.chunks_load_state.insert_ticket(pos.clone(), client_id.clone());
+        chunk_map
+            .chunks_load_state
+            .insert_ticket(pos.clone(), client_id.clone());
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
-        assert_eq!(chunk_map.chunks.len(), 1);
+        assert_eq!(chunk_map.chunks.len(), 1, "One chunk must be created");
+
+        chunk_map.chunks.get_mut(&pos).unwrap().set_despawn_timer(CHUNKS_DESPAWN_TIMER);
 
         chunk_map.chunks_load_state.remove_ticket(pos.clone(), &client_id);
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
-        assert_eq!(chunk_map.chunks.len(), 1);
-
+        assert_eq!(
+            chunk_map.chunks.len(),
+            0,
+            "Because despawn_timer is fill - chunk must be unloaded"
+        );
     }
 }

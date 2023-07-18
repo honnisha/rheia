@@ -88,29 +88,37 @@ pub fn chunk_loaded_event_reader(
     let mut server = network_container.server.write().expect("poisoned");
 
     // Iterate loaded chunks
-    for (world_slug, chunk_position) in LOADED_CHUNKS.1.try_iter() {
+    for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {
         let mut world = worlds_manager.get_world_manager_mut(&world_slug);
 
         // Get all clients which is waching this chunk
         let watch_clients = world.chunks.chunks_load_state.take_chunks_clients(&chunk_position);
 
-        for client_id in watch_clients {
-            // Try to get chunk data
-            if let Some(c) = world.chunks.chunks.get(&chunk_position) {
-                trace!(target: "network", "Send chunk {} to the client {}", chunk_position, client_id);
+        if watch_clients.len() <= 0 {
+            continue;
+        }
 
+        // Try to get chunk data
+        let encoded = match world.chunks.chunks.get(&chunk_position) {
+            Some(c) => {
                 let input = ServerMessages::ChunkSectionInfo {
-                    sections: c.sections.clone(),
+                    sections: c.build_network_format(),
                     chunk_position: [chunk_position.x.clone(), chunk_position.z.clone()],
                 };
-                let encoded = bincode::serialize(&input).unwrap();
-                server.send_message(client_id, ServerChannel::Messages, encoded);
-            } else {
+                bincode::serialize(&input).unwrap()
+            },
+            None => {
                 error!(
                     "chunk_loaded_event_reader there is not chunk for player_chunks_watch:{}",
                     chunk_position
                 );
-            }
+                continue;
+            },
+        };
+
+        for client_id in watch_clients {
+            server.send_message(client_id, ServerChannel::Messages, encoded.clone());
+            trace!(target: "network", "Send chunk {} to the client {}", chunk_position, client_id);
         }
     }
 }

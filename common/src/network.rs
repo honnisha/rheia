@@ -61,7 +61,7 @@ pub enum ServerMessages {
     ChunkSectionInfo {
         // x, z
         chunk_position: [i32; 2],
-        sections: [Option<ChunkDataType>; VERTICAL_SECTIONS]
+        sections: [ChunkDataType; VERTICAL_SECTIONS]
     }
 }
 
