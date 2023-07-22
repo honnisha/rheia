@@ -2,8 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     utils::mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
-    utils::textures::texture_mapper::TextureMapper,
-    world::chunks::chunk_info::{ChunkBordersShape, ChunkDataBordered},
+    utils::textures::texture_mapper::TextureMapper, world::chunks::godot_chunk_section::{ChunkDataBordered, ChunkBordersShape},
 };
 use common::blocks::blocks_storage::BlockType;
 use godot::prelude::{Array, Gd};

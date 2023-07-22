@@ -3,10 +3,8 @@ use bracket_noise::prelude::*;
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
     network::ChunkDataType,
-    CHUNK_SIZE,
+    CHUNK_SIZE, chunks::{chunk_position::ChunkPosition, block_position::ChunkBlockPosition},
 };
-
-use super::chunks::chunk_position::ChunkPosition;
 
 pub struct WorldGenerator {
     noise: FastNoise,
@@ -49,7 +47,7 @@ impl WorldGenerator {
 
                 //godot_print!("x{} z:{} height:{}", x, z, height);
                 for y in 0_u8..(CHUNK_SIZE as u8) {
-                    let pos = [x, y, z];
+                    let pos = ChunkBlockPosition::new(x, y, z);
 
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 

@@ -2200,7 +2200,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -2209,7 +2209,7 @@ dependencies = [
 [[package]]
 name = "godot-bindings"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "godot4-prebuilt",
 ]
@@ -2217,7 +2217,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "godot-bindings",
  "godot-fmt",
@@ -2231,7 +2231,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "glam 0.23.0",
  "godot-bindings",
@@ -2242,7 +2242,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -2252,7 +2252,7 @@ dependencies = [
 [[package]]
 name = "godot-fmt"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "proc-macro2",
 ]
@@ -2260,7 +2260,7 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#780a62a5e82098571215e0b8cebc51cf50e47944"
+source = "git+https://github.com/godot-rust/gdext?branch=master#696a2172a40667df8d9a9195eac8685868d3c0a3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2396,6 +2396,8 @@ checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 name = "honny-craft"
 version = "0.1.0"
 dependencies = [
+ "ahash 0.8.3",
+ "arrayvec 0.7.4",
  "bincode",
  "bracket-lib",
  "bracket-noise",
@@ -2404,6 +2406,7 @@ dependencies = [
  "common",
  "crossbeam",
  "crossbeam-channel",
+ "dashmap",
  "fastnbt",
  "flate2",
  "godot",
@@ -2413,6 +2416,7 @@ dependencies = [
  "log",
  "ndcopy",
  "ndshape",
+ "parking_lot 0.12.1",
  "rand",
  "rayon",
  "regex",

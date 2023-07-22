@@ -1,4 +1,5 @@
 use ahash::AHashMap;
+use common::chunks::chunk_position::ChunkPosition;
 use log::trace;
 use parking_lot::{RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
@@ -9,7 +10,7 @@ use crate::{
     CHUNKS_DESPAWN_TIMER,
 };
 
-use super::{chunk_column::ChunkColumn, chunk_position::ChunkPosition, chunks_load_state::ChunksLoadState};
+use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState};
 
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks

@@ -1,5 +1,6 @@
 use crate::worlds::world_generator::WorldGenerator;
 use arrayvec::ArrayVec;
+use common::chunks::chunk_position::ChunkPosition;
 use common::{network::ChunkDataType, VERTICAL_SECTIONS};
 use core::fmt;
 use flume::{Receiver, Sender};
@@ -7,8 +8,6 @@ use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{collections::HashMap, sync::Arc, time::Duration};
-
-use super::chunk_position::ChunkPosition;
 
 /// world_slug, chunk_position
 pub type LoadedChunkType = (String, ChunkPosition);

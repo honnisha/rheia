@@ -108,7 +108,7 @@ pub fn chunk_loaded_event_reader(
             Some(chunk_column) => {
                 let input = ServerMessages::ChunkSectionInfo {
                     sections: chunk_column.build_network_format(),
-                    chunk_position: [chunk_position.x.clone(), chunk_position.z.clone()],
+                    chunk_position: chunk_position.clone(),
                 };
                 bincode::serialize(&input).unwrap()
             },

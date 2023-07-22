@@ -1,8 +1,6 @@
 use ahash::AHashMap;
-use common::utils::vec_remove_item;
+use common::{utils::vec_remove_item, chunks::chunk_position::ChunkPosition};
 use std::mem;
-
-use super::chunk_position::ChunkPosition;
 
 /// Idia was taken from
 /// https://github.com/feather-rs/feather

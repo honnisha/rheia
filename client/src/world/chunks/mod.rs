@@ -1,4 +1,3 @@
-pub mod chunks_manager;
-pub mod chunk;
-pub mod chunk_info;
-pub mod chunk_data_formatter;
+pub mod godot_chunk_column;
+pub mod godot_chunks_container;
+pub mod godot_chunk_section;

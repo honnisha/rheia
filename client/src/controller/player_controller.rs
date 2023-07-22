@@ -1,9 +1,8 @@
+use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::{
-    engine::{Engine, RichTextLabel, InputEvent},
+    engine::{Engine, InputEvent, RichTextLabel},
     prelude::*,
 };
-
-use crate::world::chunks::chunk_info::ChunkInfo;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -26,11 +25,11 @@ const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
 
 macro_rules! debug_string {
     () => {
-"FPS: {:.0}
+        "FPS: {:.0}
 Camera position: [b]{:.2} {:.2} {:.2}[/b]
 Chunk postition: [b]{:?}[/b]
 Threads count: {}"
-    }
+    };
 }
 
 #[godot_api]
@@ -68,8 +67,7 @@ impl NodeVirtual for PlayerController {
     }
 
     #[allow(unused_variables)]
-    fn input(&mut self, event: Gd<InputEvent>) {
-    }
+    fn input(&mut self, event: Gd<InputEvent>) {}
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
@@ -90,7 +88,7 @@ impl NodeVirtual for PlayerController {
             camera_pos.x,
             camera_pos.y,
             camera_pos.z,
-            ChunkInfo::get_chunk_pos_by_global(&[camera_pos.x as i32, camera_pos.y as i32, camera_pos.z as i32]),
+            BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position(),
             rayon::current_num_threads(),
         );
         self.debug_text

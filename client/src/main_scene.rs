@@ -1,10 +1,11 @@
-use crate::client_scripts::resource_manager::ResourceManager;
+use std::sync::{Arc, RwLock};
+
 use crate::console::console_handler::Console;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
-use crate::world::World;
-use godot::engine::node::InternalMode;
-use godot::engine::Engine;
+use crate::world::world_manager::WorldManager;
+use crate::{client_scripts::resource_manager::ResourceManager};
+use godot::engine::{Engine};
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
@@ -16,7 +17,7 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     resource_manager: ResourceManager,
-    world: Option<Gd<World>>,
+    pub world_manager: WorldManager,
 }
 
 #[godot_api]
@@ -34,20 +35,12 @@ impl Main {
         &mut self.resource_manager
     }
 
-    pub fn load_world(&mut self, slug: String) {
-        let mut world = Gd::<World>::with_base(|base| World::create(base, slug));
-
-        let world_name = GodotString::from("World");
-        world.bind_mut().set_name(world_name.clone());
-
-        self.base.add_child(world.upcast());
-        self.world = Some(self.base.get_node_as::<World>(world_name));
-
-        info!("World \"{}\" loaded;", self.world.as_ref().unwrap().bind().get_slug());
-    }
-
     pub fn close() {
         Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit();
+    }
+
+    pub fn teleport_player(&mut self, world_slug: String, location: [f32; 3]) {
+        self.world_manager.teleport_player(&mut self.base, world_slug, location);
     }
 }
 
@@ -57,7 +50,7 @@ impl NodeVirtual for Main {
         Main {
             base,
             resource_manager: ResourceManager::new(),
-            world: None,
+            world_manager: WorldManager::new(),
         }
     }
 

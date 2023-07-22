@@ -103,8 +103,11 @@ impl NetworkContainer {
                             },
                         }
                     },
-                    ServerMessages::Teleport { world_slug, location } => todo!(),
+                    ServerMessages::Teleport { world_slug, location } => {
+                        main_scene.teleport_player(world_slug, location);
+                    },
                     ServerMessages::ChunkSectionInfo { chunk_position, sections } => {
+                        main_scene.world_manager.load_chunk(chunk_position, sections);
                         info!("chunk revieved: {:?}", chunk_position);
                     },
                 }

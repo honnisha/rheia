@@ -3,12 +3,12 @@ use std::fmt::{self, Display, Formatter};
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Hash)]
 pub struct ChunkPosition {
-    pub x: i32,
-    pub z: i32,
+    pub x: i64,
+    pub z: i64,
 }
 
 impl ChunkPosition {
-    pub const fn new(x: i32, z: i32) -> Self {
+    pub const fn new(x: i64, z: i64) -> Self {
         Self { x, z }
     }
 }
@@ -21,6 +21,6 @@ impl Eq for ChunkPosition {}
 
 impl Display for ChunkPosition {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "({}, {})", self.x, self.z)
+        write!(f, "(x:{}, z:{})", self.x, self.z)
     }
 }

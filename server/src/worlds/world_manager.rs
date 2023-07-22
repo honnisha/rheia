@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::world::World;
+use common::chunks::block_position::BlockPositionTrait;
 use parking_lot::RwLock;
 
 use crate::entities::entity::{Indentifier, NetworkComponent, Position};

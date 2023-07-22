@@ -8,6 +8,7 @@ mod events;
 mod console;
 mod network;
 mod logger;
+mod entities;
 
 struct HonnyCraft;
 
