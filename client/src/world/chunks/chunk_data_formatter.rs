@@ -3,7 +3,7 @@ use common::{
     blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility},
     chunks::block_position::ChunkBlockPosition,
     network::ChunkDataType,
-    CHUNK_SIZE,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use ndshape::ConstShape;
 
@@ -92,7 +92,7 @@ pub fn format_chunk_data_with_boundaries(
                         Some(e) => e.get_block_type().clone(),
                         None => BlockType::Air,
                     },
-                    None => todo!(),
+                    None => BlockType::Air,
                 };
                 b_chunk[pos_i as usize] = block_type;
             }
@@ -131,9 +131,16 @@ fn get_boundaries_chunks<'a>(
                 }
 
                 // y
-                1 => match current_section.get(y + axis_diff as usize) {
-                    Some(r) => Some(r.clone()),
-                    None => None,
+                1 => {
+                    let index = y as i32 + axis_diff;
+                    if index >= 0 && index < VERTICAL_SECTIONS as i32 {
+                        match current_section.get(index as usize) {
+                            Some(r) => Some(r.clone()),
+                            None => None,
+                        }
+                    } else {
+                        None
+                    }
                 },
 
                 // z

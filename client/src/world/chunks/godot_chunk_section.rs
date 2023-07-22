@@ -4,6 +4,8 @@ use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
 use godot::{prelude::*, engine::{MeshInstance3D, Material, ArrayMesh}};
 use ndshape::{ConstShape3u32, ConstShape};
 
+use crate::world::world_manager::get_default_material;
+
 pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
 
@@ -18,21 +20,23 @@ pub struct ChunkSection {
     #[base]
     pub base: Base<Node3D>,
     mesh: Option<Gd<MeshInstance3D>>,
+    material: Gd<Material>,
 }
 
 impl ChunkSection {
-    pub fn create(base: Base<Node3D>) -> Self {
+    pub fn create(base: Base<Node3D>, material: Gd<Material>) -> Self {
         Self {
             base,
             mesh: None,
+            material,
         }
     }
 
-    pub fn create_mesh(&mut self, material: &Gd<Material>) {
+    pub fn create_mesh(&mut self) {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
 
-        mesh.set_material_overlay(material.share());
+        mesh.set_material_overlay(self.material.share());
 
         self.base.add_child(mesh.upcast());
         let m = self.base.get_node_as::<MeshInstance3D>("ChunkMesh");
@@ -55,9 +59,10 @@ impl ChunkSection {
 impl NodeVirtual for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
-        Self::create(base)
+        Self::create(base, get_default_material())
     }
 
     fn ready(&mut self) {
+        self.create_mesh();
     }
 }

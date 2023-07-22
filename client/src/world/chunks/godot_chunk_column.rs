@@ -1,11 +1,14 @@
-use std::sync::{atomic::{AtomicBool, Ordering}, Arc};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 use arrayvec::ArrayVec;
-use common::{VERTICAL_SECTIONS};
+use common::VERTICAL_SECTIONS;
 use flume::{Receiver, Sender};
-use godot::prelude::*;
+use godot::{engine::Material, prelude::*};
 
-use crate::utils::mesh::mesh_generator::Geometry;
+use crate::{utils::mesh::mesh_generator::Geometry, world::world_manager::get_default_material};
 
 use super::godot_chunk_section::ChunkSection;
 
@@ -26,10 +29,12 @@ pub struct ChunkColumn {
 
     pub update_mesh_tx: Sender<ChunksGeometryType>,
     update_mesh_rx: Receiver<ChunksGeometryType>,
+
+    material: Gd<Material>,
 }
 
 impl ChunkColumn {
-    pub fn create(base: Base<Node>,) -> Self {
+    pub fn create(base: Base<Node>, material: Gd<Material>) -> Self {
         let (update_mesh_tx, update_mesh_rx) = flume::bounded(1);
         Self {
             base,
@@ -39,6 +44,8 @@ impl ChunkColumn {
 
             update_mesh_tx: update_mesh_tx,
             update_mesh_rx: update_mesh_rx,
+
+            material,
         }
     }
 
@@ -54,8 +61,8 @@ impl ChunkColumn {
         self.loaded
     }
 
-    fn spawn_chunk_section(base: &mut Base<Node>, y: usize) -> Gd<ChunkSection> {
-        let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base));
+    fn spawn_chunk_section(base: &mut Base<Node>, y: usize, material: &Gd<Material>) -> Gd<ChunkSection> {
+        let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share()));
 
         let name = GodotString::from(format!("Section {}", y));
         section.bind_mut().set_name(name.clone());
@@ -70,12 +77,12 @@ impl ChunkColumn {
 impl NodeVirtual for ChunkColumn {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node>) -> Self {
-        Self::create(base)
+        Self::create(base, get_default_material())
     }
 
     fn ready(&mut self) {
         for y in 0..VERTICAL_SECTIONS {
-            self.sections.push(ChunkColumn::spawn_chunk_section(&mut self.base, y));
+            self.sections.push(ChunkColumn::spawn_chunk_section(&mut self.base, y, &self.material));
         }
     }
 

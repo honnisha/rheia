@@ -1,4 +1,5 @@
 use common::{chunks::chunk_position::ChunkPosition, network::NetworkSectionType};
+use godot::engine::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{
     engine::Material,
@@ -51,7 +52,14 @@ impl WorldManager {
     }
 
     pub fn create_world(&mut self, main: &mut Base<Node>, world_slug: String) {
-        let mut world = Gd::<World>::with_base(|base| World::create(base, world_slug, self.texture_mapper.clone()));
+        let mut world = Gd::<World>::with_base(|base| {
+            World::create(
+                base,
+                world_slug,
+                self.texture_mapper.clone(),
+                self.material.share(),
+            )
+        });
 
         let world_name = GodotString::from("World");
         world.bind_mut().set_name(world_name.clone());
@@ -77,4 +85,8 @@ impl WorldManager {
             .bind_mut()
             .load_chunk(chunk_position, sections);
     }
+}
+
+pub fn get_default_material() -> Gd<Material> {
+    StandardMaterial3D::new().duplicate().unwrap().cast::<Material>()
 }

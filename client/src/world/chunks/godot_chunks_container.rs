@@ -6,15 +6,14 @@ use common::{
     VERTICAL_SECTIONS,
 };
 use flume::Sender;
-use godot::prelude::*;
-use log::info;
+use godot::{engine::Material, prelude::*};
 use log::trace;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::{
     utils::{mesh::mesh_generator::generate_chunk_geometry, textures::texture_mapper::TextureMapper},
-    world::world_manager::TextureMapperType,
+    world::world_manager::{get_default_material, TextureMapperType},
 };
 
 use super::{
@@ -70,14 +69,16 @@ pub struct ChunksContainer {
     base: Base<Node>,
     chunks: AHashMap<ChunkPosition, Chunk>,
     texture_mapper: TextureMapperType,
+    material: Gd<Material>,
 }
 
 impl ChunksContainer {
-    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType) -> Self {
+    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         Self {
             base,
             chunks: Default::default(),
             texture_mapper,
+            material,
         }
     }
 
@@ -93,7 +94,7 @@ impl ChunksContainer {
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
-        let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base));
+        let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, self.material.share()));
 
         let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
         column.bind_mut().set_name(name.clone());
@@ -130,7 +131,11 @@ impl ChunksContainer {
 impl NodeVirtual for ChunksContainer {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
-        Self::create(base, Arc::new(RwLock::new(TextureMapper::new())))
+        Self::create(
+            base,
+            Arc::new(RwLock::new(TextureMapper::new())),
+            get_default_material(),
+        )
     }
 
     fn process(&mut self, _delta: f64) {
@@ -143,7 +148,7 @@ impl NodeVirtual for ChunksContainer {
                     chunk.chunk.bind().update_mesh_tx.clone(),
                     self.texture_mapper.clone(),
                 );
-                info!("Mesh {} generated", chunk_position);
+                trace!("Mesh {} generated", chunk_position);
                 chunk.chunk.bind().set_sended();
             }
         }

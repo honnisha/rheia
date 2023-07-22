@@ -5,12 +5,15 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
     network::NetworkSectionType,
 };
-use godot::prelude::*;
+use godot::{engine::Material, prelude::*};
 use parking_lot::RwLock;
 
 use crate::utils::textures::texture_mapper::TextureMapper;
 
-use super::{chunks::godot_chunks_container::ChunksContainer, world_manager::TextureMapperType};
+use super::{
+    chunks::godot_chunks_container::ChunksContainer,
+    world_manager::{get_default_material, TextureMapperType},
+};
 
 /// Godot world
 /// Contains all things inside world
@@ -27,7 +30,9 @@ pub struct World {
     base: Base<Node>,
     slug: String,
     chunks_container: Option<Gd<ChunksContainer>>,
+
     texture_mapper: TextureMapperType,
+    material: Gd<Material>,
 }
 
 #[godot_api]
@@ -42,12 +47,13 @@ impl World {
 }
 
 impl World {
-    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType) -> Self {
+    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         World {
             base,
             slug: slug,
             chunks_container: Default::default(),
             texture_mapper,
+            material,
         }
     }
 
@@ -57,7 +63,7 @@ impl World {
 
     pub fn init_chunks_container(&mut self) {
         let mut container =
-            Gd::<ChunksContainer>::with_base(|base| ChunksContainer::create(base, self.texture_mapper.clone()));
+            Gd::<ChunksContainer>::with_base(|base| ChunksContainer::create(base, self.texture_mapper.clone(), self.material.share()));
 
         let container_name = GodotString::from("ChunksContainer");
         container.bind_mut().set_name(container_name.clone());
@@ -79,7 +85,12 @@ impl World {
 impl NodeVirtual for World {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
-        World::create(base, "Godot".to_string(), Arc::new(RwLock::new(TextureMapper::new())))
+        World::create(
+            base,
+            "Godot".to_string(),
+            Arc::new(RwLock::new(TextureMapper::new())),
+            get_default_material(),
+        )
     }
 
     fn ready(&mut self) {
