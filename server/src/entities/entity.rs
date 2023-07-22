@@ -14,22 +14,26 @@ impl Default for Indentifier {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub struct Position {
-    x: f32,
-    y: f32,
-    z: f32,
+    x: f64,
+    y: f64,
+    z: f64,
 }
 
 impl Position {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn to_array(&self) -> [f64; 3] {
+        [self.x.clone(), self.y.clone(), self.z.clone()]
     }
 }
 
 impl BlockPositionTrait for Position {
     fn get_chunk_position(&self) -> ChunkPosition {
-        ChunkPosition::new(fix_chunk_loc_pos(self.x as i32), fix_chunk_loc_pos(self.z as i32))
+        ChunkPosition::new(fix_chunk_loc_pos(self.x as i64), fix_chunk_loc_pos(self.z as i64))
     }
 }
 

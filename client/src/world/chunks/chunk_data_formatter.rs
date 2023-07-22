@@ -1,24 +1,34 @@
-use crate::world::chunks::chunk_info::{ChunkBordersShape, ChunkShape};
-use common::{blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility}, CHUNK_SIZE};
+use arrayvec::ArrayVec;
+use common::{
+    blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility},
+    chunks::block_position::ChunkBlockPosition,
+    network::ChunkDataType,
+    CHUNK_SIZE,
+};
 use ndshape::ConstShape;
 
+use crate::world::chunks::godot_chunk_section::ChunkShape;
+
 use super::{
-    chunk::ChunkPositionType,
-    chunk_info::{ChunkData, ChunkDataBordered},
-    chunks_manager::{ChunksInfoLockRead, WORLD_CHUNKS_FROM, WORLD_CHUNKS_TO},
+    godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
+    godot_chunks_container::{ColumnDataType, NearChunksData},
 };
 
 pub fn format_chunk_data_with_boundaries(
-    ci: &ChunksInfoLockRead,
-    chunk_data: &ChunkData,
-    chunk_pos: &[i32; 3],
+    chunks_near: &NearChunksData,
+    chunk_data: &ColumnDataType,
+    y: usize,
 ) -> ChunkDataBordered {
     //use std::time::Instant;
     //let now = Instant::now();
 
+    // Fill with solid block by default
     let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
 
     let mut has_any_mesh = false;
+
+    let cd = chunk_data.read();
+    let section_data = cd.get(y).unwrap();
 
     for x in 0_u32..(CHUNK_SIZE as u32) {
         for y in 0_u32..(CHUNK_SIZE as u32) {
@@ -32,18 +42,16 @@ pub fn format_chunk_data_with_boundaries(
                 );
 
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
-                let data = chunk_data[i as usize];
-                b_chunk[b_chunk_pos as usize] = data.get_block_type().clone();
+                let block_type = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
+                    Some(e) => e.get_block_type().clone(),
+                    None => BlockType::Air,
+                };
 
-                if *data
-                    .get_block_type()
-                    .get_block_type_info()
-                    .unwrap()
-                    .get_voxel_visibility()
-                    != VoxelVisibility::Empty
-                {
+                if block_type.get_block_type_info().unwrap().get_voxel_visibility() != &VoxelVisibility::Empty {
                     has_any_mesh = true;
                 }
+
+                b_chunk[b_chunk_pos as usize] = block_type;
             }
         }
     }
@@ -54,24 +62,13 @@ pub fn format_chunk_data_with_boundaries(
     }
     //godot_print!("chunk:{:?}", chunk_pos);
 
-    let boundary = get_boundaries_chunks(&chunk_pos);
-    for (axis, value, pos) in boundary {
+    let boundary = get_boundaries_chunks(&chunks_near, &chunk_data, y);
+    for (axis, axis_diff, chunk_section) in boundary {
         //godot_print!("load:{:?}", pos);
-
-        if pos[1] >= WORLD_CHUNKS_TO || pos[1] < WORLD_CHUNKS_FROM {
-            continue;
-        }
-        let border_chunk_info = match ci.get(&pos) {
-            Some(c) => c,
-            _ => {
-                println!("FORMAT_CHUNK_DATA_WITH_BOUNDARIES chunk {:?} must be loaded", pos);
-                return b_chunk;
-            }
-        };
 
         for i in 0_u32..(CHUNK_SIZE as u32) {
             for j in 0_u32..(CHUNK_SIZE as u32) {
-                let (i_v, o_v) = match value {
+                let (i_v, o_v) = match axis_diff {
                     -1 => (0, CHUNK_SIZE as u32 - 1),
                     _ => (CHUNK_SIZE as u32 + 1, 0),
                 };
@@ -83,15 +80,21 @@ pub fn format_chunk_data_with_boundaries(
                 };
 
                 let pos_i = ChunkBordersShape::linearize(pos_inside);
-                let pos_o = ChunkShape::linearize(pos_outside);
+
                 //godot_print!(
                 //    "pos_inside:{:?} pos_outside:{:?}",
                 //    pos_inside,
                 //    pos_outside
                 //);
-                b_chunk[pos_i as usize] = border_chunk_info.get_chunk_data()[pos_o as usize]
-                    .get_block_type()
-                    .clone();
+                let pos_o = ChunkBlockPosition::new(pos_outside[0] as u8, pos_outside[1] as u8, pos_outside[2] as u8);
+                let block_type = match chunk_section.as_ref() {
+                    Some(c) => match c.get(&pos_o) {
+                        Some(e) => e.get_block_type().clone(),
+                        None => BlockType::Air,
+                    },
+                    None => todo!(),
+                };
+                b_chunk[pos_i as usize] = block_type;
             }
         }
     }
@@ -104,17 +107,58 @@ pub fn format_chunk_data_with_boundaries(
     return b_chunk;
 }
 
-/// (axis, value, chunk_pos)
-pub fn get_boundaries_chunks(chunk_pos: &ChunkPositionType) -> Vec<(i8, i32, [i32; 3])> {
-    let mut result = Vec::with_capacity(6);
+type BondaryType<'a> = ArrayVec<(i8, i32, Option<Box<ChunkDataType>>), 6>;
 
+fn get_boundaries_chunks<'a>(
+    chunks_near: &'a NearChunksData,
+    chunk_data: &'a ColumnDataType,
+    y: usize,
+) -> BondaryType<'a> {
+    let mut result: BondaryType = Default::default();
+
+    let current_section = chunk_data.read();
+    // x, y, z
     for axis in 0_i8..3_i8 {
-        for value in (-1_i32..2_i32).step_by(2) {
-            let mut pos = chunk_pos.clone();
+        for axis_diff in (-1_i32..2_i32).step_by(2) {
+            let side = match axis {
+                // x
+                0 => {
+                    if axis_diff == -1 {
+                        get_section(&chunks_near.forward, y)
+                    } else {
+                        get_section(&chunks_near.behind, y)
+                    }
+                }
 
-            pos[axis as usize] += value;
-            result.push((axis, value, pos));
+                // y
+                1 => match current_section.get(y + axis_diff as usize) {
+                    Some(r) => Some(r.clone()),
+                    None => None,
+                },
+
+                // z
+                2 => {
+                    if axis_diff == -1 {
+                        get_section(&chunks_near.left, y)
+                    } else {
+                        get_section(&chunks_near.right, y)
+                    }
+                }
+                _ => panic!(),
+            };
+
+            result.push((axis, axis_diff, side));
         }
     }
     result
+}
+
+fn get_section<'a>(column: &'a Option<ColumnDataType>, y: usize) -> Option<Box<ChunkDataType>> {
+    match column {
+        Some(c) => match c.read().get(y) {
+            Some(r) => Some(r.clone()),
+            None => None,
+        },
+        None => None,
+    }
 }

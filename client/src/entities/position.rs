@@ -1,4 +1,4 @@
-use common::{chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition}, utils::fix_chunk_loc_pos};
+use common::{chunks::chunk_position::ChunkPosition, utils::fix_chunk_loc_pos};
 use godot::prelude::Vector3;
 
 pub struct GodotPositionConverter;

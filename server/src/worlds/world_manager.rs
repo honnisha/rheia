@@ -34,16 +34,11 @@ impl WorldManager {
         &self.slug
     }
 
-    pub fn spawn_player(&mut self, client_id: u64, x: f32, y: f32, z: f32) {
-        let new_position = Position::new(x, y, z);
-        self.chunks.update_chunks_render(
-            &client_id,
-            None,
-            Some(&new_position.get_chunk_position()),
-            CHUNKS_DISTANCE,
-        );
+    pub fn spawn_player(&mut self, client_id: u64, position: Position) {
+        self.chunks
+            .update_chunks_render(&client_id, None, Some(&position.get_chunk_position()), CHUNKS_DISTANCE);
         self.world
-            .spawn((Indentifier::default(), new_position, NetworkComponent::new(client_id)));
+            .spawn((Indentifier::default(), position, NetworkComponent::new(client_id)));
     }
 
     pub fn despawn_player(&mut self, client_id: &u64) {

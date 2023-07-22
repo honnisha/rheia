@@ -43,7 +43,7 @@ pub enum ServerChannel {
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
-pub type NetworkSectionType = [ChunkDataType; VERTICAL_SECTIONS];
+pub type NetworkSectionType = [Box<ChunkDataType>; VERTICAL_SECTIONS];
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessages {
@@ -56,7 +56,7 @@ pub enum ServerMessages {
     },
     Teleport {
         world_slug: String,
-        location: [f32; 3],
+        location: [f64; 3],
     },
     ChunkSectionInfo {
         // x, z

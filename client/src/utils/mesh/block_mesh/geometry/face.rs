@@ -1,3 +1,5 @@
+use crate::main_scene::FloatType;
+
 use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
 
 use godot::prelude::{Vector3, Vector2};
@@ -96,14 +98,14 @@ impl OrientedBlockFace {
         self.quad_corners(quad)
             .map(|c| {
                 let v3 = voxel_size * c.as_vec3();
-                Vector3::new(v3.x, v3.y, v3.z)
+                Vector3::new(v3.x as FloatType, v3.y as FloatType, v3.z as FloatType)
             })
     }
 
     #[inline]
     pub fn quad_mesh_normals(&self) -> [Vector3; 4] {
         let v3 = self.signed_normal().as_vec3();
-        [Vector3::new(v3.x, v3.y, v3.z); 4]
+        [Vector3::new(v3.x as FloatType, v3.y as FloatType, v3.z as FloatType); 4]
     }
 
     /// Returns the 6 vertex indices for the quad in order to make two triangles
@@ -154,7 +156,7 @@ impl OrientedBlockFace {
             u_flip_face == face_normal_axis
         };
 
-        let w = quad.width as f32;
+        let w = quad.width as FloatType;
         match (flip_u, flip_v) {
             (false, false) => [
                 Vector2::new(w, w),

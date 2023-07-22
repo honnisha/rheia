@@ -108,7 +108,6 @@ impl NetworkContainer {
                     },
                     ServerMessages::ChunkSectionInfo { chunk_position, sections } => {
                         main_scene.world_manager.load_chunk(chunk_position, sections);
-                        info!("chunk revieved: {:?}", chunk_position);
                     },
                 }
             }

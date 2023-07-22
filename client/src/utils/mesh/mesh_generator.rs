@@ -1,8 +1,7 @@
-use std::sync::{Arc, RwLock};
-
 use crate::{
-    utils::mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
-    utils::textures::texture_mapper::TextureMapper, world::chunks::godot_chunk_section::{ChunkDataBordered, ChunkBordersShape},
+    main_scene::FloatType,
+    utils::{mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG}, textures::texture_mapper::TextureMapper},
+    world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
 use common::blocks::blocks_storage::BlockType;
 use godot::prelude::{Array, Gd};
@@ -13,6 +12,7 @@ use godot::{
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
 use ndshape::ConstShape;
+use parking_lot::{RwLockReadGuard};
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -52,7 +52,7 @@ pub struct Geometry {
 unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
-pub fn generate_chunk_geometry(texture_mapper: Arc<RwLock<TextureMapper>>, chunk_data: &ChunkDataBordered) -> Geometry {
+pub fn generate_chunk_geometry(texture_mapper: &RwLockReadGuard<TextureMapper>, chunk_data: &ChunkDataBordered) -> Geometry {
     //let now = Instant::now();
 
     let mut arrays: Array<Variant> = Array::new();
@@ -90,23 +90,15 @@ pub fn generate_chunk_geometry(texture_mapper: Arc<RwLock<TextureMapper>>, chunk
 
             let unoriented_quad = UnorientedQuad::from(quad);
 
-            let t = match texture_mapper.read() {
-                Ok(e) => e,
-                Err(e) => {
-                    println!("GENERATE_CHUNK_GEOMETRY cant get texture_mapper lock; error: {:?}", e);
-                    panic!();
-                }
-            };
-
             for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, false, &unoriented_quad) {
-                let offset = match t.get_uv_offset(block_type_info, side_index as i8) {
+                let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
                     //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
                     _ => 0,
                 };
                 let ui_offset = Vector2::new(
-                    steep * ((offset % 32) as i32) as f32,
-                    steep * ((offset / 32) as f32).floor(),
+                    steep * ((offset % 32) as i32) as FloatType,
+                    steep * ((offset / 32) as f32).floor() as FloatType,
                 );
                 uvs.push(*i * uv_scale + ui_offset)
             }

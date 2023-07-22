@@ -22,7 +22,6 @@ points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 
 [node name="PlayerController" type="PlayerController" parent="."]
 
 [node name="Camera" type="Camera3D" parent="PlayerController"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 40, 0)
 current = true
 script = ExtResource("1_jif2f")
 
@@ -33,10 +32,6 @@ bbcode_enabled = true
 text = "Camera position: 0.00 15.00 0.00"
 
 [node name="RayCast3D" type="RayCast3D" parent="PlayerController/Camera"]
-
-[node name="World" type="World" parent="."]
-
-[node name="ChunksManager" type="ChunksManager" parent="World"]
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
 time_of_day_setup = 0.762

@@ -6,10 +6,10 @@ use common::network::{ServerChannel, ServerMessages};
 use dashmap::DashMap;
 use log::{error, trace};
 
-use crate::network::{
+use crate::{network::{
     player_container::{PlayerMut},
     server::NetworkContainer,
-};
+}, entities::entity::Position};
 
 use super::world_manager::WorldManager;
 
@@ -58,9 +58,9 @@ impl WorldsManager {
         self.worlds.get_mut(key).unwrap()
     }
 
-    pub fn spawn_player(&mut self, player_network: &mut PlayerMut, world_slug: &String, x: f32, y: f32, z: f32) {
+    pub fn spawn_player(&mut self, player_network: &mut PlayerMut, world_slug: &String, position: Position) {
         let mut world_manager = self.get_world_manager_mut(world_slug);
-        world_manager.spawn_player(player_network.get_client_id().clone(), x, y, z);
+        world_manager.spawn_player(player_network.get_client_id().clone(), position);
         player_network.current_world = Some(world_slug.clone());
     }
 

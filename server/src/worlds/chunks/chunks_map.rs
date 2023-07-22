@@ -55,18 +55,18 @@ impl ChunkMap {
 
         // Remove old chunks from player monitor
         if let Some(chunk_from) = from {
-            let iter = ManhattanIterator::new(chunk_from.x, chunk_from.z, chunks_distance);
+            let iter = ManhattanIterator::new(chunk_from.x as i32, chunk_from.z as i32, chunks_distance);
             for (x, z) in iter {
                 self.chunks_load_state
-                    .remove_ticket(ChunkPosition::new(x, z), &client_id);
+                    .remove_ticket(ChunkPosition::new(x as i64, z as i64), &client_id);
             }
         }
 
         // Add new tickets
         if let Some(chunk_to) = to {
-            let iter = ManhattanIterator::new(chunk_to.x, chunk_to.z, chunks_distance);
+            let iter = ManhattanIterator::new(chunk_to.x as i32, chunk_to.z as i32, chunks_distance);
             for (x, z) in iter {
-                let chunk_pos = ChunkPosition::new(x, z);
+                let chunk_pos = ChunkPosition::new(x as i64, z as i64);
                 self.chunks_load_state.insert_ticket(chunk_pos, client_id.clone());
 
                 // Update despawn timer

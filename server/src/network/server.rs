@@ -31,7 +31,7 @@ use crate::{
         disconnect::{on_disconnect, PlayerDisconnectEvent},
     },
     network::player_container::Players,
-    ServerSettings, console::commands_executer::CommandsHandler,
+    ServerSettings, console::commands_executer::CommandsHandler, entities::entity::Position,
 };
 
 pub struct NetworkPlugin;
@@ -55,6 +55,15 @@ pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
 pub struct NetworkContainer {
     pub server: ServerLock,
     pub transport: TransferLock,
+}
+
+impl NetworkContainer {
+    pub (crate) fn teleport_player(&self, client_id: &u64, world_slug: &String, position: &Position) {
+        let mut server = self.server.write().expect("poisoned");
+        let input = ServerMessages::Teleport { world_slug: world_slug.clone(), location: position.to_array() };
+        let encoded = bincode::serialize(&input).unwrap();
+        server.send_message(client_id.clone(), ServerChannel::Messages, encoded)
+    }
 }
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]

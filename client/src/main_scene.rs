@@ -1,11 +1,9 @@
-use std::sync::{Arc, RwLock};
-
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::world::world_manager::WorldManager;
-use crate::{client_scripts::resource_manager::ResourceManager};
-use godot::engine::{Engine};
+use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
@@ -19,6 +17,8 @@ pub struct Main {
     resource_manager: ResourceManager,
     pub world_manager: WorldManager,
 }
+
+pub type FloatType = f64;
 
 #[godot_api]
 impl Main {
@@ -39,7 +39,7 @@ impl Main {
         Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit();
     }
 
-    pub fn teleport_player(&mut self, world_slug: String, location: [f32; 3]) {
+    pub fn teleport_player(&mut self, world_slug: String, location: [FloatType; 3]) {
         self.world_manager.teleport_player(&mut self.base, world_slug, location);
     }
 }

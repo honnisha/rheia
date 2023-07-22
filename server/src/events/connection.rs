@@ -2,7 +2,9 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::{Res, ResMut};
 use log::info;
 
+use crate::entities::entity::Position;
 use crate::network::player_container::Players;
+use crate::network::server::NetworkContainer;
 use crate::worlds::worlds_manager::WorldsManager;
 use crate::{client_resources::resources_manager::ResourceManager, network::server::NetworkPlugin};
 
@@ -17,6 +19,7 @@ impl PlayerConnectionEvent {
 }
 
 pub fn on_connection(
+    network_container: Res<NetworkContainer>,
     mut connection_events: EventReader<PlayerConnectionEvent>,
     resources_manager: Res<ResourceManager>,
     players: Res<Players>,
@@ -29,7 +32,9 @@ pub fn on_connection(
 
         let default_teleport = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_teleport) {
-            worlds_manager.spawn_player(&mut player, &default_teleport, 0_f32, 0_f32, 0_f32)
+            let position = Position::new(0_f64, 0_f64, 0_f64);
+            worlds_manager.spawn_player(&mut player, &default_teleport, position.clone());
+            network_container.teleport_player(&event.client_id, &default_teleport, &position);
         }
     }
 }

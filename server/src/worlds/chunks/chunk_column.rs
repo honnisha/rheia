@@ -19,7 +19,7 @@ pub struct ChunkColumn {
     chunk_position: ChunkPosition,
     world_slug: String,
 
-    sections: ArrayVec<ChunkDataType, VERTICAL_SECTIONS>,
+    sections: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>,
     despawn_timer: Arc<RwLock<Duration>>,
     loaded: bool,
 }
@@ -59,7 +59,7 @@ impl ChunkColumn {
         *self.despawn_timer.write() += new_despawn;
     }
 
-    pub(crate) fn build_network_format(&self) -> [ChunkDataType; VERTICAL_SECTIONS] {
+    pub(crate) fn build_network_format(&self) -> [Box<ChunkDataType>; VERTICAL_SECTIONS] {
         self.sections.clone().into_inner().unwrap()
     }
 }
@@ -73,7 +73,7 @@ pub(crate) fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, chunk_col
             world_generator
                 .read()
                 .generate_chunk_data(&mut chunk_section, &chunk_column.chunk_position, y);
-            chunk_column.sections.push(chunk_section);
+            chunk_column.sections.push(Box::new(chunk_section));
         }
         chunk_column.loaded = true;
         LOADED_CHUNKS

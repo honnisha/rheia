@@ -5,16 +5,20 @@ use godot::{
     prelude::{Gd, GodotString},
 };
 use log::info;
-use std::sync::{Arc, RwLock};
+use parking_lot::RwLock;
+use std::sync::Arc;
 
+use crate::main_scene::FloatType;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
 use super::godot_world::World;
 
+pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
+
 pub struct WorldManager {
     world: Option<Gd<World>>,
 
-    texture_mapper: Arc<RwLock<TextureMapper>>,
+    texture_mapper: TextureMapperType,
     material: Gd<Material>,
 }
 
@@ -32,7 +36,7 @@ impl WorldManager {
 
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, main: &mut Base<Node>, world_slug: String, location: [f32; 3]) {
+    pub fn teleport_player(&mut self, main: &mut Base<Node>, world_slug: String, location: [FloatType; 3]) {
         if self.world.is_some() {
             if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
                 // Player moving to another world; old one must be destroyed
@@ -47,7 +51,7 @@ impl WorldManager {
     }
 
     pub fn create_world(&mut self, main: &mut Base<Node>, world_slug: String) {
-        let mut world = Gd::<World>::with_base(|base| World::create(base, world_slug));
+        let mut world = Gd::<World>::with_base(|base| World::create(base, world_slug, self.texture_mapper.clone()));
 
         let world_name = GodotString::from("World");
         world.bind_mut().set_name(world_name.clone());
@@ -67,6 +71,10 @@ impl WorldManager {
 
     /// Load chunk column by the network
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
-        todo!();
+        self.world
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .load_chunk(chunk_position, sections);
     }
 }

@@ -2409,6 +2409,7 @@ dependencies = [
  "dashmap",
  "fastnbt",
  "flate2",
+ "flume",
  "godot",
  "ilattice",
  "image",
