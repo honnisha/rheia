@@ -49,7 +49,7 @@ impl ChunkSection {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
         let c = new_mesh.get_surface_count();
         m.set_mesh(new_mesh.upcast());
-        println!("update_mesh y:{} surface_count:{}", self.y, c);
+        // println!("update_mesh y:{} surface_count:{}", self.y, c);
 
         //if c > 0 {
         //    m.create_trimesh_collision();

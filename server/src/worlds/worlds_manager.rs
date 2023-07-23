@@ -121,9 +121,12 @@ pub fn chunk_loaded_event_reader(
             },
         };
 
+        match bincode::serialized_size(&encoded) {
+            Ok(s) => println!("NETWORK chunk_position:{} packet size:{}", chunk_position, s),
+            Err(e) => println!("NETWORK bincode::serialized_size error: {}", e),
+        }
         for client_id in watch_clients {
             server.send_message(client_id.clone(), ServerChannel::Messages, encoded.clone());
-            trace!(target: "network", "NETWORK Send chunk {} to the client {}", chunk_position, client_id);
         }
     }
 }

@@ -34,10 +34,10 @@ pub struct NearChunksData {
 impl NearChunksData {
     fn new(chunks: &AHashMap<ChunkPosition, Chunk>, pos: &ChunkPosition) -> Self {
         Self {
-            forward: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x + 1, pos.z)),
-            behind: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x - 1, pos.z)),
-            right: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z + 1)),
+            forward: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x - 1, pos.z)),
+            behind: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x + 1, pos.z)),
             left: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z - 1)),
+            right: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z + 1)),
         }
     }
 
@@ -125,18 +125,20 @@ impl ChunksContainer {
         update_mesh_tx: Sender<ChunksGeometryType>,
         texture_mapper: TextureMapperType,
     ) {
-        let mut geometry_array: ChunksGeometryType = Default::default();
-        let t = texture_mapper.read();
-        for y in 0..VERTICAL_SECTIONS {
-            let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+        rayon::spawn(move || {
+            let mut geometry_array: ChunksGeometryType = Default::default();
+            let t = texture_mapper.read();
+            for y in 0..VERTICAL_SECTIONS {
+                let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
 
-            // Create test sphere
-            // let bordered_chunk_data = get_test_sphere();
+                // Create test sphere
+                // let bordered_chunk_data = get_test_sphere();
 
-            let new_geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
-            geometry_array.push(new_geometry);
-        }
-        update_mesh_tx.send(geometry_array).unwrap();
+                let new_geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
+                geometry_array.push(new_geometry);
+            }
+            update_mesh_tx.send(geometry_array).unwrap();
+        });
     }
 }
 
