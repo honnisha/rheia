@@ -47,6 +47,10 @@ impl ChunkColumn {
         }
     }
 
+    pub(crate) fn is_loaded(&self) -> bool {
+        self.loaded
+    }
+
     pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {
         *self.despawn_timer.read() >= duration
     }

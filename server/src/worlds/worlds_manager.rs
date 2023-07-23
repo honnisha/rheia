@@ -2,14 +2,14 @@ use super::chunks::chunk_column::LOADED_CHUNKS;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};
-use common::network::{ServerChannel, ServerMessages};
+use common::network::ServerChannel;
 use dashmap::DashMap;
 use log::{error, trace};
 
-use crate::{network::{
-    player_container::{PlayerMut},
-    server::NetworkContainer,
-}, entities::entity::Position};
+use crate::{
+    entities::entity::Position,
+    network::{player_container::PlayerMut, player_network::PlayerNetwork, server::NetworkContainer},
+};
 
 use super::world_manager::WorldManager;
 
@@ -64,6 +64,22 @@ impl WorldsManager {
         player_network.current_world = Some(world_slug.clone());
     }
 
+    /// Send already loaded chunks to the client
+    pub fn send_loaded_chunks(&self, network_container: &NetworkContainer, player: &PlayerNetwork) {
+        let mut server = network_container.server.write().expect("poisoned");
+
+        let world_manager = self.get_world_manager(&player.current_world.as_ref().unwrap());
+        let client_chunks = world_manager
+            .chunks_map
+            .take_client_chunks(&player.get_client_id())
+            .unwrap();
+        for chunk_position in client_chunks {
+            if let Some(e) = world_manager.get_network_chunk_bytes(chunk_position) {
+                server.send_message(player.get_client_id().clone(), ServerChannel::Messages, e);
+            };
+        }
+    }
+
     pub fn despawn_player(&mut self, player_network: &mut PlayerMut) {
         let current_world = match player_network.current_world.as_ref() {
             Some(c) => c,
@@ -81,10 +97,7 @@ pub fn update_world_chunks(mut worlds_manager: ResMut<WorldsManager>, time: Res<
     }
 }
 
-pub fn chunk_loaded_event_reader(
-    worlds_manager: ResMut<WorldsManager>,
-    network_container: Res<NetworkContainer>,
-) {
+pub fn chunk_loaded_event_reader(worlds_manager: ResMut<WorldsManager>, network_container: Res<NetworkContainer>) {
     let mut server = network_container.server.write().expect("poisoned");
 
     // Iterate loaded chunks
@@ -92,11 +105,11 @@ pub fn chunk_loaded_event_reader(
         let world = worlds_manager.get_world_manager(&world_slug);
 
         // Get all clients which is waching this chunk
-        let watch_clients = match world.chunks.take_chunks_clients(&chunk_position) {
+        let watch_clients = match world.chunks_map.take_chunks_clients(&chunk_position) {
             Some(v) => v,
             None => {
                 panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
-            },
+            }
         };
 
         if watch_clients.len() <= 0 {
@@ -104,26 +117,20 @@ pub fn chunk_loaded_event_reader(
         }
 
         // Try to get chunk data
-        let encoded = match world.chunks.get_chunk_column(&chunk_position) {
-            Some(chunk_column) => {
-                let input = ServerMessages::ChunkSectionInfo {
-                    sections: chunk_column.build_network_format(),
-                    chunk_position: chunk_position.clone(),
-                };
-                bincode::serialize(&input).unwrap()
-            },
+        let encoded = match world.get_network_chunk_bytes(&chunk_position) {
+            Some(e) => e,
             None => {
                 error!(
                     "chunk_loaded_event_reader there is not chunk for player_chunks_watch:{}",
                     chunk_position
                 );
                 continue;
-            },
+            }
         };
 
         match bincode::serialized_size(&encoded) {
-            Ok(s) => println!("NETWORK chunk_position:{} packet size:{}", chunk_position, s),
-            Err(e) => println!("NETWORK bincode::serialized_size error: {}", e),
+            Ok(s) => trace!("NETWORK chunk_position:{} packet size:{}", chunk_position, s),
+            Err(e) => error!("NETWORK bincode::serialized_size error: {}", e),
         }
         for client_id in watch_clients {
             server.send_message(client_id.clone(), ServerChannel::Messages, encoded.clone());

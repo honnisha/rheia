@@ -43,6 +43,10 @@ impl ChunkMap {
         self.chunks_load_state.take_chunks_clients(&chunk_position)
     }
 
+    pub fn take_client_chunks(&self, client_id: &u64) -> Option<&Vec<ChunkPosition>> {
+        self.chunks_load_state.take_client_chunks(&client_id)
+    }
+
     /// Trigered when player is move between chunks or spawns/despawns
     /// for updating chunks vision
     /// to unload unused chunks

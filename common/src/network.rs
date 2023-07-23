@@ -30,7 +30,7 @@ impl ClientChannel {
     pub fn channels_config() -> Vec<ChannelConfig> {
         vec![ChannelConfig {
             channel_id: Self::Messages.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024,
+            max_memory_usage_bytes: 10 * 1024 * 1024,
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
@@ -78,7 +78,9 @@ impl ServerChannel {
         vec![ChannelConfig {
             channel_id: Self::Messages.into(),
             max_memory_usage_bytes: 10 * 1024 * 1024,
-            send_type: SendType::Unreliable,
+            send_type: SendType::ReliableOrdered {
+                resend_time: Duration::from_secs_f32(0.5_f32),
+            },
         }]
     }
 }

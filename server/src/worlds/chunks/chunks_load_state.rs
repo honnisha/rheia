@@ -38,6 +38,13 @@ impl ChunksLoadState {
         }
     }
 
+    pub fn take_client_chunks(&self, client_id: &u64) -> Option<&Vec<ChunkPosition>> {
+        match self.by_client.get(client_id) {
+            Some(v) => Some(&v),
+            None => None,
+        }
+    }
+
     pub fn _take_chunks_clients_mut(&mut self, chunk: &ChunkPosition) -> Vec<u64> {
         self.by_chunk.get_mut(chunk).map(mem::take).unwrap_or_default()
     }

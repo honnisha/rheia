@@ -35,6 +35,7 @@ pub fn on_connection(
             let position = Position::default();
             worlds_manager.spawn_player(&mut player, &default_teleport, position.clone());
             network_container.teleport_player(&event.client_id, &default_teleport, &position);
+            worlds_manager.send_loaded_chunks(&network_container, &*player);
         }
     }
 }
