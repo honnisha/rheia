@@ -12,8 +12,8 @@ const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
 macro_rules! debug_string {
     () => {
         "FPS: {:.0}
-Camera position: [b]{:.2} {:.2} {:.2}[/b]
-Chunk postition: [b]{:?}[/b]
+Camera position: {:.2} {:.2} {:.2}
+Chunk postition: {:?}
 Threads count: {}
 World: {}"
     };

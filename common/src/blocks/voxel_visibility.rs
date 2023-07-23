@@ -1,7 +1,9 @@
+use strum_macros::Display;
+
 use super::blocks_storage::BlockType;
 
 /// Describes how this voxel influences mesh generation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum VoxelVisibility {
     /// This voxel should not produce any geometry.
     Empty,

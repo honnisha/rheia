@@ -1,4 +1,5 @@
 use super::voxel_visibility::VoxelVisibility;
+use std::fmt::{self, Display, Formatter};
 
 pub struct BlockTypeInfo {
     pub voxel_visibility: VoxelVisibility,
@@ -6,6 +7,19 @@ pub struct BlockTypeInfo {
     pub top_texture: Option<&'static str>,
     pub side_texture: Option<&'static str>,
     pub bottom_texture: Option<&'static str>,
+}
+
+impl Display for BlockTypeInfo {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(
+            f,
+            "(visibility:{} top:{} side:{} bottom:{})",
+            self.voxel_visibility,
+            self.top_texture.unwrap_or("none"),
+            self.side_texture.unwrap_or("none"),
+            self.bottom_texture.unwrap_or("none")
+        )
+    }
 }
 
 impl BlockTypeInfo {
@@ -34,7 +48,7 @@ impl BlockTypeInfo {
         }
     }
 
-    pub fn get_voxel_visibility(&self) -> &VoxelVisibility {
-        &self.voxel_visibility
+    pub fn get_voxel_visibility(&self) -> VoxelVisibility {
+        self.voxel_visibility
     }
 }

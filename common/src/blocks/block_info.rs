@@ -19,8 +19,8 @@ impl BlockInfo {
         self.block_type.get_block_type_info().unwrap()
     }
 
-    pub fn get_block_type(&self) -> &BlockType {
-        &self.block_type
+    pub fn get_block_type(&self) -> BlockType {
+        self.block_type
     }
 }
 

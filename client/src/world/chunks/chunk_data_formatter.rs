@@ -13,7 +13,7 @@ use super::{
 };
 
 pub fn format_chunk_data_with_boundaries(
-    chunks_near: &NearChunksData,
+    chunks_near: Option<&NearChunksData>,
     chunk_data: &ColumnDataType,
     y: usize,
 ) -> ChunkDataBordered {
@@ -31,11 +31,11 @@ pub fn format_chunk_data_with_boundaries(
 
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
                 let block_type = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
-                    Some(e) => e.get_block_type().clone(),
+                    Some(e) => e.get_block_type(),
                     None => BlockType::Air,
                 };
 
-                if block_type.get_block_type_info().unwrap().get_voxel_visibility() != &VoxelVisibility::Empty {
+                if block_type.get_block_type_info().unwrap().get_voxel_visibility() != VoxelVisibility::Empty {
                     mesh_count += 1
                 }
 
@@ -51,6 +51,12 @@ pub fn format_chunk_data_with_boundaries(
         return b_chunk;
     }
 
+    let chunks_near = match chunks_near {
+        Some(c) => c,
+        None => {
+            return b_chunk;
+        },
+    };
     let boundary = get_boundaries_chunks(&chunks_near, &chunk_data, y);
     for (axis, axis_diff, chunk_section) in boundary {
 
@@ -72,7 +78,7 @@ pub fn format_chunk_data_with_boundaries(
                 let pos_o = ChunkBlockPosition::new(pos_outside[0] as u8, pos_outside[1] as u8, pos_outside[2] as u8);
                 let block_type = match chunk_section.as_ref() {
                     Some(c) => match c.get(&pos_o) {
-                        Some(e) => e.get_block_type().clone(),
+                        Some(e) => e.get_block_type(),
                         None => BlockType::Air,
                     },
                     None => BlockType::Air,
@@ -145,5 +151,13 @@ fn get_section<'a>(column: &'a Option<ColumnDataType>, y: usize) -> Option<Box<C
             None => None,
         },
         None => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_format_chunk_data_with_boundaries() {
     }
 }

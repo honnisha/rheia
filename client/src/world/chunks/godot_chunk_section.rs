@@ -21,14 +21,16 @@ pub struct ChunkSection {
     pub base: Base<Node3D>,
     mesh: Option<Gd<MeshInstance3D>>,
     material: Gd<Material>,
+    y: u8,
 }
 
 impl ChunkSection {
-    pub fn create(base: Base<Node3D>, material: Gd<Material>) -> Self {
+    pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8) -> Self {
         Self {
             base,
             mesh: None,
             material,
+            y,
         }
     }
 
@@ -47,10 +49,11 @@ impl ChunkSection {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
         let c = new_mesh.get_surface_count();
         m.set_mesh(new_mesh.upcast());
+        println!("update_mesh y:{} surface_count:{}", self.y, c);
 
-        if c > 0 {
-            m.create_trimesh_collision();
-        }
+        //if c > 0 {
+        //    m.create_trimesh_collision();
+        //}
         //m.create_convex_collision(false, false);
     }
 }
@@ -59,7 +62,7 @@ impl ChunkSection {
 impl NodeVirtual for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
-        Self::create(base, get_default_material())
+        Self::create(base, get_default_material(), 0)
     }
 
     fn ready(&mut self) {

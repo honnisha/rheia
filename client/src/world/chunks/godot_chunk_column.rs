@@ -1,12 +1,12 @@
+use arrayvec::ArrayVec;
+use common::CHUNK_SIZE;
+use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
+use flume::{Receiver, Sender};
+use godot::{engine::Material, prelude::*};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
-
-use arrayvec::ArrayVec;
-use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
-use flume::{Receiver, Sender};
-use godot::{engine::Material, prelude::*};
 
 use crate::{
     entities::position::GodotPositionConverter, utils::mesh::mesh_generator::Geometry,
@@ -70,9 +70,9 @@ impl ChunkColumn {
         base: &mut Base<Node3D>,
         y: usize,
         material: &Gd<Material>,
-        chunk_position: &ChunkPosition,
+        _chunk_position: &ChunkPosition,
     ) -> Gd<ChunkSection> {
-        let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share()));
+        let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
 
         let name = GodotString::from(format!("Section {}", y));
         section.bind_mut().set_name(name.clone());
@@ -82,10 +82,7 @@ impl ChunkColumn {
         let mut section = base.get_child(index).unwrap().cast::<ChunkSection>();
         section
             .bind_mut()
-            .set_global_position(GodotPositionConverter::get_chunk_section_position_vector(
-                chunk_position,
-                y as u8,
-            ));
+            .set_global_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
         section
     }
 }
@@ -110,9 +107,10 @@ impl NodeVirtual for ChunkColumn {
 
     fn process(&mut self, _delta: f64) {
         for mut section_geometry in self.update_mesh_rx.drain() {
-            let y = 0;
+            let mut y = 0;
             for geometry in section_geometry.drain(..) {
                 self.sections[y].bind_mut().update_mesh(geometry.mesh_ist);
+                y += 1;
             }
             self.loaded = true;
         }

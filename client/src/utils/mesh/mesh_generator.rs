@@ -101,7 +101,10 @@ pub fn generate_chunk_geometry(
                 let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
                     //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
-                    _ => 0,
+                    _ => {
+                        error!("GENERATE_CHUNK_GEOMETRY cant find offset for block type: {}", block_type_info);
+                        panic!();
+                    },
                 };
                 let ui_offset = Vector2::new(
                     steep * ((offset % 32) as i32) as FloatType,

@@ -111,7 +111,7 @@ impl ChunksContainer {
 
         column
             .bind_mut()
-            .set_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
+            .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
 
         self.chunks.insert(
             chunk_position.clone(),
@@ -128,7 +128,11 @@ impl ChunksContainer {
         let mut geometry_array: ChunksGeometryType = Default::default();
         let t = texture_mapper.read();
         for y in 0..VERTICAL_SECTIONS {
-            let bordered_chunk_data = format_chunk_data_with_boundaries(&chunks_near, &data, y);
+            let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+
+            // Create test sphere
+            // let bordered_chunk_data = get_test_sphere();
+
             let new_geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
             geometry_array.push(new_geometry);
         }

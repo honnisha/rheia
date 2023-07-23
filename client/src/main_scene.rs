@@ -55,14 +55,14 @@ impl NodeVirtual for Main {
     }
 
     fn ready(&mut self) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         log::set_logger(&CONSOLE_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Info);
 
         info!("Loading HonnyCraft version: {}", VERSION);
-
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
 
         match NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
             Ok(_) => {}
