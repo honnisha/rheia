@@ -61,9 +61,17 @@ impl World {
         &self.slug
     }
 
+    pub fn get_chunks_count(&self) -> usize {
+        match self.chunks_container.as_ref() {
+            Some(c) => c.bind().get_chunks_count(),
+            None => 0 as usize,
+        }
+    }
+
     pub fn init_chunks_container(&mut self) {
-        let mut container =
-            Gd::<ChunksContainer>::with_base(|base| ChunksContainer::create(base, self.texture_mapper.clone(), self.material.share()));
+        let mut container = Gd::<ChunksContainer>::with_base(|base| {
+            ChunksContainer::create(base, self.texture_mapper.clone(), self.material.share())
+        });
 
         let container_name = GodotString::from("ChunksContainer");
         container.bind_mut().set_name(container_name.clone());

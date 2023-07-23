@@ -1,14 +1,14 @@
-use std::{thread, time::Duration};
-
 use bevy_ecs::world::World;
 use chrono::Local;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use log::{error, info};
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
+use std::{path::Path, thread, time::Duration, fs::OpenOptions};
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
-use super::{console_sender::Console, commands_executer::CommandsHandler};
+use super::{commands_executer::CommandsHandler, console_sender::Console};
 
 lazy_static! {
     // To handle output log from entire server and draw it on console
@@ -19,6 +19,8 @@ lazy_static! {
 }
 
 pub struct ConsoleHandler;
+
+const CONSOLE_HISTORY_FILE: &str = "console_history.txt";
 
 /// Read and write console std
 impl ConsoleHandler {
@@ -31,6 +33,18 @@ impl ConsoleHandler {
         let history = FileHistory::with_config(config);
 
         let mut rl = DefaultEditor::with_history(config, history).unwrap();
+
+        let _ = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .append(true)
+            .open(CONSOLE_HISTORY_FILE);
+
+        let _ = match rl.load_history(CONSOLE_HISTORY_FILE) {
+            Ok(_) => info!("Console file history loaded from \"{}\"", CONSOLE_HISTORY_FILE),
+            Err(e) => error!("Console history \"{}\" error: {}", CONSOLE_HISTORY_FILE, e),
+        };
+
         let mut printer = rl.create_external_printer().unwrap();
 
         thread::spawn(move || loop {
@@ -42,6 +56,11 @@ impl ConsoleHandler {
                     }
                 }
                 Err(ReadlineError::Interrupted) => {
+                    let _ = match rl.save_history(CONSOLE_HISTORY_FILE) {
+                        Ok(_) => info!("Console file history saved in \"{}\"", CONSOLE_HISTORY_FILE),
+                        Err(e) => error!("Console file \"{}\" history save error: {}", CONSOLE_HISTORY_FILE, e),
+                    };
+
                     RuntimePlugin::stop();
                     break;
                 }

@@ -12,6 +12,7 @@ impl ChunkPosition {
         Self { x, z }
     }
 }
+
 impl PartialEq for ChunkPosition {
     fn eq(&self, other: &Self) -> bool {
         self.x == other.x && self.z == other.z

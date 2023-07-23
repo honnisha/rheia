@@ -1,7 +1,0 @@
-title: Test
-slug: honny_test
-autor: Test autor
-version: 1.0
-
-client_scripts:
-  - 'test.rhai'

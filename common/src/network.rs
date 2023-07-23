@@ -56,7 +56,7 @@ pub enum ServerMessages {
     },
     Teleport {
         world_slug: String,
-        location: [f64; 3],
+        location: [f32; 3],
     },
     ChunkSectionInfo {
         // x, z

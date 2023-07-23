@@ -34,6 +34,10 @@ impl WorldManager {
         &self.slug
     }
 
+    pub fn get_chunks_count(&self) -> usize {
+        self.chunks.count()
+    }
+
     pub fn spawn_player(&mut self, client_id: u64, position: Position) {
         self.chunks
             .update_chunks_render(&client_id, None, Some(&position.get_chunk_position()), CHUNKS_DISTANCE);

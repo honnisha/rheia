@@ -1,6 +1,6 @@
 use super::console_sender::ConsoleSenderType;
 use bevy_ecs::{system::Resource, world::World};
-use clap::{error::ErrorKind, Command, ArgMatches};
+use clap::{error::ErrorKind, ArgMatches, Command};
 use regex::Regex;
 
 pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
@@ -16,7 +16,7 @@ pub struct CommandExecuter {
 }
 
 impl CommandExecuter {
-    pub fn new(command_parser: Command, handler: CommandFN, ) -> Self {
+    pub fn new(command_parser: Command, handler: CommandFN) -> Self {
         let name = command_parser.get_name().to_string();
         Self {
             command_parser,

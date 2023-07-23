@@ -9,9 +9,13 @@ use bevy_app::{App, ScheduleRunnerPlugin};
 use bevy_ecs::system::Resource;
 
 use clap::Parser;
-use log::{info, LevelFilter};
+use log::info;
 
-use crate::{logger::CONSOLE_LOGGER, network::{server::NetworkPlugin, runtime_plugin::RuntimePlugin}};
+use crate::{
+    args::get_log_level,
+    logger::CONSOLE_LOGGER,
+    network::{runtime_plugin::RuntimePlugin, server::NetworkPlugin},
+};
 use client_resources::ResourcesPlugin;
 use worlds::WorldsHandlerPlugin;
 
@@ -20,11 +24,11 @@ use crate::console::ConsolePlugin;
 mod args;
 mod client_resources;
 mod console;
+mod entities;
+mod events;
 mod logger;
 mod network;
 mod worlds;
-mod entities;
-mod events;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -44,11 +48,13 @@ impl ServerSettings {
 
 fn main() {
     log::set_logger(&CONSOLE_LOGGER).unwrap();
-    log::set_max_level(LevelFilter::Info);
 
     let server_settings = ServerSettings {
         args: MainCommand::parse(),
     };
+    let log_level = get_log_level(&server_settings.args.logs);
+    log::set_max_level(log_level.clone());
+    info!("Log level using: {}", log_level);
 
     info!("HonnyCraft Server version {}", VERSION);
 

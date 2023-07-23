@@ -4,21 +4,7 @@ use godot::{
     prelude::*,
 };
 
-#[derive(GodotClass)]
-#[class(base=Node)]
-pub struct PlayerController {
-    #[base]
-    base: Base<Node>,
-    camera: Option<Gd<Camera3D>>,
-    debug_text: Option<Gd<RichTextLabel>>,
-    buffer_position: Vector3,
-}
-
-#[godot_api]
-impl PlayerController {
-    #[signal]
-    fn submit_camera_move();
-}
+use crate::main_scene::Main;
 
 const CAMERA_PATH: &str = "Camera";
 const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
@@ -28,8 +14,26 @@ macro_rules! debug_string {
         "FPS: {:.0}
 Camera position: [b]{:.2} {:.2} {:.2}[/b]
 Chunk postition: [b]{:?}[/b]
-Threads count: {}"
+Threads count: {}
+World: {}"
     };
+}
+
+#[derive(GodotClass)]
+#[class(base=Node)]
+pub struct PlayerController {
+    #[base]
+    base: Base<Node>,
+    camera: Option<Gd<Camera3D>>,
+    debug_text: Option<Gd<RichTextLabel>>,
+    buffer_position: Vector3,
+    main: Option<Gd<Main>>,
+}
+
+#[godot_api]
+impl PlayerController {
+    #[signal]
+    fn submit_camera_move();
 }
 
 #[godot_api]
@@ -39,6 +43,7 @@ impl NodeVirtual for PlayerController {
             base,
             camera: None,
             debug_text: None,
+            main: None,
             buffer_position: Vector3::ZERO,
         }
     }
@@ -47,9 +52,6 @@ impl NodeVirtual for PlayerController {
         match self.base.try_get_node_as::<Camera3D>(CAMERA_PATH) {
             Some(c) => {
                 self.camera = Some(c);
-
-                let camera = self.camera.as_deref_mut().unwrap();
-                camera.set_position(Vector3::new(0.0, 40.0, 0.0));
             }
             None => {
                 godot_error!("Camera element not found for PlayerController");
@@ -64,6 +66,8 @@ impl NodeVirtual for PlayerController {
                 godot_error!("Debug text element not found for PlayerController");
             }
         }
+
+        self.main = Some(self.base.get_parent().unwrap().cast::<Main>());
     }
 
     #[allow(unused_variables)]
@@ -81,7 +85,12 @@ impl NodeVirtual for PlayerController {
 
         let camera = self.camera.as_deref_mut().unwrap();
 
-        let camera_pos = camera.get_global_position();
+        let world_str = match self.main.as_ref().unwrap().bind().world_manager.get_world() {
+            Some(w) => format!("{}; chunks count: {}", w.bind().get_slug(), w.bind().get_chunks_count()),
+            None => "none".to_string(),
+        };
+
+        let camera_pos = camera.get_position();
         let text = format!(
             debug_string!(),
             Engine::singleton().get_frames_per_second(),
@@ -90,6 +99,7 @@ impl NodeVirtual for PlayerController {
             camera_pos.z,
             BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position(),
             rayon::current_num_threads(),
+            world_str,
         );
         self.debug_text
             .as_deref_mut()

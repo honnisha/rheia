@@ -22,6 +22,7 @@ points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 
 [node name="PlayerController" type="PlayerController" parent="."]
 
 [node name="Camera" type="Camera3D" parent="PlayerController"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.78866, 0, 0)
 current = true
 script = ExtResource("1_jif2f")
 
@@ -63,7 +64,7 @@ grow_vertical = 2
 layout_mode = 1
 
 [node name="RigidBody3D" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5062, -18.2698)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 40.9417, -18.2698)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
 mesh = SubResource("BoxMesh_tot8o")

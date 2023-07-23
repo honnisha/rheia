@@ -28,6 +28,10 @@ impl ChunkMap {
         Self::default()
     }
 
+    pub fn count(&self) -> usize {
+        self.chunks.len()
+    }
+
     pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.read()),

@@ -7,11 +7,11 @@ use common::{
 };
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
-use log::trace;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::{
+    entities::position::GodotPositionConverter,
     utils::{mesh::mesh_generator::generate_chunk_geometry, textures::texture_mapper::TextureMapper},
     world::world_manager::{get_default_material, TextureMapperType},
 };
@@ -82,6 +82,10 @@ impl ChunksContainer {
         }
     }
 
+    pub fn get_chunks_count(&self) -> usize {
+        self.chunks.len()
+    }
+
     pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.data.clone()),
@@ -94,7 +98,9 @@ impl ChunksContainer {
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
-        let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, self.material.share()));
+        let mut column = Gd::<ChunkColumn>::with_base(|base| {
+            ChunkColumn::create(base, self.material.share(), chunk_position.clone())
+        });
 
         let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
         column.bind_mut().set_name(name.clone());
@@ -103,11 +109,14 @@ impl ChunksContainer {
         self.base.add_child(column.upcast());
         column = self.base.get_child(index).unwrap().cast::<ChunkColumn>();
 
+        column
+            .bind_mut()
+            .set_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
+
         self.chunks.insert(
             chunk_position.clone(),
             Chunk::create(column, Arc::new(RwLock::new(sections))),
         );
-        trace!("Chunk created at position {}", chunk_position);
     }
 
     fn update_mesh(
@@ -148,7 +157,6 @@ impl NodeVirtual for ChunksContainer {
                     chunk.chunk.bind().update_mesh_tx.clone(),
                     self.texture_mapper.clone(),
                 );
-                trace!("Mesh {} generated", chunk_position);
                 chunk.chunk.bind().set_sended();
             }
         }

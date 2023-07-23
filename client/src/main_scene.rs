@@ -18,7 +18,7 @@ pub struct Main {
     pub world_manager: WorldManager,
 }
 
-pub type FloatType = f64;
+pub type FloatType = f32;
 
 #[godot_api]
 impl Main {

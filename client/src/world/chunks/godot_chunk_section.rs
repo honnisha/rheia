@@ -1,15 +1,15 @@
 use std::borrow::BorrowMut;
 
-use common::blocks::{block_info::BlockInfo, blocks_storage::BlockType};
+use common::blocks::{blocks_storage::BlockType};
 use godot::{prelude::*, engine::{MeshInstance3D, Material, ArrayMesh}};
 use ndshape::{ConstShape3u32, ConstShape};
 
 use crate::world::world_manager::get_default_material;
 
-pub type ChunkShape = ConstShape3u32<16, 16, 16>;
+//pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
 
-pub type ChunkData = [BlockInfo; ChunkShape::SIZE as usize];
+//pub type ChunkData = [BlockInfo; ChunkShape::SIZE as usize];
 pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 
 /// Chunk section, one of the chunk column

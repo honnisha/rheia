@@ -33,7 +33,11 @@ pub(crate) fn world_command(world: &mut World, sender: &dyn ConsoleSenderType, a
             let worlds = worlds_manager.get_worlds();
             sender.send_console_message("Worlds list:".to_string());
             for world in worlds.iter() {
-                sender.send_console_message(format!(" - {}", world.get_slug()));
+                sender.send_console_message(format!(
+                    " - {} (loaded chunks: {})",
+                    world.get_slug(),
+                    world.get_chunks_count()
+                ));
             }
         }
         Some(("create", create_matches)) => {

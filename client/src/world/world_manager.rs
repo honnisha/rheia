@@ -5,7 +5,7 @@ use godot::{
     engine::Material,
     prelude::{Gd, GodotString},
 };
-use log::info;
+use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -35,6 +35,13 @@ impl WorldManager {
         }
     }
 
+    pub fn get_world(&self) -> Option<&Gd<World>> {
+        match self.world.as_ref() {
+            Some(w) => Some(&w),
+            None => None,
+        }
+    }
+
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
     pub fn teleport_player(&mut self, main: &mut Base<Node>, world_slug: String, location: [FloatType; 3]) {
@@ -53,12 +60,7 @@ impl WorldManager {
 
     pub fn create_world(&mut self, main: &mut Base<Node>, world_slug: String) {
         let mut world = Gd::<World>::with_base(|base| {
-            World::create(
-                base,
-                world_slug,
-                self.texture_mapper.clone(),
-                self.material.share(),
-            )
+            World::create(base, world_slug, self.texture_mapper.clone(), self.material.share())
         });
 
         let world_name = GodotString::from("World");
@@ -79,11 +81,12 @@ impl WorldManager {
 
     /// Load chunk column by the network
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
-        self.world
-            .as_mut()
-            .unwrap()
-            .bind_mut()
-            .load_chunk(chunk_position, sections);
+        match self.world.as_mut() {
+            Some(w) => w.bind_mut().load_chunk(chunk_position, sections),
+            None => {
+                error!("load_chunk tried to run witout a world");
+            }
+        }
     }
 }
 

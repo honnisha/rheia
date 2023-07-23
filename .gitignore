@@ -1,3 +1,4 @@
+console_history.txt
 .directory
 client/rust/target/*
 server/target/*

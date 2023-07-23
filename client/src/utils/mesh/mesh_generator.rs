@@ -1,6 +1,9 @@
 use crate::{
     main_scene::FloatType,
-    utils::{mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG}, textures::texture_mapper::TextureMapper},
+    utils::{
+        mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
+        textures::texture_mapper::TextureMapper,
+    },
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
 use common::blocks::blocks_storage::BlockType;
@@ -11,8 +14,9 @@ use godot::{
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
+use log::error;
 use ndshape::ConstShape;
-use parking_lot::{RwLockReadGuard};
+use parking_lot::RwLockReadGuard;
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -52,7 +56,10 @@ pub struct Geometry {
 unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
-pub fn generate_chunk_geometry(texture_mapper: &RwLockReadGuard<TextureMapper>, chunk_data: &ChunkDataBordered) -> Geometry {
+pub fn generate_chunk_geometry(
+    texture_mapper: &RwLockReadGuard<TextureMapper>,
+    chunk_data: &ChunkDataBordered,
+) -> Geometry {
     //let now = Instant::now();
 
     let mut arrays: Array<Variant> = Array::new();
@@ -79,7 +86,7 @@ pub fn generate_chunk_geometry(texture_mapper: &RwLockReadGuard<TextureMapper>, 
             let block_type_info = match quad.block_type.get_block_type_info() {
                 Some(e) => e,
                 _ => {
-                    println!("GENERATE_CHUNK_GEOMETRY cant get block_type_info");
+                    error!("GENERATE_CHUNK_GEOMETRY cant get block_type_info");
                     panic!();
                 }
             };

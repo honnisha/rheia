@@ -8,6 +8,7 @@ use godot::{
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use log::error;
+use log::trace;
 use std::io::Cursor;
 use strum::IntoEnumIterator;
 
@@ -74,6 +75,7 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
 }
 
 pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardMaterial3D> {
+    trace!("build_blocks_material started");
     let mut material = StandardMaterial3D::new();
     if Engine::singleton().is_editor_hint() {
         return material;
@@ -105,5 +107,6 @@ pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardM
     texture.set_image(image);
     material.set_texture(TextureParam::TEXTURE_ALBEDO, texture.upcast());
 
+    trace!("build_blocks_material completed");
     material
 }

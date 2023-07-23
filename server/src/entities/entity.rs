@@ -14,19 +14,21 @@ impl Default for Indentifier {
     }
 }
 
-#[derive(Component, Clone, Copy)]
+pub type PositionFloatType = f32;
+
+#[derive(Component, Clone, Copy, Default)]
 pub struct Position {
-    x: f64,
-    y: f64,
-    z: f64,
+    x: PositionFloatType,
+    y: PositionFloatType,
+    z: PositionFloatType,
 }
 
 impl Position {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub fn new(x: PositionFloatType, y: PositionFloatType, z: PositionFloatType) -> Self {
         Self { x, y, z }
     }
 
-    pub fn to_array(&self) -> [f64; 3] {
+    pub fn to_array(&self) -> [PositionFloatType; 3] {
         [self.x.clone(), self.y.clone(), self.z.clone()]
     }
 }

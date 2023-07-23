@@ -7,8 +7,6 @@ use common::{
 };
 use ndshape::ConstShape;
 
-use crate::world::chunks::godot_chunk_section::ChunkShape;
-
 use super::{
     godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
     godot_chunks_container::{ColumnDataType, NearChunksData},
@@ -19,13 +17,10 @@ pub fn format_chunk_data_with_boundaries(
     chunk_data: &ColumnDataType,
     y: usize,
 ) -> ChunkDataBordered {
-    //use std::time::Instant;
-    //let now = Instant::now();
-
     // Fill with solid block by default
     let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
 
-    let mut has_any_mesh = false;
+    let mut mesh_count = 0;
 
     let cd = chunk_data.read();
     let section_data = cd.get(y).unwrap();
@@ -33,13 +28,6 @@ pub fn format_chunk_data_with_boundaries(
     for x in 0_u32..(CHUNK_SIZE as u32) {
         for y in 0_u32..(CHUNK_SIZE as u32) {
             for z in 0_u32..(CHUNK_SIZE as u32) {
-                let i = ChunkShape::linearize([x, y, z]);
-                assert!(
-                    i < ChunkShape::SIZE,
-                    "Generate chunk data overflow array length; dimentions:{:?} current:{:?}",
-                    ChunkShape::ARRAY,
-                    [x, y, z]
-                );
 
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
                 let block_type = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
@@ -48,7 +36,7 @@ pub fn format_chunk_data_with_boundaries(
                 };
 
                 if block_type.get_block_type_info().unwrap().get_voxel_visibility() != &VoxelVisibility::Empty {
-                    has_any_mesh = true;
+                    mesh_count += 1
                 }
 
                 b_chunk[b_chunk_pos as usize] = block_type;
@@ -56,15 +44,15 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
+    // println!("mesh_count: {}", mesh_count);
+
     // fill boundaries
-    if !has_any_mesh {
+    if mesh_count == 0 {
         return b_chunk;
     }
-    //godot_print!("chunk:{:?}", chunk_pos);
 
     let boundary = get_boundaries_chunks(&chunks_near, &chunk_data, y);
     for (axis, axis_diff, chunk_section) in boundary {
-        //godot_print!("load:{:?}", pos);
 
         for i in 0_u32..(CHUNK_SIZE as u32) {
             for j in 0_u32..(CHUNK_SIZE as u32) {
@@ -81,11 +69,6 @@ pub fn format_chunk_data_with_boundaries(
 
                 let pos_i = ChunkBordersShape::linearize(pos_inside);
 
-                //godot_print!(
-                //    "pos_inside:{:?} pos_outside:{:?}",
-                //    pos_inside,
-                //    pos_outside
-                //);
                 let pos_o = ChunkBlockPosition::new(pos_outside[0] as u8, pos_outside[1] as u8, pos_outside[2] as u8);
                 let block_type = match chunk_section.as_ref() {
                     Some(c) => match c.get(&pos_o) {
@@ -99,11 +82,6 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
-    //println!(
-    //    "format_chunk_data_with_boundaries {:?} data generated in {:.2?}",
-    //    chunk_pos,
-    //    now.elapsed()
-    //);
     return b_chunk;
 }
 
@@ -141,7 +119,7 @@ fn get_boundaries_chunks<'a>(
                     } else {
                         None
                     }
-                },
+                }
 
                 // z
                 2 => {
