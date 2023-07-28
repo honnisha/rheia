@@ -1,23 +1,14 @@
-use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::{
-    engine::{Engine, InputEvent, RichTextLabel},
+    engine::{Engine, InputEvent},
     prelude::*,
 };
 
-use crate::main_scene::Main;
+use crate::world::world_manager::WorldManager;
+
+use super::debug_info::DebugInfo;
 
 const CAMERA_PATH: &str = "Camera";
-const CAMERA_TEXT_PATH: &str = "Camera/DebugText";
-
-macro_rules! debug_string {
-    () => {
-        "FPS: {:.0}
-Camera position: {:.2} {:.2} {:.2}
-Chunk postition: {:?}
-Threads count: {}
-World: {}"
-    };
-}
+const DEBUG_INFO_PATH: &str = "DebugInfo";
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -25,15 +16,34 @@ pub struct PlayerController {
     #[base]
     base: Base<Node>,
     camera: Option<Gd<Camera3D>>,
-    debug_text: Option<Gd<RichTextLabel>>,
-    buffer_position: Vector3,
-    main: Option<Gd<Main>>,
+    debug_info: Option<Gd<DebugInfo>>,
+}
+
+impl PlayerController {
+    pub fn teleport(&mut self, new_position: Vector3) {}
+
+    pub fn update_debug(&mut self, world_manager: &WorldManager) {
+        if self.camera.is_none() {
+            return;
+        }
+
+        if let Some(d) = self.debug_info.as_mut() {
+            let camera = self.camera.as_deref_mut().unwrap();
+            d.bind_mut().update_debug(world_manager, camera);
+        }
+    }
 }
 
 #[godot_api]
 impl PlayerController {
-    #[signal]
-    fn submit_camera_move();
+    // #[signal]
+    // fn submit_camera_move();
+
+        // if self.buffer_position.distance_to(camera_pos) > 0.1 {
+        //     self.buffer_position = camera_pos;
+        //     self.base
+        //         .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
+        // }
 }
 
 #[godot_api]
@@ -42,13 +52,15 @@ impl NodeVirtual for PlayerController {
         PlayerController {
             base,
             camera: None,
-            debug_text: None,
-            main: None,
-            buffer_position: Vector3::ZERO,
+            debug_info: None,
         }
     }
 
     fn ready(&mut self) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         match self.base.try_get_node_as::<Camera3D>(CAMERA_PATH) {
             Some(c) => {
                 self.camera = Some(c);
@@ -58,16 +70,14 @@ impl NodeVirtual for PlayerController {
             }
         }
 
-        match self.base.try_get_node_as::<RichTextLabel>(CAMERA_TEXT_PATH) {
+        match self.base.try_get_node_as::<DebugInfo>(DEBUG_INFO_PATH) {
             Some(c) => {
-                self.debug_text = Some(c);
+                self.debug_info = Some(c);
             }
             None => {
                 godot_error!("Debug text element not found for PlayerController");
             }
         }
-
-        self.main = Some(self.base.get_parent().unwrap().cast::<Main>());
     }
 
     #[allow(unused_variables)]
@@ -77,39 +87,6 @@ impl NodeVirtual for PlayerController {
     fn process(&mut self, delta: f64) {
         if Engine::singleton().is_editor_hint() {
             return;
-        }
-
-        if self.camera.is_none() {
-            return;
-        }
-
-        let camera = self.camera.as_deref_mut().unwrap();
-
-        let world_str = match self.main.as_ref().unwrap().bind().world_manager.get_world() {
-            Some(w) => format!("{}; chunks count: {}", w.bind().get_slug(), w.bind().get_chunks_count()),
-            None => "none".to_string(),
-        };
-
-        let camera_pos = camera.get_position();
-        let text = format!(
-            debug_string!(),
-            Engine::singleton().get_frames_per_second(),
-            camera_pos.x,
-            camera_pos.y,
-            camera_pos.z,
-            BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position(),
-            rayon::current_num_threads(),
-            world_str,
-        );
-        self.debug_text
-            .as_deref_mut()
-            .unwrap()
-            .set_text(GodotString::from(text));
-
-        if self.buffer_position.distance_to(camera_pos) > 0.1 {
-            self.buffer_position = camera_pos;
-            self.base
-                .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
         }
     }
 }

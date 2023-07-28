@@ -107,7 +107,7 @@ impl NetworkContainer {
                         main_scene.teleport_player(world_slug, location);
                     },
                     ServerMessages::ChunkSectionInfo { chunk_position, sections } => {
-                        main_scene.world_manager.load_chunk(chunk_position, sections);
+                        main_scene.get_world_manager_mut().load_chunk(chunk_position, sections);
                     },
                 }
             }

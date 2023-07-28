@@ -67,7 +67,7 @@ func _input(event):
 				_space = event.pressed
 
 func _ready():
-	var console = get_parent().get_parent().get_node("GUIControl/ConsoleContainer/ConsoleContainer")
+	var console = get_parent().get_parent().get_parent().get_node("GUIControl/ConsoleContainer/ConsoleContainer")
 	console.submit_toggle_console.connect(_toggle_controller)
 
 func _toggle_controller(console_state):

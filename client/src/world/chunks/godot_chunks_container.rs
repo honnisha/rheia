@@ -41,6 +41,10 @@ impl NearChunksData {
         }
     }
 
+    pub fn is_full(&self) -> bool {
+        self.forward.is_some() && self.behind.is_some() && self.left.is_some() && self.right.is_some()
+    }
+
     fn get_data(chunks: &AHashMap<ChunkPosition, Chunk>, pos: &ChunkPosition) -> Option<ColumnDataType> {
         match chunks.get(pos) {
             Some(c) => Some(c.data.clone()),
@@ -157,6 +161,12 @@ impl NodeVirtual for ChunksContainer {
         for (chunk_position, chunk) in self.chunks.iter() {
             if !chunk.chunk.bind().is_sended() {
                 let near_chunks_data = NearChunksData::new(&self.chunks, chunk_position);
+
+                // Load only if all chunks around are loaded
+                if !near_chunks_data.is_full() {
+                    continue;
+                }
+
                 ChunksContainer::update_mesh(
                     near_chunks_data,
                     chunk.data.clone(),

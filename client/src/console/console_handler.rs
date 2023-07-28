@@ -116,6 +116,7 @@ impl NodeVirtual for Console {
             commands_history: Vec::new(),
         }
     }
+
     fn ready(&mut self) {
         info!("Start loading console;");
         match self.base.try_get_node_as::<RichTextLabel>(

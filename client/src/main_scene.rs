@@ -7,6 +7,7 @@ use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
+pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(GodotClass)]
@@ -15,10 +16,8 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     resource_manager: ResourceManager,
-    pub world_manager: WorldManager,
+    world_manager: Option<Gd<WorldManager>>,
 }
-
-pub type FloatType = f32;
 
 #[godot_api]
 impl Main {
@@ -40,7 +39,31 @@ impl Main {
     }
 
     pub fn teleport_player(&mut self, world_slug: String, location: [FloatType; 3]) {
-        self.world_manager.teleport_player(&mut self.base, world_slug, location);
+        self.get_world_manager_mut().teleport_player(world_slug, location);
+    }
+
+    pub fn get_world_manager(&self) -> GdRef<WorldManager> {
+        match self.world_manager.as_ref() {
+            Some(w) => w.bind(),
+            None => panic!("WorldManager must be loaded"),
+        }
+    }
+
+    pub fn get_world_manager_mut(&mut self) -> GdMut<WorldManager> {
+        match self.world_manager.as_mut() {
+            Some(w) => w.bind_mut(),
+            None => panic!("WorldManager must be loaded"),
+        }
+    }
+
+    pub fn create_world_manager(&mut self) -> Gd<WorldManager> {
+        let mut entity = Gd::<WorldManager>::with_base(|base| WorldManager::create(base));
+
+        let name = GodotString::from("WorldManager");
+        entity.bind_mut().set_name(name.clone());
+
+        self.base.add_child(entity.upcast());
+        self.base.get_node_as::<WorldManager>(name)
     }
 }
 
@@ -50,7 +73,7 @@ impl NodeVirtual for Main {
         Main {
             base,
             resource_manager: ResourceManager::new(),
-            world_manager: WorldManager::new(),
+            world_manager: None,
         }
     }
 
@@ -63,6 +86,8 @@ impl NodeVirtual for Main {
         log::set_max_level(LevelFilter::Info);
 
         info!("Loading HonnyCraft version: {}", VERSION);
+
+        self.world_manager = Some(self.create_world_manager());
 
         match NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
             Ok(_) => {}

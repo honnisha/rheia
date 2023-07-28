@@ -32,7 +32,7 @@ pub fn on_connection(
 
         let default_teleport = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_teleport) {
-            let position = Position::default();
+            let position = Position::new(0.0, 60.0, 0.0);
             worlds_manager.spawn_player(&mut player, &default_teleport, position.clone());
             network_container.teleport_player(&event.client_id, &default_teleport, &position);
             worlds_manager.send_loaded_chunks(&network_container, &*player);

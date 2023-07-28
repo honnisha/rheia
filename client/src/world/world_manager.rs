@@ -1,5 +1,5 @@
 use common::{chunks::chunk_position::ChunkPosition, network::NetworkSectionType};
-use godot::engine::StandardMaterial3D;
+use godot::engine::{StandardMaterial3D, Engine};
 use godot::prelude::*;
 use godot::{
     engine::Material,
@@ -9,6 +9,7 @@ use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
+use crate::controller::player_controller::PlayerController;
 use crate::main_scene::FloatType;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
@@ -16,22 +17,31 @@ use super::godot_world::World;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 
+#[derive(GodotClass)]
+#[class(base=Node)]
 pub struct WorldManager {
+    #[base]
+    base: Base<Node>,
+
     world: Option<Gd<World>>,
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
+
+    player_controller: Option<Gd<PlayerController>>,
 }
 
 impl WorldManager {
-    pub fn new() -> Self {
+    pub fn create(base: Base<Node>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
 
         Self {
+            base,
             world: None,
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+            player_controller: None,
         }
     }
 
@@ -42,23 +52,28 @@ impl WorldManager {
         }
     }
 
+    fn teleport(&mut self, new_position: Vector3) {
+        self.player_controller.as_mut().unwrap().bind_mut().teleport(new_position);
+    }
+
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, main: &mut Base<Node>, world_slug: String, location: [FloatType; 3]) {
+    pub fn teleport_player(&mut self, world_slug: String, location: [FloatType; 3]) {
         if self.world.is_some() {
             if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
                 // Player moving to another world; old one must be destroyed
-                self.destroy_world(main);
-                self.create_world(main, world_slug);
+                self.destroy_world();
+                self.create_world(world_slug);
             }
         } else {
-            self.create_world(main, world_slug);
+            self.create_world(world_slug);
         }
 
         // TODO: teleport player
+        self.teleport(Vector3::new(location[0], location[1], location[2]))
     }
 
-    pub fn create_world(&mut self, main: &mut Base<Node>, world_slug: String) {
+    pub fn create_world(&mut self, world_slug: String) {
         let mut world = Gd::<World>::with_base(|base| {
             World::create(base, world_slug, self.texture_mapper.clone(), self.material.share())
         });
@@ -66,15 +81,15 @@ impl WorldManager {
         let world_name = GodotString::from("World");
         world.bind_mut().set_name(world_name.clone());
 
-        main.add_child(world.upcast());
-        self.world = Some(main.get_node_as::<World>(world_name));
+        self.base.add_child(world.upcast());
+        self.world = Some(self.base.get_node_as::<World>(world_name));
 
         info!("World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
     }
 
-    pub fn destroy_world(&mut self, main: &mut Base<Node>) {
+    pub fn destroy_world(&mut self) {
         let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
-        main.remove_child(self.world.as_mut().unwrap().share().upcast());
+        self.base.remove_child(self.world.as_mut().unwrap().share().upcast());
         self.world = None;
         info!("World \"{}\" destroyed;", slug);
     }
@@ -88,8 +103,35 @@ impl WorldManager {
             }
         }
     }
+
+    pub fn create_player_controller(&mut self) -> Gd<PlayerController> {
+        let mut entity = load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();
+
+        let name = GodotString::from("PlayerController");
+        entity.bind_mut().set_name(name.clone());
+
+        self.base.add_child(entity.upcast());
+        self.base.get_node_as::<PlayerController>(name)
+    }
 }
 
 pub fn get_default_material() -> Gd<Material> {
     StandardMaterial3D::new().duplicate().unwrap().cast::<Material>()
+}
+
+#[godot_api]
+impl NodeVirtual for WorldManager {
+    fn ready(&mut self) {
+        self.player_controller = Some(self.create_player_controller());
+    }
+
+    fn process(&mut self, delta: f64) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
+        if let Some(c) = self.player_controller.as_mut() {
+            c.share().bind_mut().update_debug(&self);
+        }
+    }
 }

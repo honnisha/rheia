@@ -1,6 +1,5 @@
-[gd_scene load_steps=10 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
 
-[ext_resource type="Script" path="res://camera.gd" id="1_jif2f"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://lrxo0w3ffsh" path="res://scenes/console.tscn" id="4_rvd0x"]
 [ext_resource type="PackedScene" uid="uid://c5a73j7hw4p3s" path="res://assets/entities/human/human.tscn" id="4_tj33o"]
@@ -18,21 +17,6 @@ points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 
 [sub_resource type="BoxShape3D" id="BoxShape3D_eppau"]
 
 [node name="Main" type="Main"]
-
-[node name="PlayerController" type="PlayerController" parent="."]
-
-[node name="Camera" type="Camera3D" parent="PlayerController"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.78866, 0, 0)
-current = true
-script = ExtResource("1_jif2f")
-
-[node name="DebugText" type="RichTextLabel" parent="PlayerController/Camera"]
-offset_right = 1152.0
-offset_bottom = 648.0
-bbcode_enabled = true
-text = "Camera position: 0.00 15.00 0.00"
-
-[node name="RayCast3D" type="RayCast3D" parent="PlayerController/Camera"]
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
 time_of_day_setup = 0.762

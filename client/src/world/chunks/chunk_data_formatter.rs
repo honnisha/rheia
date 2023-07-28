@@ -153,11 +153,3 @@ fn get_section<'a>(column: &'a Option<ColumnDataType>, y: usize) -> Option<Box<C
         None => None,
     }
 }
-
-#[cfg(test)]
-mod tests {
-
-    #[test]
-    fn test_format_chunk_data_with_boundaries() {
-    }
-}
