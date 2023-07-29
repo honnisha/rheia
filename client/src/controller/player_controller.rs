@@ -2,6 +2,7 @@ use godot::{
     engine::{Engine, InputEvent},
     prelude::*,
 };
+use log::error;
 
 use crate::world::world_manager::WorldManager;
 
@@ -20,13 +21,11 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn teleport(&mut self, new_position: Vector3) {}
+    pub fn teleport(&mut self, new_position: Vector3) {
+        self.camera.as_mut().unwrap().set_position(new_position);
+    }
 
     pub fn update_debug(&mut self, world_manager: &WorldManager) {
-        if self.camera.is_none() {
-            return;
-        }
-
         if let Some(d) = self.debug_info.as_mut() {
             let camera = self.camera.as_deref_mut().unwrap();
             d.bind_mut().update_debug(world_manager, camera);
@@ -39,11 +38,11 @@ impl PlayerController {
     // #[signal]
     // fn submit_camera_move();
 
-        // if self.buffer_position.distance_to(camera_pos) > 0.1 {
-        //     self.buffer_position = camera_pos;
-        //     self.base
-        //         .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
-        // }
+    // if self.buffer_position.distance_to(camera_pos) > 0.1 {
+    //     self.buffer_position = camera_pos;
+    //     self.base
+    //         .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
+    // }
 }
 
 #[godot_api]
@@ -61,21 +60,18 @@ impl NodeVirtual for PlayerController {
             return;
         }
 
-        match self.base.try_get_node_as::<Camera3D>(CAMERA_PATH) {
-            Some(c) => {
-                self.camera = Some(c);
-            }
-            None => {
-                godot_error!("Camera element not found for PlayerController");
-            }
-        }
+        self.camera = Some(
+            self.base
+                .try_get_node_as::<Camera3D>(CAMERA_PATH)
+                .expect("Camera not found"),
+        );
 
         match self.base.try_get_node_as::<DebugInfo>(DEBUG_INFO_PATH) {
             Some(c) => {
                 self.debug_info = Some(c);
             }
             None => {
-                godot_error!("Debug text element not found for PlayerController");
+                error!("DEBUG_INFO_PATH not found");
             }
         }
     }

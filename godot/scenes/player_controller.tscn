@@ -14,7 +14,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.78866, 0, 0)
 current = true
 script = ExtResource("1_dlrkk")
 
-[node name="DebugInfo" type="MarginContainer" parent="."]
+[node name="DebugInfo" type="DebugInfo" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

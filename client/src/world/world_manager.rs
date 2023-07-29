@@ -125,7 +125,7 @@ impl NodeVirtual for WorldManager {
         self.player_controller = Some(self.create_player_controller());
     }
 
-    fn process(&mut self, delta: f64) {
+    fn process(&mut self, _delta: f64) {
         if Engine::singleton().is_editor_hint() {
             return;
         }

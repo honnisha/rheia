@@ -14,7 +14,7 @@ macro_rules! debug_string {
     () => {
         "FPS: {:.0}
 Camera position: {:.2} {:.2} {:.2}
-Chunk postition: {:?}
+Chunk postition: {}
 Threads count: {}
 World: {}"
     };
@@ -55,6 +55,13 @@ impl DebugInfo {
 
 #[godot_api]
 impl NodeVirtual for DebugInfo {
+    fn init(base: Base<MarginContainer>) -> Self {
+        Self {
+            base: base,
+            first_text: None,
+        }
+    }
+
     fn ready(&mut self) {
         if Engine::singleton().is_editor_hint() {
             return;
