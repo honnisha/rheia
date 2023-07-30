@@ -6,7 +6,7 @@ use log::error;
 
 use crate::world::world_manager::WorldManager;
 
-use super::debug_info::DebugInfo;
+use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
 
 const CAMERA_PATH: &str = "Camera";
 const DEBUG_INFO_PATH: &str = "DebugInfo";
@@ -18,6 +18,7 @@ pub struct PlayerController {
     base: Base<Node>,
     camera: Option<Gd<Camera3D>>,
     debug_info: Option<Gd<DebugInfo>>,
+    handler: Option<FreeCameraHandler>,
 }
 
 impl PlayerController {
@@ -52,6 +53,7 @@ impl NodeVirtual for PlayerController {
             base,
             camera: None,
             debug_info: None,
+            handler: None,
         }
     }
 
@@ -74,10 +76,16 @@ impl NodeVirtual for PlayerController {
                 error!("DEBUG_INFO_PATH not found");
             }
         }
+
+        self.handler = Some(FreeCameraHandler::create());
     }
 
     #[allow(unused_variables)]
-    fn input(&mut self, event: Gd<InputEvent>) {}
+    fn input(&mut self, event: Gd<InputEvent>) {
+        if let Some(h) = self.handler.as_mut() {
+            h.input(event, &mut self.camera.as_mut().unwrap());
+        }
+    }
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
