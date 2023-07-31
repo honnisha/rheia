@@ -1,6 +1,5 @@
-[gd_scene load_steps=7 format=3 uid="uid://ddtuvu3hrsuxf"]
+[gd_scene load_steps=6 format=3 uid="uid://ddtuvu3hrsuxf"]
 
-[ext_resource type="Script" path="res://camera.gd" id="1_dlrkk"]
 [ext_resource type="Texture2D" uid="uid://c2ujts6nvss0c" path="res://assets/gui/textures/console/text_background.png" id="2_0wcck"]
 [ext_resource type="FontFile" uid="uid://clhrph24nx6vo" path="res://assets/gui/fonts/hack/Hack-Regular.ttf" id="3_p2pta"]
 [ext_resource type="FontFile" uid="uid://dxly1nwoo0j78" path="res://assets/gui/fonts/hack/Hack-Bold.ttf" id="4_gql61"]
@@ -12,7 +11,6 @@
 [node name="Camera" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.78866, 0, 0)
 current = true
-script = ExtResource("1_dlrkk")
 
 [node name="DebugInfo" type="DebugInfo" parent="."]
 anchors_preset = 15

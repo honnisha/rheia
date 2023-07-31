@@ -82,6 +82,9 @@ impl NodeVirtual for PlayerController {
 
     #[allow(unused_variables)]
     fn input(&mut self, event: Gd<InputEvent>) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
         if let Some(h) = self.handler.as_mut() {
             h.input(event, &mut self.camera.as_mut().unwrap());
         }
@@ -91,6 +94,9 @@ impl NodeVirtual for PlayerController {
     fn process(&mut self, delta: f64) {
         if Engine::singleton().is_editor_hint() {
             return;
+        }
+        if let Some(h) = self.handler.as_mut() {
+            h.process(delta, &mut self.camera.as_mut().unwrap());
         }
     }
 }
