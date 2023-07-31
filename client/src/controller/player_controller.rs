@@ -4,12 +4,30 @@ use godot::{
 };
 use log::error;
 
-use crate::world::world_manager::WorldManager;
+use crate::{main_scene::FloatType, world::world_manager::WorldManager};
 
 use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
 
 const CAMERA_PATH: &str = "Camera";
 const DEBUG_INFO_PATH: &str = "DebugInfo";
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PlayerMovement {
+    // Player object position
+    position: Vector3,
+
+    // vertical angle
+    yaw: FloatType,
+
+    // horizontal angle
+    pitch: FloatType,
+}
+
+impl PlayerMovement {
+    pub fn create(position: Vector3, yaw: FloatType, pitch: FloatType) -> Self {
+        Self { position, yaw, pitch }
+    }
+}
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -19,6 +37,7 @@ pub struct PlayerController {
     camera: Option<Gd<Camera3D>>,
     debug_info: Option<Gd<DebugInfo>>,
     handler: Option<FreeCameraHandler>,
+    movement_cache: Option<PlayerMovement>,
 }
 
 impl PlayerController {
@@ -54,6 +73,7 @@ impl NodeVirtual for PlayerController {
             camera: None,
             debug_info: None,
             handler: None,
+            movement_cache: None,
         }
     }
 
@@ -96,7 +116,8 @@ impl NodeVirtual for PlayerController {
             return;
         }
         if let Some(h) = self.handler.as_mut() {
-            h.process(delta, &mut self.camera.as_mut().unwrap());
+            let movement_cache = h.process(delta, &mut self.camera.as_mut().unwrap());
+            self.movement_cache = Some(movement_cache);
         }
     }
 }

@@ -3,14 +3,11 @@ use godot::{
         global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
         InputEventMouseMotion,
     },
-    prelude::{
-        utilities::{deg_to_rad},
-        Camera3D, Gd, Input, Share, ToVariant, Vector2, Vector3,
-    },
+    prelude::{utilities::deg_to_rad, Camera3D, Gd, Input, Share, ToVariant, Vector2, Vector3},
 };
 use std::fmt::{self, Display, Formatter};
 
-use crate::main_scene::FloatType;
+use crate::{controller::player_controller::PlayerMovement, main_scene::FloatType};
 
 const ACCELERATION: f32 = 5.0;
 const BOST_MULTIPLIER: f32 = 2.5;
@@ -35,13 +32,7 @@ impl Display for FreeCameraData {
         write!(
             f,
             "(r:{} l:{} f:{} b:{}, m:{} mp:{} tp:{})",
-            self.right,
-            self.left,
-            self.forward,
-            self.back,
-            self.multiplier,
-            self.mouse_position,
-            self.total_pitch,
+            self.right, self.left, self.forward, self.back, self.multiplier, self.mouse_position, self.total_pitch,
         )
     }
 }
@@ -122,7 +113,7 @@ impl FreeCameraHandler {
         }
     }
 
-    pub fn process(&mut self, delta: f64, camera: &mut Camera3D) {
+    pub fn process(&mut self, delta: f64, camera: &mut Camera3D) -> PlayerMovement {
         // println!("{}", self.data);
 
         if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
@@ -131,5 +122,6 @@ impl FreeCameraHandler {
             camera.rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
         }
         camera.translate(self.data.get_movement_vector(delta));
+        PlayerMovement::create(camera.get_position(), camera.get_rotation().y, camera.get_rotation().x)
     }
 }
