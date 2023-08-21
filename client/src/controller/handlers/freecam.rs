@@ -1,13 +1,12 @@
-use godot::{
-    engine::{
-        global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
-        InputEventMouseMotion,
-    },
-    prelude::{utilities::deg_to_rad, Camera3D, Gd, Input, Share, ToVariant, Vector2, Vector3},
+use godot::engine::{
+    global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
+    InputEventMouseMotion,
 };
+use godot::prelude::utilities::deg_to_rad;
+use godot::prelude::*;
 use std::fmt::{self, Display, Formatter};
 
-use crate::{controller::player_controller::PlayerMovement, main_scene::FloatType};
+use crate::{console::console_handler::Console, controller::player_controller::PlayerMovement, main_scene::FloatType};
 
 const ACCELERATION: f32 = 5.0;
 const BOST_MULTIPLIER: f32 = 2.5;
@@ -77,6 +76,10 @@ impl FreeCameraHandler {
     }
 
     pub fn input(&mut self, event: Gd<InputEvent>, _camera: &mut Camera3D) {
+        if Console::is_active() {
+            return;
+        }
+
         if let Some(e) = event.share().try_cast::<InputEventMouseMotion>() {
             self.data.mouse_position = e.get_relative();
         }
@@ -113,8 +116,10 @@ impl FreeCameraHandler {
         }
     }
 
-    pub fn process(&mut self, delta: f64, camera: &mut Camera3D) -> PlayerMovement {
-        // println!("{}", self.data);
+    pub fn process(&mut self, base: &mut Base<Node>, delta: f64, camera: &mut Camera3D) {
+        if Console::is_active() {
+            return;
+        }
 
         if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
             let (yaw, pitch) = self.data.get_mouselook_vector();
@@ -122,6 +127,8 @@ impl FreeCameraHandler {
             camera.rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
         }
         camera.translate(self.data.get_movement_vector(delta));
-        PlayerMovement::create(camera.get_position(), camera.get_rotation().y, camera.get_rotation().x)
+        let new_movement =
+            PlayerMovement::create(camera.get_position(), camera.get_rotation().y, camera.get_rotation().x);
+        base.emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
     }
 }

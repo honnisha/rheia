@@ -1,3 +1,5 @@
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+
 use chrono::Local;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use godot::{
@@ -12,7 +14,6 @@ use log::info;
 pub struct Console {
     #[base]
     base: Base<MarginContainer>,
-    active: bool,
     console_text: Option<Gd<RichTextLabel>>,
     console_input: Option<Gd<LineEdit>>,
     console_button: Option<Gd<TextureButton>>,
@@ -23,6 +24,7 @@ pub struct Console {
 lazy_static! {
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
 #[godot_api]
@@ -50,20 +52,22 @@ impl Console {
     #[signal]
     fn submit_toggle_console();
 
-    fn toggle_console(&mut self) {
-        self.active = !self.active;
-        self.base.set_visible(self.active);
+    pub fn is_active() -> bool {
+        CONSOLE_ACTIVE.load(Ordering::Relaxed)
+    }
 
-        if self.active {
+    fn toggle_console(&mut self) {
+        CONSOLE_ACTIVE.store(!Console::is_active(), Ordering::Relaxed);
+        let active = Console::is_active();
+        self.base.set_visible(active);
+
+        if active {
             let i = self.console_input.as_mut().unwrap();
             if !i.has_focus() {
                 i.grab_focus();
             }
             i.clear();
         }
-
-        self.base
-            .emit_signal("submit_toggle_console".into(), &[self.active.to_variant()]);
     }
 
     fn scroll_to_bottom(&mut self) {
@@ -107,7 +111,6 @@ impl Console {
 impl NodeVirtual for Console {
     fn init(base: Base<MarginContainer>) -> Self {
         Console {
-            active: false,
             console_text: None,
             console_input: None,
             console_button: None,
@@ -193,7 +196,7 @@ impl NodeVirtual for Console {
         if input.is_action_just_pressed("ui_toggle_console".into()) {
             self.toggle_console();
         }
-        if !self.active {
+        if !Console::is_active() {
             return;
         }
 

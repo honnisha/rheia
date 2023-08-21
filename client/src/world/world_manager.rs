@@ -52,7 +52,7 @@ impl WorldManager {
         }
     }
 
-    fn teleport(&mut self, new_position: Vector3) {
+    fn teleport_player_controller(&mut self, new_position: Vector3) {
         self.player_controller.as_mut().unwrap().bind_mut().teleport(new_position);
     }
 
@@ -69,8 +69,7 @@ impl WorldManager {
             self.create_world(world_slug);
         }
 
-        // TODO: teleport player
-        self.teleport(Vector3::new(location[0], location[1], location[2]))
+        self.teleport_player_controller(Vector3::new(location[0], location[1], location[2]))
     }
 
     pub fn create_world(&mut self, world_slug: String) {
@@ -99,7 +98,7 @@ impl WorldManager {
         match self.world.as_mut() {
             Some(w) => w.bind_mut().load_chunk(chunk_position, sections),
             None => {
-                error!("load_chunk tried to run witout a world");
+                error!("load_chunk tried to run without a world");
             }
         }
     }
@@ -122,7 +121,8 @@ pub fn get_default_material() -> Gd<Material> {
 #[godot_api]
 impl NodeVirtual for WorldManager {
     fn ready(&mut self) {
-        self.player_controller = Some(self.create_player_controller());
+        let player_controller = self.create_player_controller();
+        self.player_controller = Some(player_controller);
     }
 
     fn process(&mut self, _delta: f64) {

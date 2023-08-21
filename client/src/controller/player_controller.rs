@@ -11,7 +11,7 @@ use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
 const CAMERA_PATH: &str = "Camera";
 const DEBUG_INFO_PATH: &str = "DebugInfo";
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, ToVariant)]
 pub struct PlayerMovement {
     // Player object position
     position: Vector3,
@@ -55,14 +55,8 @@ impl PlayerController {
 
 #[godot_api]
 impl PlayerController {
-    // #[signal]
-    // fn submit_camera_move();
-
-    // if self.buffer_position.distance_to(camera_pos) > 0.1 {
-    //     self.buffer_position = camera_pos;
-    //     self.base
-    //         .emit_signal("submit_camera_move".into(), &[camera_pos.to_variant()]);
-    // }
+    #[signal]
+    fn on_player_move();
 }
 
 #[godot_api]
@@ -116,8 +110,7 @@ impl NodeVirtual for PlayerController {
             return;
         }
         if let Some(h) = self.handler.as_mut() {
-            let movement_cache = h.process(delta, &mut self.camera.as_mut().unwrap());
-            self.movement_cache = Some(movement_cache);
+            h.process(&mut self.base, delta, &mut self.camera.as_mut().unwrap());
         }
     }
 }
