@@ -58,12 +58,6 @@ impl WorldsManager {
         self.worlds.get_mut(key).unwrap()
     }
 
-    pub fn spawn_player(&mut self, player_network: &mut PlayerMut, world_slug: &String, position: Position) {
-        let mut world_manager = self.get_world_manager_mut(world_slug);
-        world_manager.spawn_player(player_network.get_client_id().clone(), position);
-        player_network.current_world = Some(world_slug.clone());
-    }
-
     /// Send already loaded chunks to the client
     pub fn send_loaded_chunks(&self, network_container: &NetworkContainer, player: &PlayerNetwork) {
         let mut server = network_container.server.write().expect("poisoned");

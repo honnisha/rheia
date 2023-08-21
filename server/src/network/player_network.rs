@@ -1,9 +1,11 @@
 use core::fmt;
 use std::fmt::Display;
 
-use crate::console::console_sender::{ConsoleSender, ConsoleSenderType};
+use common::network::{messages::ServerMessages, channels::ServerChannel};
 
-use super::server::NetworkPlugin;
+use crate::{console::console_sender::{ConsoleSender, ConsoleSenderType}, entities::entity::Position};
+
+use super::server::{NetworkPlugin, NetworkContainer};
 
 #[derive(Clone)]
 pub struct PlayerNetwork {
@@ -29,6 +31,25 @@ impl PlayerNetwork {
 
     pub fn get_client_id(&self) -> &u64 {
         &self.client_id
+    }
+
+    pub fn send_teleport(
+        &mut self,
+        network_container: &NetworkContainer,
+        world_slug: &String,
+        position: &Position,
+        yaw: f32,
+        pitch: f32,
+    ) {
+        let mut server = network_container.server.write().expect("poisoned");
+        let input = ServerMessages::Teleport {
+            world_slug: world_slug.clone(),
+            location: position.to_array(),
+            yaw,
+            pitch,
+        };
+        let encoded = bincode::serialize(&input).unwrap();
+        server.send_message(self.client_id.clone(), ServerChannel::Reliable, encoded)
     }
 }
 

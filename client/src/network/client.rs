@@ -1,4 +1,5 @@
 use crate::controller::player_controller::PlayerMovement;
+use crate::entities::position::GodotPositionConverter;
 use crate::main_scene::Main;
 use common::network::channels::ClientChannel;
 use common::network::channels::ServerChannel;
@@ -104,8 +105,18 @@ impl NetworkContainer {
                             }
                         }
                     }
-                    ServerMessages::Teleport { world_slug, location } => {
-                        main_scene.teleport_player(world_slug, location);
+                    ServerMessages::Teleport {
+                        world_slug,
+                        location,
+                        yaw,
+                        pitch,
+                    } => {
+                        main_scene.teleport_player(
+                            world_slug,
+                            GodotPositionConverter::vec3_from_array(&location),
+                            yaw,
+                            pitch,
+                        );
                     }
                     ServerMessages::ChunkSectionInfo {
                         chunk_position,
@@ -146,8 +157,7 @@ impl NetworkContainer {
         let container = NETWORK_CONTAINER.read().unwrap();
 
         let mut client = container.client.as_ref().unwrap().write().unwrap();
-
-        let command_message = bincode::serialize(&movement.into_network()).unwrap();
-        client.send_message(ClientChannel::Reliable, command_message);
+        let message = bincode::serialize(&movement.into_network()).unwrap();
+        client.send_message(ClientChannel::Unreliable, message);
     }
 }

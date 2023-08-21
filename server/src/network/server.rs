@@ -59,18 +59,6 @@ pub struct NetworkContainer {
     pub transport: TransferLock,
 }
 
-impl NetworkContainer {
-    pub(crate) fn teleport_player(&self, client_id: &u64, world_slug: &String, position: &Position) {
-        let mut server = self.server.write().expect("poisoned");
-        let input = ServerMessages::Teleport {
-            world_slug: world_slug.clone(),
-            location: position.to_array(),
-        };
-        let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(client_id.clone(), ServerChannel::Reliable, encoded)
-    }
-}
-
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum NetworkSet {
     Server,
@@ -119,11 +107,11 @@ impl NetworkPlugin {
         app.add_event::<PlayerDisconnectEvent>();
         app.add_system(on_disconnect.after(handle_events_system).in_set(NetworkSet::Server));
 
+        app.add_event::<PlayerMoveEvent>();
+        app.add_system(on_player_move.after(handle_events_system).in_set(NetworkSet::Server));
+
         app.add_event::<SendClientMessageEvent>();
         app.add_system(send_client_messages.after(on_disconnect).in_set(NetworkSet::Server));
-
-        app.add_event::<PlayerMoveEvent>();
-        app.add_system(send_client_messages.after(on_player_move).in_set(NetworkSet::Server));
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {

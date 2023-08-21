@@ -28,6 +28,8 @@ pub enum ServerMessages {
     Teleport {
         world_slug: String,
         location: [f32; 3],
+        yaw: f32,
+        pitch: f32,
     },
     ChunkSectionInfo {
         // x, z

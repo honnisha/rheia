@@ -6,7 +6,7 @@ use godot::{
 use log::error;
 use std::fmt::{self, Display, Formatter};
 
-use crate::{main_scene::FloatType, world::world_manager::WorldManager};
+use crate::{entities::position::GodotPositionConverter, main_scene::FloatType, world::world_manager::WorldManager};
 
 use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
 
@@ -38,7 +38,7 @@ impl PlayerMovement {
 
     pub fn into_network(&self) -> ClientMessages {
         ClientMessages::PlayerMove {
-            position: [self.position.x, self.position.y, self.position.z],
+            position: GodotPositionConverter::vec3_to_array(&self.position),
             yaw: self.yaw,
             pitch: self.pitch,
         }
@@ -56,15 +56,23 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn teleport(&mut self, new_position: Vector3) {
-        self.camera.as_mut().unwrap().set_position(new_position);
-    }
-
     pub fn update_debug(&mut self, world_manager: &WorldManager) {
         if let Some(d) = self.debug_info.as_mut() {
             let camera = self.camera.as_deref_mut().unwrap();
             d.bind_mut().update_debug(world_manager, camera);
         }
+    }
+
+    /// Handle network packet for changing position
+    pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
+        let mut handler = match self.handler.as_mut() {
+            Some(h) => h,
+            None => {
+                self.handler = Some(FreeCameraHandler::create());
+                self.handler.as_mut().unwrap()
+            }
+        };
+        handler.teleport(&mut self.camera.as_mut().unwrap(), position, yaw, pitch);
     }
 }
 
@@ -104,8 +112,6 @@ impl NodeVirtual for PlayerController {
                 error!("DEBUG_INFO_PATH not found");
             }
         }
-
-        self.handler = Some(FreeCameraHandler::create());
     }
 
     #[allow(unused_variables)]

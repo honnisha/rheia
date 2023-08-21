@@ -38,8 +38,8 @@ impl Main {
         Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit();
     }
 
-    pub fn teleport_player(&mut self, world_slug: String, location: [FloatType; 3]) {
-        self.get_world_manager_mut().teleport_player(world_slug, location);
+    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, yaw: FloatType, pitch: FloatType) {
+        self.get_world_manager_mut().teleport_player(world_slug, position, yaw, pitch);
     }
 
     pub fn _get_world_manager(&self) -> GdRef<WorldManager> {

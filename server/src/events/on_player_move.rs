@@ -1,7 +1,7 @@
-use bevy_ecs::{prelude::EventReader, system::ResMut};
-use log::info;
+use bevy_ecs::prelude::EventReader;
+use bevy_ecs::system::{Res, ResMut};
 
-use crate::{network::player_container::Players, worlds::worlds_manager::WorldsManager, entities::entity::Position};
+use crate::{entities::entity::Position, network::player_container::Players, worlds::worlds_manager::WorldsManager};
 
 pub struct PlayerMoveEvent {
     client_id: u64,
@@ -23,11 +23,19 @@ impl PlayerMoveEvent {
 
 pub fn on_player_move(
     mut player_move_events: EventReader<PlayerMoveEvent>,
-    mut players: ResMut<Players>,
+    players: Res<Players>,
     mut worlds_manager: ResMut<WorldsManager>,
 ) {
     for event in player_move_events.iter() {
-        let mut player = players.get_mut(&event.client_id);
-        info!("Player move \"{}\"", player.get_login());
+        let player = players.get(&event.client_id);
+        if let Some(world_slug) = player.current_world.as_ref() {
+            let mut world_manager = worlds_manager.get_world_manager_mut(&world_slug);
+            world_manager.move_player(
+                &player,
+                position,
+                yaw,
+                pitch,
+            )
+        }
     }
 }

@@ -11,6 +11,7 @@ use parking_lot::RwLock;
 use crate::entities::entity::{Indentifier, NetworkComponent, Position};
 use crate::CHUNKS_DISTANCE;
 
+use crate::network::player_container::{PlayerMut, PlayerCell};
 use crate::worlds::chunks::chunks_map::ChunkMap;
 
 use super::world_generator::WorldGenerator;
@@ -40,11 +41,20 @@ impl WorldManager {
         self.chunks_map.count()
     }
 
-    pub fn spawn_player(&mut self, client_id: u64, position: Position) {
+    pub fn spawn_player(&mut self, client: &mut PlayerMut, position: Position) {
         self.chunks_map
-            .update_chunks_render(&client_id, None, Some(&position.get_chunk_position()), CHUNKS_DISTANCE);
+            .update_chunks_render(&client.get_client_id(), None, Some(&position.get_chunk_position()), CHUNKS_DISTANCE);
         self.world
-            .spawn((Indentifier::default(), position, NetworkComponent::new(client_id)));
+            .spawn((Indentifier::default(), position, NetworkComponent::new(client.get_client_id().clone())));
+        client.current_world = Some(self.slug.clone());
+    }
+
+    pub fn player_move(
+        &mut self,
+        player_network: &PlayerMut,
+        position: Position,
+        yaw: f32,
+        pitch: f32) {
     }
 
     pub fn despawn_player(&mut self, client_id: &u64) {

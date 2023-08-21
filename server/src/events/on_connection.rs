@@ -30,11 +30,14 @@ pub fn on_connection(
         info!("Connected login \"{}\"", player.get_login());
         NetworkPlugin::send_resources(&event.client_id, &resources_manager);
 
-        let default_teleport = "default".to_string();
-        if worlds_manager.has_world_with_slug(&default_teleport) {
+        let default_world = "default".to_string();
+        if worlds_manager.has_world_with_slug(&default_world) {
             let position = Position::new(0.0, 60.0, 0.0);
-            worlds_manager.spawn_player(&mut player, &default_teleport, position.clone());
-            network_container.teleport_player(&event.client_id, &default_teleport, &position);
+
+            let mut world_manager = worlds_manager.get_world_manager_mut(&default_world);
+            world_manager.spawn_player(player, &position, 0.0, 0.0);
+
+            player.send_teleport(&network_container, &default_world, );
             worlds_manager.send_loaded_chunks(&network_container, &*player);
         }
     }

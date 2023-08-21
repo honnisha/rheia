@@ -118,6 +118,12 @@ impl FreeCameraHandler {
         }
     }
 
+    pub fn teleport(&mut self, camera: &mut Camera3D, position: Vector3, yaw: FloatType, pitch: FloatType) {
+        camera.set_position(position);
+        camera.rotate_y(yaw);
+        camera.rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
+    }
+
     pub fn process(&mut self, base: &mut Base<Node>, delta: f64, camera: &mut Camera3D) {
         if Console::is_active() {
             return;
