@@ -1,11 +1,19 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
 
-use crate::{chunks::chunk_position::ChunkPosition, network::NetworkSectionType};
+use crate::chunks::chunk_position::ChunkPosition;
 
-pub enum ServerReliableChannel {
-    Messages,
+use super::NetworkSectionType;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ClientMessages {
+    ConsoleInput { command: String },
+    PlayerMove {
+        position: [f32; 3],
+        yaw: f32,
+        pitch: f32,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,12 +34,4 @@ pub enum ServerMessages {
         chunk_position: ChunkPosition,
         sections: NetworkSectionType,
     },
-}
-
-impl From<ServerReliableChannel> for u8 {
-    fn from(channel_id: ServerReliableChannel) -> Self {
-        match channel_id {
-            ServerReliableChannel::Messages => 0,
-        }
-    }
 }

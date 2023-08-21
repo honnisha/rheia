@@ -110,7 +110,7 @@ impl NodeVirtual for Main {
         match NetworkContainer::update(delta, self) {
             Ok(_) => {}
             Err(e) => {
-                error!("Network error: {}", e);
+                error!("Network process error: {}", e);
                 Main::close();
             }
         }

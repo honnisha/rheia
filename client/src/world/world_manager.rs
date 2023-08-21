@@ -12,6 +12,7 @@ use std::sync::Arc;
 
 use crate::controller::player_controller::{PlayerController, PlayerMovement};
 use crate::main_scene::FloatType;
+use crate::network::client::NetworkContainer;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
 use super::godot_world::World;
@@ -129,7 +130,7 @@ impl WorldManager {
     #[func]
     fn handler_player_move(&self, movement_var: Variant) {
         let movement = movement_var.to::<PlayerMovement>();
-        println!("handler_player_move: {}", movement);
+        NetworkContainer::send_player_move(movement);
     }
 }
 

@@ -2,7 +2,7 @@ use super::chunks::chunk_column::LOADED_CHUNKS;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};
-use common::network::channels::server_reliable::ServerReliableChannel;
+use common::network::channels::ServerChannel;
 use dashmap::DashMap;
 use log::{error, trace};
 
@@ -75,7 +75,7 @@ impl WorldsManager {
             .unwrap();
         for chunk_position in client_chunks {
             if let Some(e) = world_manager.get_network_chunk_bytes(chunk_position) {
-                server.send_message(player.get_client_id().clone(), ServerReliableChannel::Messages, e);
+                server.send_message(player.get_client_id().clone(), ServerChannel::Reliable, e);
             };
         }
     }
@@ -133,7 +133,7 @@ pub fn chunk_loaded_event_reader(worlds_manager: ResMut<WorldsManager>, network_
             Err(e) => error!("NETWORK bincode::serialized_size error: {}", e),
         }
         for client_id in watch_clients {
-            server.send_message(client_id.clone(), ServerReliableChannel::Messages, encoded.clone());
+            server.send_message(client_id.clone(), ServerChannel::Reliable, encoded.clone());
         }
     }
 }

@@ -1,11 +1,12 @@
+use crate::controller::player_controller::PlayerMovement;
 use crate::main_scene::Main;
-use common::network::channels::clinet_reliable::ClientMessages;
-use common::network::channels::clinet_reliable::ClientReliableChannel;
-use common::network::channels::server_reliable::ServerMessages;
-use common::network::channels::server_reliable::ServerReliableChannel;
+use common::network::channels::ClientChannel;
+use common::network::channels::ServerChannel;
 use common::network::connection_config;
-use common::network::PROTOCOL_ID;
 use common::network::login::Login;
+use common::network::messages::ClientMessages;
+use common::network::messages::ServerMessages;
+use common::network::PROTOCOL_ID;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -79,7 +80,7 @@ impl NetworkContainer {
         transport.update(delta_time, &mut client).unwrap();
 
         if !client.is_disconnected() {
-            while let Some(server_message) = client.receive_message(ServerReliableChannel::Messages) {
+            while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
                 let decoded: ServerMessages = match bincode::deserialize(&server_message) {
                     Ok(d) => d,
                     Err(e) => {
@@ -90,34 +91,35 @@ impl NetworkContainer {
                 match decoded {
                     ServerMessages::ConsoleOutput { message } => {
                         info!("{}", message);
-                    },
+                    }
                     ServerMessages::Resource { slug, scripts } => {
                         let resource_manager = main_scene.get_resource_manager_mut();
                         info!("Start loading client resource slug:\"{}\"", slug);
                         match resource_manager.try_load(&slug, scripts) {
                             Ok(_) => {
                                 info!("Client resource slug:\"{}\" loaded", slug);
-                            },
+                            }
                             Err(e) => {
                                 error!("Client resource slug:\"{}\" error: {}", slug, e);
-                            },
+                            }
                         }
-                    },
+                    }
                     ServerMessages::Teleport { world_slug, location } => {
                         main_scene.teleport_player(world_slug, location);
-                    },
-                    ServerMessages::ChunkSectionInfo { chunk_position, sections } => {
+                    }
+                    ServerMessages::ChunkSectionInfo {
+                        chunk_position,
+                        sections,
+                    } => {
                         main_scene.get_world_manager_mut().load_chunk(chunk_position, sections);
-                    },
+                    }
                 }
             }
         }
 
         match transport.send_packets(&mut client) {
             Ok(_) => Ok(()),
-            Err(e) => {
-                Err(e.to_string())
-            }
+            Err(e) => Err(e.to_string()),
         }
     }
 
@@ -137,6 +139,15 @@ impl NetworkContainer {
         let mut client = container.client.as_ref().unwrap().write().unwrap();
         let input = ClientMessages::ConsoleInput { command: command };
         let command_message = bincode::serialize(&input).unwrap();
-        client.send_message(ClientReliableChannel::Messages, command_message);
+        client.send_message(ClientChannel::Reliable, command_message);
+    }
+
+    pub fn send_player_move(movement: PlayerMovement) {
+        let container = NETWORK_CONTAINER.read().unwrap();
+
+        let mut client = container.client.as_ref().unwrap().write().unwrap();
+
+        let command_message = bincode::serialize(&movement.into_network()).unwrap();
+        client.send_message(ClientChannel::Reliable, command_message);
     }
 }

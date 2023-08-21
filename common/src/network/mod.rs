@@ -8,6 +8,7 @@ use self::channels::{get_client_channels_config, get_server_channels_config};
 
 pub mod login;
 pub mod channels;
+pub mod messages;
 
 pub const PRIVATE_KEY: &[u8; NETCODE_KEY_BYTES] = b"an example very very secret key."; // 32-bytes
 pub const PROTOCOL_ID: u64 = 7;

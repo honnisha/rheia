@@ -7,15 +7,8 @@ use bevy_ecs::{
     system::{Res, ResMut, Resource},
     world::World,
 };
-use common::network::{
-    channels::{
-        clinet_reliable::{ClientMessages, ClientReliableChannel},
-        server_reliable::{ServerMessages, ServerReliableChannel},
-    },
-    connection_config,
-    login::Login,
-    PROTOCOL_ID,
-};
+use common::network::messages::{ClientMessages, ServerMessages};
+use common::network::{channels::ClientChannel, channels::ServerChannel, connection_config, login::Login, PROTOCOL_ID};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
@@ -35,8 +28,9 @@ use crate::{
     console::commands_executer::CommandsHandler,
     entities::entity::Position,
     events::{
-        connection::{on_connection, PlayerConnectionEvent},
-        disconnect::{on_disconnect, PlayerDisconnectEvent},
+        on_connection::{on_connection, PlayerConnectionEvent},
+        on_disconnect::{on_disconnect, PlayerDisconnectEvent},
+        on_player_move::{on_player_move, PlayerMoveEvent},
     },
     network::player_container::Players,
     ServerSettings,
@@ -73,7 +67,7 @@ impl NetworkContainer {
             location: position.to_array(),
         };
         let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(client_id.clone(), ServerReliableChannel::Messages, encoded)
+        server.send_message(client_id.clone(), ServerChannel::Reliable, encoded)
     }
 }
 
@@ -127,12 +121,15 @@ impl NetworkPlugin {
 
         app.add_event::<SendClientMessageEvent>();
         app.add_system(send_client_messages.after(on_disconnect).in_set(NetworkSet::Server));
+
+        app.add_event::<PlayerMoveEvent>();
+        app.add_system(send_client_messages.after(on_player_move).in_set(NetworkSet::Server));
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
         let encoded = bincode::serialize(&input).unwrap();
-        NetworkPlugin::send_static_message(client_id, ServerReliableChannel::Messages.into(), encoded)
+        NetworkPlugin::send_static_message(client_id, ServerChannel::Reliable.into(), encoded)
     }
 
     pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
@@ -142,7 +139,7 @@ impl NetworkPlugin {
                 scripts: resource.get_client_scripts().clone(),
             };
             let encoded = bincode::serialize(&input).unwrap();
-            NetworkPlugin::send_static_message(client_id.clone(), ServerReliableChannel::Messages.into(), encoded)
+            NetworkPlugin::send_static_message(client_id.clone(), ServerChannel::Reliable.into(), encoded)
         }
     }
 
@@ -162,6 +159,7 @@ fn receive_message_system(
     network_container: Res<NetworkContainer>,
     time: Res<Time>,
     mut server_events: EventWriter<ServerEvent>,
+    mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
     let mut server = network_container.server.write().expect("poisoned");
     let mut transport = network_container.transport.write().expect("poisoned");
@@ -172,11 +170,11 @@ fn receive_message_system(
     }
 
     for client_id in server.clients_id().into_iter() {
-        while let Some(client_message) = server.receive_message(client_id, ClientReliableChannel::Messages) {
+        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Reliable) {
             let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                 Ok(d) => d,
                 Err(e) => {
-                    error!("Decode client message error: {}", e);
+                    error!("Decode client reliable message error: {}", e);
                     continue;
                 }
             };
@@ -184,6 +182,27 @@ fn receive_message_system(
                 ClientMessages::ConsoleInput { command } => {
                     CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
                 }
+                _ => panic!("unsupported message"),
+            }
+        }
+        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Unreliable) {
+            let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+                Ok(d) => d,
+                Err(e) => {
+                    error!("Decode client unreliable message error: {}", e);
+                    continue;
+                }
+            };
+            match decoded {
+                ClientMessages::PlayerMove { position, yaw, pitch } => {
+                    player_move_events.send(PlayerMoveEvent::new(
+                        client_id.clone(),
+                        Position::from_array(position),
+                        yaw,
+                        pitch,
+                    ));
+                }
+                _ => panic!("unsupported message"),
             }
         }
     }

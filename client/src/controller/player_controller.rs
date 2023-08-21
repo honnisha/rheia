@@ -1,3 +1,4 @@
+use common::network::messages::ClientMessages;
 use godot::{
     engine::{Engine, InputEvent},
     prelude::*,
@@ -33,6 +34,14 @@ impl Display for PlayerMovement {
 impl PlayerMovement {
     pub fn create(position: Vector3, yaw: FloatType, pitch: FloatType) -> Self {
         Self { position, yaw, pitch }
+    }
+
+    pub fn into_network(&self) -> ClientMessages {
+        ClientMessages::PlayerMove {
+            position: [self.position.x, self.position.y, self.position.z],
+            yaw: self.yaw,
+            pitch: self.pitch,
+        }
     }
 }
 

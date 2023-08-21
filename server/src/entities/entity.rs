@@ -28,6 +28,10 @@ impl Position {
         Self { x, y, z }
     }
 
+    pub fn from_array(position: [PositionFloatType; 3]) -> Self {
+        Self::new(position[0], position[1], position[2])
+    }
+
     pub fn to_array(&self) -> [PositionFloatType; 3] {
         [self.x.clone(), self.y.clone(), self.z.clone()]
     }
