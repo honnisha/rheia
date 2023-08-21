@@ -66,12 +66,14 @@ impl FreeCameraData {
 
 pub struct FreeCameraHandler {
     data: FreeCameraData,
+    cache_movement: Option<PlayerMovement>,
 }
 
 impl FreeCameraHandler {
     pub fn create() -> Self {
         Self {
             data: FreeCameraData::default(),
+            cache_movement: None,
         }
     }
 
@@ -129,6 +131,14 @@ impl FreeCameraHandler {
         camera.translate(self.data.get_movement_vector(delta));
         let new_movement =
             PlayerMovement::create(camera.get_position(), camera.get_rotation().y, camera.get_rotation().x);
+
+        if let Some(cache_movement) = self.cache_movement {
+            if new_movement == cache_movement {
+                return;
+            }
+        }
+
         base.emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
+        self.cache_movement = Some(new_movement);
     }
 }

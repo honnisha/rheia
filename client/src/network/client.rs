@@ -1,11 +1,11 @@
 use crate::main_scene::Main;
+use common::network::channels::clinet_reliable::ClientMessages;
+use common::network::channels::clinet_reliable::ClientReliableChannel;
+use common::network::channels::server_reliable::ServerMessages;
+use common::network::channels::server_reliable::ServerReliableChannel;
 use common::network::connection_config;
-use common::network::ClientChannel;
-use common::network::ClientMessages;
-use common::network::Login;
-use common::network::ServerChannel;
-use common::network::ServerMessages;
 use common::network::PROTOCOL_ID;
+use common::network::login::Login;
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
@@ -79,7 +79,7 @@ impl NetworkContainer {
         transport.update(delta_time, &mut client).unwrap();
 
         if !client.is_disconnected() {
-            while let Some(server_message) = client.receive_message(ServerChannel::Messages) {
+            while let Some(server_message) = client.receive_message(ServerReliableChannel::Messages) {
                 let decoded: ServerMessages = match bincode::deserialize(&server_message) {
                     Ok(d) => d,
                     Err(e) => {
@@ -137,6 +137,6 @@ impl NetworkContainer {
         let mut client = container.client.as_ref().unwrap().write().unwrap();
         let input = ClientMessages::ConsoleInput { command: command };
         let command_message = bincode::serialize(&input).unwrap();
-        client.send_message(ClientChannel::Messages, command_message);
+        client.send_message(ClientReliableChannel::Messages, command_message);
     }
 }

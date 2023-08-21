@@ -1,5 +1,6 @@
-use common::{chunks::chunk_position::ChunkPosition, network::NetworkSectionType};
-use godot::engine::{StandardMaterial3D, Engine};
+use common::chunks::chunk_position::ChunkPosition;
+use common::network::NetworkSectionType;
+use godot::engine::{Engine, StandardMaterial3D};
 use godot::prelude::*;
 use godot::{
     engine::Material,
@@ -9,7 +10,7 @@ use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::controller::player_controller::PlayerController;
+use crate::controller::player_controller::{PlayerController, PlayerMovement};
 use crate::main_scene::FloatType;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
@@ -53,7 +54,11 @@ impl WorldManager {
     }
 
     fn teleport_player_controller(&mut self, new_position: Vector3) {
-        self.player_controller.as_mut().unwrap().bind_mut().teleport(new_position);
+        self.player_controller
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .teleport(new_position);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -104,7 +109,8 @@ impl WorldManager {
     }
 
     pub fn create_player_controller(&mut self) -> Gd<PlayerController> {
-        let mut entity = load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();
+        let mut entity =
+            load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();
 
         let name = GodotString::from("PlayerController");
         entity.bind_mut().set_name(name.clone());
@@ -119,9 +125,22 @@ pub fn get_default_material() -> Gd<Material> {
 }
 
 #[godot_api]
+impl WorldManager {
+    #[func]
+    fn handler_player_move(&self, movement_var: Variant) {
+        let movement = movement_var.to::<PlayerMovement>();
+        println!("handler_player_move: {}", movement);
+    }
+}
+
+#[godot_api]
 impl NodeVirtual for WorldManager {
     fn ready(&mut self) {
-        let player_controller = self.create_player_controller();
+        let mut player_controller = self.create_player_controller();
+        player_controller.bind_mut().connect(
+            "on_player_move".into(),
+            Callable::from_object_method(self.base.share(), "handler_player_move"),
+        );
         self.player_controller = Some(player_controller);
     }
 

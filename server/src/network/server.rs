@@ -1,6 +1,6 @@
-use bevy_ecs::change_detection::Mut;
 use bevy::time::Time;
 use bevy_app::App;
+use bevy_ecs::change_detection::Mut;
 use bevy_ecs::{
     prelude::{resource_exists, EventReader, EventWriter, Events},
     schedule::{IntoSystemConfig, IntoSystemSetConfig, SystemSet},
@@ -8,7 +8,13 @@ use bevy_ecs::{
     world::World,
 };
 use common::network::{
-    connection_config, ClientChannel, ClientMessages, Login, ServerChannel, ServerMessages, PROTOCOL_ID,
+    channels::{
+        clinet_reliable::{ClientMessages, ClientReliableChannel},
+        server_reliable::{ServerMessages, ServerReliableChannel},
+    },
+    connection_config,
+    login::Login,
+    PROTOCOL_ID,
 };
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -26,12 +32,14 @@ use std::{
 
 use crate::{
     client_resources::resources_manager::ResourceManager,
+    console::commands_executer::CommandsHandler,
+    entities::entity::Position,
     events::{
         connection::{on_connection, PlayerConnectionEvent},
         disconnect::{on_disconnect, PlayerDisconnectEvent},
     },
     network::player_container::Players,
-    ServerSettings, console::commands_executer::CommandsHandler, entities::entity::Position,
+    ServerSettings,
 };
 
 pub struct NetworkPlugin;
@@ -58,11 +66,14 @@ pub struct NetworkContainer {
 }
 
 impl NetworkContainer {
-    pub (crate) fn teleport_player(&self, client_id: &u64, world_slug: &String, position: &Position) {
+    pub(crate) fn teleport_player(&self, client_id: &u64, world_slug: &String, position: &Position) {
         let mut server = self.server.write().expect("poisoned");
-        let input = ServerMessages::Teleport { world_slug: world_slug.clone(), location: position.to_array() };
+        let input = ServerMessages::Teleport {
+            world_slug: world_slug.clone(),
+            location: position.to_array(),
+        };
         let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(client_id.clone(), ServerChannel::Messages, encoded)
+        server.send_message(client_id.clone(), ServerReliableChannel::Messages, encoded)
     }
 }
 
@@ -121,7 +132,7 @@ impl NetworkPlugin {
     pub(crate) fn send_console_output(client_id: u64, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
         let encoded = bincode::serialize(&input).unwrap();
-        NetworkPlugin::send_static_message(client_id, ServerChannel::Messages.into(), encoded)
+        NetworkPlugin::send_static_message(client_id, ServerReliableChannel::Messages.into(), encoded)
     }
 
     pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
@@ -131,7 +142,7 @@ impl NetworkPlugin {
                 scripts: resource.get_client_scripts().clone(),
             };
             let encoded = bincode::serialize(&input).unwrap();
-            NetworkPlugin::send_static_message(client_id.clone(), ServerChannel::Messages.into(), encoded)
+            NetworkPlugin::send_static_message(client_id.clone(), ServerReliableChannel::Messages.into(), encoded)
         }
     }
 
@@ -161,7 +172,7 @@ fn receive_message_system(
     }
 
     for client_id in server.clients_id().into_iter() {
-        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Messages) {
+        while let Some(client_message) = server.receive_message(client_id, ClientReliableChannel::Messages) {
             let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                 Ok(d) => d,
                 Err(e) => {

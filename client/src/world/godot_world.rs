@@ -35,9 +35,8 @@ pub struct World {
     material: Gd<Material>,
 }
 
-#[godot_api]
 impl World {
-    pub fn modify_block(&mut self, pos: &BlockPosition, block_info: BlockInfo) {
+    pub fn _modify_block(&mut self, pos: &BlockPosition, block_info: BlockInfo) {
         self.chunks_container
             .as_mut()
             .unwrap()

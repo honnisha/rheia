@@ -5,7 +5,7 @@ use bevy_ecs::prelude::Entity;
 use bevy_ecs::world::World;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
-use common::network::ServerMessages;
+use common::network::channels::server_reliable::ServerMessages;
 use parking_lot::RwLock;
 
 use crate::entities::entity::{Indentifier, NetworkComponent, Position};

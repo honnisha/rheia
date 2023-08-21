@@ -2,8 +2,7 @@ use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
-    network::NetworkSectionType,
-    VERTICAL_SECTIONS,
+    VERTICAL_SECTIONS, network::NetworkSectionType,
 };
 use flume::Sender;
 use godot::{engine::Material, prelude::*};

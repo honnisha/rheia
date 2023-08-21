@@ -3,6 +3,7 @@ use godot::{
     prelude::*,
 };
 use log::error;
+use std::fmt::{self, Display, Formatter};
 
 use crate::{main_scene::FloatType, world::world_manager::WorldManager};
 
@@ -11,7 +12,7 @@ use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
 const CAMERA_PATH: &str = "Camera";
 const DEBUG_INFO_PATH: &str = "DebugInfo";
 
-#[derive(Clone, Copy, Debug, PartialEq, ToVariant)]
+#[derive(Clone, Copy, Debug, PartialEq, ToVariant, FromVariant)]
 pub struct PlayerMovement {
     // Player object position
     position: Vector3,
@@ -21,6 +22,12 @@ pub struct PlayerMovement {
 
     // horizontal angle
     pitch: FloatType,
+}
+
+impl Display for PlayerMovement {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "(pos:{} yaw:{} pitch:{})", self.position, self.yaw, self.pitch)
+    }
 }
 
 impl PlayerMovement {
@@ -37,7 +44,6 @@ pub struct PlayerController {
     camera: Option<Gd<Camera3D>>,
     debug_info: Option<Gd<DebugInfo>>,
     handler: Option<FreeCameraHandler>,
-    movement_cache: Option<PlayerMovement>,
 }
 
 impl PlayerController {
@@ -67,7 +73,6 @@ impl NodeVirtual for PlayerController {
             camera: None,
             debug_info: None,
             handler: None,
-            movement_cache: None,
         }
     }
 

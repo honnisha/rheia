@@ -2,8 +2,7 @@ use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
-    network::ChunkDataType,
-    CHUNK_SIZE, chunks::{chunk_position::ChunkPosition, block_position::ChunkBlockPosition},
+    CHUNK_SIZE, chunks::{chunk_position::ChunkPosition, block_position::ChunkBlockPosition}, network::ChunkDataType,
 };
 
 pub struct WorldGenerator {
