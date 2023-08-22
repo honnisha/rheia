@@ -86,6 +86,14 @@ impl World {
             .bind_mut()
             .load_chunk(chunk_position, sections);
     }
+
+    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
+        self.chunks_container
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .unload_chunk(chunks_positions);
+    }
 }
 
 #[godot_api]

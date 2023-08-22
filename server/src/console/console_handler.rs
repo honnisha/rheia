@@ -4,7 +4,7 @@ use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::{error, info};
 use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
-use std::{path::Path, thread, time::Duration, fs::OpenOptions};
+use std::{thread, time::Duration, fs::OpenOptions};
 
 use crate::network::runtime_plugin::RuntimePlugin;
 

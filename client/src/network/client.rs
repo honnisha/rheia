@@ -123,7 +123,10 @@ impl NetworkContainer {
                         sections,
                     } => {
                         main_scene.get_world_manager_mut().load_chunk(chunk_position, sections);
-                    }
+                    },
+                    ServerMessages::UnloadChunks { chunks } => {
+                        main_scene.get_world_manager_mut().unload_chunk(chunks);
+                    },
                 }
             }
         }

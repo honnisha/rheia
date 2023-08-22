@@ -110,6 +110,15 @@ impl WorldManager {
         }
     }
 
+    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
+        match self.world.as_mut() {
+            Some(w) => w.bind_mut().unload_chunk(chunks_positions),
+            None => {
+                error!("unload_chunk tried to run without a world");
+            }
+        }
+    }
+
     pub fn create_player_controller(&mut self) -> Gd<PlayerController> {
         let mut entity =
             load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();

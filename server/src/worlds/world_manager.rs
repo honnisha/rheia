@@ -49,32 +49,41 @@ impl WorldManager {
         let ecs = (position, rotation, NetworkComponent::new(client_id.clone()));
         let entity = self.world.spawn(ecs);
         self.chunks_map
-            .update_chunks_render(entity.id(), None, Some(&position.get_chunk_position()), CHUNKS_DISTANCE);
+            .start_chunks_render(entity.id(), &position.get_chunk_position(), CHUNKS_DISTANCE);
 
         WorldEntity::new(self.slug.clone(), entity.id())
     }
 
-    pub fn player_move(&mut self, world_entity: &WorldEntity, position: Position, rotation: Rotation) {
-        //self.chunks_map.update_chunks_render(&client.get_client_id(), )
+    pub fn player_move(
+        &mut self,
+        world_entity: &WorldEntity,
+        position: Position,
+        rotation: Rotation,
+    ) -> Vec<ChunkPosition> {
+        let mut abandoned_chunks: Vec<ChunkPosition> = Default::default();
+
         let mut player_entity = self.world.entity_mut(world_entity.get_entity());
         let mut old_position = player_entity.get_mut::<Position>().unwrap();
 
         let old_chunk = old_position.get_chunk_position();
         let new_chunk = position.get_chunk_position();
         if old_chunk != new_chunk {
-            self.chunks_map.update_chunks_render(
+            abandoned_chunks = self.chunks_map.update_chunks_render(
                 world_entity.get_entity(),
-                Some(&old_chunk),
-                Some(&new_chunk),
+                &old_chunk,
+                &new_chunk,
                 CHUNKS_DISTANCE,
             );
         }
         *old_position = position;
         let mut old_rotation = player_entity.get_mut::<Rotation>().unwrap();
         *old_rotation = rotation;
+
+        abandoned_chunks
     }
 
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {
+        self.chunks_map.stop_chunks_render(world_entity.get_entity());
         self.world.despawn(world_entity.get_entity());
     }
 

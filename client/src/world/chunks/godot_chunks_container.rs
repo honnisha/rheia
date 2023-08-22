@@ -2,10 +2,12 @@ use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
-    VERTICAL_SECTIONS, network::NetworkSectionType,
+    network::NetworkSectionType,
+    VERTICAL_SECTIONS,
 };
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
+use log::error;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -120,6 +122,15 @@ impl ChunksContainer {
             chunk_position.clone(),
             Chunk::create(column, Arc::new(RwLock::new(sections))),
         );
+    }
+
+    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
+        for chunk in chunks_positions {
+            if let Some(c) = self.chunks.get_mut(&chunk) {
+                c.chunk.bind_mut().queue_free();
+                self.chunks.remove(&chunk);
+            }
+        }
     }
 
     fn update_mesh(

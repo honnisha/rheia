@@ -2,7 +2,10 @@ use core::fmt;
 use std::fmt::Display;
 
 use bevy::prelude::Entity;
-use common::network::{channels::ServerChannel, messages::ServerMessages};
+use common::{
+    chunks::chunk_position::ChunkPosition,
+    network::{channels::ServerChannel, messages::ServerMessages},
+};
 
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
@@ -81,7 +84,9 @@ impl ClientNetwork {
         let mut server = network_container.server.write().expect("poisoned");
         let world_entity = self.world_entity.as_ref().unwrap();
 
-        let world_manager = worlds_manager.get_world_manager(&world_entity.get_world_slug()).unwrap();
+        let world_manager = worlds_manager
+            .get_world_manager(&world_entity.get_world_slug())
+            .unwrap();
         let client_chunks = world_manager
             .chunks_map
             .take_entity_chunks(&world_entity.get_entity())
@@ -91,6 +96,16 @@ impl ClientNetwork {
                 server.send_message(self.get_client_id().clone(), ServerChannel::Reliable, e);
             };
         }
+    }
+
+    /// Send chunks
+    pub fn send_unload_chunks(&self, network_container: &NetworkContainer, abandoned_chunks: Vec<ChunkPosition>) {
+        let mut server = network_container.server.write().expect("poisoned");
+        let input = ServerMessages::UnloadChunks {
+            chunks: abandoned_chunks,
+        };
+        let encoded = bincode::serialize(&input).unwrap();
+        server.send_message(self.get_client_id().clone(), ServerChannel::Reliable, encoded);
     }
 }
 

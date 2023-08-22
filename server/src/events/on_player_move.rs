@@ -3,6 +3,7 @@ use bevy_ecs::system::Res;
 
 use crate::entities::entity::Rotation;
 use crate::network::clients_container::ClientsContainer;
+use crate::network::server::NetworkContainer;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
 pub struct PlayerMoveEvent {
@@ -22,6 +23,7 @@ impl PlayerMoveEvent {
 }
 
 pub fn on_player_move(
+    network_container: Res<NetworkContainer>,
     mut player_move_events: EventReader<PlayerMoveEvent>,
     clients: Res<ClientsContainer>,
     worlds_manager: Res<WorldsManager>,
@@ -32,7 +34,8 @@ pub fn on_player_move(
             let mut world_manager = worlds_manager
                 .get_world_manager_mut(&world_entity.get_world_slug())
                 .unwrap();
-            world_manager.player_move(&world_entity, event.position, event.rotation)
+            let abandoned_chunks = world_manager.player_move(&world_entity, event.position, event.rotation);
+            client.send_unload_chunks(&network_container, abandoned_chunks);
         }
     }
 }
