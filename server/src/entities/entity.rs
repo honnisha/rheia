@@ -13,6 +13,12 @@ pub struct Position {
     z: PositionFloatType,
 }
 
+impl PartialEq for Position {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
 impl Position {
     pub fn new(x: PositionFloatType, y: PositionFloatType, z: PositionFloatType) -> Self {
         Self { x, y, z }

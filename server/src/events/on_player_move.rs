@@ -1,5 +1,5 @@
 use bevy_ecs::prelude::EventReader;
-use bevy_ecs::system::{Res, ResMut};
+use bevy_ecs::system::Res;
 
 use crate::entities::entity::Rotation;
 use crate::network::clients_container::ClientsContainer;
@@ -24,7 +24,7 @@ impl PlayerMoveEvent {
 pub fn on_player_move(
     mut player_move_events: EventReader<PlayerMoveEvent>,
     clients: Res<ClientsContainer>,
-    mut worlds_manager: ResMut<WorldsManager>,
+    worlds_manager: Res<WorldsManager>,
 ) {
     for event in player_move_events.iter() {
         let client = clients.get(&event.client_id);

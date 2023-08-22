@@ -56,7 +56,22 @@ impl WorldManager {
 
     pub fn player_move(&mut self, world_entity: &WorldEntity, position: Position, rotation: Rotation) {
         //self.chunks_map.update_chunks_render(&client.get_client_id(), )
-        let mut query = self.world.query::<(Entity, &NetworkComponent)>();
+        let mut player_entity = self.world.entity_mut(world_entity.get_entity());
+        let mut old_position = player_entity.get_mut::<Position>().unwrap();
+
+        let old_chunk = old_position.get_chunk_position();
+        let new_chunk = position.get_chunk_position();
+        if old_chunk != new_chunk {
+            self.chunks_map.update_chunks_render(
+                world_entity.get_entity(),
+                Some(&old_chunk),
+                Some(&new_chunk),
+                CHUNKS_DISTANCE,
+            );
+        }
+        *old_position = position;
+        let mut old_rotation = player_entity.get_mut::<Rotation>().unwrap();
+        *old_rotation = rotation;
     }
 
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {
