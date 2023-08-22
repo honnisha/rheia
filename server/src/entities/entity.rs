@@ -3,16 +3,6 @@ use common::{
     chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
     utils::fix_chunk_loc_pos,
 };
-use uuid::Uuid;
-
-#[derive(Component)]
-pub struct Indentifier(Uuid);
-
-impl Default for Indentifier {
-    fn default() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
 
 pub type PositionFloatType = f32;
 
@@ -43,13 +33,37 @@ impl BlockPositionTrait for Position {
     }
 }
 
+#[derive(Component, Clone, Copy, Default)]
+pub struct Rotation {
+    pitch: PositionFloatType,
+    yaw: PositionFloatType,
+}
+
+impl Rotation {
+    pub fn new(pitch: PositionFloatType, yaw: PositionFloatType) -> Self {
+        Self { pitch, yaw }
+    }
+
+    pub fn get_yaw(&self) -> &PositionFloatType {
+        &self.yaw
+    }
+
+    pub fn get_pitch(&self) -> &PositionFloatType {
+        &self.pitch
+    }
+}
+
 #[derive(Component)]
 pub struct NetworkComponent {
-    pub client_id: u64,
+    client_id: u64,
 }
 
 impl NetworkComponent {
     pub fn new(client_id: u64) -> Self {
         Self { client_id }
+    }
+
+    pub fn get_client_id(&self) -> &u64 {
+        &self.client_id
     }
 }

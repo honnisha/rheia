@@ -1,4 +1,5 @@
 use ahash::AHashMap;
+use bevy::prelude::Entity;
 use common::chunks::chunk_position::ChunkPosition;
 use log::trace;
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -39,12 +40,12 @@ impl ChunkMap {
         }
     }
 
-    pub fn take_chunks_clients(&self, chunk_position: &ChunkPosition) -> Option<&Vec<u64>> {
-        self.chunks_load_state.take_chunks_clients(&chunk_position)
+    pub fn take_chunks_entities(&self, chunk_position: &ChunkPosition) -> Option<&Vec<Entity>> {
+        self.chunks_load_state.take_chunks_entities(&chunk_position)
     }
 
-    pub fn take_client_chunks(&self, client_id: &u64) -> Option<&Vec<ChunkPosition>> {
-        self.chunks_load_state.take_client_chunks(&client_id)
+    pub fn take_entity_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
+        self.chunks_load_state.take_entity_chunks(&entity)
     }
 
     /// Trigered when player is move between chunks or spawns/despawns
@@ -52,7 +53,7 @@ impl ChunkMap {
     /// to unload unused chunks
     pub fn update_chunks_render(
         &mut self,
-        client_id: &u64,
+        entity: Entity,
         from: Option<&ChunkPosition>,
         to: Option<&ChunkPosition>,
         chunks_distance: u16,
@@ -66,7 +67,7 @@ impl ChunkMap {
             let iter = ManhattanIterator::new(chunk_from.x as i32, chunk_from.z as i32, chunks_distance);
             for (x, z) in iter {
                 self.chunks_load_state
-                    .remove_ticket(ChunkPosition::new(x as i64, z as i64), &client_id);
+                    .remove_ticket(ChunkPosition::new(x as i64, z as i64), &entity);
             }
         }
 
@@ -75,7 +76,7 @@ impl ChunkMap {
             let iter = ManhattanIterator::new(chunk_to.x as i32, chunk_to.z as i32, chunks_distance);
             for (x, z) in iter {
                 let chunk_pos = ChunkPosition::new(x as i64, z as i64);
-                self.chunks_load_state.insert_ticket(chunk_pos, client_id.clone());
+                self.chunks_load_state.insert_ticket(chunk_pos, entity.clone());
 
                 // Update despawn timer
                 if let Some(chunk_column) = self.chunks.get_mut(&chunk_pos) {
@@ -128,6 +129,7 @@ impl ChunkMap {
 mod tests {
     use std::sync::Arc;
 
+    use bevy::prelude::Entity;
     use parking_lot::RwLock;
     use std::time::Duration;
 
@@ -138,19 +140,19 @@ mod tests {
     #[test]
     fn test_tickets_spawn_despawn() {
         let mut chunk_map = ChunkMap::default();
-        let client_id = 0_u64;
+        let entity = Entity::from_raw(0);
         let pos = ChunkPosition::new(0, 0);
         let chunks_distance = 3_u16;
 
         // Spawn
-        chunk_map.update_chunks_render(&client_id, None, Some(&pos), chunks_distance);
+        chunk_map.update_chunks_render(entity, None, Some(&pos), chunks_distance);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&pos), 1);
-        assert_eq!(chunk_map.chunks_load_state.take_entity_tickets(&client_id).len(), 13);
+        assert_eq!(chunk_map.chunks_load_state.take_entity_tickets(&entity).len(), 13);
 
         // despawn
-        chunk_map.update_chunks_render(&client_id, Some(&pos), None, chunks_distance);
+        chunk_map.update_chunks_render(entity, Some(&pos), None, chunks_distance);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&pos), 0);
-        assert_eq!(chunk_map.chunks_load_state.take_entity_tickets(&client_id).len(), 0);
+        assert_eq!(chunk_map.chunks_load_state.take_entity_tickets(&entity).len(), 0);
     }
 
     #[test]
@@ -158,12 +160,12 @@ mod tests {
         let mut chunk_map = ChunkMap::default();
         let world_generator = Arc::new(RwLock::new(WorldGenerator::default()));
         let world_slug = "default".to_string();
-        let client_id = 0_u64;
+        let entity = Entity::from_raw(0);
         let pos = ChunkPosition::new(0, 0);
 
         chunk_map
             .chunks_load_state
-            .insert_ticket(pos.clone(), client_id.clone());
+            .insert_ticket(pos.clone(), entity.clone());
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
         assert_eq!(chunk_map.chunks.len(), 1, "One chunk must be created");
 
@@ -172,7 +174,7 @@ mod tests {
             .unwrap()
             .set_despawn_timer(CHUNKS_DESPAWN_TIMER);
 
-        chunk_map.chunks_load_state.remove_ticket(pos.clone(), &client_id);
+        chunk_map.chunks_load_state.remove_ticket(pos.clone(), &entity);
         chunk_map.update_chunks(Duration::from_secs(1), &world_slug, world_generator.clone());
         assert_eq!(
             chunk_map.chunks.len(),

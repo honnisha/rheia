@@ -2,7 +2,7 @@ use bevy_ecs::{prelude::EventReader, system::ResMut};
 use log::info;
 use renet::DisconnectReason;
 
-use crate::{network::player_container::Players, worlds::worlds_manager::WorldsManager};
+use crate::{network::clients_container::ClientsContainer, worlds::worlds_manager::WorldsManager};
 
 pub struct PlayerDisconnectEvent {
     client_id: u64,
@@ -17,16 +17,16 @@ impl PlayerDisconnectEvent {
 
 pub fn on_disconnect(
     mut disconnection_events: EventReader<PlayerDisconnectEvent>,
-    mut players: ResMut<Players>,
+    mut clients: ResMut<ClientsContainer>,
     mut worlds_manager: ResMut<WorldsManager>,
 ) {
     for event in disconnection_events.iter() {
         {
-            let mut player = players.get_mut(&event.client_id);
-            info!("Disconnected login \"{}\" reason {}", player.get_login(), event.reason,);
+            let mut client = clients.get_mut(&event.client_id);
+            info!("Disconnected login \"{}\" reason {}", client.get_login(), event.reason,);
 
-            worlds_manager.despawn_player(&mut player)
+            worlds_manager.despawn_player(&mut client)
         }
-        players.remove(&event.client_id);
+        clients.remove(&event.client_id);
     }
 }

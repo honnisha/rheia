@@ -1,4 +1,5 @@
 use ahash::AHashMap;
+use bevy::prelude::Entity;
 use common::{utils::vec_remove_item, chunks::chunk_position::ChunkPosition};
 use std::mem;
 
@@ -7,21 +8,21 @@ use std::mem;
 /// feather/common/src/chunk/loading.rs
 #[derive(Default)]
 pub struct ChunksLoadState {
-    pub(crate) by_chunk: AHashMap<ChunkPosition, Vec<u64>>,
-    by_client: AHashMap<u64, Vec<ChunkPosition>>,
+    pub(crate) by_chunk: AHashMap<ChunkPosition, Vec<Entity>>,
+    by_entity: AHashMap<Entity, Vec<ChunkPosition>>,
 }
 
 impl ChunksLoadState {
-    pub fn insert_ticket(&mut self, chunk: ChunkPosition, client_id: u64) {
-        self.by_chunk.entry(chunk).or_default().push(client_id);
-        self.by_client.entry(client_id).or_default().push(chunk);
+    pub fn insert_ticket(&mut self, chunk: ChunkPosition, entity: Entity) {
+        self.by_chunk.entry(chunk).or_default().push(entity);
+        self.by_entity.entry(entity).or_default().push(chunk);
     }
 
-    pub fn remove_ticket(&mut self, chunk: ChunkPosition, client_id: &u64) {
+    pub fn remove_ticket(&mut self, chunk: ChunkPosition, entity: &Entity) {
         if let Some(vec) = self.by_chunk.get_mut(&chunk) {
-            vec_remove_item(vec, client_id);
+            vec_remove_item(vec, entity);
         }
-        vec_remove_item(self.by_client.get_mut(client_id).unwrap(), &chunk);
+        vec_remove_item(self.by_entity.get_mut(entity).unwrap(), &chunk);
     }
 
     pub fn num_tickets(&self, chunk: &ChunkPosition) -> usize {
@@ -31,27 +32,27 @@ impl ChunksLoadState {
         }
     }
 
-    pub fn take_chunks_clients(&self, chunk: &ChunkPosition) -> Option<&Vec<u64>> {
+    pub fn take_chunks_entities(&self, chunk: &ChunkPosition) -> Option<&Vec<Entity>> {
         match self.by_chunk.get(chunk) {
             Some(v) => Some(&v),
             None => None,
         }
     }
 
-    pub fn take_client_chunks(&self, client_id: &u64) -> Option<&Vec<ChunkPosition>> {
-        match self.by_client.get(client_id) {
+    pub fn take_entity_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
+        match self.by_entity.get(entity) {
             Some(v) => Some(&v),
             None => None,
         }
     }
 
-    pub fn _take_chunks_clients_mut(&mut self, chunk: &ChunkPosition) -> Vec<u64> {
+    pub fn _take_chunks_entitys_mut(&mut self, chunk: &ChunkPosition) -> Vec<Entity> {
         self.by_chunk.get_mut(chunk).map(mem::take).unwrap_or_default()
     }
 
     #[allow(dead_code)]
-    pub fn take_entity_tickets(&mut self, client_id: &u64) -> Vec<ChunkPosition> {
-        self.by_client.get_mut(client_id).map(mem::take).unwrap_or_default()
+    pub fn take_entity_tickets(&mut self, entity: &Entity) -> Vec<ChunkPosition> {
+        self.by_entity.get_mut(entity).map(mem::take).unwrap_or_default()
     }
 
     pub fn _remove_chunk(&mut self, pos: ChunkPosition) {

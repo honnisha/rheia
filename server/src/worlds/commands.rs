@@ -32,7 +32,8 @@ pub(crate) fn world_command(world: &mut World, sender: &dyn ConsoleSenderType, a
             }
             let worlds = worlds_manager.get_worlds();
             sender.send_console_message("Worlds list:".to_string());
-            for world in worlds.iter() {
+            for (_slug, world) in worlds.iter() {
+                let world = world.read();
                 sender.send_console_message(format!(
                     " - {} (loaded chunks: {})",
                     world.get_slug(),

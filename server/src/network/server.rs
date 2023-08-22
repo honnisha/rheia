@@ -23,6 +23,8 @@ use std::{
     time::SystemTime,
 };
 
+use crate::entities::entity::Rotation;
+use crate::network::clients_container::ClientsContainer;
 use crate::{
     client_resources::resources_manager::ResourceManager,
     console::commands_executer::CommandsHandler,
@@ -32,7 +34,6 @@ use crate::{
         on_disconnect::{on_disconnect, PlayerDisconnectEvent},
         on_player_move::{on_player_move, PlayerMoveEvent},
     },
-    network::player_container::Players,
     ServerSettings,
 };
 
@@ -92,7 +93,7 @@ impl NetworkPlugin {
             transport: Arc::new(RwLock::new(transport)),
         });
 
-        app.insert_resource(Players::default());
+        app.insert_resource(ClientsContainer::default());
 
         app.configure_set(NetworkSet::Server.run_if(resource_exists::<NetworkContainer>()));
 
@@ -186,8 +187,7 @@ fn receive_message_system(
                     player_move_events.send(PlayerMoveEvent::new(
                         client_id.clone(),
                         Position::from_array(position),
-                        yaw,
-                        pitch,
+                        Rotation::new(pitch, yaw),
                     ));
                 }
                 _ => panic!("unsupported message"),
@@ -204,17 +204,17 @@ fn receive_message_system(
 
 #[allow(unused_mut)]
 fn console_client_command_event(world: &mut World) {
-    world.resource_scope(|world, mut players: Mut<Players>| {
+    world.resource_scope(|world, mut clients: Mut<ClientsContainer>| {
         for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
-            let player = players.get(&client_id);
-            CommandsHandler::execute_command(world, &player.to_owned(), &command);
+            let client = clients.get(&client_id);
+            CommandsHandler::execute_command(world, &client.to_owned(), &command);
         }
     });
 }
 
 fn handle_events_system(
     mut server_events: EventReader<ServerEvent>,
-    mut players: ResMut<Players>,
+    mut clients: ResMut<ClientsContainer>,
     network_container: Res<NetworkContainer>,
 
     mut connection_events: EventWriter<PlayerConnectionEvent>,
@@ -227,7 +227,7 @@ fn handle_events_system(
             ServerEvent::ClientConnected { client_id } => {
                 let user_data = transport.user_data(client_id.clone()).unwrap();
                 let login = Login::from_user_data(&user_data).0;
-                players.add(client_id, login.clone());
+                clients.add(client_id, login.clone());
                 connection_events.send(PlayerConnectionEvent::new(client_id.clone()));
             }
             ServerEvent::ClientDisconnected { client_id, reason } => {
