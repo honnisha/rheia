@@ -20,3 +20,5 @@ strum_macros = "0.24.3"
 
 downcast-rs = "1.2.0"
 typetag = "0.1.6"
+
+arrayvec = "0.7.4"

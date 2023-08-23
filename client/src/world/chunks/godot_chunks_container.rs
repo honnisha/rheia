@@ -1,8 +1,7 @@
 use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
-    network::NetworkSectionType,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
     VERTICAL_SECTIONS,
 };
 use flume::Sender;
@@ -23,7 +22,7 @@ use super::{
     godot_chunk_column::{ChunkColumn, ChunksGeometryType},
 };
 
-pub type ColumnDataType = Arc<RwLock<NetworkSectionType>>;
+pub type ColumnDataType = Arc<RwLock<SectionsData>>;
 
 /// Tool for storing near chunks
 pub struct NearChunksData {
@@ -116,7 +115,7 @@ impl ChunksContainer {
         todo!();
     }
 
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
+    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         let mut column = Gd::<ChunkColumn>::with_base(|base| {
             ChunkColumn::create(base, self.material.share(), chunk_position.clone())
         });
@@ -132,10 +131,9 @@ impl ChunksContainer {
             .bind_mut()
             .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
 
-        self.chunks.insert(
-            chunk_position.clone(),
-            Rc::new(RefCell::new(Chunk::create(column, Arc::new(RwLock::new(sections))))),
-        );
+        let chunk = Chunk::create(column, Arc::new(RwLock::new(sections)));
+
+        self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {

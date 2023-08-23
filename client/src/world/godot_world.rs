@@ -1,7 +1,6 @@
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
-    network::NetworkSectionType,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{engine::Material, prelude::*};
 use parking_lot::RwLock;
@@ -89,7 +88,7 @@ impl World {
         self.chunks_container = Some(self.base.get_node_as::<ChunksContainer>(container_name));
     }
 
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
+    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         self.chunks_container
             .as_mut()
             .unwrap()

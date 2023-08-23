@@ -1,7 +1,9 @@
 use crate::worlds::world_generator::WorldGenerator;
 use arrayvec::ArrayVec;
 use common::chunks::chunk_position::ChunkPosition;
-use common::{network::ChunkDataType, VERTICAL_SECTIONS};
+use common::chunks::utils::PacketChunkSectionData;
+use common::network::messages::ChunkDataType;
+use common::VERTICAL_SECTIONS;
 use core::fmt;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -63,8 +65,12 @@ impl ChunkColumn {
         *self.despawn_timer.write() += new_despawn;
     }
 
-    pub(crate) fn build_network_format(&self) -> [Box<ChunkDataType>; VERTICAL_SECTIONS] {
-        self.sections.clone().into_inner().unwrap()
+    pub(crate) fn build_network_format(&self) -> [PacketChunkSectionData; VERTICAL_SECTIONS] {
+        let mut data: ArrayVec<PacketChunkSectionData, VERTICAL_SECTIONS> = Default::default();
+        for section in self.sections.iter() {
+            data.push(PacketChunkSectionData::new(&mut section.clone()));
+        }
+        data.into_inner().unwrap()
     }
 }
 

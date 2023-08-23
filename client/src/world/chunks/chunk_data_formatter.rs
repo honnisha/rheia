@@ -2,7 +2,8 @@ use arrayvec::ArrayVec;
 use common::{
     blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility},
     chunks::block_position::ChunkBlockPosition,
-    CHUNK_SIZE, VERTICAL_SECTIONS, network::ChunkDataType,
+    network::messages::ChunkDataType,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use ndshape::ConstShape;
 
@@ -27,7 +28,6 @@ pub fn format_chunk_data_with_boundaries(
     for x in 0_u32..(CHUNK_SIZE as u32) {
         for y in 0_u32..(CHUNK_SIZE as u32) {
             for z in 0_u32..(CHUNK_SIZE as u32) {
-
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
                 let block_type = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
                     Some(e) => e.get_block_type(),
@@ -54,11 +54,10 @@ pub fn format_chunk_data_with_boundaries(
         Some(c) => c,
         None => {
             return b_chunk;
-        },
+        }
     };
     let boundary = get_boundaries_chunks(&chunks_near, &chunk_data, y);
     for (axis, axis_diff, chunk_section) in boundary {
-
         for i in 0_u32..(CHUNK_SIZE as u32) {
             for j in 0_u32..(CHUNK_SIZE as u32) {
                 let (i_v, o_v) = match axis_diff {

@@ -1291,6 +1291,7 @@ checksum = "bf43edc576402991846b093a7ca18a3477e0ef9c588cde84964b5d3e43016642"
 name = "common"
 version = "0.1.0"
 dependencies = [
+ "arrayvec 0.7.4",
  "bevy_renet",
  "downcast-rs",
  "renet",

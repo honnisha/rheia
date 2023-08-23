@@ -1,5 +1,5 @@
 use common::chunks::chunk_position::ChunkPosition;
-use common::network::NetworkSectionType;
+use common::chunks::utils::SectionsData;
 use godot::engine::{Engine, StandardMaterial3D};
 use godot::prelude::*;
 use godot::{
@@ -11,7 +11,6 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::controller::player_controller::{PlayerController, PlayerMovement};
-use crate::entities::position::GodotPositionConverter;
 use crate::main_scene::FloatType;
 use crate::network::client::NetworkContainer;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
@@ -101,7 +100,7 @@ impl WorldManager {
     }
 
     /// Load chunk column by the network
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: NetworkSectionType) {
+    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         match self.world.as_mut() {
             Some(w) => w.bind_mut().load_chunk(chunk_position, sections),
             None => {
