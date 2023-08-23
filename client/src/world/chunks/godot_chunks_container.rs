@@ -7,8 +7,9 @@ use common::{
 };
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
-use log::error;
 use parking_lot::RwLock;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::{
@@ -33,7 +34,7 @@ pub struct NearChunksData {
 }
 
 impl NearChunksData {
-    fn new(chunks: &AHashMap<ChunkPosition, Chunk>, pos: &ChunkPosition) -> Self {
+    fn new(chunks: &ChunksType, pos: &ChunkPosition) -> Self {
         Self {
             forward: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x - 1, pos.z)),
             behind: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x + 1, pos.z)),
@@ -46,25 +47,31 @@ impl NearChunksData {
         self.forward.is_some() && self.behind.is_some() && self.left.is_some() && self.right.is_some()
     }
 
-    fn get_data(chunks: &AHashMap<ChunkPosition, Chunk>, pos: &ChunkPosition) -> Option<ColumnDataType> {
+    fn get_data(chunks: &ChunksType, pos: &ChunkPosition) -> Option<ColumnDataType> {
         match chunks.get(pos) {
-            Some(c) => Some(c.data.clone()),
+            Some(c) => Some(c.borrow().data.clone()),
             None => None,
         }
     }
 }
 
 /// Container of godot chunk entity and blocks data
-struct Chunk {
-    chunk: Gd<ChunkColumn>,
+pub struct Chunk {
+    chunk_column: Gd<ChunkColumn>,
     data: ColumnDataType,
 }
 
 impl Chunk {
-    fn create(chunk: Gd<ChunkColumn>, data: ColumnDataType) -> Self {
-        Self { chunk, data }
+    fn create(chunk_column: Gd<ChunkColumn>, data: ColumnDataType) -> Self {
+        Self { chunk_column, data }
+    }
+
+    pub fn get_chunk_column(&self) -> &Gd<ChunkColumn> {
+        &self.chunk_column
     }
 }
+
+type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
 #[derive(GodotClass)]
@@ -72,7 +79,7 @@ impl Chunk {
 pub struct ChunksContainer {
     #[base]
     base: Base<Node>,
-    chunks: AHashMap<ChunkPosition, Chunk>,
+    chunks: ChunksType,
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
 }
@@ -91,14 +98,21 @@ impl ChunksContainer {
         self.chunks.len()
     }
 
-    pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataType> {
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Rc<RefCell<Chunk>>> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.data.clone()),
+            Some(c) => Some(c.clone()),
             None => None,
         }
     }
 
-    pub fn modify_block(&self, global_pos: &BlockPosition, block_info: BlockInfo) {
+    pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataType> {
+        match self.chunks.get(chunk_position) {
+            Some(c) => Some(c.borrow().data.clone()),
+            None => None,
+        }
+    }
+
+    pub fn modify_block(&self, _global_pos: &BlockPosition, _block_info: BlockInfo) {
         todo!();
     }
 
@@ -120,14 +134,14 @@ impl ChunksContainer {
 
         self.chunks.insert(
             chunk_position.clone(),
-            Chunk::create(column, Arc::new(RwLock::new(sections))),
+            Rc::new(RefCell::new(Chunk::create(column, Arc::new(RwLock::new(sections))))),
         );
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
         for chunk in chunks_positions {
             if let Some(c) = self.chunks.get_mut(&chunk) {
-                c.chunk.bind_mut().queue_free();
+                c.borrow_mut().chunk_column.bind_mut().queue_free();
                 self.chunks.remove(&chunk);
             }
         }
@@ -169,7 +183,7 @@ impl NodeVirtual for ChunksContainer {
 
     fn process(&mut self, _delta: f64) {
         for (chunk_position, chunk) in self.chunks.iter() {
-            if !chunk.chunk.bind().is_sended() {
+            if !chunk.borrow().chunk_column.bind().is_sended() {
                 let near_chunks_data = NearChunksData::new(&self.chunks, chunk_position);
 
                 // Load only if all chunks around are loaded
@@ -179,11 +193,11 @@ impl NodeVirtual for ChunksContainer {
 
                 ChunksContainer::update_mesh(
                     near_chunks_data,
-                    chunk.data.clone(),
-                    chunk.chunk.bind().update_mesh_tx.clone(),
+                    chunk.borrow().data.clone(),
+                    chunk.borrow().chunk_column.bind().update_mesh_tx.clone(),
                     self.texture_mapper.clone(),
                 );
-                chunk.chunk.bind().set_sended();
+                chunk.borrow().chunk_column.bind().set_sended();
             }
         }
     }

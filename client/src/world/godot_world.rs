@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
@@ -7,11 +5,14 @@ use common::{
 };
 use godot::{engine::Material, prelude::*};
 use parking_lot::RwLock;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::{
-    chunks::godot_chunks_container::ChunksContainer,
+    chunks::godot_chunks_container::{Chunk, ChunksContainer},
     world_manager::{get_default_material, TextureMapperType},
 };
 
@@ -65,6 +66,15 @@ impl World {
             Some(c) => c.bind().get_chunks_count(),
             None => 0 as usize,
         }
+    }
+
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Rc<RefCell<Chunk>>> {
+        if let Some(chunks_container) = self.chunks_container.as_ref() {
+            if let Some(chunk) = chunks_container.bind().get_chunk(chunk_position) {
+                return Some(chunk.clone());
+            }
+        }
+        return None;
     }
 
     pub fn init_chunks_container(&mut self) {

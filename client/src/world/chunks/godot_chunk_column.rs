@@ -8,10 +8,7 @@ use std::sync::{
     Arc,
 };
 
-use crate::{
-    entities::position::GodotPositionConverter, utils::mesh::mesh_generator::Geometry,
-    world::world_manager::get_default_material,
-};
+use crate::{utils::mesh::mesh_generator::Geometry, world::world_manager::get_default_material};
 
 use super::godot_chunk_section::ChunkSection;
 

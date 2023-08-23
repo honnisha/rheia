@@ -30,27 +30,72 @@ theme_override_constants/margin_bottom = 6
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="DebugInfo/MarginContainer/VBoxContainer"]
+[node name="Row1" type="HBoxContainer" parent="DebugInfo/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(10, 10)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="TextureRect" type="TextureRect" parent="DebugInfo/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="DebugInfo/MarginContainer/VBoxContainer/Row1"]
 layout_mode = 2
 texture = ExtResource("2_0wcck")
 expand_mode = 1
 
-[node name="PanelContainer" type="PanelContainer" parent="DebugInfo/MarginContainer/VBoxContainer/HBoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="DebugInfo/MarginContainer/VBoxContainer/Row1"]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="DebugInfo/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="DebugInfo/MarginContainer/VBoxContainer/Row1/PanelContainer"]
 layout_mode = 2
 theme_override_constants/margin_left = 3
 theme_override_constants/margin_top = 3
 theme_override_constants/margin_right = 3
 theme_override_constants/margin_bottom = 3
 
-[node name="RichTextLabel" type="RichTextLabel" parent="DebugInfo/MarginContainer/VBoxContainer/HBoxContainer/PanelContainer/MarginContainer"]
+[node name="RichTextLabel" type="RichTextLabel" parent="DebugInfo/MarginContainer/VBoxContainer/Row1/PanelContainer/MarginContainer"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_fonts/normal_font = ExtResource("3_p2pta")
+theme_override_fonts/bold_font = ExtResource("4_gql61")
+theme_override_fonts/italics_font = ExtResource("5_uk60t")
+theme_override_fonts/bold_italics_font = ExtResource("6_rsdci")
+theme_override_fonts/mono_font = ExtResource("3_p2pta")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
+bbcode_enabled = true
+text = "test 123
+123
+213
+teasdas
+"
+fit_content = true
+scroll_active = false
+tab_size = 0
+
+[node name="Row2" type="HBoxContainer" parent="DebugInfo/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TextureRect" type="TextureRect" parent="DebugInfo/MarginContainer/VBoxContainer/Row2"]
+layout_mode = 2
+texture = ExtResource("2_0wcck")
+expand_mode = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="DebugInfo/MarginContainer/VBoxContainer/Row2"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="DebugInfo/MarginContainer/VBoxContainer/Row2/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 3
+
+[node name="RichTextLabel" type="RichTextLabel" parent="DebugInfo/MarginContainer/VBoxContainer/Row2/PanelContainer/MarginContainer"]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_horizontal = 0
