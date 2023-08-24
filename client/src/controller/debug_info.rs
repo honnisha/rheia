@@ -7,12 +7,14 @@ use log::error;
 
 use crate::world::world_manager::WorldManager;
 
+use super::{handlers::freecam::FreeCameraHandler, player_controller::PlayerController};
+
 const TEXT_FIRST_PATH: &str = "MarginContainer/VBoxContainer/Row1/PanelContainer/MarginContainer/RichTextLabel";
 
 macro_rules! debug_first_string {
     () => {
         "FPS: {:.0}
-Camera position: {:.2} {:.2} {:.2}
+Controller position: {}
 Threads count: {}"
     };
 }
@@ -37,15 +39,32 @@ pub struct DebugInfo {
 }
 
 impl DebugInfo {
-    pub fn update_debug(&mut self, world_manager: &WorldManager, camera: &mut Camera3D) {
-        let camera_pos = camera.get_position();
+    pub fn update_debug(
+        &mut self,
+        world_manager: &WorldManager,
+        camera: &Camera3D,
+        player_handler: &Option<FreeCameraHandler>,
+    ) {
+
+        let controller_positioin = match player_handler {
+            Some(h) => {
+                let controller_pos = h.get_position(camera);
+                format!(
+                    "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
+                    controller_pos.x,
+                    controller_pos.y,
+                    controller_pos.z,
+                    h.get_yaw(camera),
+                    h.get_pitch(camera),
+                )
+            }
+            None => "-".to_string(),
+        };
 
         let first_text = format!(
             debug_first_string!(),
             Engine::singleton().get_frames_per_second(),
-            camera_pos.x,
-            camera_pos.y,
-            camera_pos.z,
+            controller_positioin,
             rayon::current_num_threads()
         );
         self.first_text
@@ -53,8 +72,15 @@ impl DebugInfo {
             .unwrap()
             .set_text(GodotString::from(first_text));
 
+        let camera_pos = camera.get_position();
         let chunk_pos =
             BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position();
+        let chunk_pos = BlockPosition::new(
+            camera_pos.x as i64,
+            camera_pos.y as i64,
+            camera_pos.z as i64,
+        )
+        .get_chunk_position();
         let second_text = match world_manager.get_world() {
             Some(w) => {
                 let world = w.bind();
@@ -62,8 +88,12 @@ impl DebugInfo {
                     Some(c) => {
                         let c = c.borrow();
                         let chunk_column = c.get_chunk_column().bind();
-                        format!("sended:{} loaded:{}", chunk_column.is_sended(), chunk_column.is_loaded())
-                    },
+                        format!(
+                            "sended:{} loaded:{}",
+                            chunk_column.is_sended(),
+                            chunk_column.is_loaded()
+                        )
+                    }
                     None => "-".to_string(),
                 };
                 format!(

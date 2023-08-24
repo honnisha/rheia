@@ -7,6 +7,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+use std::time::Instant;
 
 use crate::{utils::mesh::mesh_generator::Geometry, world::world_manager::get_default_material};
 
@@ -92,6 +93,7 @@ impl NodeVirtual for ChunkColumn {
     }
 
     fn ready(&mut self) {
+        let now = Instant::now();
         for y in 0..VERTICAL_SECTIONS {
             self.sections.push(ChunkColumn::spawn_chunk_section(
                 &mut self.base,
@@ -100,6 +102,8 @@ impl NodeVirtual for ChunkColumn {
                 &self.chunk_position,
             ));
         }
+        let elapsed = now.elapsed();
+        println!("Chunk {} ready processed: {:.2?}", self.chunk_position, elapsed);
     }
 
     fn process(&mut self, _delta: f64) {

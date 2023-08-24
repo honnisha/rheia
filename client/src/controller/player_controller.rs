@@ -58,8 +58,8 @@ pub struct PlayerController {
 impl PlayerController {
     pub fn update_debug(&mut self, world_manager: &WorldManager) {
         if let Some(d) = self.debug_info.as_mut() {
-            let camera = self.camera.as_deref_mut().unwrap();
-            d.bind_mut().update_debug(world_manager, camera);
+            let camera = self.camera.as_deref().unwrap();
+            d.bind_mut().update_debug(world_manager, camera, &self.handler);
         }
     }
 
@@ -80,6 +80,25 @@ impl PlayerController {
 impl PlayerController {
     #[signal]
     fn on_player_move();
+
+    #[func]
+    pub fn get_position(&self) -> Vector3 {
+        let handler = self.handler.as_ref().unwrap();
+        let camera = self.camera.as_deref().unwrap();
+        handler.get_position(camera)
+    }
+
+    pub fn get_yaw(&self) -> f32 {
+        let handler = self.handler.as_ref().unwrap();
+        let camera = self.camera.as_deref().unwrap();
+        handler.get_yaw(camera)
+    }
+
+    pub fn get_pitch(&self) -> f32 {
+        let handler = self.handler.as_ref().unwrap();
+        let camera = self.camera.as_deref().unwrap();
+        handler.get_pitch(camera)
+    }
 }
 
 #[godot_api]

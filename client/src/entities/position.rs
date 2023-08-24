@@ -12,6 +12,10 @@ impl GodotPositionConverter {
         Vector3::new(pos[0], pos[1], pos[2])
     }
 
+    pub fn get_chunk_position(pos: &Vector3) -> ChunkPosition {
+        ChunkPosition::new(fix_chunk_loc_pos(pos.x as i64), fix_chunk_loc_pos(pos.z as i64))
+    }
+
     /// Minus one because chunk contains boundaries
     pub fn get_chunk_position_vector(chunk_position: &ChunkPosition) -> Vector3 {
         Vector3::new(

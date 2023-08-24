@@ -8,14 +8,17 @@ use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
+use spiral::ManhattanIterator;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::Instant;
 
 use crate::{
     entities::position::GodotPositionConverter,
+    main_scene::CHUNKS_DISTANCE,
     utils::{mesh::mesh_generator::generate_chunk_geometry, textures::texture_mapper::TextureMapper},
-    world::world_manager::{get_default_material, TextureMapperType},
+    world::world_manager::{get_default_material, TextureMapperType, WorldManager},
 };
 
 use super::{
@@ -117,15 +120,14 @@ impl ChunksContainer {
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+        let now = Instant::now();
+
         if self.chunks.contains_key(&chunk_position) {
             error!(
                 "Network sended chunk to load, but it already exists: {}",
                 chunk_position
             );
             return;
-        }
-        if chunk_position == ChunkPosition::new(-1, -11) {
-            println!("Load: {}", chunk_position);
         }
 
         let mut column = Gd::<ChunkColumn>::with_base(|base| {
@@ -146,21 +148,17 @@ impl ChunksContainer {
         let chunk = Chunk::create(column, Arc::new(RwLock::new(sections)));
 
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
+
+        let elapsed = now.elapsed();
+        println!("Chunk {} load: {:.2?}", chunk_position, elapsed);
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
         for chunk_position in chunks_positions {
             if let Some(chunk) = self.chunks.remove(&chunk_position) {
                 chunk.borrow_mut().chunk_column.bind_mut().queue_free();
-
-                if chunk_position == ChunkPosition::new(-1, -11) {
-                    println!("Unload: {}", chunk_position);
-                }
-            }
-            else {
-                if chunk_position == ChunkPosition::new(-1, -11) {
-                    println!("Unload chunk not found: {}", chunk_position);
-                }
+            } else {
+                error!("Unload chunk not found: {}", chunk_position);
             }
         }
     }
@@ -200,9 +198,19 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
-        for (chunk_position, chunk) in self.chunks.iter() {
-            if !chunk.borrow().chunk_column.bind().is_sended() {
-                let near_chunks_data = NearChunksData::new(&self.chunks, chunk_position);
+        let world_manager = self.get_parent().unwrap().get_parent().unwrap().cast::<WorldManager>();
+        let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
+        let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
+
+        let iter = ManhattanIterator::new(current_chunk.x as i32, current_chunk.z as i32, CHUNKS_DISTANCE);
+        for (x, z) in iter {
+            let chunk_position = ChunkPosition::new(x as i64, z as i64);
+            if let Some(chunk) = self.get_chunk(&chunk_position) {
+                if chunk.borrow().chunk_column.bind().is_sended() {
+                    continue;
+                }
+
+                let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
                 // Load only if all chunks around are loaded
                 if !near_chunks_data.is_full() {

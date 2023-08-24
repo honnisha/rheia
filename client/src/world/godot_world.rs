@@ -76,7 +76,7 @@ impl World {
         return None;
     }
 
-    pub fn init_chunks_container(&mut self) {
+    fn init_chunks_container(&mut self) {
         let mut container = Gd::<ChunksContainer>::with_base(|base| {
             ChunksContainer::create(base, self.texture_mapper.clone(), self.material.share())
         });

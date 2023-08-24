@@ -118,6 +118,10 @@ impl WorldManager {
         }
     }
 
+    pub fn get_player_controller(&self) -> &Gd<PlayerController> {
+        self.player_controller.as_ref().unwrap()
+    }
+
     pub fn create_player_controller(&mut self) -> Gd<PlayerController> {
         let mut entity =
             load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();

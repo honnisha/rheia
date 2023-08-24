@@ -77,6 +77,19 @@ impl FreeCameraHandler {
         }
     }
 
+    // Get position of the controller
+    pub fn get_position(&self, camera: &Camera3D) -> Vector3 {
+        camera.get_position()
+    }
+
+    pub fn get_yaw(&self, camera: &Camera3D) -> f32 {
+        camera.get_rotation().x
+    }
+
+    pub fn get_pitch(&self, camera: &Camera3D) -> f32 {
+        camera.get_rotation().y
+    }
+
     pub fn input(&mut self, event: Gd<InputEvent>, _camera: &mut Camera3D) {
         if Console::is_active() {
             return;
