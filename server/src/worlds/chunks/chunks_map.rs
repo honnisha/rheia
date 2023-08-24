@@ -175,21 +175,31 @@ mod tests {
         // Spawn
         let pos = ChunkPosition::new(0, 0);
         chunk_map.start_chunks_render(entity, &pos, chunks_distance);
-        assert_eq!(
-            chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap().len(),
-            5,
-        );
+        let chunks = chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap();
+        assert_eq!(chunks.len(), 5);
+        assert_eq!(chunks.contains(&ChunkPosition::new(0, 0)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(0, 1)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(0, -1)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(1, 0)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(-1, 0)), true);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&pos), 1);
 
         // Move
         let new_pos = ChunkPosition::new(1, 0);
         let abandoned_chunks = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
-        assert_eq!(abandoned_chunks.len(), 3);
-        assert_eq!(
-            chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap().len(),
-            5,
-        );
+        let chunks = chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap();
+        assert_eq!(chunks.len(), 5);
+        assert_eq!(chunks.contains(&ChunkPosition::new(1, 0)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(1, 1)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(1, -1)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(2, 0)), true);
+        assert_eq!(chunks.contains(&ChunkPosition::new(0, 0)), true);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&new_pos), 1);
+
+        assert_eq!(abandoned_chunks.len(), 3);
+        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(-1, 0)), true);
+        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(0, 1)), true);
+        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(0, -1)), true);
 
         // despawn
         chunk_map.stop_chunks_render(entity);

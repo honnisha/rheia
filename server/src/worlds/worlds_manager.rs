@@ -5,13 +5,15 @@ use ahash::HashMap;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::{Res, ResMut};
-use common::network::channels::ServerChannel;
 use log::{error, trace};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::{
     entities::entity::NetworkComponent,
-    network::{clients_container::ClientMut, server::NetworkContainer},
+    network::{
+        clients_container::{ClientMut, ClientsContainer},
+        server::NetworkContainer,
+    },
 };
 
 use super::world_manager::WorldManager;
@@ -26,7 +28,9 @@ pub struct WorldsManager {
 
 impl Default for WorldsManager {
     fn default() -> Self {
-        WorldsManager { worlds: Default::default() }
+        WorldsManager {
+            worlds: Default::default(),
+        }
     }
 }
 
@@ -39,7 +43,8 @@ impl WorldsManager {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
         }
-        self.worlds.insert(slug.clone(), Arc::new(RwLock::new(WorldManager::new(slug, seed))));
+        self.worlds
+            .insert(slug.clone(), Arc::new(RwLock::new(WorldManager::new(slug, seed))));
         Ok(())
     }
 
@@ -82,7 +87,11 @@ pub fn update_world_chunks(worlds_manager: Res<WorldsManager>, time: Res<Time>) 
     }
 }
 
-pub fn chunk_loaded_event_reader(worlds_manager: ResMut<WorldsManager>, network_container: Res<NetworkContainer>) {
+pub fn chunk_loaded_event_reader(
+    worlds_manager: ResMut<WorldsManager>,
+    network_container: Res<NetworkContainer>,
+    clients: Res<ClientsContainer>,
+) {
     let mut server = network_container.server.write().expect("poisoned");
 
     // Iterate loaded chunks
@@ -120,11 +129,8 @@ pub fn chunk_loaded_event_reader(worlds_manager: ResMut<WorldsManager>, network_
         for entity in watch_entities {
             let player_entity = world.get_entity(entity);
             let network = player_entity.get::<NetworkComponent>().unwrap();
-            server.send_message(
-                network.get_client_id().clone(),
-                ServerChannel::Reliable,
-                encoded.clone(),
-            );
+            let mut client = clients.get_mut(&network.get_client_id());
+            client.send_loaded_chunk(&mut server, &chunk_position, encoded.clone());
         }
     }
 }

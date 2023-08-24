@@ -54,12 +54,14 @@ impl WorldManager {
         WorldEntity::new(self.slug.clone(), entity.id())
     }
 
+    /// Returns boolean if player changed his chunk
+    /// and his despawned chunks if so
     pub fn player_move(
         &mut self,
         world_entity: &WorldEntity,
         position: Position,
         rotation: Rotation,
-    ) -> Vec<ChunkPosition> {
+    ) -> (bool, Vec<ChunkPosition>) {
         let mut abandoned_chunks: Vec<ChunkPosition> = Default::default();
 
         let mut player_entity = self.world.entity_mut(world_entity.get_entity());
@@ -67,7 +69,8 @@ impl WorldManager {
 
         let old_chunk = old_position.get_chunk_position();
         let new_chunk = position.get_chunk_position();
-        if old_chunk != new_chunk {
+        let chunk_changed = old_chunk != new_chunk;
+        if chunk_changed {
             abandoned_chunks = self.chunks_map.update_chunks_render(
                 world_entity.get_entity(),
                 &old_chunk,
@@ -79,7 +82,7 @@ impl WorldManager {
         let mut old_rotation = player_entity.get_mut::<Rotation>().unwrap();
         *old_rotation = rotation;
 
-        abandoned_chunks
+        (chunk_changed, abandoned_chunks)
     }
 
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {

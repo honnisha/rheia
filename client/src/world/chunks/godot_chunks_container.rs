@@ -6,6 +6,7 @@ use common::{
 };
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
+use log::error;
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -116,6 +117,17 @@ impl ChunksContainer {
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+        if self.chunks.contains_key(&chunk_position) {
+            error!(
+                "Network sended chunk to load, but it already exists: {}",
+                chunk_position
+            );
+            return;
+        }
+        if chunk_position == ChunkPosition::new(-1, -11) {
+            println!("Load: {}", chunk_position);
+        }
+
         let mut column = Gd::<ChunkColumn>::with_base(|base| {
             ChunkColumn::create(base, self.material.share(), chunk_position.clone())
         });
@@ -137,10 +149,18 @@ impl ChunksContainer {
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
-        for chunk in chunks_positions {
-            if let Some(c) = self.chunks.get_mut(&chunk) {
-                c.borrow_mut().chunk_column.bind_mut().queue_free();
-                self.chunks.remove(&chunk);
+        for chunk_position in chunks_positions {
+            if let Some(chunk) = self.chunks.remove(&chunk_position) {
+                chunk.borrow_mut().chunk_column.bind_mut().queue_free();
+
+                if chunk_position == ChunkPosition::new(-1, -11) {
+                    println!("Unload: {}", chunk_position);
+                }
+            }
+            else {
+                if chunk_position == ChunkPosition::new(-1, -11) {
+                    println!("Unload chunk not found: {}", chunk_position);
+                }
             }
         }
     }

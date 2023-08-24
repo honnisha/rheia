@@ -49,6 +49,7 @@ impl ChunkColumn {
         }
     }
 
+    /// If chunk load his data
     pub(crate) fn is_loaded(&self) -> bool {
         self.loaded
     }

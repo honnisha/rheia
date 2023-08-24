@@ -21,6 +21,7 @@ const TEXT_SECOND_PATH: &str = "MarginContainer/VBoxContainer/Row2/PanelContaine
 macro_rules! debug_second_string {
     () => {
         "World: {}
+Chunks loaded: {}
 Chunk position: {}
 Chunk info: {}"
     };
@@ -68,6 +69,7 @@ impl DebugInfo {
                 format!(
                     debug_second_string!(),
                     world.get_slug(),
+                    world.get_chunks_count(),
                     chunk_pos,
                     chunk_info,
                 )

@@ -29,13 +29,24 @@ pub fn on_player_move(
     worlds_manager: Res<WorldsManager>,
 ) {
     for event in player_move_events.iter() {
-        let client = clients.get(&event.client_id);
+        let mut client = clients.get_mut(&event.client_id);
         if let Some(world_entity) = client.world_entity.as_ref() {
-            let mut world_manager = worlds_manager
-                .get_world_manager_mut(&world_entity.get_world_slug())
-                .unwrap();
-            let abandoned_chunks = world_manager.player_move(&world_entity, event.position, event.rotation);
-            client.send_unload_chunks(&network_container, abandoned_chunks);
+
+            // Handle player move in world
+            let (chunk_changed, abandoned_chunks) = {
+                let mut world_manager = worlds_manager
+                    .get_world_manager_mut(&world_entity.get_world_slug())
+                    .unwrap();
+                world_manager.player_move(&world_entity, event.position, event.rotation)
+            };
+
+            if chunk_changed {
+                // Send abandoned chunks to unload
+                client.send_unload_chunks(&network_container, abandoned_chunks);
+
+                // Send new chunks
+                client.send_already_loaded_chunks(&network_container, &worlds_manager);
+            }
         }
     }
 }

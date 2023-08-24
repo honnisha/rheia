@@ -3,6 +3,7 @@
 ## Server
 ```
 cargo r -p honny-craft-server
+cargo test -p honny-craft-server
 ```
 
 ## Client
