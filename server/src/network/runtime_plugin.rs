@@ -1,8 +1,11 @@
 use std::sync::{Arc, RwLock};
 
-use bevy::{prelude::{Plugin, EventWriter, App, IntoSystemConfig, CoreSet}, app::AppExit};
+use bevy::{
+    app::AppExit,
+    prelude::{App, EventWriter, Plugin},
+};
+use bevy_app::{First, Startup};
 use lazy_static::lazy_static;
-
 
 lazy_static! {
     static ref SERVER_STATE: Arc<RwLock<ServerState>> = Arc::new(RwLock::new(ServerState::STARTED));
@@ -48,8 +51,8 @@ impl RuntimePlugin {
 
 impl Plugin for RuntimePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(activate_runtime.in_base_set(CoreSet::Last));
-        app.add_system(update_runtime.in_base_set(CoreSet::First));
+        app.add_systems(Startup, activate_runtime);
+        app.add_systems(First, update_runtime);
     }
 }
 

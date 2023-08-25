@@ -1,9 +1,9 @@
+use bevy::prelude::{Event, IntoSystemConfigs};
 use bevy::time::Time;
-use bevy_app::App;
+use bevy_app::{App, Update};
 use bevy_ecs::change_detection::Mut;
 use bevy_ecs::{
-    prelude::{resource_exists, EventReader, EventWriter, Events},
-    schedule::{IntoSystemConfig, IntoSystemSetConfig, SystemSet},
+    prelude::{EventReader, EventWriter, Events},
     system::{Res, ResMut, Resource},
     world::World,
 };
@@ -39,6 +39,7 @@ use crate::{
 
 pub struct NetworkPlugin;
 
+#[derive(Event)]
 pub(crate) struct SendClientMessageEvent {
     client_id: u64,
     channel: u8,
@@ -58,11 +59,6 @@ pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
 pub struct NetworkContainer {
     pub server: ServerLock,
     pub transport: TransferLock,
-}
-
-#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-pub enum NetworkSet {
-    Server,
 }
 
 impl NetworkPlugin {
@@ -95,24 +91,22 @@ impl NetworkPlugin {
 
         app.insert_resource(ClientsContainer::default());
 
-        app.configure_set(NetworkSet::Server.run_if(resource_exists::<NetworkContainer>()));
+        app.add_systems(Update, receive_message_system);
+        app.add_systems(Update, handle_events_system);
 
-        app.add_system(receive_message_system.in_set(NetworkSet::Server));
-        app.add_system(handle_events_system.in_set(NetworkSet::Server));
-
-        app.add_system(console_client_command_event);
+        app.add_systems(Update, console_client_command_event);
 
         app.add_event::<PlayerConnectionEvent>();
-        app.add_system(on_connection.after(handle_events_system).in_set(NetworkSet::Server));
+        app.add_systems(Update, on_connection.after(handle_events_system));
 
         app.add_event::<PlayerDisconnectEvent>();
-        app.add_system(on_disconnect.after(handle_events_system).in_set(NetworkSet::Server));
+        app.add_systems(Update, on_disconnect.after(handle_events_system));
 
         app.add_event::<PlayerMoveEvent>();
-        app.add_system(on_player_move.after(handle_events_system).in_set(NetworkSet::Server));
+        app.add_systems(Update, on_player_move.after(handle_events_system));
 
         app.add_event::<SendClientMessageEvent>();
-        app.add_system(send_client_messages.after(on_disconnect).in_set(NetworkSet::Server));
+        app.add_systems(Update, send_client_messages.after(on_disconnect));
     }
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {

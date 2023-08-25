@@ -6,9 +6,10 @@ use super::{
     world_manager::{chunks_loader_system, WorldManager},
 };
 
-struct WorldManagerPlugin;
+#[derive(Default)]
+pub struct WorldsManagerPlugin;
 
-impl Plugin for WorldManagerPlugin {
+impl Plugin for WorldsManagerPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, chunks_loader_system);
         app.insert_resource(WorldsManager::default());
@@ -31,7 +32,7 @@ impl WorldsManager {
         }
     }
 
-    pub fn get_world(&mut self) -> Option<&WorldManager> {
+    pub fn get_world(&self) -> Option<&WorldManager> {
         match self.world.as_ref() {
             Some(w) => Some(w),
             None => None,

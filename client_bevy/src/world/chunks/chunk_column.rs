@@ -1,6 +1,6 @@
 use arrayvec::ArrayVec;
-use bevy::prelude::{PbrBundle};
-use common::chunks::chunk_position::ChunkPosition;
+use bevy::prelude::{PbrBundle, Transform};
+use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
 use common::chunks::utils::SectionsData;
 use common::VERTICAL_SECTIONS;
 use parking_lot::RwLock;
@@ -33,6 +33,14 @@ impl ChunkColumn {
             sended: Arc::new(AtomicBool::new(false)),
             sections: Default::default(),
         }
+    }
+
+    pub fn get_transform(&self) -> Transform {
+        Transform::from_xyz(
+            self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
+            0_f32,
+            self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
+        )
     }
 
     pub fn get_world_slug(&self) -> &String {

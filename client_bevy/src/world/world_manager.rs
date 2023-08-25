@@ -1,4 +1,5 @@
 use bevy::prelude::{Commands, EventWriter, PbrBundle, ResMut};
+use bevy_app::App;
 use common::chunks::{chunk_position::ChunkPosition, utils::SectionsData};
 
 use std::borrow::Borrow;
@@ -8,8 +9,6 @@ use super::{
     chunks::{chunk_column::ChunkColumn, chunks_map::ChunkMap, near_chunk_data::NearChunksData},
     worlds_manager::WorldsManager,
 };
-
-pub struct WorldManagerPlugin;
 
 #[derive(Default)]
 pub struct WorldManager {

@@ -5,7 +5,7 @@ use super::chunk_section::ChunkSection;
 use super::mesh::mesh_generator::generate_chunk_geometry;
 use super::near_chunk_data::NearChunksData;
 use bevy::prelude::*;
-use bevy::prelude::{Assets, Commands, Event, Events, ResMut};
+use bevy::prelude::{Assets, Commands, Event, Events, Res, ResMut};
 use common::chunks::chunk_position::ChunkPosition;
 use common::VERTICAL_SECTIONS;
 use log::error;
@@ -32,7 +32,7 @@ pub fn chunk_generator(
     mut chunk_generator_event: ResMut<Events<GenerateChunkEvent>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut worlds_manager: ResMut<WorldsManager>,
+    worlds_manager: Res<WorldsManager>,
 ) {
     for event in chunk_generator_event.drain() {
         let world = match worlds_manager.get_world() {
@@ -65,6 +65,7 @@ pub fn chunk_generator(
 
             let entity = commands.spawn(PbrBundle {
                 mesh: meshes.add(mesh.into()),
+                transform: c.get_transform(),
                 material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
                 ..default()
             });

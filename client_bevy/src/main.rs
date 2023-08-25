@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 use network::client::NetworkPlugin;
+use world::worlds_manager::WorldsManagerPlugin;
 
 pub mod network;
 pub mod world;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, NetworkPlugin::default()))
+        .add_plugins((DefaultPlugins, WorldsManagerPlugin::default(), NetworkPlugin::default()))
         .add_systems(Startup, setup)
         .run();
 }

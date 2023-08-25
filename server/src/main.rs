@@ -59,17 +59,18 @@ fn main() {
     info!("HonnyCraft Server version {}", VERSION);
 
     let mut app = App::new();
-    app.add_plugin(TimePlugin::default());
-    app.add_plugin(TaskPoolPlugin::default());
-    app.add_plugin(TypeRegistrationPlugin::default());
-    app.add_plugin(FrameCountPlugin::default());
-    app.add_plugin(ScheduleRunnerPlugin::default());
-
     app.insert_resource(server_settings);
-    app.add_plugin(ConsolePlugin::default());
-    app.add_plugin(RuntimePlugin::default());
+    app.add_plugins((
+        TimePlugin::default(),
+        TaskPoolPlugin::default(),
+        TypeRegistrationPlugin::default(),
+        FrameCountPlugin::default(),
+        ScheduleRunnerPlugin::default(),
+        ConsolePlugin::default(),
+        RuntimePlugin::default(),
+        ResourcesPlugin::default(),
+        WorldsHandlerPlugin::default(),
+    ));
     NetworkPlugin::build(&mut app);
-    app.add_plugin(ResourcesPlugin::default());
-    app.add_plugin(WorldsHandlerPlugin::default());
     app.run();
 }
