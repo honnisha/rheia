@@ -6,7 +6,13 @@ cargo r -p honny-craft-server
 cargo test -p honny-craft-server
 ```
 
-## Client
+## Client bevy
+```
+cargo b -p honny-client-bevy
+cargo run -p honny-client-bevy
+```
+
+## Client Godot
 ```
 cargo b -p honny-craft
 ```

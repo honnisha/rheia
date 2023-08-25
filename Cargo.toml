@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "client",
+    "client_bevy",
     "server",
     "common",
 ]

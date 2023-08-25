@@ -1,5 +1,5 @@
 [package]
-name = "honny-craft-server"
+name = "honny-client-bevy"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,16 +7,17 @@ publish = false
 [dependencies]
 common = { path = "../common" }
 
+bevy = { version = "0.11.2", default-features = true }
+bevy_app = "0.11.2"
+
+# ECS
+bevy_ecs = "0.11.2"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 env_logger = "0.10.0"
 log = { version = "0.4" }
 lazy_static = "1.4.0"
-rustyline = { version = "12.0.0", features = ["with-file-history"] }
-chrono = "0.4.24"
-uuid = { version = "1.3.2", features = ["v4", "fast-rng"] }
-regex = "1.8.4"
-fxhash = "0.2.1"
 
 # For spiral iteration
 spiral = "0.1"
@@ -34,26 +35,13 @@ bincode = "1.3.2"
 # Fast RwLock
 flume = "0.10.14"
 
-bevy = { version = "0.11.2", default-features = false }
-bevy_app = "0.11.2"
-
-# ECS
-bevy_ecs = "0.11.2"
-
 # Single thread links
 send_wrapper = "0.6.0"
 
-# ARGS
-clap = { version = "4.2.1", features = ["string", "derive"] }
-
-# Noise
-bracket-lib = "~0.8"
-bracket-noise = "~0.8"
-bracket-random = "~0.8"
-
-# Schematics
-flate2 = "1.0"
-fastnbt = "2"
-
 # Miltithread heavy tasks
 rayon = "1.7"
+
+# https://github.com/bonsairobo/block-mesh-rs/blob/main/Cargo.toml
+ilattice = "0.1"
+ndshape = "0.3"
+ndcopy = "0.3"

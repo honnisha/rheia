@@ -1,3 +1,4 @@
+use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
 use log::info;
@@ -8,6 +9,7 @@ use crate::network::server::NetworkContainer;
 use crate::worlds::worlds_manager::WorldsManager;
 use crate::{client_resources::resources_manager::ResourceManager, network::server::NetworkPlugin};
 
+#[derive(Event)]
 pub struct PlayerConnectionEvent {
     client_id: u64,
 }

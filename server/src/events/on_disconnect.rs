@@ -1,9 +1,11 @@
+use bevy::prelude::Event;
 use bevy_ecs::{prelude::EventReader, system::ResMut};
 use log::info;
 use renet::DisconnectReason;
 
 use crate::{network::clients_container::ClientsContainer, worlds::worlds_manager::WorldsManager};
 
+#[derive(Event)]
 pub struct PlayerDisconnectEvent {
     client_id: u64,
     reason: DisconnectReason,
