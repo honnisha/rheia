@@ -17,6 +17,7 @@ use renet::{
     transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
     RenetServer, ServerEvent,
 };
+use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 use std::{
     net::UdpSocket,
     sync::{Arc, RwLock},
@@ -57,8 +58,33 @@ pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
 
 #[derive(Resource)]
 pub struct NetworkContainer {
-    pub server: ServerLock,
-    pub transport: TransferLock,
+    server: ServerLock,
+    transport: TransferLock,
+}
+
+impl NetworkContainer {
+    pub fn new(server: RenetServer, transport: NetcodeServerTransport) -> Self {
+        Self {
+            server: Arc::new(RwLock::new(server)),
+            transport: Arc::new(RwLock::new(transport)),
+        }
+    }
+
+    pub fn get_server(&self) -> RwLockReadGuard<RenetServer> {
+        self.server.as_ref().read().expect("poisoned")
+    }
+
+    pub fn get_server_mut(&self) -> RwLockWriteGuard<RenetServer> {
+        self.server.as_ref().write().expect("poisoned")
+    }
+
+    pub fn get_transport(&self) -> RwLockReadGuard<NetcodeServerTransport> {
+        self.transport.as_ref().read().expect("poisoned")
+    }
+
+    pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeServerTransport> {
+        self.transport.as_ref().write().expect("poisoned")
+    }
 }
 
 impl NetworkPlugin {
@@ -84,10 +110,7 @@ impl NetworkPlugin {
 
         let transport = NetcodeServerTransport::new(current_time, server_config, socket).unwrap();
 
-        app.insert_resource(NetworkContainer {
-            server: Arc::new(RwLock::new(server)),
-            transport: Arc::new(RwLock::new(transport)),
-        });
+        app.insert_resource(NetworkContainer::new(server, transport));
 
         app.insert_resource(ClientsContainer::default());
 
@@ -144,8 +167,8 @@ fn receive_message_system(
     mut server_events: EventWriter<ServerEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
-    let mut server = network_container.server.write().expect("poisoned");
-    let mut transport = network_container.transport.write().expect("poisoned");
+    let mut server = network_container.get_server_mut();
+    let mut transport = network_container.get_transport_mut();
     server.update(time.delta());
 
     if let Err(e) = transport.update(time.delta(), &mut server) {
@@ -214,7 +237,7 @@ fn handle_events_system(
     mut connection_events: EventWriter<PlayerConnectionEvent>,
     mut disconnection_events: EventWriter<PlayerDisconnectEvent>,
 ) {
-    let transport = network_container.transport.read().expect("poisoned");
+    let transport = network_container.get_transport();
 
     for event in server_events.iter() {
         match event {

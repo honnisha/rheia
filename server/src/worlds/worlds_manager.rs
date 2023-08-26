@@ -92,7 +92,7 @@ pub fn chunk_loaded_event_reader(
     network_container: Res<NetworkContainer>,
     clients: Res<ClientsContainer>,
 ) {
-    let mut server = network_container.server.write().expect("poisoned");
+    let mut server = network_container.get_server_mut();
 
     // Iterate loaded chunks
     for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {

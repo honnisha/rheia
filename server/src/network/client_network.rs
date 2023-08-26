@@ -72,7 +72,7 @@ impl ClientNetwork {
     }
 
     pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
-        let mut server = network_container.server.write().expect("poisoned");
+        let mut server = network_container.get_server_mut();
         let world_entity = self.world_entity.as_ref().unwrap();
 
         let input = ServerMessages::Teleport {
@@ -103,7 +103,7 @@ impl ClientNetwork {
 
     /// Send already loaded chunks to the client
     pub fn send_already_loaded_chunks(&mut self, network_container: &NetworkContainer, worlds_manager: &WorldsManager) {
-        let mut server = network_container.server.write().expect("poisoned");
+        let mut server = network_container.get_server_mut();
         let world_entity = self.world_entity.as_ref().unwrap();
 
         let world_manager = worlds_manager
@@ -133,7 +133,7 @@ impl ClientNetwork {
             return;
         }
 
-        let mut server = network_container.server.write().expect("poisoned");
+        let mut server = network_container.get_server_mut();
 
         let input = ServerMessages::UnloadChunks {
             chunks: abandoned_chunks.clone(),
