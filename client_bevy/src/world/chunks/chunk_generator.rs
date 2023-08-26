@@ -65,7 +65,7 @@ pub fn chunk_generator(
 
             let entity = commands.spawn(PbrBundle {
                 mesh: meshes.add(mesh.into()),
-                transform: c.get_transform(),
+                transform: c.get_transform(y as u8),
                 material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
                 ..default()
             });

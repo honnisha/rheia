@@ -7,7 +7,7 @@ publish = false
 [dependencies]
 common = { path = "../common" }
 
-bevy = { version = "0.11.2", default-features = true }
+bevy = { version = "0.11.2", default-features = true, features = ["dynamic_linking", "trace_tracy"] }
 bevy_app = "0.11.2"
 
 # ECS
@@ -45,3 +45,11 @@ rayon = "1.7"
 ilattice = "0.1"
 ndshape = "0.3"
 ndcopy = "0.3"
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3

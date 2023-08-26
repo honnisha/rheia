@@ -35,10 +35,10 @@ impl ChunkColumn {
         }
     }
 
-    pub fn get_transform(&self) -> Transform {
+    pub fn get_transform(&self, y: u8) -> Transform {
         Transform::from_xyz(
             self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
-            0_f32,
+            (y * CHUNK_SIZE) as f32,
             self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
         )
     }

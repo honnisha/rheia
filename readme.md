@@ -10,6 +10,8 @@ cargo test -p honny-craft-server
 ```
 cargo b -p honny-client-bevy
 cargo run -p honny-client-bevy
+cargo run --features bevy/dynamic_linking -p honny-client-bevy
+cargo run --features bevy/trace_tracy -p honny-client-bevy
 ```
 
 ## Client Godot

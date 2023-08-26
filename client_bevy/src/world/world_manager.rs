@@ -1,5 +1,4 @@
-use bevy::prelude::{Commands, EventWriter, PbrBundle, ResMut};
-use bevy_app::App;
+use bevy::prelude::{Commands, EventWriter, ResMut};
 use common::chunks::{chunk_position::ChunkPosition, utils::SectionsData};
 
 use std::borrow::Borrow;

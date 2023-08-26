@@ -1,29 +1,44 @@
-use bevy::prelude::*;
+use std::f32::consts::PI;
+
+use bevy::{
+    core_pipeline::experimental::taa::TemporalAntiAliasPlugin, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*,
+};
 use network::client::NetworkPlugin;
+use player_controller::freecam_handler::{pan_orbit_camera, spawn_camera};
 use world::worlds_manager::WorldsManagerPlugin;
 
 pub mod network;
+pub mod player_controller;
 pub mod world;
 
 fn main() {
-    App::new()
-        .add_plugins((DefaultPlugins, WorldsManagerPlugin::default(), NetworkPlugin::default()))
-        .add_systems(Startup, setup)
-        .run();
+    let mut app = App::new();
+    app.add_plugins((
+        DefaultPlugins,
+        WorldsManagerPlugin::default(),
+        NetworkPlugin::default(),
+        TemporalAntiAliasPlugin,
+        FrameTimeDiagnosticsPlugin,
+        LogDiagnosticsPlugin::default(),
+    ));
+    app.add_systems(Startup, setup);
+    app.add_systems(Update, pan_orbit_camera);
+    app.run();
 }
 
-/// set up a simple 3D scene
-fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
-    // plane
-    //commands.spawn(PbrBundle {
-    //    mesh: meshes.add(shape::Plane::from_size(5.0).into()),
-    //    material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+fn setup(mut commands: Commands) {
+    // camera
+    //commands.spawn(Camera3dBundle {
+    //    transform: Transform::from_xyz(0.0, 60.0, 60.0).looking_at(Vec3::ZERO, Vec3::Y),
     //    ..default()
     //});
-
-    // camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 60.0, 60.0).looking_at(Vec3::ZERO, Vec3::Y),
+    spawn_camera(&mut commands);
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_rotation(Quat::from_euler(EulerRot::ZYX, 0.0, PI * -0.15, PI * -0.15)),
         ..default()
     });
 }
