@@ -142,59 +142,56 @@ fn handle_events_system(
     mut chunk_loaded_event: EventWriter<ChunkLoadedEvent>,
     mut chunk_unloaded_event: EventWriter<ChunkUnloadedEvent>,
 ) {
-    let delta = time.delta();
-
     let mut client = network_container.get_client_mut();
-    if client.is_disconnected() {
-        return;
-    }
-    client.update(delta);
+    client.update(time.delta());
 
     let mut transport = network_container.get_transport_mut();
-    if let Err(e) = transport.update(delta, &mut client) {
+    if let Err(e) = transport.update(time.delta(), &mut client) {
         netcode_error_event.send(NetcodeErrorEvent::new(e));
         return;
     }
 
-    while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
-        let decoded: ServerMessages = match bincode::deserialize(&server_message) {
-            Ok(d) => d,
-            Err(e) => {
-                error!("Decode server message error: {}", e);
-                continue;
-            }
-        };
-        match decoded {
-            ServerMessages::ConsoleOutput { message } => {
-                info!("{}", message);
-            }
-            ServerMessages::Resource { slug, scripts } => {
-                resource_loaded_event.send(ResourceLoadedEvent::new(slug, scripts));
-            }
-            ServerMessages::Teleport {
-                world_slug,
-                location,
-                yaw,
-                pitch,
-            } => {
-                player_teleport_event.send(PlayerTeleportEvent::new(
+    if !client.is_disconnected() {
+        while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
+            let decoded: ServerMessages = match bincode::deserialize(&server_message) {
+                Ok(d) => d,
+                Err(e) => {
+                    error!("Decode server message error: {}", e);
+                    continue;
+                }
+            };
+            match decoded {
+                ServerMessages::ConsoleOutput { message } => {
+                    info!("{}", message);
+                }
+                ServerMessages::Resource { slug, scripts } => {
+                    resource_loaded_event.send(ResourceLoadedEvent::new(slug, scripts));
+                }
+                ServerMessages::Teleport {
                     world_slug,
-                    Transform::from_xyz(location[0], location[1], location[2]),
+                    location,
                     yaw,
                     pitch,
-                ));
-            }
-            ServerMessages::ChunkSectionInfo {
-                chunk_position,
-                mut sections,
-            } => {
-                chunk_loaded_event.send(ChunkLoadedEvent::new(
+                } => {
+                    player_teleport_event.send(PlayerTeleportEvent::new(
+                        world_slug,
+                        Transform::from_xyz(location[0], location[1], location[2]),
+                        yaw,
+                        pitch,
+                    ));
+                }
+                ServerMessages::ChunkSectionInfo {
                     chunk_position,
-                    unpack_network_sectioins(&mut sections),
-                ));
-            }
-            ServerMessages::UnloadChunks { chunks } => {
-                chunk_unloaded_event.send(ChunkUnloadedEvent::new(chunks));
+                    mut sections,
+                } => {
+                    chunk_loaded_event.send(ChunkLoadedEvent::new(
+                        chunk_position,
+                        unpack_network_sectioins(&mut sections),
+                    ));
+                }
+                ServerMessages::UnloadChunks { chunks } => {
+                    chunk_unloaded_event.send(ChunkUnloadedEvent::new(chunks));
+                }
             }
         }
     }
