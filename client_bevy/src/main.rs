@@ -1,10 +1,12 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    core_pipeline::experimental::taa::TemporalAntiAliasPlugin, diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin}, prelude::*,
+    core_pipeline::experimental::taa::TemporalAntiAliasPlugin,
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
 };
 use network::client::NetworkPlugin;
-use player_controller::freecam_handler::{pan_orbit_camera, spawn_camera};
+use player_controller::controller::PlayerControllerPlugin;
 use world::worlds_manager::WorldsManagerPlugin;
 
 pub mod network;
@@ -17,12 +19,12 @@ fn main() {
         DefaultPlugins,
         WorldsManagerPlugin::default(),
         NetworkPlugin::default(),
+        PlayerControllerPlugin::default(),
         TemporalAntiAliasPlugin,
         FrameTimeDiagnosticsPlugin,
         LogDiagnosticsPlugin::default(),
     ));
     app.add_systems(Startup, setup);
-    app.add_systems(Update, pan_orbit_camera);
     app.run();
 }
 
@@ -32,7 +34,6 @@ fn setup(mut commands: Commands) {
     //    transform: Transform::from_xyz(0.0, 60.0, 60.0).looking_at(Vec3::ZERO, Vec3::Y),
     //    ..default()
     //});
-    spawn_camera(&mut commands);
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,
