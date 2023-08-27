@@ -70,7 +70,7 @@ impl NetworkContainer {
         }
     }
 
-    pub fn get_server(&self) -> RwLockReadGuard<RenetServer> {
+    pub fn _get_server(&self) -> RwLockReadGuard<RenetServer> {
         self.server.as_ref().read().expect("poisoned")
     }
 

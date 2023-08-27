@@ -143,7 +143,6 @@ fn handle_events_system(
     mut chunk_unloaded_event: EventWriter<ChunkUnloadedEvent>,
 ) {
     let delta = time.delta();
-    info!("handle_events_system start delta:{:.2?}", delta);
 
     let mut client = network_container.get_client_mut();
     if client.is_disconnected() {
