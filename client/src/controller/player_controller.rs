@@ -65,7 +65,7 @@ impl PlayerController {
 
     /// Handle network packet for changing position
     pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        let mut handler = match self.handler.as_mut() {
+        let handler = match self.handler.as_mut() {
             Some(h) => h,
             None => {
                 self.handler = Some(FreeCameraHandler::create());
@@ -86,18 +86,6 @@ impl PlayerController {
         let handler = self.handler.as_ref().unwrap();
         let camera = self.camera.as_deref().unwrap();
         handler.get_position(camera)
-    }
-
-    pub fn get_yaw(&self) -> f32 {
-        let handler = self.handler.as_ref().unwrap();
-        let camera = self.camera.as_deref().unwrap();
-        handler.get_yaw(camera)
-    }
-
-    pub fn get_pitch(&self) -> f32 {
-        let handler = self.handler.as_ref().unwrap();
-        let camera = self.camera.as_deref().unwrap();
-        handler.get_pitch(camera)
     }
 }
 

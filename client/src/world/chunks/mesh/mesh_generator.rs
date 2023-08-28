@@ -1,9 +1,6 @@
 use crate::{
     main_scene::FloatType,
-    utils::{
-        mesh::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
-        textures::texture_mapper::TextureMapper,
-    },
+    utils::textures::texture_mapper::TextureMapper,
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
 use common::blocks::blocks_storage::BlockType;
@@ -17,6 +14,8 @@ use godot::{obj::EngineEnum, prelude::Vector2};
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
+
+use super::block_mesh::{visible_block_faces, UnitQuadBuffer, RIGHT_HANDED_Y_UP_CONFIG, UnorientedQuad};
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -102,9 +101,12 @@ pub fn generate_chunk_geometry(
                     //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,
                     _ => {
-                        error!("GENERATE_CHUNK_GEOMETRY cant find offset for block type: {}", block_type_info);
+                        error!(
+                            "GENERATE_CHUNK_GEOMETRY cant find offset for block type: {}",
+                            block_type_info
+                        );
                         panic!();
-                    },
+                    }
                 };
                 let ui_offset = Vector2::new(
                     steep * ((offset % 32) as i32) as FloatType,

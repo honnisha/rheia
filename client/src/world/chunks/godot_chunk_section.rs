@@ -47,7 +47,7 @@ impl ChunkSection {
 
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
         let m = self.mesh.as_mut().unwrap().borrow_mut();
-        let c = new_mesh.get_surface_count();
+        //let c = new_mesh.get_surface_count();
         m.set_mesh(new_mesh.upcast());
         // println!("update_mesh y:{} surface_count:{}", self.y, c);
 

@@ -9,9 +9,10 @@ use std::sync::{
 };
 use std::time::Instant;
 
-use crate::{utils::mesh::mesh_generator::Geometry, world::world_manager::get_default_material};
+use crate::world::world_manager::get_default_material;
 
 use super::godot_chunk_section::ChunkSection;
+use super::mesh::mesh_generator::Geometry;
 
 type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 

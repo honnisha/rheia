@@ -7,7 +7,7 @@ use log::error;
 
 use crate::world::world_manager::WorldManager;
 
-use super::{handlers::freecam::FreeCameraHandler, player_controller::PlayerController};
+use super::handlers::freecam::FreeCameraHandler;
 
 const TEXT_FIRST_PATH: &str = "MarginContainer/VBoxContainer/Row1/PanelContainer/MarginContainer/RichTextLabel";
 
@@ -45,7 +45,6 @@ impl DebugInfo {
         camera: &Camera3D,
         player_handler: &Option<FreeCameraHandler>,
     ) {
-
         let controller_positioin = match player_handler {
             Some(h) => {
                 let controller_pos = h.get_position(camera);
@@ -75,12 +74,6 @@ impl DebugInfo {
         let camera_pos = camera.get_position();
         let chunk_pos =
             BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position();
-        let chunk_pos = BlockPosition::new(
-            camera_pos.x as i64,
-            camera_pos.y as i64,
-            camera_pos.z as i64,
-        )
-        .get_chunk_position();
         let second_text = match world_manager.get_world() {
             Some(w) => {
                 let world = w.bind();

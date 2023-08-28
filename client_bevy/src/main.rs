@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::{
     core_pipeline::experimental::taa::TemporalAntiAliasPlugin,
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
+    prelude::*, window::PresentMode,
 };
 use network::client::NetworkPlugin;
 use player_controller::controller::PlayerControllerPlugin;
@@ -16,7 +16,13 @@ pub mod world;
 fn main() {
     let mut app = App::new();
     app.add_plugins((
-        DefaultPlugins,
+        DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                present_mode: PresentMode::AutoNoVsync,
+                ..default()
+            }),
+            ..default()
+        }),
         WorldsManagerPlugin::default(),
         NetworkPlugin::default(),
         PlayerControllerPlugin::default(),

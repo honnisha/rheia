@@ -13,8 +13,6 @@ use super::chunk_section::ChunkSection;
 
 pub type ColumnDataLockType = Arc<RwLock<SectionsData>>;
 
-pub(crate) type ChunkGeneratorType = ArrayVec<PbrBundle, VERTICAL_SECTIONS>;
-
 pub struct ChunkColumn {
     chunk_position: ChunkPosition,
     world_slug: String,

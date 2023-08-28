@@ -90,7 +90,7 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{utils::mesh::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+    use crate::world::chunks::mesh::block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
 
     use super::*;
     use common::blocks::blocks_storage::BlockType;

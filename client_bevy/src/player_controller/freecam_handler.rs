@@ -1,130 +1,123 @@
+use std::f32::consts::PI;
+
 use bevy::{
-    input::mouse::{MouseMotion, MouseWheel},
-    prelude::*,
-    window::PrimaryWindow,
+    input::mouse::MouseMotion,
+    prelude::{
+        default, Camera, Camera3dBundle, Commands, Component, EulerRot, EventReader, Input, KeyCode, Quat, Query,
+        Transform, Vec2, Vec3, With,
+    },
+    time::Time,
 };
+use bevy_ecs::system::Res;
 
-/// Tags an entity as capable of panning and orbiting.
 #[derive(Component)]
-pub struct PanOrbitCamera {
-    /// The "focus point" to orbit around. It is automatically updated when panning the camera
-    pub focus: Vec3,
-    pub radius: f32,
-    pub upside_down: bool,
+pub(crate) struct FreecamCameraController {
+    pub enabled: bool,
+    pub sensitivity: f32,
+    pub key_forward: KeyCode,
+    pub key_back: KeyCode,
+    pub key_left: KeyCode,
+    pub key_right: KeyCode,
+    pub key_up: KeyCode,
+    pub key_down: KeyCode,
+    pub key_run: KeyCode,
+    pub walk_speed: f32,
+    pub run_speed: f32,
+    pub friction: f32,
+    pub pitch: f32,
+    pub yaw: f32,
+    pub velocity: Vec3,
 }
 
-impl Default for PanOrbitCamera {
+impl Default for FreecamCameraController {
     fn default() -> Self {
-        PanOrbitCamera {
-            focus: Vec3::ZERO,
-            radius: 5.0,
-            upside_down: false,
+        Self {
+            enabled: true,
+            sensitivity: 0.5,
+            key_forward: KeyCode::W,
+            key_back: KeyCode::S,
+            key_left: KeyCode::A,
+            key_right: KeyCode::D,
+            key_up: KeyCode::E,
+            key_down: KeyCode::Q,
+            key_run: KeyCode::ShiftLeft,
+            walk_speed: 10.0,
+            run_speed: 30.0,
+            friction: 0.5,
+            pitch: 0.0,
+            yaw: 0.0,
+            velocity: Vec3::ZERO,
         }
     }
 }
 
-/// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
-pub fn pan_orbit_camera(
-    primary_query: Query<&Window, With<PrimaryWindow>>,
-    mut ev_motion: EventReader<MouseMotion>,
-    mut ev_scroll: EventReader<MouseWheel>,
-    input_mouse: Res<Input<MouseButton>>,
-    mut query: Query<(&mut PanOrbitCamera, &mut Transform, &Projection)>,
+pub(crate) fn freecam_camera_handler(
+    time: Res<Time>,
+    mut mouse_events: EventReader<MouseMotion>,
+    key_input: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Transform, &mut FreecamCameraController), With<Camera>>,
 ) {
-    let window = match primary_query.get_single() {
-        Ok(w) => w,
-        Err(_) => {
-            return;
-        }
-    };
+    let dt = time.delta_seconds();
 
-    // change input mapping for orbit and panning here
-    let orbit_button = MouseButton::Right;
-    let pan_button = MouseButton::Middle;
-
-    let mut pan = Vec2::ZERO;
-    let mut rotation_move = Vec2::ZERO;
-    let mut scroll = 0.0;
-    let mut orbit_button_changed = false;
-
-    if input_mouse.pressed(orbit_button) {
-        for ev in ev_motion.iter() {
-            rotation_move += ev.delta;
-        }
-    } else if input_mouse.pressed(pan_button) {
-        // Pan only if we're not rotating at the moment
-        for ev in ev_motion.iter() {
-            pan += ev.delta;
-        }
-    }
-    for ev in ev_scroll.iter() {
-        scroll += ev.y;
-    }
-    if input_mouse.just_released(orbit_button) || input_mouse.just_pressed(orbit_button) {
-        orbit_button_changed = true;
+    // Handle mouse input
+    let mut mouse_delta = Vec2::ZERO;
+    for mouse_event in mouse_events.iter() {
+        mouse_delta += mouse_event.delta;
     }
 
-    for (mut pan_orbit, mut transform, projection) in query.iter_mut() {
-        if orbit_button_changed {
-            // only check for upside down when orbiting started or ended this frame
-            // if the camera is "upside" down, panning horizontally would be inverted, so invert the input to make it correct
-            let up = transform.rotation * Vec3::Y;
-            pan_orbit.upside_down = up.y <= 0.0;
+    for (mut transform, mut options) in &mut query {
+        if !options.enabled {
+            continue;
         }
 
-        let mut any = false;
-        if rotation_move.length_squared() > 0.0 {
-            any = true;
-            let window = get_primary_window_size(window);
-            let delta_x = {
-                let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
-                if pan_orbit.upside_down {
-                    -delta
-                } else {
-                    delta
-                }
+        // Handle key input
+        let mut axis_input = Vec3::ZERO;
+        if key_input.pressed(options.key_forward) {
+            axis_input.z += 1.0;
+        }
+        if key_input.pressed(options.key_back) {
+            axis_input.z -= 1.0;
+        }
+        if key_input.pressed(options.key_right) {
+            axis_input.x += 1.0;
+        }
+        if key_input.pressed(options.key_left) {
+            axis_input.x -= 1.0;
+        }
+        if key_input.pressed(options.key_up) {
+            axis_input.y += 1.0;
+        }
+        if key_input.pressed(options.key_down) {
+            axis_input.y -= 1.0;
+        }
+
+        // Apply movement update
+        if axis_input != Vec3::ZERO {
+            let max_speed = if key_input.pressed(options.key_run) {
+                options.run_speed
+            } else {
+                options.walk_speed
             };
-            let delta_y = rotation_move.y / window.y * std::f32::consts::PI;
-            let yaw = Quat::from_rotation_y(-delta_x);
-            let pitch = Quat::from_rotation_x(-delta_y);
-            transform.rotation = yaw * transform.rotation; // rotate around global y axis
-            transform.rotation = transform.rotation * pitch; // rotate around local x axis
-        } else if pan.length_squared() > 0.0 {
-            any = true;
-            // make panning distance independent of resolution and FOV,
-            let window = get_primary_window_size(window);
-            if let Projection::Perspective(projection) = projection {
-                pan *= Vec2::new(projection.fov * projection.aspect_ratio, projection.fov) / window;
+            options.velocity = axis_input.normalize() * max_speed;
+        } else {
+            let friction = options.friction.clamp(0.0, 1.0);
+            options.velocity *= 1.0 - friction;
+            if options.velocity.length_squared() < 1e-6 {
+                options.velocity = Vec3::ZERO;
             }
-            // translate by local axes
-            let right = transform.rotation * Vec3::X * -pan.x;
-            let up = transform.rotation * Vec3::Y * pan.y;
-            // make panning proportional to distance away from focus point
-            let translation = (right + up) * pan_orbit.radius;
-            pan_orbit.focus += translation;
-        } else if scroll.abs() > 0.0 {
-            any = true;
-            pan_orbit.radius -= scroll * pan_orbit.radius * 0.2;
-            // dont allow zoom to reach zero or you get stuck
-            pan_orbit.radius = f32::max(pan_orbit.radius, 0.05);
         }
+        let forward = transform.forward();
+        let right = transform.right();
+        transform.translation +=
+            options.velocity.x * dt * right + options.velocity.y * dt * Vec3::Y + options.velocity.z * dt * forward;
 
-        if any {
-            // emulating parent/child to make the yaw/y-axis rotation behave like a turntable
-            // parent = x and y rotation
-            // child = z-offset
-            let rot_matrix = Mat3::from_quat(transform.rotation);
-            transform.translation = pan_orbit.focus + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, pan_orbit.radius));
+        if mouse_delta != Vec2::ZERO {
+            // Apply look update
+            options.pitch = (options.pitch - mouse_delta.y * 0.5 * options.sensitivity * dt).clamp(-PI / 2., PI / 2.);
+            options.yaw -= mouse_delta.x * options.sensitivity * dt;
+            transform.rotation = Quat::from_euler(EulerRot::ZYX, 0.0, options.yaw, options.pitch);
         }
     }
-
-    // consume any remaining events, so they don't pile up if we don't need them
-    // (and also to avoid Bevy warning us about not checking events every frame update)
-    ev_motion.clear();
-}
-
-fn get_primary_window_size(window: &Window) -> Vec2 {
-    Vec2::new(window.width() as f32, window.height() as f32)
 }
 
 /// Spawn a camera like this
@@ -134,12 +127,9 @@ pub fn spawn_camera(mut commands: Commands) {
 
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y),
-            ..Default::default()
+            transform: Transform::from_xyz(-1.0, 1.0, 1.0).looking_at(Vec3::new(-1.0, 1.0, 0.0), Vec3::Y),
+            ..default()
         },
-        PanOrbitCamera {
-            radius,
-            ..Default::default()
-        },
+        FreecamCameraController::default(),
     ));
 }

@@ -17,13 +17,14 @@ use std::time::Instant;
 use crate::{
     entities::position::GodotPositionConverter,
     main_scene::CHUNKS_DISTANCE,
-    utils::{mesh::mesh_generator::generate_chunk_geometry, textures::texture_mapper::TextureMapper},
+    utils::textures::texture_mapper::TextureMapper,
     world::world_manager::{get_default_material, TextureMapperType, WorldManager},
 };
 
 use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries,
     godot_chunk_column::{ChunkColumn, ChunksGeometryType},
+    mesh::mesh_generator::generate_chunk_geometry,
 };
 
 pub type ColumnDataType = Arc<RwLock<SectionsData>>;
