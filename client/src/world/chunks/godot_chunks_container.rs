@@ -164,7 +164,8 @@ impl ChunksContainer {
         }
     }
 
-    fn update_mesh(
+    /// Send chunk to generate his mesh
+    fn send_generation(
         chunks_near: NearChunksData,
         data: ColumnDataType,
         update_mesh_tx: Sender<ChunksGeometryType>,
@@ -218,7 +219,7 @@ impl NodeVirtual for ChunksContainer {
                     continue;
                 }
 
-                ChunksContainer::update_mesh(
+                ChunksContainer::send_generation(
                     near_chunks_data,
                     chunk.borrow().data.clone(),
                     chunk.borrow().chunk_column.bind().update_mesh_tx.clone(),

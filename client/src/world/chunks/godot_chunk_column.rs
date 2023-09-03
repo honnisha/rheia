@@ -108,6 +108,7 @@ impl NodeVirtual for ChunkColumn {
     }
 
     fn process(&mut self, _delta: f64) {
+        // Recieve loaded chunk to spawn
         for mut section_geometry in self.update_mesh_rx.drain() {
             let mut y = 0;
             for geometry in section_geometry.drain(..) {
