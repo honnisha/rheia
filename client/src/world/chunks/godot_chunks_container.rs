@@ -151,8 +151,8 @@ impl ChunksContainer {
             if let Some(chunk) = self.chunks.remove(&chunk_position) {
                 if let Some(c) = chunk.borrow_mut().chunk_column.as_mut() {
                     c.bind_mut().queue_free();
-                    unloaded = true;
                 }
+                unloaded = true;
             }
             if !unloaded {
                 error!("Unload chunk not found: {}", chunk_position);
@@ -199,7 +199,7 @@ impl NodeVirtual for ChunksContainer {
                     c.update_tx.clone(),
                     self.texture_mapper.clone(),
                     self.material.instance_id(),
-                    chunk_position.clone()
+                    chunk_position.clone(),
                 );
                 c.set_sended();
             }
@@ -209,7 +209,7 @@ impl NodeVirtual for ChunksContainer {
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
-                    c.chunk_column = Some(spawn_chunk(data, &mut self.base));
+                    c.chunk_column = Some(spawn_chunk(data, chunk_position, &mut self.base));
                     c.set_loaded()
                 }
             }

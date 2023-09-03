@@ -9,7 +9,6 @@ use super::{
     godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
-use std::time::Instant;
 
 pub(crate) type ChunksGenerationType = InstanceId;
 
@@ -25,7 +24,7 @@ pub(crate) fn generate_chunk(
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
         let mut column =
-            Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, material.share(), chunk_position));
+            Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
 
         let mut c = column.bind_mut();
@@ -38,10 +37,8 @@ pub(crate) fn generate_chunk(
 
             let name = GodotString::from(format!("Section {}", y));
             section.bind_mut().set_name(name.clone());
-            let index = section.bind().get_index().clone();
 
-            c.base.add_child(section.upcast());
-            let mut section = c.base.get_child(index).unwrap().cast::<ChunkSection>();
+            c.base.add_child(section.share().upcast());
             section.bind_mut().create_mesh();
             section
                 .bind_mut()
@@ -65,18 +62,16 @@ pub(crate) fn generate_chunk(
 }
 
 /// Spawn chunk from main thread
-pub(crate) fn spawn_chunk(instance_id: ChunksGenerationType, base: &mut Base<Node>) -> Gd<ChunkColumn>{
-    let now = Instant::now();
-    let column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
-    let chunk_position = column.bind().get_chunk_position().clone();
-    let index = column.bind().get_index().clone();
-    base.add_child(column.upcast());
-    let mut column = base.get_child(index).unwrap().cast::<ChunkColumn>();
+pub(crate) fn spawn_chunk(
+    instance_id: ChunksGenerationType,
+    chunk_position: &ChunkPosition,
+    base: &mut Base<Node>,
+) -> Gd<ChunkColumn> {
+    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
+    base.add_child(column.share().upcast());
 
     column
         .bind_mut()
         .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
-    let elapsed = now.elapsed();
-    println!("Chunk {} spawned: {:.2?}", chunk_position, elapsed);
     column
 }
