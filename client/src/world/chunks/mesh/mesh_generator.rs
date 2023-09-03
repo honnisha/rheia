@@ -59,8 +59,6 @@ pub fn generate_chunk_geometry(
     texture_mapper: &RwLockReadGuard<TextureMapper>,
     chunk_data: &ChunkDataBordered,
 ) -> Geometry {
-    //let now = Instant::now();
-
     let mut arrays: Array<Variant> = Array::new();
     let mut mesh_ist = ArrayMesh::new();
     arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
@@ -127,6 +125,5 @@ pub fn generate_chunk_geometry(
     arrays.set(mesh::ArrayType::ARRAY_TEX_UV.ord() as usize, Variant::from(uvs));
 
     mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::PRIMITIVE_TRIANGLES, arrays);
-    //println!("generate_chunk_geometry data generated in {:.2?}", now.elapsed());
     Geometry { mesh_ist: mesh_ist }
 }

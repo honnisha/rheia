@@ -37,7 +37,6 @@ impl WorldGenerator {
         chunk_position: &ChunkPosition,
         vertical_index: usize,
     ) -> bool {
-        //let now = Instant::now();
         let mut has_any_block = false;
         for x in 0_u8..(CHUNK_SIZE as u8) {
             for z in 0_u8..(CHUNK_SIZE as u8) {
@@ -58,7 +57,6 @@ impl WorldGenerator {
                 }
             }
         }
-        //println!("Chunk {:?} data generated in {:.2?}", chunk_pos, now.elapsed());
         return has_any_block;
     }
 }

@@ -10,7 +10,6 @@ use parking_lot::RwLock;
 use spiral::ManhattanIterator;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::Instant;
 use std::{
     cell::RefCell,
     sync::atomic::{AtomicBool, Ordering},
@@ -133,8 +132,6 @@ impl ChunksContainer {
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
-        let now = Instant::now();
-
         if self.chunks.contains_key(&chunk_position) {
             error!(
                 "Network sended chunk to load, but it already exists: {}",
@@ -146,9 +143,6 @@ impl ChunksContainer {
         let chunk = Chunk::create(Arc::new(RwLock::new(sections)));
 
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
-
-        let elapsed = now.elapsed();
-        println!("Chunk {} load: {:.2?}", chunk_position, elapsed);
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
@@ -204,16 +198,18 @@ impl NodeVirtual for ChunksContainer {
                     c.data.clone(),
                     c.update_tx.clone(),
                     self.texture_mapper.clone(),
+                    self.material.instance_id(),
+                    chunk_position.clone()
                 );
                 c.set_sended();
             }
         }
 
         for (chunk_position, chunk) in self.chunks.iter() {
-            let c = chunk.borrow();
+            let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
-                for mut data in c.update_rx.drain() {
-                    spawn_chunk(&mut data, &mut self.base, self.material.share(), chunk_position.clone());
+                for data in c.update_rx.clone().drain() {
+                    c.chunk_column = Some(spawn_chunk(data, &mut self.base));
                     c.set_loaded()
                 }
             }

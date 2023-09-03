@@ -1,55 +1,40 @@
-use arrayvec::ArrayVec;
-use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS, CHUNK_SIZE};
+use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 
 use crate::{entities::position::GodotPositionConverter, world::world_manager::TextureMapperType};
 
 use super::{
-    chunk_data_formatter::format_chunk_data_with_boundaries,
-    godot_chunk_column::ChunkColumn,
-    godot_chunks_container::ColumnDataType,
-    mesh::mesh_generator::{generate_chunk_geometry, Geometry},
-    near_chunk_data::NearChunksData, godot_chunk_section::ChunkSection,
+    chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
+    godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
+    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
+use std::time::Instant;
 
-pub(crate) type ChunksGenerationType = ArrayVec<Geometry, VERTICAL_SECTIONS>;
+pub(crate) type ChunksGenerationType = InstanceId;
 
-/// Send chunk to generation
+/// Generate chunk in separate thread
 pub(crate) fn generate_chunk(
     chunks_near: NearChunksData,
     data: ColumnDataType,
-    update_mesh_tx: Sender<ChunksGenerationType>,
+    update_tx: Sender<ChunksGenerationType>,
     texture_mapper: TextureMapperType,
-) {
-    rayon::spawn(move || {
-        let mut geometry_array: ChunksGenerationType = Default::default();
-        let t = texture_mapper.read();
-        for y in 0..VERTICAL_SECTIONS {
-            let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
-
-            // Create test sphere
-            // let bordered_chunk_data = get_test_sphere();
-
-            let new_geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
-            geometry_array.push(new_geometry);
-        }
-        update_mesh_tx.send(geometry_array).unwrap();
-    });
-}
-
-pub(crate) fn spawn_chunk(
-    data: &mut ChunksGenerationType,
-    base: &mut Base<Node>,
-    material: Gd<Material>,
+    material_instance_id: InstanceId,
     chunk_position: ChunkPosition,
 ) {
-    let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, material.share(), chunk_position));
+    rayon::spawn(move || {
+        let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
+        let mut column =
+            Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, material.share(), chunk_position));
+        let instance_id = column.instance_id().clone();
 
-    let index = {
         let mut c = column.bind_mut();
+        let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
+        c.set_name(name);
+
         for y in 0..VERTICAL_SECTIONS {
-            let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
+            let mut section =
+                Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
 
             let name = GodotString::from(format!("Section {}", y));
             section.bind_mut().set_name(name.clone());
@@ -65,21 +50,33 @@ pub(crate) fn spawn_chunk(
             c.sections.push(section);
         }
 
-        let mut y = 0;
-        for geometry in data.drain(..) {
+        let t = texture_mapper.read();
+        for y in 0..VERTICAL_SECTIONS {
+            let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+
+            // Create test sphere
+            // let bordered_chunk_data = get_test_sphere();
+
+            let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
             c.sections[y].bind_mut().update_mesh(geometry.mesh_ist);
-            y += 1;
         }
+        update_tx.send(instance_id).unwrap();
+    });
+}
 
-        let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
-        c.set_name(name.clone());
-        c.get_index().clone()
-    };
-
+/// Spawn chunk from main thread
+pub(crate) fn spawn_chunk(instance_id: ChunksGenerationType, base: &mut Base<Node>) -> Gd<ChunkColumn>{
+    let now = Instant::now();
+    let column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
+    let chunk_position = column.bind().get_chunk_position().clone();
+    let index = column.bind().get_index().clone();
     base.add_child(column.upcast());
-    column = base.get_child(index).unwrap().cast::<ChunkColumn>();
+    let mut column = base.get_child(index).unwrap().cast::<ChunkColumn>();
 
     column
         .bind_mut()
         .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
+    let elapsed = now.elapsed();
+    println!("Chunk {} spawned: {:.2?}", chunk_position, elapsed);
+    column
 }

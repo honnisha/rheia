@@ -30,6 +30,10 @@ impl ChunkColumn {
             material,
         }
     }
+
+    pub fn get_chunk_position(&self) -> &ChunkPosition {
+        &self.chunk_position
+    }
 }
 
 #[godot_api]
