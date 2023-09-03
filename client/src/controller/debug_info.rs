@@ -80,11 +80,10 @@ impl DebugInfo {
                 let chunk_info = match world.get_chunk(&chunk_pos) {
                     Some(c) => {
                         let c = c.borrow();
-                        let chunk_column = c.get_chunk_column().bind();
                         format!(
                             "sended:{} loaded:{}",
-                            chunk_column.is_sended(),
-                            chunk_column.is_loaded()
+                            c.is_sended(),
+                            c.is_loaded()
                         )
                     }
                     None => "-".to_string(),

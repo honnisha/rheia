@@ -2,17 +2,19 @@ use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    VERTICAL_SECTIONS,
 };
-use flume::Sender;
+use flume::{Receiver, Sender};
 use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
 use spiral::ManhattanIterator;
-use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::time::Instant;
+use std::{
+    cell::RefCell,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use crate::{
     entities::position::GodotPositionConverter,
@@ -22,60 +24,70 @@ use crate::{
 };
 
 use super::{
-    chunk_data_formatter::format_chunk_data_with_boundaries,
-    godot_chunk_column::{ChunkColumn, ChunksGeometryType},
-    mesh::mesh_generator::generate_chunk_geometry,
+    chunk_generator::{generate_chunk, spawn_chunk, ChunksGenerationType},
+    godot_chunk_column::ChunkColumn,
+    near_chunk_data::NearChunksData,
 };
 
 pub type ColumnDataType = Arc<RwLock<SectionsData>>;
 
-/// Tool for storing near chunks
-pub struct NearChunksData {
-    pub forward: Option<ColumnDataType>,
-    pub behind: Option<ColumnDataType>,
-    pub left: Option<ColumnDataType>,
-    pub right: Option<ColumnDataType>,
-}
-
-impl NearChunksData {
-    fn new(chunks: &ChunksType, pos: &ChunkPosition) -> Self {
-        Self {
-            forward: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x - 1, pos.z)),
-            behind: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x + 1, pos.z)),
-            left: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z - 1)),
-            right: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z + 1)),
-        }
-    }
-
-    pub fn is_full(&self) -> bool {
-        self.forward.is_some() && self.behind.is_some() && self.left.is_some() && self.right.is_some()
-    }
-
-    fn get_data(chunks: &ChunksType, pos: &ChunkPosition) -> Option<ColumnDataType> {
-        match chunks.get(pos) {
-            Some(c) => Some(c.borrow().data.clone()),
-            None => None,
-        }
-    }
-}
-
 /// Container of godot chunk entity and blocks data
 pub struct Chunk {
-    chunk_column: Gd<ChunkColumn>,
+    // Godot entity
+    chunk_column: Option<Gd<ChunkColumn>>,
+
+    // Chunk data
     data: ColumnDataType,
+
+    update_tx: Sender<ChunksGenerationType>,
+    update_rx: Receiver<ChunksGenerationType>,
+
+    sended: Arc<AtomicBool>,
+    loaded: Arc<AtomicBool>,
 }
 
 impl Chunk {
-    fn create(chunk_column: Gd<ChunkColumn>, data: ColumnDataType) -> Self {
-        Self { chunk_column, data }
+    fn create(data: ColumnDataType) -> Self {
+        let (update_tx, update_rx) = flume::bounded(1);
+        Self {
+            chunk_column: None,
+            data,
+            sended: Arc::new(AtomicBool::new(false)),
+            loaded: Arc::new(AtomicBool::new(false)),
+            update_tx: update_tx,
+            update_rx: update_rx,
+        }
     }
 
-    pub fn get_chunk_column(&self) -> &Gd<ChunkColumn> {
-        &self.chunk_column
+    pub fn get_chunk_column(&self) -> Option<&Gd<ChunkColumn>> {
+        match self.chunk_column.as_ref() {
+            Some(c) => Some(c),
+            None => None,
+        }
+    }
+
+    pub fn get_chunk_data(&self) -> &ColumnDataType {
+        &self.data
+    }
+
+    pub fn is_sended(&self) -> bool {
+        self.sended.load(Ordering::Relaxed)
+    }
+
+    pub fn set_sended(&self) {
+        self.sended.store(true, Ordering::Relaxed);
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.loaded.load(Ordering::Relaxed)
+    }
+
+    pub fn set_loaded(&self) {
+        self.loaded.store(true, Ordering::Relaxed);
     }
 }
 
-type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
+pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
 #[derive(GodotClass)]
@@ -131,22 +143,7 @@ impl ChunksContainer {
             return;
         }
 
-        let mut column = Gd::<ChunkColumn>::with_base(|base| {
-            ChunkColumn::create(base, self.material.share(), chunk_position.clone())
-        });
-
-        let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
-        column.bind_mut().set_name(name.clone());
-        let index = column.bind().get_index().clone();
-
-        self.base.add_child(column.upcast());
-        column = self.base.get_child(index).unwrap().cast::<ChunkColumn>();
-
-        column
-            .bind_mut()
-            .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
-
-        let chunk = Chunk::create(column, Arc::new(RwLock::new(sections)));
+        let chunk = Chunk::create(Arc::new(RwLock::new(sections)));
 
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
 
@@ -156,35 +153,17 @@ impl ChunksContainer {
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
         for chunk_position in chunks_positions {
+            let mut unloaded = false;
             if let Some(chunk) = self.chunks.remove(&chunk_position) {
-                chunk.borrow_mut().chunk_column.bind_mut().queue_free();
-            } else {
+                if let Some(c) = chunk.borrow_mut().chunk_column.as_mut() {
+                    c.bind_mut().queue_free();
+                    unloaded = true;
+                }
+            }
+            if !unloaded {
                 error!("Unload chunk not found: {}", chunk_position);
             }
         }
-    }
-
-    /// Send chunk to generate his mesh
-    fn send_generation(
-        chunks_near: NearChunksData,
-        data: ColumnDataType,
-        update_mesh_tx: Sender<ChunksGeometryType>,
-        texture_mapper: TextureMapperType,
-    ) {
-        rayon::spawn(move || {
-            let mut geometry_array: ChunksGeometryType = Default::default();
-            let t = texture_mapper.read();
-            for y in 0..VERTICAL_SECTIONS {
-                let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
-
-                // Create test sphere
-                // let bordered_chunk_data = get_test_sphere();
-
-                let new_geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
-                geometry_array.push(new_geometry);
-            }
-            update_mesh_tx.send(geometry_array).unwrap();
-        });
     }
 }
 
@@ -208,7 +187,8 @@ impl NodeVirtual for ChunksContainer {
         for (x, z) in iter {
             let chunk_position = ChunkPosition::new(x as i64, z as i64);
             if let Some(chunk) = self.get_chunk(&chunk_position) {
-                if chunk.borrow().chunk_column.bind().is_sended() {
+                let c = chunk.borrow();
+                if c.is_sended() {
                     continue;
                 }
 
@@ -219,13 +199,23 @@ impl NodeVirtual for ChunksContainer {
                     continue;
                 }
 
-                ChunksContainer::send_generation(
+                generate_chunk(
                     near_chunks_data,
-                    chunk.borrow().data.clone(),
-                    chunk.borrow().chunk_column.bind().update_mesh_tx.clone(),
+                    c.data.clone(),
+                    c.update_tx.clone(),
                     self.texture_mapper.clone(),
                 );
-                chunk.borrow().chunk_column.bind().set_sended();
+                c.set_sended();
+            }
+        }
+
+        for (chunk_position, chunk) in self.chunks.iter() {
+            let c = chunk.borrow();
+            if c.is_sended() && !c.is_loaded() {
+                for mut data in c.update_rx.drain() {
+                    spawn_chunk(&mut data, &mut self.base, self.material.share(), chunk_position.clone());
+                    c.set_loaded()
+                }
             }
         }
     }
