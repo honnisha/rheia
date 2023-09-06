@@ -49,7 +49,7 @@ impl PlayerMovement {
 #[class(base=Node)]
 pub struct PlayerController {
     #[base]
-    base: Base<Node>,
+    pub(crate) base: Base<Node>,
     camera: Option<Gd<Camera3D>>,
     debug_info: Option<Gd<DebugInfo>>,
     handler: Option<FreeCameraHandler>,

@@ -62,7 +62,7 @@ impl Main {
         let mut entity = Gd::<WorldManager>::with_base(|base| WorldManager::create(base));
 
         let name = GodotString::from("WorldManager");
-        entity.bind_mut().set_name(name.clone());
+        entity.bind_mut().base.set_name(name.clone());
 
         self.base.add_child(entity.upcast());
         self.base.get_node_as::<WorldManager>(name)

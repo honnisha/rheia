@@ -2,7 +2,10 @@ use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
-use godot::{engine::Material, prelude::*};
+use godot::{
+    engine::{Engine, Material},
+    prelude::*,
+};
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -12,6 +15,7 @@ use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::{
     chunks::godot_chunks_container::{Chunk, ChunksContainer},
+    physics_handler::PhysicsController,
     world_manager::{get_default_material, TextureMapperType},
 };
 
@@ -27,12 +31,14 @@ use super::{
 #[class(base=Node)]
 pub struct World {
     #[base]
-    base: Base<Node>,
+    pub(crate) base: Base<Node>,
     slug: String,
     chunks_container: Option<Gd<ChunksContainer>>,
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
+
+    physics: PhysicsController,
 }
 
 impl World {
@@ -53,6 +59,7 @@ impl World {
             chunks_container: Default::default(),
             texture_mapper,
             material,
+            physics: PhysicsController::default(),
         }
     }
 
@@ -82,7 +89,7 @@ impl World {
         });
 
         let container_name = GodotString::from("ChunksContainer");
-        container.bind_mut().set_name(container_name.clone());
+        container.bind_mut().base.set_name(container_name.clone());
 
         self.base.add_child(container.upcast());
         self.chunks_container = Some(self.base.get_node_as::<ChunksContainer>(container_name));
@@ -119,5 +126,13 @@ impl NodeVirtual for World {
 
     fn ready(&mut self) {
         self.init_chunks_container();
+    }
+
+    fn process(&mut self, _delta: f64) {
+        if Engine::singleton().is_editor_hint() {
+            return;
+        }
+
+        self.physics.step();
     }
 }

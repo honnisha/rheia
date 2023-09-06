@@ -1,32 +1,16 @@
-use godot::{prelude::*, private::class_macros::auto_register_classes};
+use godot::prelude::*;
 mod client_scripts;
+mod console;
 mod controller;
+mod entities;
+mod events;
+mod logger;
 mod main_scene;
+mod network;
 mod utils;
 mod world;
-mod events;
-mod console;
-mod network;
-mod logger;
-mod entities;
 
 struct HonnyCraft;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for HonnyCraft {
-    fn load_library(handle: &mut InitHandle) -> bool {
-        handle.register_layer(InitLevel::Scene, DefaultLayer);
-        true
-    }
-}
-
-struct DefaultLayer;
-
-impl ExtensionLayer for DefaultLayer {
-    fn initialize(&mut self) {
-        auto_register_classes();
-    }
-
-    fn deinitialize(&mut self) {
-    }
-}
+unsafe impl ExtensionLibrary for HonnyCraft {}

@@ -23,7 +23,7 @@ pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 #[class(base=Node)]
 pub struct WorldManager {
     #[base]
-    base: Base<Node>,
+    pub base: Base<Node>,
 
     world: Option<Gd<World>>,
 
@@ -84,7 +84,7 @@ impl WorldManager {
         });
 
         let world_name = GodotString::from("World");
-        world.bind_mut().set_name(world_name.clone());
+        world.bind_mut().base.set_name(world_name.clone());
 
         self.base.add_child(world.upcast());
         self.world = Some(self.base.get_node_as::<World>(world_name));
@@ -127,10 +127,14 @@ impl WorldManager {
             load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();
 
         let name = GodotString::from("PlayerController");
-        entity.bind_mut().set_name(name.clone());
+        entity.bind_mut().base.set_name(name.clone());
 
         self.base.add_child(entity.upcast());
         self.base.get_node_as::<PlayerController>(name)
+    }
+
+    pub fn base(&self) -> &Base<Node> {
+        &self.base
     }
 }
 
@@ -151,7 +155,7 @@ impl WorldManager {
 impl NodeVirtual for WorldManager {
     fn ready(&mut self) {
         let mut player_controller = self.create_player_controller();
-        player_controller.bind_mut().connect(
+        player_controller.bind_mut().base.connect(
             "on_player_move".into(),
             Callable::from_object_method(self.base.share(), "handler_player_move"),
         );

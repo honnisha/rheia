@@ -18,7 +18,7 @@ pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 #[class(base=Node3D)]
 pub struct ChunkSection {
     #[base]
-    pub base: Base<Node3D>,
+    pub(crate) base: Base<Node3D>,
     mesh: Option<Gd<MeshInstance3D>>,
     material: Gd<Material>,
     y: u8,

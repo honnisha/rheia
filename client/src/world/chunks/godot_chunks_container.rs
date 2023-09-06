@@ -93,7 +93,7 @@ pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 #[class(base=Node)]
 pub struct ChunksContainer {
     #[base]
-    base: Base<Node>,
+    pub(crate) base: Base<Node>,
     chunks: ChunksType,
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
@@ -150,7 +150,7 @@ impl ChunksContainer {
             let mut unloaded = false;
             if let Some(chunk) = self.chunks.remove(&chunk_position) {
                 if let Some(c) = chunk.borrow_mut().chunk_column.as_mut() {
-                    c.bind_mut().queue_free();
+                    c.bind_mut().base.queue_free();
                 }
                 unloaded = true;
             }
@@ -173,7 +173,7 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
-        let world_manager = self.get_parent().unwrap().get_parent().unwrap().cast::<WorldManager>();
+        let world_manager = self.base.get_parent().unwrap().get_parent().unwrap().cast::<WorldManager>();
         let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
         let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
 

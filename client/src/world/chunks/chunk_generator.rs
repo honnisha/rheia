@@ -1,7 +1,7 @@
 use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
-
+use std::time::Instant;
 use crate::{entities::position::GodotPositionConverter, world::world_manager::TextureMapperType};
 
 use super::{
@@ -23,25 +23,25 @@ pub(crate) fn generate_chunk(
 ) {
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
-        let mut column =
-            Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
+        let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
 
         let mut c = column.bind_mut();
         let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
-        c.set_name(name);
+        c.base.set_name(name);
 
         for y in 0..VERTICAL_SECTIONS {
             let mut section =
                 Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
 
             let name = GodotString::from(format!("Section {}", y));
-            section.bind_mut().set_name(name.clone());
+            section.bind_mut().base.set_name(name.clone());
 
             c.base.add_child(section.share().upcast());
             section.bind_mut().create_mesh();
             section
                 .bind_mut()
+                .base
                 .set_global_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
 
             c.sections.push(section);
@@ -67,11 +67,16 @@ pub(crate) fn spawn_chunk(
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
 ) -> Gd<ChunkColumn> {
+    let now = Instant::now();
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
     base.add_child(column.share().upcast());
 
     column
         .bind_mut()
+        .base
         .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
+
+    let elapsed = now.elapsed();
+    println!("Chunk {} spawned: {:.2?}", chunk_position, elapsed);
     column
 }
