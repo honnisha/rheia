@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=2 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
-[ext_resource type="PackedScene" uid="uid://lrxo0w3ffsh" path="res://scenes/console.tscn" id="4_rvd0x"]
 
 [node name="Main" type="Main"]
 
@@ -12,14 +11,3 @@ clouds_height = 0.4
 clouds_size = 0.52
 clouds_quality = 100
 wind_strength = 0.05
-
-[node name="GUIControl" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="ConsoleContainer" parent="GUIControl" instance=ExtResource("4_rvd0x")]
-layout_mode = 1

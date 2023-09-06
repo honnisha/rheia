@@ -10,11 +10,13 @@ use common::network::login::Login;
 use common::network::messages::ClientMessages;
 use common::network::messages::ServerMessages;
 use common::network::PROTOCOL_ID;
+use flume::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
 use renet::transport::ClientAuthentication;
 use renet::transport::NetcodeClientTransport;
+use renet::Bytes;
 use renet::RenetClient;
 use std::net::UdpSocket;
 use std::sync::Arc;
@@ -23,9 +25,12 @@ use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::time::Duration;
 use std::time::SystemTime;
+use std::{thread, time};
 
 lazy_static! {
     static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::default()));
+    static ref NETWORK_DECODER_IN: (Sender<Bytes>, Receiver<Bytes>) = unbounded();
+    static ref NETWORK_DECODER_OUT: (Sender<ServerMessages>, Receiver<ServerMessages>) = unbounded();
 }
 
 #[derive(Default)]
@@ -87,6 +92,22 @@ impl NetworkContainer {
         self.transport.as_ref().unwrap().write().expect("poisoned")
     }
 
+    pub fn spawn_decoder() {
+        rayon::spawn(move || loop {
+            for server_message in NETWORK_DECODER_IN.1.drain() {
+                match bincode::deserialize(&server_message) {
+                    Ok(d) => NETWORK_DECODER_OUT.0.send(d).unwrap(),
+                    Err(e) => {
+                        error!("Decode server message error: {}", e);
+                        continue;
+                    }
+                };
+            }
+            thread::sleep(time::Duration::from_millis(16));
+        });
+        info!("Network decoder thread spawned");
+    }
+
     pub fn update(delta: f64, main_scene: &mut Main) -> Result<(), String> {
         let delta_time = Duration::from_secs_f64(delta);
         let container = NetworkContainer::read();
@@ -103,13 +124,9 @@ impl NetworkContainer {
         }
 
         while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
-            let decoded: ServerMessages = match bincode::deserialize(&server_message) {
-                Ok(d) => d,
-                Err(e) => {
-                    error!("Decode server message error: {}", e);
-                    continue;
-                }
-            };
+            NETWORK_DECODER_IN.0.send(server_message).unwrap();
+        }
+        for decoded in NETWORK_DECODER_OUT.1.drain() {
             match decoded {
                 ServerMessages::ConsoleOutput { message } => {
                     info!("{}", message);
@@ -132,7 +149,7 @@ impl NetworkContainer {
                     yaw,
                     pitch,
                 } => {
-                    main_scene.teleport_player(
+                    main_scene.get_world_manager_mut().teleport_player(
                         world_slug,
                         GodotPositionConverter::vec3_from_array(&location),
                         yaw,

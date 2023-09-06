@@ -1,13 +1,21 @@
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 use chrono::Local;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use godot::{
-    engine::{Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
+    engine::{input::MouseMode, Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
 };
 use lazy_static::lazy_static;
 use log::info;
+
+const TEXT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText";
+const INPUT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput";
+const BUTTON_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/ConsoleButton";
+const SUGESTIOINS_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins";
 
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
@@ -49,15 +57,12 @@ impl Console {
         self.scroll_to_bottom();
     }
 
-    #[signal]
-    fn submit_toggle_console();
-
     pub fn is_active() -> bool {
         CONSOLE_ACTIVE.load(Ordering::Relaxed)
     }
 
-    fn toggle_console(&mut self) {
-        CONSOLE_ACTIVE.store(!Console::is_active(), Ordering::Relaxed);
+    fn toggle(&mut self, state: bool) {
+        CONSOLE_ACTIVE.store(state, Ordering::Relaxed);
         let active = Console::is_active();
         self.base.set_visible(active);
 
@@ -67,6 +72,10 @@ impl Console {
                 i.grab_focus();
             }
             i.clear();
+
+            Input::singleton().set_mouse_mode(MouseMode::MOUSE_MODE_VISIBLE);
+        } else {
+            Input::singleton().set_mouse_mode(MouseMode::MOUSE_MODE_HIDDEN);
         }
     }
 
@@ -111,30 +120,25 @@ impl Console {
 impl NodeVirtual for Console {
     fn init(base: Base<MarginContainer>) -> Self {
         Console {
+            base: base,
             console_text: None,
             console_input: None,
             console_button: None,
             console_sugestions: None,
-            base: base,
-            commands_history: Vec::new(),
+            commands_history: Default::default(),
         }
     }
 
     fn ready(&mut self) {
         info!("Start loading console;");
-        match self.base.try_get_node_as::<RichTextLabel>(
-            "VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText",
-        ) {
+        match self.base.try_get_node_as::<RichTextLabel>(TEXT_PATH) {
             Some(e) => self.console_text = Some(e),
             _ => {
                 godot_error!("console_text element not found");
                 return;
             }
         };
-        match self
-            .base
-            .try_get_node_as::<LineEdit>("VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput")
-        {
+        match self.base.try_get_node_as::<LineEdit>(INPUT_PATH) {
             Some(e) => {
                 self.console_input = Some(e);
                 //self.console_input.as_mut().unwrap().connect(
@@ -144,7 +148,7 @@ impl NodeVirtual for Console {
                 //);
                 self.console_input.as_mut().unwrap().connect(
                     "text_submitted".into(),
-                    Callable::from_object_method(self.base.share(), "text_submitted")
+                    Callable::from_object_method(self.base.share(), "text_submitted"),
                 );
             }
             _ => {
@@ -152,10 +156,7 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self
-            .base
-            .try_get_node_as::<TextureButton>("VBoxContainer/HBoxContainer2/ConsoleButton")
-        {
+        match self.base.try_get_node_as::<TextureButton>(BUTTON_PATH) {
             Some(e) => {
                 self.console_button = Some(e);
                 self.console_button.as_mut().unwrap().connect(
@@ -168,10 +169,7 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self
-            .base
-            .try_get_node_as::<RichTextLabel>("VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins")
-        {
+        match self.base.try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
             Some(e) => self.console_sugestions = Some(e),
             _ => {
                 godot_error!("console_sugestions element not found");
@@ -194,7 +192,7 @@ impl NodeVirtual for Console {
 
         let input = Input::singleton();
         if input.is_action_just_pressed("ui_toggle_console".into()) {
-            self.toggle_console();
+            self.toggle(!Console::is_active());
         }
         if !Console::is_active() {
             return;

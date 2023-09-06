@@ -1,13 +1,19 @@
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::{
     engine::{Engine, MarginContainer, RichTextLabel},
     prelude::*,
 };
+use lazy_static::lazy_static;
 use log::error;
 
-use crate::world::world_manager::WorldManager;
+use crate::{world::world_manager::WorldManager};
 
-use super::handlers::freecam::FreeCameraHandler;
+
+lazy_static! {
+    static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+}
 
 const TEXT_FIRST_PATH: &str = "MarginContainer/VBoxContainer/Row1/PanelContainer/MarginContainer/RichTextLabel";
 
@@ -39,24 +45,37 @@ pub struct DebugInfo {
 }
 
 impl DebugInfo {
+    pub fn is_active() -> bool {
+        DEBUG_ACTIVE.load(Ordering::Relaxed)
+    }
+
+    pub fn toggle(&mut self, state: bool) {
+        DEBUG_ACTIVE.store(state, Ordering::Relaxed);
+
+        self.base.set_visible(DebugInfo::is_active());
+    }
+
     pub fn update_debug(
         &mut self,
-        world_manager: &WorldManager,
-        camera: &Camera3D,
-        player_handler: &Option<FreeCameraHandler>,
+        world_manager: GdRef<WorldManager>,
+        camera: &Gd<Camera3D>,
     ) {
-        let controller_positioin = match player_handler {
+        if !DebugInfo::is_active() {
+            return;
+        }
+
+        let controller_positioin = match world_manager.get_player_controller().bind().get_handler() {
             Some(h) => {
-                let controller_pos = h.get_position(camera);
+                let controller_pos = h.get_position(&camera);
                 format!(
                     "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
                     controller_pos.x,
                     controller_pos.y,
                     controller_pos.z,
-                    h.get_yaw(camera),
-                    h.get_pitch(camera),
+                    h.get_yaw(&camera),
+                    h.get_pitch(&camera),
                 )
-            }
+            },
             None => "-".to_string(),
         };
 

@@ -3,12 +3,11 @@ use godot::{
     engine::{Engine, InputEvent},
     prelude::*,
 };
-use log::error;
 use std::fmt::{self, Display, Formatter};
 
-use crate::{entities::position::GodotPositionConverter, main_scene::FloatType, world::world_manager::WorldManager};
+use crate::{entities::position::GodotPositionConverter, main_scene::FloatType};
 
-use super::{debug_info::DebugInfo, handlers::freecam::FreeCameraHandler};
+use super::handlers::freecam::FreeCameraHandler;
 
 const CAMERA_PATH: &str = "Camera";
 const DEBUG_INFO_PATH: &str = "DebugInfo";
@@ -50,19 +49,11 @@ impl PlayerMovement {
 pub struct PlayerController {
     #[base]
     pub(crate) base: Base<Node>,
-    camera: Option<Gd<Camera3D>>,
-    debug_info: Option<Gd<DebugInfo>>,
+    camera: Gd<Camera3D>,
     handler: Option<FreeCameraHandler>,
 }
 
 impl PlayerController {
-    pub fn update_debug(&mut self, world_manager: &WorldManager) {
-        if let Some(d) = self.debug_info.as_mut() {
-            let camera = self.camera.as_deref().unwrap();
-            d.bind_mut().update_debug(world_manager, camera, &self.handler);
-        }
-    }
-
     /// Handle network packet for changing position
     pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
         let handler = match self.handler.as_mut() {
@@ -72,7 +63,14 @@ impl PlayerController {
                 self.handler.as_mut().unwrap()
             }
         };
-        handler.teleport(&mut self.camera.as_mut().unwrap(), position, yaw, pitch);
+        handler.teleport(&mut self.camera, position, yaw, pitch);
+    }
+
+    pub fn get_handler(&self) -> Option<&FreeCameraHandler> {
+        match self.handler.as_ref() {
+            Some(h) => Some(h),
+            None => None,
+        }
     }
 }
 
@@ -84,50 +82,25 @@ impl PlayerController {
     #[func]
     pub fn get_position(&self) -> Vector3 {
         let handler = self.handler.as_ref().unwrap();
-        let camera = self.camera.as_deref().unwrap();
-        handler.get_position(camera)
+        handler.get_position(&self.camera)
     }
 }
 
 #[godot_api]
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node>) -> Self {
-        PlayerController {
+        Self {
             base,
-            camera: None,
-            debug_info: None,
+            camera: load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>(),
             handler: None,
         }
     }
 
-    fn ready(&mut self) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
+    fn ready(&mut self) {}
 
-        self.camera = Some(
-            self.base
-                .try_get_node_as::<Camera3D>(CAMERA_PATH)
-                .expect("Camera not found"),
-        );
-
-        match self.base.try_get_node_as::<DebugInfo>(DEBUG_INFO_PATH) {
-            Some(c) => {
-                self.debug_info = Some(c);
-            }
-            None => {
-                error!("DEBUG_INFO_PATH not found");
-            }
-        }
-    }
-
-    #[allow(unused_variables)]
     fn input(&mut self, event: Gd<InputEvent>) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
         if let Some(h) = self.handler.as_mut() {
-            h.input(event, &mut self.camera.as_mut().unwrap());
+            h.input(event, &mut self.camera);
         }
     }
 
@@ -137,7 +110,7 @@ impl NodeVirtual for PlayerController {
             return;
         }
         if let Some(h) = self.handler.as_mut() {
-            h.process(&mut self.base, delta, &mut self.camera.as_mut().unwrap());
+            h.process(&mut self.base, delta, &mut self.camera);
         }
     }
 }

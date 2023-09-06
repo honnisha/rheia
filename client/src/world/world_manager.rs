@@ -1,7 +1,7 @@
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
 use flume::{Receiver, Sender};
-use godot::engine::{Engine, StandardMaterial3D};
+use godot::engine::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{
     engine::Material,
@@ -24,7 +24,8 @@ pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 pub(crate) type ChunksSectionsChannelType = (String, ChunkPosition, SectionsData);
 
 lazy_static! {
-    static ref CHUNK_LOAD_DATA: (Sender<ChunksSectionsChannelType>, Receiver<ChunksSectionsChannelType>) = flume::unbounded();
+    static ref CHUNK_LOAD_DATA: (Sender<ChunksSectionsChannelType>, Receiver<ChunksSectionsChannelType>) =
+        flume::unbounded();
 }
 
 #[derive(GodotClass)]
@@ -32,25 +33,29 @@ lazy_static! {
 pub struct WorldManager {
     #[base]
     pub base: Base<Node>,
+    camera: Gd<Camera3D>,
 
     world: Option<Gd<World>>,
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
 
-    player_controller: Option<Gd<PlayerController>>,
+    player_controller: Gd<PlayerController>,
 }
 
 impl WorldManager {
-    pub fn create(base: Base<Node>) -> Self {
+    pub fn create(base: Base<Node>, camera: Gd<Camera3D>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
         Self {
             base,
+            camera,
+
             world: None,
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
-            player_controller: None,
+            player_controller: load::<PackedScene>("res://scenes/player_controller.tscn")
+                .instantiate_as::<PlayerController>(),
         }
     }
 
@@ -66,11 +71,7 @@ impl WorldManager {
     }
 
     fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        self.player_controller
-            .as_mut()
-            .unwrap()
-            .bind_mut()
-            .teleport(position, yaw, pitch);
+        self.player_controller.bind_mut().teleport(position, yaw, pitch);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -97,8 +98,8 @@ impl WorldManager {
         let world_name = GodotString::from("World");
         world.bind_mut().base.set_name(world_name.clone());
 
-        self.base.add_child(world.upcast());
-        self.world = Some(self.base.get_node_as::<World>(world_name));
+        self.base.add_child(world.share().upcast());
+        self.world = Some(world);
 
         info!("World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
     }
@@ -147,18 +148,7 @@ impl WorldManager {
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
-        self.player_controller.as_ref().unwrap()
-    }
-
-    pub fn create_player_controller(&mut self) -> Gd<PlayerController> {
-        let mut entity =
-            load::<PackedScene>("res://scenes/player_controller.tscn").instantiate_as::<PlayerController>();
-
-        let name = GodotString::from("PlayerController");
-        entity.bind_mut().base.set_name(name.clone());
-
-        self.base.add_child(entity.upcast());
-        self.base.get_node_as::<PlayerController>(name)
+        &self.player_controller
     }
 }
 
@@ -178,23 +168,14 @@ impl WorldManager {
 #[godot_api]
 impl NodeVirtual for WorldManager {
     fn ready(&mut self) {
-        let mut player_controller = self.create_player_controller();
-        player_controller.bind_mut().base.connect(
+        self.player_controller.bind_mut().base.connect(
             "on_player_move".into(),
             Callable::from_object_method(self.base.share(), "handler_player_move"),
         );
-        self.player_controller = Some(player_controller);
+        self.base.add_child(self.player_controller.share().upcast());
     }
 
     fn process(&mut self, _delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
-
-        if let Some(c) = self.player_controller.as_mut() {
-            c.share().bind_mut().update_debug(&self);
-        }
-
         for (world_slug, chunk_position, decoded_sections) in CHUNK_LOAD_DATA.1.drain() {
             self.load_chunk(world_slug, chunk_position, decoded_sections);
         }

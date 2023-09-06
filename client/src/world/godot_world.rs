@@ -91,8 +91,8 @@ impl World {
         let container_name = GodotString::from("ChunksContainer");
         container.bind_mut().base.set_name(container_name.clone());
 
-        self.base.add_child(container.upcast());
-        self.chunks_container = Some(self.base.get_node_as::<ChunksContainer>(container_name));
+        self.base.add_child(container.share().upcast());
+        self.chunks_container = Some(container);
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
