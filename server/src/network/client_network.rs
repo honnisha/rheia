@@ -128,7 +128,7 @@ impl ClientNetwork {
     }
 
     /// Send chunks to unload
-    pub fn send_unload_chunks(&mut self, network_container: &NetworkContainer, abandoned_chunks: Vec<ChunkPosition>) {
+    pub fn send_unload_chunks(&mut self, network_container: &NetworkContainer, world_slug: &String, abandoned_chunks: Vec<ChunkPosition>) {
         if abandoned_chunks.len() == 0 {
             return;
         }
@@ -136,6 +136,7 @@ impl ClientNetwork {
         let mut server = network_container.get_server_mut();
 
         let input = ServerMessages::UnloadChunks {
+            world_slug: world_slug.clone(),
             chunks: abandoned_chunks.clone(),
         };
         let encoded = bincode::serialize(&input).unwrap();

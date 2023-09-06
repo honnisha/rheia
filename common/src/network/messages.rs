@@ -33,10 +33,12 @@ pub enum ServerMessages {
         pitch: f32,
     },
     ChunkSectionInfo {
+        world_slug: String,
         chunk_position: ChunkPosition,
         sections: NetworkSectionsType,
     },
     UnloadChunks {
+        world_slug: String,
         chunks: Vec<ChunkPosition>,
     },
 }

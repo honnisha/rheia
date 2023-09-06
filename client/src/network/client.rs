@@ -1,6 +1,7 @@
 use crate::controller::player_controller::PlayerMovement;
 use crate::entities::position::GodotPositionConverter;
 use crate::main_scene::Main;
+use crate::world::world_manager::WorldManager;
 use common::chunks::utils::unpack_network_sectioins;
 use common::network::channels::ClientChannel;
 use common::network::channels::ServerChannel;
@@ -139,15 +140,18 @@ impl NetworkContainer {
                     );
                 }
                 ServerMessages::ChunkSectionInfo {
+                    world_slug,
                     chunk_position,
                     mut sections,
                 } => {
-                    main_scene
-                        .get_world_manager_mut()
-                        .load_chunk(chunk_position, unpack_network_sectioins(&mut sections));
+                    let tx = WorldManager::get_chunk_sender();
+                    rayon::spawn(move || {
+                        let decoded_sections = unpack_network_sectioins(&mut sections);
+                        tx.send((world_slug, chunk_position, decoded_sections)).unwrap();
+                    });
                 }
-                ServerMessages::UnloadChunks { chunks } => {
-                    main_scene.get_world_manager_mut().unload_chunk(chunks);
+                ServerMessages::UnloadChunks { chunks, world_slug } => {
+                    main_scene.get_world_manager_mut().unload_chunk(world_slug, chunks);
                 }
             }
         }

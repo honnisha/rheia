@@ -1,11 +1,13 @@
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
+use flume::{Receiver, Sender};
 use godot::engine::{Engine, StandardMaterial3D};
 use godot::prelude::*;
 use godot::{
     engine::Material,
     prelude::{Gd, GodotString},
 };
+use lazy_static::lazy_static;
 use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -18,6 +20,12 @@ use crate::utils::textures::{material_builder::build_blocks_material, texture_ma
 use super::godot_world::World;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
+
+pub(crate) type ChunksSectionsChannelType = (String, ChunkPosition, SectionsData);
+
+lazy_static! {
+    static ref CHUNK_LOAD_DATA: (Sender<ChunksSectionsChannelType>, Receiver<ChunksSectionsChannelType>) = flume::unbounded();
+}
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -37,7 +45,6 @@ impl WorldManager {
     pub fn create(base: Base<Node>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
-
         Self {
             base,
             world: None,
@@ -45,6 +52,10 @@ impl WorldManager {
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
             player_controller: None,
         }
+    }
+
+    pub fn get_chunk_sender() -> Sender<ChunksSectionsChannelType> {
+        CHUNK_LOAD_DATA.0.clone()
     }
 
     pub fn get_world(&self) -> Option<&Gd<World>> {
@@ -100,18 +111,35 @@ impl WorldManager {
     }
 
     /// Load chunk column by the network
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+    pub fn load_chunk(&mut self, world_slug: String, chunk_position: ChunkPosition, sections: SectionsData) {
         match self.world.as_mut() {
-            Some(w) => w.bind_mut().load_chunk(chunk_position, sections),
+            Some(w) => {
+                let mut world = w.bind_mut();
+                if world_slug != *world.get_slug() {
+                    error!(
+                        "Tried to load chunk {} for non existed world {}",
+                        chunk_position, world_slug
+                    );
+                    return;
+                }
+                world.load_chunk(chunk_position, sections);
+            }
             None => {
                 error!("load_chunk tried to run without a world");
             }
         }
     }
 
-    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
+    pub fn unload_chunk(&mut self, world_slug: String, chunks_positions: Vec<ChunkPosition>) {
         match self.world.as_mut() {
-            Some(w) => w.bind_mut().unload_chunk(chunks_positions),
+            Some(w) => {
+                let mut world = w.bind_mut();
+                if world_slug != *world.get_slug() {
+                    error!("Tried to unload chunks for non existed world {}", world_slug);
+                    return;
+                }
+                world.unload_chunk(chunks_positions);
+            }
             None => {
                 error!("unload_chunk tried to run without a world");
             }
@@ -131,10 +159,6 @@ impl WorldManager {
 
         self.base.add_child(entity.upcast());
         self.base.get_node_as::<PlayerController>(name)
-    }
-
-    pub fn base(&self) -> &Base<Node> {
-        &self.base
     }
 }
 
@@ -169,6 +193,10 @@ impl NodeVirtual for WorldManager {
 
         if let Some(c) = self.player_controller.as_mut() {
             c.share().bind_mut().update_debug(&self);
+        }
+
+        for (world_slug, chunk_position, decoded_sections) in CHUNK_LOAD_DATA.1.drain() {
+            self.load_chunk(world_slug, chunk_position, decoded_sections);
         }
     }
 }

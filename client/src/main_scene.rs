@@ -44,7 +44,7 @@ impl Main {
         self.get_world_manager_mut().teleport_player(world_slug, position, yaw, pitch);
     }
 
-    pub fn _get_world_manager(&self) -> GdRef<WorldManager> {
+    pub fn get_world_manager(&self) -> GdRef<WorldManager> {
         match self.world_manager.as_ref() {
             Some(w) => w.bind(),
             None => panic!("WorldManager must be loaded"),

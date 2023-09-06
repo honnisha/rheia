@@ -1,14 +1,13 @@
-use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
-use flume::Sender;
-use godot::{engine::Material, prelude::*};
-use std::time::Instant;
-use crate::{entities::position::GodotPositionConverter, world::world_manager::TextureMapperType};
-
 use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
     godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
+use crate::{entities::position::GodotPositionConverter, world::world_manager::TextureMapperType};
+use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
+use flume::Sender;
+use godot::{engine::Material, prelude::*};
+use log::error;
 
 pub(crate) type ChunksGenerationType = InstanceId;
 
@@ -42,7 +41,7 @@ pub(crate) fn generate_chunk(
             section
                 .bind_mut()
                 .base
-                .set_global_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
+                .set_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
 
             c.sections.push(section);
         }
@@ -57,7 +56,9 @@ pub(crate) fn generate_chunk(
             let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
             c.sections[y].bind_mut().update_mesh(geometry.mesh_ist);
         }
-        update_tx.send(instance_id).unwrap();
+        if let Err(e) = update_tx.send(instance_id) {
+            error!("Send chunk to spawn error: {:?}", e);
+        }
     });
 }
 
@@ -67,7 +68,6 @@ pub(crate) fn spawn_chunk(
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
 ) -> Gd<ChunkColumn> {
-    let now = Instant::now();
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
     base.add_child(column.share().upcast());
 
@@ -75,8 +75,5 @@ pub(crate) fn spawn_chunk(
         .bind_mut()
         .base
         .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
-
-    let elapsed = now.elapsed();
-    println!("Chunk {} spawned: {:.2?}", chunk_position, elapsed);
     column
 }

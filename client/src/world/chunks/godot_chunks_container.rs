@@ -46,11 +46,11 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    fn create(data: ColumnDataType) -> Self {
+    fn create(sections: SectionsData) -> Self {
         let (update_tx, update_rx) = flume::bounded(1);
         Self {
             chunk_column: None,
-            data,
+            data: Arc::new(RwLock::new(sections)),
             sended: Arc::new(AtomicBool::new(false)),
             loaded: Arc::new(AtomicBool::new(false)),
             update_tx: update_tx,
@@ -140,7 +140,7 @@ impl ChunksContainer {
             return;
         }
 
-        let chunk = Chunk::create(Arc::new(RwLock::new(sections)));
+        let chunk = Chunk::create(sections);
 
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }

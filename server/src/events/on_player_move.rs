@@ -42,8 +42,9 @@ pub fn on_player_move(
             };
 
             if chunk_changed {
+                let world_slug = world_entity.get_world_slug().clone();
                 // Send abandoned chunks to unload
-                client.send_unload_chunks(&network_container, abandoned_chunks);
+                client.send_unload_chunks(&network_container, &world_slug, abandoned_chunks);
 
                 // Send new chunks
                 client.send_already_loaded_chunks(&network_container, &worlds_manager);
