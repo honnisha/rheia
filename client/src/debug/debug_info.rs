@@ -1,21 +1,20 @@
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::{
-    engine::{Engine, MarginContainer, RichTextLabel},
+    engine::{Engine, HBoxContainer, MarginContainer, RichTextLabel, VBoxContainer},
     prelude::*,
 };
 use lazy_static::lazy_static;
-use log::error;
 
-use crate::{world::world_manager::WorldManager};
-
+use crate::{world::world_manager::WorldManager, network::client::NetworkContainer};
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
-
-const TEXT_FIRST_PATH: &str = "MarginContainer/VBoxContainer/Row1/PanelContainer/MarginContainer/RichTextLabel";
 
 macro_rules! debug_first_string {
     () => {
@@ -24,14 +23,21 @@ Controller position: {}
 Threads count: {}"
     };
 }
-
-const TEXT_SECOND_PATH: &str = "MarginContainer/VBoxContainer/Row2/PanelContainer/MarginContainer/RichTextLabel";
-macro_rules! debug_second_string {
+macro_rules! debug_world_string {
     () => {
         "World: {}
 Chunks loaded: {}
 Chunk position: {}
 Chunk info: {}"
+    };
+}
+macro_rules! debug_network_string {
+    () => {
+        "Network connected: {}
+Bytes received per second: {:.1}
+Bytes received per sec: {:.1}
+Bytes sent per sec: {:.1}
+Packet loss: {:.1}"
     };
 }
 
@@ -40,11 +46,21 @@ Chunk info: {}"
 pub struct DebugInfo {
     #[base]
     base: Base<MarginContainer>,
-    first_text: Option<Gd<RichTextLabel>>,
-    second_text: Option<Gd<RichTextLabel>>,
+    first_row: Gd<HBoxContainer>,
+    world_row: Gd<HBoxContainer>,
+    network_row: Gd<HBoxContainer>,
 }
 
 impl DebugInfo {
+    pub fn load_row() -> Gd<HBoxContainer> {
+        load::<PackedScene>("res://scenes/debug_row.tscn").instantiate_as::<HBoxContainer>()
+    }
+
+    pub fn change_text(row: &Gd<HBoxContainer>, new_text: String) {
+        let mut text = row.get_node_as::<RichTextLabel>("PanelContainer/MarginContainer/RichTextLabel");
+        text.set_text(GodotString::from(new_text));
+    }
+
     pub fn is_active() -> bool {
         DEBUG_ACTIVE.load(Ordering::Relaxed)
     }
@@ -55,11 +71,7 @@ impl DebugInfo {
         self.base.set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(
-        &mut self,
-        world_manager: GdRef<WorldManager>,
-        camera: &Gd<Camera3D>,
-    ) {
+    pub fn update_debug(&mut self, world_manager: GdRef<WorldManager>, camera: &Gd<Camera3D>) {
         if !DebugInfo::is_active() {
             return;
         }
@@ -75,7 +87,7 @@ impl DebugInfo {
                     h.get_yaw(&camera),
                     h.get_pitch(&camera),
                 )
-            },
+            }
             None => "-".to_string(),
         };
 
@@ -85,10 +97,7 @@ impl DebugInfo {
             controller_positioin,
             rayon::current_num_threads()
         );
-        self.first_text
-            .as_deref_mut()
-            .unwrap()
-            .set_text(GodotString::from(first_text));
+        DebugInfo::change_text(&self.first_row, first_text);
 
         let camera_pos = camera.get_position();
         let chunk_pos =
@@ -99,16 +108,12 @@ impl DebugInfo {
                 let chunk_info = match world.get_chunk(&chunk_pos) {
                     Some(c) => {
                         let c = c.borrow();
-                        format!(
-                            "sended:{} loaded:{}",
-                            c.is_sended(),
-                            c.is_loaded()
-                        )
+                        format!("sended:{} loaded:{}", c.is_sended(), c.is_loaded())
                     }
                     None => "-".to_string(),
                 };
                 format!(
-                    debug_second_string!(),
+                    debug_world_string!(),
                     world.get_slug(),
                     world.get_chunks_count(),
                     chunk_pos,
@@ -117,10 +122,25 @@ impl DebugInfo {
             }
             None => "World: -".to_string(),
         };
-        self.second_text
-            .as_deref_mut()
-            .unwrap()
-            .set_text(GodotString::from(second_text));
+        DebugInfo::change_text(&self.world_row, second_text);
+
+        let container = NetworkContainer::read();
+        let network_text = if container.has_client() {
+            let client = container.get_client();
+            let network_info = client.network_info();
+
+            format!(
+                debug_network_string!(),
+                client.is_disconnected(),
+                network_info.bytes_received_per_second,
+                client.bytes_received_per_sec(),
+                client.bytes_sent_per_sec(),
+                client.packet_loss(),
+            )
+        } else {
+            "Network connected: -".to_string()
+        };
+        DebugInfo::change_text(&self.network_row, network_text);
     }
 }
 
@@ -129,24 +149,18 @@ impl NodeVirtual for DebugInfo {
     fn init(base: Base<MarginContainer>) -> Self {
         Self {
             base: base,
-            first_text: Default::default(),
-            second_text: Default::default(),
+            first_row: DebugInfo::load_row(),
+            world_row: DebugInfo::load_row(),
+            network_row: DebugInfo::load_row(),
         }
     }
 
     fn ready(&mut self) {
         self.base.set_visible(false);
 
-        if let Some(c) = self.base.try_get_node_as::<RichTextLabel>(TEXT_FIRST_PATH) {
-            self.first_text = Some(c);
-        } else {
-            error!("TEXT_FIRST_PATH not found");
-        }
-
-        if let Some(c) = self.base.try_get_node_as::<RichTextLabel>(TEXT_SECOND_PATH) {
-            self.second_text = Some(c);
-        } else {
-            error!("TEXT_SECOND_PATH not found");
-        }
+        let mut base = self.base.get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
+        base.add_child(self.first_row.share().upcast());
+        base.add_child(self.world_row.share().upcast());
+        base.add_child(self.network_row.share().upcast());
     }
 }

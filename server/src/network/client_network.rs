@@ -12,10 +12,11 @@ use std::{fmt::Display, sync::RwLockWriteGuard};
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
     entities::entity::{Position, Rotation},
-    worlds::worlds_manager::WorldsManager,
 };
 
 use super::server::{NetworkContainer, NetworkPlugin};
+
+static SEND_CHUNK_QUEUE_LIMIT: usize = 64;
 
 /// Store player current world slug and his entity
 #[derive(Clone)]
@@ -50,7 +51,12 @@ pub struct ClientNetwork {
     pub world_entity: Option<WorldEntity>,
 
     // Current chunks that player can see
-    watched_chunks: Vec<ChunkPosition>,
+    // Tp prevent resend chunks
+    already_sended: Vec<ChunkPosition>,
+
+    // Chunks was sended by network
+    // but not yet recieved by the player
+    send_chunk_queue: Vec<ChunkPosition>,
 }
 
 impl ClientNetwork {
@@ -59,7 +65,8 @@ impl ClientNetwork {
             client_id,
             login,
             world_entity: None,
-            watched_chunks: Default::default(),
+            already_sended: Default::default(),
+            send_chunk_queue: Default::default(),
         }
     }
 
@@ -90,7 +97,21 @@ impl ClientNetwork {
             pitch: rotation.get_pitch().clone(),
         };
         let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(self.client_id.clone(), ServerChannel::Reliable, encoded)
+        server.send_message(self.client_id.clone(), ServerChannel::Reliable, encoded);
+    }
+
+    pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
+        self.already_sended.contains(chunk_position)
+    }
+
+    /// If too many chunks currently was sended and waiting
+    /// for confirmation that they have reached the client
+    pub fn is_queue_limit(&self) -> bool {
+        self.send_chunk_queue.len() > SEND_CHUNK_QUEUE_LIMIT
+    }
+
+    pub fn send_to_queue(&mut self, chunk_position: &ChunkPosition) {
+        self.send_chunk_queue.push(chunk_position.clone());
     }
 
     /// Send chunk which was just loaded
@@ -100,47 +121,19 @@ impl ClientNetwork {
         chunk_position: &ChunkPosition,
         encoded: Vec<u8>,
     ) {
-        if !self.is_connected(&*server) {
-            error!("send_loaded_chunk runs on disconnected user {}", self.login);
-            return;
-        }
-        if self.watched_chunks.contains(&chunk_position) {
+        if self.already_sended.contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        server.send_message(self.client_id.clone(), ServerChannel::Reliable, encoded.clone());
+        server.send_message(self.client_id.clone(), ServerChannel::Chunks, encoded.clone());
 
         // Watch chunk
-        self.watched_chunks.push(chunk_position.clone());
+        self.already_sended.push(chunk_position.clone());
     }
 
-    /// Send already loaded chunks to the client
-    pub fn send_already_loaded_chunks(&mut self, network_container: &NetworkContainer, worlds_manager: &WorldsManager) {
-        let mut server = network_container.get_server_mut();
-        if !self.is_connected(&*server) {
-            error!("send_already_loaded_chunks runs on disconnected user {}", self.login);
-            return;
-        }
-
-        let world_entity = self.world_entity.as_ref().unwrap();
-        let world_manager = worlds_manager
-            .get_world_manager(&world_entity.get_world_slug())
-            .unwrap();
-        let client_chunks = world_manager
-            .chunks_map
-            .take_entity_chunks(&world_entity.get_entity())
-            .unwrap();
-
-        for chunk_position in client_chunks {
-            if self.watched_chunks.contains(&chunk_position) {
-                continue;
-            }
-            if let Some(e) = world_manager.get_network_chunk_bytes(chunk_position) {
-                server.send_message(self.get_client_id().clone(), ServerChannel::Reliable, e);
-
-                // Watch chunk
-                self.watched_chunks.push(chunk_position.clone());
-            };
-        }
+    /// Called when the player has sent a confirmation of receiving chunk data
+    pub fn mark_chunk_as_recieved(&mut self, chunk_position: ChunkPosition) {
+        println!("mark_chunk_as_recieved {}", chunk_position);
+        vec_remove_item(&mut self.send_chunk_queue, &chunk_position);
     }
 
     /// Send chunks to unload
@@ -148,7 +141,7 @@ impl ClientNetwork {
         &mut self,
         network_container: &NetworkContainer,
         world_slug: &String,
-        abandoned_chunks: Vec<ChunkPosition>,
+        mut abandoned_chunks: Vec<ChunkPosition>,
     ) {
         if abandoned_chunks.len() == 0 {
             return;
@@ -160,18 +153,21 @@ impl ClientNetwork {
             return;
         }
 
-        let input = ServerMessages::UnloadChunks {
-            world_slug: world_slug.clone(),
-            chunks: abandoned_chunks.clone(),
-        };
-        let encoded = bincode::serialize(&input).unwrap();
-        server.send_message(self.get_client_id().clone(), ServerChannel::Reliable, encoded);
+        let mut unload_chunks: Vec<ChunkPosition> = Default::default();
 
         // Unwatch chunks
-        for chunk_position in abandoned_chunks.iter() {
-            let removed = vec_remove_item(&mut self.watched_chunks, &chunk_position);
-            assert_eq!(removed, true);
+        for chunk_position in abandoned_chunks.drain(..) {
+            let removed = vec_remove_item(&mut self.already_sended, &chunk_position);
+            if removed {
+                unload_chunks.push(chunk_position);
+            }
         }
+        let input = ServerMessages::UnloadChunks {
+            world_slug: world_slug.clone(),
+            chunks: unload_chunks,
+        };
+        let encoded = bincode::serialize(&input).unwrap();
+        server.send_message(self.get_client_id().clone(), ServerChannel::Chunks, encoded);
     }
 }
 

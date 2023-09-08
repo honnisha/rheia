@@ -1,13 +1,14 @@
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
+use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::world::world_manager::WorldManager;
-use crate::{client_scripts::resource_manager::ResourceManager, controller::debug_info::DebugInfo};
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
-pub const CHUNKS_DISTANCE: u16 = 24;
+pub const CHUNKS_DISTANCE: u16 = 16;
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");

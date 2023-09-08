@@ -1,20 +1,12 @@
 use std::sync::Arc;
 
-use super::chunks::chunk_column::LOADED_CHUNKS;
 use ahash::HashMap;
 use bevy::prelude::Resource;
 use bevy::time::Time;
-use bevy_ecs::system::{Res, ResMut};
-use log::{error, trace};
+use bevy_ecs::system::Res;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::{
-    entities::entity::NetworkComponent,
-    network::{
-        clients_container::{ClientMut, ClientsContainer},
-        server::NetworkContainer,
-    },
-};
+use crate::network::clients_container::ClientMut;
 
 use super::world_manager::WorldManager;
 
@@ -84,56 +76,5 @@ impl WorldsManager {
 pub fn update_world_chunks(worlds_manager: Res<WorldsManager>, time: Res<Time>) {
     for (_key, world) in worlds_manager.get_worlds().iter() {
         world.write().update_chunks(time.delta());
-    }
-}
-
-pub fn chunk_loaded_event_reader(
-    worlds_manager: ResMut<WorldsManager>,
-    network_container: Res<NetworkContainer>,
-    clients: Res<ClientsContainer>,
-) {
-    let mut server = network_container.get_server_mut();
-
-    // Iterate loaded chunks
-    for (world_slug, chunk_position) in LOADED_CHUNKS.1.drain() {
-        let world = worlds_manager.get_world_manager(&world_slug).unwrap();
-
-        // Get all clients which is waching this chunk
-        let watch_entities = match world.chunks_map.take_chunks_entities(&chunk_position) {
-            Some(v) => v,
-            None => {
-                panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
-            }
-        };
-
-        if watch_entities.len() <= 0 {
-            continue;
-        }
-
-        // Try to get chunk data
-        let encoded = match world.get_network_chunk_bytes(&chunk_position) {
-            Some(e) => e,
-            None => {
-                error!(
-                    "chunk_loaded_event_reader there is not chunk for player_chunks_watch:{}",
-                    chunk_position
-                );
-                continue;
-            }
-        };
-
-        match bincode::serialized_size(&encoded) {
-            Ok(s) => trace!("NETWORK chunk_position:{} packet size:{}", chunk_position, s),
-            Err(e) => error!("NETWORK bincode::serialized_size error: {}", e),
-        }
-        for entity in watch_entities {
-            let player_entity = world.get_entity(entity);
-            let network = player_entity.get::<NetworkComponent>().unwrap();
-            let mut client = clients.get_mut(&network.get_client_id());
-
-            if client.is_connected(&*server) {
-                client.send_loaded_chunk(&mut server, &chunk_position, encoded.clone());
-            }
-        }
     }
 }

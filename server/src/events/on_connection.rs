@@ -44,7 +44,6 @@ pub fn on_connection(
             }
 
             client.send_teleport(&network_container, &position, &rotation);
-            client.send_already_loaded_chunks(&network_container, &worlds_manager);
         }
     }
 }

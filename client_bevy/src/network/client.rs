@@ -183,6 +183,7 @@ fn handle_events_system(
                 ));
             }
             ServerMessages::ChunkSectionInfo {
+                world_slug,
                 chunk_position,
                 mut sections,
             } => {
@@ -191,7 +192,7 @@ fn handle_events_system(
                     unpack_network_sectioins(&mut sections),
                 ));
             }
-            ServerMessages::UnloadChunks { chunks } => {
+            ServerMessages::UnloadChunks { world_slug, chunks } => {
                 chunk_unloaded_event.send(ChunkUnloadedEvent::new(chunks));
             }
         }

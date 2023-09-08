@@ -20,7 +20,7 @@ pub fn get_client_channels_config() -> Vec<ChannelConfig> {
     vec![
         ChannelConfig {
             channel_id: ClientChannel::Reliable.into(),
-            max_memory_usage_bytes: 5 * 1024 * 1024,
+            max_memory_usage_bytes: 1 * 1024 * 1024,
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
@@ -36,6 +36,7 @@ pub fn get_client_channels_config() -> Vec<ChannelConfig> {
 pub enum ServerChannel {
     Reliable,
     Unreliable,
+    Chunks,
 }
 
 impl From<ServerChannel> for u8 {
@@ -43,6 +44,7 @@ impl From<ServerChannel> for u8 {
         match channel_id {
             ServerChannel::Reliable => 0,
             ServerChannel::Unreliable => 1,
+            ServerChannel::Chunks => 2,
         }
     }
 }
@@ -51,7 +53,7 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
     vec![
         ChannelConfig {
             channel_id: ServerChannel::Reliable.into(),
-            max_memory_usage_bytes: 10 * 1024 * 1024,
+            max_memory_usage_bytes: 1 * 1024 * 1024, // in MB
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
@@ -60,6 +62,13 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
             channel_id: ServerChannel::Unreliable.into(),
             max_memory_usage_bytes: 1 * 1024 * 1024,
             send_type: SendType::Unreliable,
+        },
+        ChannelConfig {
+            channel_id: ServerChannel::Chunks.into(),
+            max_memory_usage_bytes: 5 * 1024 * 1024, // in MB
+            send_type: SendType::ReliableUnordered {
+                resend_time: Duration::from_secs_f32(0.5_f32),
+            },
         },
     ]
 }

@@ -25,12 +25,14 @@ use std::{
 };
 
 use crate::entities::entity::Rotation;
+use crate::network::chunks_sender::send_chunks;
 use crate::network::clients_container::ClientsContainer;
 use crate::{
     client_resources::resources_manager::ResourceManager,
     console::commands_executer::CommandsHandler,
     entities::entity::Position,
     events::{
+        on_chunk_recieved::{on_chunk_recieved, ChunkRecievedEvent},
         on_connection::{on_connection, PlayerConnectionEvent},
         on_disconnect::{on_disconnect, PlayerDisconnectEvent},
         on_player_move::{on_player_move, PlayerMoveEvent},
@@ -111,11 +113,11 @@ impl NetworkPlugin {
         let transport = NetcodeServerTransport::new(current_time, server_config, socket).unwrap();
 
         app.insert_resource(NetworkContainer::new(server, transport));
-
         app.insert_resource(ClientsContainer::default());
 
         app.add_systems(Update, receive_message_system);
         app.add_systems(Update, handle_events_system);
+        app.add_systems(Update, send_chunks.after(handle_events_system));
 
         app.add_systems(Update, console_client_command_event);
 
@@ -127,6 +129,9 @@ impl NetworkPlugin {
 
         app.add_event::<PlayerMoveEvent>();
         app.add_systems(Update, on_player_move.after(handle_events_system));
+
+        app.add_event::<ChunkRecievedEvent>();
+        app.add_systems(Update, on_chunk_recieved.after(handle_events_system));
 
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
@@ -166,6 +171,7 @@ fn receive_message_system(
     time: Res<Time>,
     mut server_events: EventWriter<ServerEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
+    mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
     let mut server = network_container.get_server_mut();
     let mut transport = network_container.get_transport_mut();
@@ -187,6 +193,9 @@ fn receive_message_system(
             match decoded {
                 ClientMessages::ConsoleInput { command } => {
                     CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
+                }
+                ClientMessages::ChunkRecieved { chunk_position } => {
+                    chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_position));
                 }
                 _ => panic!("unsupported message"),
             }

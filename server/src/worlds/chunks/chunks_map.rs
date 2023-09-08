@@ -13,12 +13,14 @@ use crate::{
 
 use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState};
 
+pub type MapChunksType = AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>;
+
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks
 /// and responsible for load/unload chunks
 #[derive(Default)]
 pub struct ChunkMap {
-    chunks: AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>,
+    chunks: MapChunksType,
     chunks_load_state: ChunksLoadState,
 }
 
@@ -31,6 +33,10 @@ impl ChunkMap {
 
     pub fn count(&self) -> usize {
         self.chunks.len()
+    }
+
+    pub fn get_chunks(&self) -> &MapChunksType {
+        &self.chunks
     }
 
     pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {

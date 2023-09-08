@@ -80,12 +80,16 @@ impl NetworkContainer {
         NETWORK_CONTAINER.read().unwrap()
     }
 
-    pub fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
-        self.client.as_ref().unwrap().write().expect("poisoned")
+    pub fn has_client(&self) -> bool {
+        self.client.as_ref().is_some()
     }
 
-    pub fn _get_transport(&self) -> RwLockReadGuard<NetcodeClientTransport> {
-        self.transport.as_ref().unwrap().read().expect("poisoned")
+    pub fn get_client(&self) -> RwLockReadGuard<RenetClient> {
+        self.client.as_ref().unwrap().read().expect("poisoned")
+    }
+
+    pub fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
+        self.client.as_ref().unwrap().write().expect("poisoned")
     }
 
     pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
@@ -126,6 +130,10 @@ impl NetworkContainer {
         while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
             NETWORK_DECODER_IN.0.send(server_message).unwrap();
         }
+        while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
+            NETWORK_DECODER_IN.0.send(server_message).unwrap();
+        }
+
         for decoded in NETWORK_DECODER_OUT.1.drain() {
             match decoded {
                 ServerMessages::ConsoleOutput { message } => {
@@ -164,8 +172,12 @@ impl NetworkContainer {
                     let tx = WorldManager::get_chunk_sender();
                     rayon::spawn(move || {
                         let decoded_sections = unpack_network_sectioins(&mut sections);
-                        tx.send((world_slug, chunk_position, decoded_sections)).unwrap();
+                        tx.send((world_slug, chunk_position.clone(), decoded_sections)).unwrap();
                     });
+
+                    let input = ClientMessages::ChunkRecieved { chunk_position: chunk_position };
+                    let chunk_recieved = bincode::serialize(&input).unwrap();
+                    client.send_message(ClientChannel::Reliable, chunk_recieved);
                 }
                 ServerMessages::UnloadChunks { chunks, world_slug } => {
                     main_scene.get_world_manager_mut().unload_chunk(world_slug, chunks);

@@ -6,7 +6,7 @@ use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
 
 use self::{
     commands::{get_command_parser, world_command},
-    worlds_manager::{chunk_loaded_event_reader, update_world_chunks, WorldsManager},
+    worlds_manager::{update_world_chunks, WorldsManager},
 };
 
 pub mod chunks;
@@ -47,6 +47,5 @@ impl Plugin for WorldsHandlerPlugin {
         app.insert_resource(wm);
 
         app.add_systems(Update, update_world_chunks);
-        app.add_systems(Update, chunk_loaded_event_reader);
     }
 }

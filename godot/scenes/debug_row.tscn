@@ -1,0 +1,51 @@
+[gd_scene load_steps=6 format=3 uid="uid://bohec0klc40x2"]
+
+[ext_resource type="Texture2D" uid="uid://c2ujts6nvss0c" path="res://assets/gui/textures/console/text_background.png" id="1_qpuck"]
+[ext_resource type="FontFile" uid="uid://clhrph24nx6vo" path="res://assets/gui/fonts/hack/Hack-Regular.ttf" id="2_g2hw7"]
+[ext_resource type="FontFile" uid="uid://dxly1nwoo0j78" path="res://assets/gui/fonts/hack/Hack-Bold.ttf" id="3_l8kb8"]
+[ext_resource type="FontFile" uid="uid://b4ff0cugvpgrk" path="res://assets/gui/fonts/hack/Hack-Italic.ttf" id="4_s54r6"]
+[ext_resource type="FontFile" uid="uid://kv6t6keof778" path="res://assets/gui/fonts/hack/Hack-BoldItalic.ttf" id="5_6nsia"]
+
+[node name="Row2" type="HBoxContainer"]
+custom_minimum_size = Vector2(10, 10)
+size_flags_vertical = 3
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 2
+texture = ExtResource("1_qpuck")
+expand_mode = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 3
+
+[node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer"]
+custom_minimum_size = Vector2(350, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_fonts/normal_font = ExtResource("2_g2hw7")
+theme_override_fonts/bold_font = ExtResource("3_l8kb8")
+theme_override_fonts/italics_font = ExtResource("4_s54r6")
+theme_override_fonts/bold_italics_font = ExtResource("5_6nsia")
+theme_override_fonts/mono_font = ExtResource("2_g2hw7")
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/mono_font_size = 12
+bbcode_enabled = true
+text = "test 123
+123
+213
+teasdas
+"
+fit_content = true
+scroll_active = false
+tab_size = 0

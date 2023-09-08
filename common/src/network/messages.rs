@@ -12,6 +12,7 @@ use crate::{
 pub enum ClientMessages {
     ConsoleInput { command: String },
     PlayerMove { position: [f32; 3], yaw: f32, pitch: f32 },
+    ChunkRecieved { chunk_position: ChunkPosition },
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;

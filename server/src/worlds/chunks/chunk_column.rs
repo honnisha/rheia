@@ -5,17 +5,9 @@ use common::chunks::utils::PacketChunkSectionData;
 use common::network::messages::ChunkDataType;
 use common::VERTICAL_SECTIONS;
 use core::fmt;
-use flume::{Receiver, Sender};
-use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{collections::HashMap, sync::Arc, time::Duration};
-
-/// world_slug, chunk_position
-pub type LoadedChunkType = (String, ChunkPosition);
-lazy_static! {
-    pub static ref LOADED_CHUNKS: (Sender<LoadedChunkType>, Receiver<LoadedChunkType>) = flume::unbounded();
-}
 
 pub struct ChunkColumn {
     chunk_position: ChunkPosition,
@@ -87,9 +79,5 @@ pub(crate) fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, chunk_col
             chunk_column.sections.push(Box::new(chunk_section));
         }
         chunk_column.loaded = true;
-        LOADED_CHUNKS
-            .0
-            .send((chunk_column.world_slug.clone(), chunk_column.chunk_position.clone()))
-            .unwrap();
     })
 }

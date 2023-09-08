@@ -9,6 +9,7 @@ mod main_scene;
 mod network;
 mod utils;
 mod world;
+mod debug;
 
 struct HonnyCraft;
 
