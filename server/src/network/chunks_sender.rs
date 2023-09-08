@@ -37,21 +37,21 @@ pub fn send_chunks(
                     panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
                 }
             };
-            for entity in watch_entities {
+            'entity_loop: for entity in watch_entities {
                 let player_entity = world.get_entity(entity);
                 let network = player_entity.get::<NetworkComponent>().unwrap();
                 let mut client = clients.get_mut(&network.get_client_id());
 
                 if !client.is_connected(&*server) {
-                    continue;
+                    continue 'entity_loop;
                 }
 
                 if client.is_queue_limit() {
-                    continue;
+                    continue 'entity_loop;
                 }
 
                 if client.is_already_sended(&chunk_position) {
-                    continue;
+                    continue 'entity_loop;
                 }
 
                 let chunk_queue = queue.entry(chunk_position.clone()).or_insert(Default::default());
