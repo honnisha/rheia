@@ -7,7 +7,7 @@ use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
-pub const CHUNKS_DISTANCE: u16 = 12;
+pub const CHUNKS_DISTANCE: u16 = 24;
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -59,7 +59,7 @@ impl NodeVirtual for Main {
         Main {
             base,
             resource_manager: ResourceManager::new(),
-            world_manager: Gd::<WorldManager>::with_base(|base| WorldManager::create(base, camera.share())),
+            world_manager: Gd::<WorldManager>::with_base(|base| WorldManager::create(base, &camera)),
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
             camera: camera,
@@ -75,16 +75,15 @@ impl NodeVirtual for Main {
         self.base.add_child(self.debug_info.share().upcast());
         self.base.add_child(self.camera.share().upcast());
 
+        self.debug_info.bind_mut().toggle(true);
+
         info!("Loading HonnyCraft version: {}", VERSION);
 
         NetworkContainer::spawn_decoder();
-        match NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
-            Ok(_) => {}
-            Err(e) => {
-                error!("Network connection error: {}", e);
-                Main::close();
-            }
-        };
+        if let Err(e) = NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
+            error!("Network connection error: {}", e);
+            Main::close();
+        }
     }
 
     fn process(&mut self, delta: f64) {
@@ -92,12 +91,9 @@ impl NodeVirtual for Main {
             self.handle_console_command(message);
         }
 
-        match NetworkContainer::update(delta, self) {
-            Ok(_) => {}
-            Err(e) => {
-                error!("Network process error: {}", e);
-                Main::close();
-            }
+        if let Err(e) = NetworkContainer::update(delta, self) {
+            error!("Network process error: {}", e);
+            Main::close();
         }
         self.debug_info
             .bind_mut()
@@ -106,6 +102,6 @@ impl NodeVirtual for Main {
 
     fn exit_tree(&mut self) {
         NetworkContainer::disconnect();
-        info!("{}", "Exiting the game");
+        info!("Exiting the game");
     }
 }

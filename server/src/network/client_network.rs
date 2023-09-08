@@ -1,13 +1,13 @@
-use core::fmt;
-use std::{fmt::Display, sync::RwLockWriteGuard};
-
 use bevy::prelude::Entity;
 use common::{
     chunks::chunk_position::ChunkPosition,
     network::{channels::ServerChannel, messages::ServerMessages},
     utils::vec_remove_item,
 };
+use core::fmt;
+use log::error;
 use renet::RenetServer;
+use std::{fmt::Display, sync::RwLockWriteGuard};
 
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
@@ -71,10 +71,18 @@ impl ClientNetwork {
         &self.client_id
     }
 
+    pub fn is_connected(&self, server: &RenetServer) -> bool {
+        server.clients_id().contains(&self.client_id)
+    }
+
     pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
         let mut server = network_container.get_server_mut();
-        let world_entity = self.world_entity.as_ref().unwrap();
+        if !server.clients_id().contains(&self.client_id) {
+            error!("send_teleport runs on disconnected user {}", self.login);
+            return;
+        }
 
+        let world_entity = self.world_entity.as_ref().unwrap();
         let input = ServerMessages::Teleport {
             world_slug: world_entity.get_world_slug().clone(),
             location: position.to_array(),
@@ -92,6 +100,10 @@ impl ClientNetwork {
         chunk_position: &ChunkPosition,
         encoded: Vec<u8>,
     ) {
+        if !self.is_connected(&*server) {
+            error!("send_loaded_chunk runs on disconnected user {}", self.login);
+            return;
+        }
         if self.watched_chunks.contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
@@ -104,8 +116,12 @@ impl ClientNetwork {
     /// Send already loaded chunks to the client
     pub fn send_already_loaded_chunks(&mut self, network_container: &NetworkContainer, worlds_manager: &WorldsManager) {
         let mut server = network_container.get_server_mut();
-        let world_entity = self.world_entity.as_ref().unwrap();
+        if !self.is_connected(&*server) {
+            error!("send_already_loaded_chunks runs on disconnected user {}", self.login);
+            return;
+        }
 
+        let world_entity = self.world_entity.as_ref().unwrap();
         let world_manager = worlds_manager
             .get_world_manager(&world_entity.get_world_slug())
             .unwrap();
@@ -128,12 +144,21 @@ impl ClientNetwork {
     }
 
     /// Send chunks to unload
-    pub fn send_unload_chunks(&mut self, network_container: &NetworkContainer, world_slug: &String, abandoned_chunks: Vec<ChunkPosition>) {
+    pub fn send_unload_chunks(
+        &mut self,
+        network_container: &NetworkContainer,
+        world_slug: &String,
+        abandoned_chunks: Vec<ChunkPosition>,
+    ) {
         if abandoned_chunks.len() == 0 {
             return;
         }
 
         let mut server = network_container.get_server_mut();
+        if !self.is_connected(&*server) {
+            error!("send_unload_chunks runs on disconnected user {}", self.login);
+            return;
+        }
 
         let input = ServerMessages::UnloadChunks {
             world_slug: world_slug.clone(),

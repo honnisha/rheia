@@ -135,9 +135,7 @@ impl NodeVirtual for DebugInfo {
     }
 
     fn ready(&mut self) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
+        self.base.set_visible(false);
 
         if let Some(c) = self.base.try_get_node_as::<RichTextLabel>(TEXT_FIRST_PATH) {
             self.first_text = Some(c);

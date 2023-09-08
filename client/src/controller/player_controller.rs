@@ -1,16 +1,10 @@
 use common::network::messages::ClientMessages;
-use godot::{
-    engine::{Engine, InputEvent},
-    prelude::*,
-};
+use godot::{engine::InputEvent, prelude::*};
 use std::fmt::{self, Display, Formatter};
 
 use crate::{entities::position::GodotPositionConverter, main_scene::FloatType};
 
 use super::handlers::freecam::FreeCameraHandler;
-
-const CAMERA_PATH: &str = "Camera";
-const DEBUG_INFO_PATH: &str = "DebugInfo";
 
 #[derive(Clone, Copy, Debug, PartialEq, ToVariant, FromVariant)]
 pub struct PlayerMovement {
@@ -54,6 +48,14 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
+    pub fn create(base: Base<Node>, camera: &Gd<Camera3D>) -> Self {
+        Self {
+            base,
+            camera: camera.share(),
+            handler: None,
+        }
+    }
+
     /// Handle network packet for changing position
     pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
         let handler = match self.handler.as_mut() {
@@ -89,11 +91,8 @@ impl PlayerController {
 #[godot_api]
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node>) -> Self {
-        Self {
-            base,
-            camera: load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>(),
-            handler: None,
-        }
+        let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
+        Self::create(base, &camera)
     }
 
     fn ready(&mut self) {}
@@ -106,9 +105,6 @@ impl NodeVirtual for PlayerController {
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
         if let Some(h) = self.handler.as_mut() {
             h.process(&mut self.base, delta, &mut self.camera);
         }

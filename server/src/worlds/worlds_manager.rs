@@ -130,7 +130,10 @@ pub fn chunk_loaded_event_reader(
             let player_entity = world.get_entity(entity);
             let network = player_entity.get::<NetworkComponent>().unwrap();
             let mut client = clients.get_mut(&network.get_client_id());
-            client.send_loaded_chunk(&mut server, &chunk_position, encoded.clone());
+
+            if client.is_connected(&*server) {
+                client.send_loaded_chunk(&mut server, &chunk_position, encoded.clone());
+            }
         }
     }
 }

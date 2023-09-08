@@ -44,18 +44,17 @@ pub struct WorldManager {
 }
 
 impl WorldManager {
-    pub fn create(base: Base<Node>, camera: Gd<Camera3D>) -> Self {
+    pub fn create(base: Base<Node>, camera: &Gd<Camera3D>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
         Self {
             base,
-            camera,
+            camera: camera.share(),
 
             world: None,
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
-            player_controller: load::<PackedScene>("res://scenes/player_controller.tscn")
-                .instantiate_as::<PlayerController>(),
+            player_controller: Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera)),
         }
     }
 
