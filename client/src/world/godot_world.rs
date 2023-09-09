@@ -3,11 +3,12 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Engine, Material},
+    engine::{Engine, Material, MeshInstance3D, SphereMesh},
     prelude::*,
 };
 use parking_lot::RwLock;
-use std::cell::RefCell;
+use rapier3d::prelude::RigidBodyHandle;
+use std::{cell::RefCell};
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -36,6 +37,8 @@ pub struct World {
     chunks_container: Gd<ChunksContainer>,
 
     physics: PhysicsController,
+    handle: Option<RigidBodyHandle>,
+    obj: Option<Gd<MeshInstance3D>>,
 }
 
 impl World {
@@ -56,6 +59,8 @@ impl World {
             slug: slug,
             chunks_container,
             physics: PhysicsController::default(),
+            handle: None,
+            obj: None,
         }
     }
 
@@ -97,6 +102,15 @@ impl NodeVirtual for World {
 
     fn ready(&mut self) {
         self.base.add_child(self.chunks_container.share().upcast());
+
+        self.obj = Some(MeshInstance3D::new_alloc());
+        let mut sphere = self.obj.as_mut().unwrap();
+        let mesh = SphereMesh::new();
+        sphere.set_mesh(mesh.upcast());
+        self.base.add_child(sphere.share().upcast());
+        sphere.set_position(Vector3 { x: 0.0, y: 60.0, z: 60.0 });
+
+        self.handle = Some(self.physics.create_ball(&sphere.get_position()));
     }
 
     fn process(&mut self, _delta: f64) {
@@ -105,5 +119,11 @@ impl NodeVirtual for World {
         }
 
         self.physics.step();
+        if let Some(h) = self.handle {
+            let body = self.physics.get_rigid_body(&h).unwrap();
+            let mut sphere = self.obj.as_mut().unwrap();
+            let new_pos = Vector3::new(body.translation()[0], body.translation()[1], body.translation()[2]);
+            sphere.set_position(new_pos);
+        }
     }
 }

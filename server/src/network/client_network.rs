@@ -132,7 +132,6 @@ impl ClientNetwork {
 
     /// Called when the player has sent a confirmation of receiving chunk data
     pub fn mark_chunk_as_recieved(&mut self, chunk_position: ChunkPosition) {
-        println!("mark_chunk_as_recieved {}", chunk_position);
         vec_remove_item(&mut self.send_chunk_queue, &chunk_position);
     }
 

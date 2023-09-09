@@ -1,3 +1,4 @@
+use godot::prelude::Vector3;
 use rapier3d::prelude::*;
 
 pub(crate) struct PhysicsController {
@@ -33,6 +34,19 @@ impl Default for PhysicsController {
 }
 
 impl PhysicsController {
+    pub fn create_ball(&mut self, position: &Vector3) -> RigidBodyHandle {
+        /* Create the bounding ball. */
+        let rigid_body = RigidBodyBuilder::dynamic().translation(vector![position.x, position.y, position.z]).build();
+        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
+        let body_handle = self.rigid_body_set.insert(rigid_body);
+        self.collider_set.insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
+        body_handle
+    }
+
+    pub fn get_rigid_body(&self, handle: &RigidBodyHandle) -> Option<&RigidBody> {
+        self.rigid_body_set.get(*handle)
+    }
+
     pub fn step(&mut self) {
         let physics_hooks = ();
         let event_handler = ();

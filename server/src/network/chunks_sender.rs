@@ -74,7 +74,6 @@ pub fn send_chunks(
             };
 
             for entity in entities.iter() {
-                println!("sended {}", chunk_position);
                 let player_entity = world.get_entity(&entity);
                 let network = player_entity.get::<NetworkComponent>().unwrap();
                 let mut client = clients.get_mut(&network.get_client_id());

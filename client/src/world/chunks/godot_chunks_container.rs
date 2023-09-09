@@ -19,7 +19,7 @@ use crate::{
     entities::position::GodotPositionConverter,
     main_scene::CHUNKS_DISTANCE,
     utils::textures::texture_mapper::TextureMapper,
-    world::world_manager::{get_default_material, TextureMapperType, WorldManager},
+    world::{world_manager::{get_default_material, TextureMapperType, WorldManager}, godot_world::World},
 };
 
 use super::{
@@ -173,7 +173,9 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
-        let world_manager = self.base.get_parent().unwrap().get_parent().unwrap().cast::<WorldManager>();
+        let world = self.base.get_parent().unwrap().cast::<World>();
+
+        let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
         let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
         let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
 

@@ -1,8 +1,11 @@
 use std::borrow::BorrowMut;
 
-use common::blocks::{blocks_storage::BlockType};
-use godot::{prelude::*, engine::{MeshInstance3D, Material, ArrayMesh}};
-use ndshape::{ConstShape3u32, ConstShape};
+use common::blocks::blocks_storage::BlockType;
+use godot::{
+    engine::{ArrayMesh, Material, MeshInstance3D},
+    prelude::*,
+};
+use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::world::world_manager::get_default_material;
 
@@ -19,42 +22,24 @@ pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 pub struct ChunkSection {
     #[base]
     pub(crate) base: Base<Node3D>,
-    mesh: Option<Gd<MeshInstance3D>>,
-    material: Gd<Material>,
+    mesh: Gd<MeshInstance3D>,
     y: u8,
 }
 
 impl ChunkSection {
     pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8) -> Self {
-        Self {
-            base,
-            mesh: None,
-            material,
-            y,
-        }
-    }
-
-    pub fn create_mesh(&mut self) {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
+        mesh.set_material_overlay(material.share());
 
-        mesh.set_material_overlay(self.material.share());
-
-        self.base.add_child(mesh.upcast());
-        let m = self.base.get_node_as::<MeshInstance3D>("ChunkMesh");
-        self.mesh = Some(m);
+        Self { base, mesh, y }
     }
 
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
-        let m = self.mesh.as_mut().unwrap().borrow_mut();
+        let mesh = self.mesh.borrow_mut();
         //let c = new_mesh.get_surface_count();
-        m.set_mesh(new_mesh.upcast());
+        mesh.set_mesh(new_mesh.upcast());
         // println!("update_mesh y:{} surface_count:{}", self.y, c);
-
-        //if c > 0 {
-        //    m.create_trimesh_collision();
-        //}
-        //m.create_convex_collision(false, false);
     }
 }
 
@@ -66,6 +51,6 @@ impl NodeVirtual for ChunkSection {
     }
 
     fn ready(&mut self) {
-        self.create_mesh();
+        self.base.add_child(self.mesh.share().upcast());
     }
 }

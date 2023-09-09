@@ -8,6 +8,7 @@ use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTION
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
+use rapier3d::prelude::ColliderBuilder;
 
 pub(crate) type ChunksGenerationType = InstanceId;
 
@@ -37,7 +38,6 @@ pub(crate) fn generate_chunk(
             section.bind_mut().base.set_name(name.clone());
 
             c.base.add_child(section.share().upcast());
-            section.bind_mut().create_mesh();
             section
                 .bind_mut()
                 .base

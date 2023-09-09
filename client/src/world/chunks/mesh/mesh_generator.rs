@@ -14,8 +14,10 @@ use godot::{obj::EngineEnum, prelude::Vector2};
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
+use rapier3d::prelude::ColliderBuilder;
+use rapier3d::prelude::*;
 
-use super::block_mesh::{visible_block_faces, UnitQuadBuffer, RIGHT_HANDED_Y_UP_CONFIG, UnorientedQuad};
+use super::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG};
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -50,6 +52,7 @@ pub trait GeometryTrait: Send + Sync {}
 
 pub struct Geometry {
     pub mesh_ist: Gd<ArrayMesh>,
+    pub collider: Option<ColliderBuilder>,
 }
 
 unsafe impl Send for Geometry {}
@@ -64,6 +67,9 @@ pub fn generate_chunk_geometry(
     arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
 
     let buffer = generate_buffer(chunk_data);
+
+    let mut collider_verts: Vec<Point<Real>> = Default::default();
+    let mut collider_indices: Vec<[u32; 3]> = Default::default();
 
     let mut indices = PackedInt32Array::new();
     let mut verts = PackedVector3Array::new();
@@ -88,8 +94,17 @@ pub fn generate_chunk_geometry(
                 }
             };
 
-            indices.extend(face.quad_mesh_indices(verts.len() as i32));
-            verts.extend(face.quad_mesh_positions(&quad.into(), 1.0));
+            let i = face.quad_mesh_indices(verts.len() as i32);
+            indices.extend(i);
+            collider_indices.push([i[0] as u32, i[1] as u32, i[2] as u32]);
+            collider_indices.push([i[3] as u32, i[4] as u32, i[5] as u32]);
+
+            let v = face.quad_mesh_positions(&quad.into(), 1.0);
+            verts.extend(v);
+            for _v in v.iter() {
+                collider_verts.push(Point::new(_v.x, _v.y, _v.z));
+            }
+
             normals.extend(face.quad_mesh_normals());
 
             let unoriented_quad = UnorientedQuad::from(quad);
@@ -115,15 +130,21 @@ pub fn generate_chunk_geometry(
         }
     }
 
-    if indices.len() == 0 {
-        return Geometry { mesh_ist: mesh_ist };
-    }
+    let collider: Option<ColliderBuilder> = if collider_verts.len() == 0 {
+        None
+    } else {
+        Some(ColliderBuilder::trimesh(collider_verts, collider_indices))
+    };
 
+    let len = indices.len();
     arrays.set(mesh::ArrayType::ARRAY_INDEX.ord() as usize, Variant::from(indices));
     arrays.set(mesh::ArrayType::ARRAY_VERTEX.ord() as usize, Variant::from(verts));
     arrays.set(mesh::ArrayType::ARRAY_NORMAL.ord() as usize, Variant::from(normals));
     arrays.set(mesh::ArrayType::ARRAY_TEX_UV.ord() as usize, Variant::from(uvs));
 
-    mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::PRIMITIVE_TRIANGLES, arrays);
-    Geometry { mesh_ist: mesh_ist }
+    if len > 0 {
+        mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::PRIMITIVE_TRIANGLES, arrays);
+    }
+
+    Geometry { mesh_ist, collider }
 }

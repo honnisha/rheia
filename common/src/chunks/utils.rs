@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use arrayvec::ArrayVec;
 use serde::{Deserialize, Serialize};
 
-use crate::{blocks::block_info::BlockInfo, network::messages::{ChunkDataType, NetworkSectionsType}, VERTICAL_SECTIONS};
+use crate::{
+    blocks::{block_info::BlockInfo, blocks_storage::BlockType},
+    network::messages::{ChunkDataType, NetworkSectionsType},
+    VERTICAL_SECTIONS,
+};
 
 use super::block_position::ChunkBlockPosition;
 
@@ -17,7 +21,10 @@ impl PacketChunkSectionData {
     pub fn new(chunk_data: &mut ChunkDataType) -> Self {
         let mut data: Self = Default::default();
         for (pos, block_info) in chunk_data.drain() {
-            data.store_block(pos, block_info);
+            if block_info.get_block_type() == BlockType::Air {
+                continue;
+            }
+            data.store_block(pos, block_info)
         }
         data
     }
