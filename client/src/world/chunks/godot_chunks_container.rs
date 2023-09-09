@@ -173,7 +173,7 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
-        let world = self.base.get_parent().unwrap().cast::<World>();
+        let mut world = self.base.get_parent().unwrap().cast::<World>();
 
         let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
         let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
@@ -211,7 +211,9 @@ impl NodeVirtual for ChunksContainer {
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
-                    c.chunk_column = Some(spawn_chunk(data, chunk_position, &mut self.base));
+                    let mut w = world.bind_mut();
+                    let physics = w.get_physics_mut();
+                    c.chunk_column = Some(spawn_chunk(data, chunk_position, &mut self.base, physics));
                     c.set_loaded()
                 }
             }

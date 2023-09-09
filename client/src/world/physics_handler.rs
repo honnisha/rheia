@@ -1,7 +1,7 @@
 use godot::prelude::Vector3;
 use rapier3d::prelude::*;
 
-pub(crate) struct PhysicsController {
+pub struct PhysicsController {
     gravity: Vector<Real>,
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
@@ -34,13 +34,16 @@ impl Default for PhysicsController {
 }
 
 impl PhysicsController {
-    pub fn create_ball(&mut self, position: &Vector3) -> RigidBodyHandle {
-        /* Create the bounding ball. */
+    pub fn create_ball(&mut self, position: &Vector3) -> (RigidBodyHandle, ColliderHandle) {
         let rigid_body = RigidBodyBuilder::dynamic().translation(vector![position.x, position.y, position.z]).build();
         let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-        let body_handle = self.rigid_body_set.insert(rigid_body);
-        self.collider_set.insert_with_parent(collider, body_handle, &mut self.rigid_body_set);
-        body_handle
+        let rigid_handle = self.rigid_body_set.insert(rigid_body);
+        let collider_handle = self.collider_set.insert_with_parent(collider, rigid_handle, &mut self.rigid_body_set);
+        (rigid_handle, collider_handle)
+    }
+    pub fn create_mesh(&mut self, collider: ColliderBuilder, position: &Vector3) -> ColliderHandle {
+        let collider = collider.translation(vector![position.x, position.y, position.z]);
+        self.collider_set.insert(collider)
     }
 
     pub fn get_rigid_body(&self, handle: &RigidBodyHandle) -> Option<&RigidBody> {

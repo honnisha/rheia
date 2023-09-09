@@ -86,6 +86,10 @@ impl World {
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
         self.chunks_container.bind_mut().unload_chunk(chunks_positions);
     }
+
+    pub fn get_physics_mut(&mut self) -> &mut PhysicsController {
+        &mut self.physics
+    }
 }
 
 #[godot_api]
@@ -108,9 +112,10 @@ impl NodeVirtual for World {
         let mesh = SphereMesh::new();
         sphere.set_mesh(mesh.upcast());
         self.base.add_child(sphere.share().upcast());
-        sphere.set_position(Vector3 { x: 0.0, y: 60.0, z: 60.0 });
+        sphere.set_position(Vector3 { x: 0.0, y: 60.0, z: 0.0 });
 
-        self.handle = Some(self.physics.create_ball(&sphere.get_position()));
+        let (rigid_handle, _collider_handle) = self.physics.create_ball(&sphere.get_position());
+        self.handle = Some(rigid_handle);
     }
 
     fn process(&mut self, _delta: f64) {

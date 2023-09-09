@@ -3,14 +3,19 @@ use super::{
     godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
-use crate::{entities::position::GodotPositionConverter, world::world_manager::TextureMapperType};
+use crate::{
+    entities::position::GodotPositionConverter,
+    world::{physics_handler::PhysicsController, world_manager::TextureMapperType},
+};
+use arrayvec::ArrayVec;
 use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
 use rapier3d::prelude::ColliderBuilder;
 
-pub(crate) type ChunksGenerationType = InstanceId;
+type SectionsCollidersType = ArrayVec<Option<ColliderBuilder>, VERTICAL_SECTIONS>;
+pub(crate) type ChunksGenerationType = (InstanceId, SectionsCollidersType);
 
 /// Generate chunk in separate thread
 pub(crate) fn generate_chunk(
@@ -47,6 +52,7 @@ pub(crate) fn generate_chunk(
         }
 
         let t = texture_mapper.read();
+        let mut sections_colliders: SectionsCollidersType = Default::default();
         for y in 0..VERTICAL_SECTIONS {
             let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
 
@@ -54,9 +60,11 @@ pub(crate) fn generate_chunk(
             // let bordered_chunk_data = get_test_sphere();
 
             let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
-            c.sections[y].bind_mut().update_mesh(geometry.mesh_ist);
+            let mut section = c.sections[y].bind_mut();
+            section.update_mesh(geometry.mesh_ist);
+            sections_colliders.push(geometry.collider);
         }
-        if let Err(e) = update_tx.send(instance_id) {
+        if let Err(e) = update_tx.send((instance_id, sections_colliders)) {
             error!("Send chunk to spawn error: {:?}", e);
         }
     });
@@ -64,16 +72,28 @@ pub(crate) fn generate_chunk(
 
 /// Spawn chunk from main thread
 pub(crate) fn spawn_chunk(
-    instance_id: ChunksGenerationType,
+    mut data: ChunksGenerationType,
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
+    physics: &mut PhysicsController,
 ) -> Gd<ChunkColumn> {
-    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(instance_id);
+    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(data.0);
+    let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
     base.add_child(column.share().upcast());
 
-    column
-        .bind_mut()
-        .base
-        .set_global_position(GodotPositionConverter::get_chunk_position_vector(&chunk_position));
+    let mut y = 0;
+    for collider in data.1.drain(..) {
+        let section_position = Vector3::new(
+            chunk_pos_vector.x,
+            y as f32 * CHUNK_SIZE as f32 - 1_f32,
+            chunk_pos_vector.z,
+        );
+        if let Some(c) = collider {
+            physics.create_mesh(c, &section_position);
+        }
+        y += 1;
+    }
+
+    column.bind_mut().base.set_global_position(chunk_pos_vector);
     column
 }
