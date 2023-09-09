@@ -65,7 +65,7 @@ pub(crate) fn generate_chunk(
             sections_colliders.push(geometry.collider);
         }
         if let Err(e) = update_tx.send((instance_id, sections_colliders)) {
-            error!("Send chunk to spawn error: {:?}", e);
+            error!("Send chunk {} to spawn error: {:?}", chunk_position, e);
         }
     });
 }

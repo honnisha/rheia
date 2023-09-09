@@ -50,6 +50,10 @@ impl PhysicsController {
         self.rigid_body_set.get(*handle)
     }
 
+    pub fn get_rigid_body_mut(&mut self, handle: &RigidBodyHandle) -> Option<&mut RigidBody> {
+        self.rigid_body_set.get_mut(*handle)
+    }
+
     pub fn step(&mut self) {
         let physics_hooks = ();
         let event_handler = ();

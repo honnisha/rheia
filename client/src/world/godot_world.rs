@@ -8,7 +8,8 @@ use godot::{
 };
 use parking_lot::RwLock;
 use rapier3d::prelude::RigidBodyHandle;
-use std::{cell::RefCell};
+use rapier3d::prelude::*;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -112,7 +113,11 @@ impl NodeVirtual for World {
         let mesh = SphereMesh::new();
         sphere.set_mesh(mesh.upcast());
         self.base.add_child(sphere.share().upcast());
-        sphere.set_position(Vector3 { x: 0.0, y: 60.0, z: 0.0 });
+        sphere.set_position(Vector3 {
+            x: 0.0,
+            y: 60.0,
+            z: 0.0,
+        });
 
         let (rigid_handle, _collider_handle) = self.physics.create_ball(&sphere.get_position());
         self.handle = Some(rigid_handle);
@@ -129,6 +134,14 @@ impl NodeVirtual for World {
             let mut sphere = self.obj.as_mut().unwrap();
             let new_pos = Vector3::new(body.translation()[0], body.translation()[1], body.translation()[2]);
             sphere.set_position(new_pos);
+        }
+
+        let input = Input::singleton();
+        if input.is_action_just_pressed("ui_up".into()) {
+            if let Some(h) = self.handle {
+                let body = self.physics.get_rigid_body_mut(&h).unwrap();
+                body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
+            }
         }
     }
 }

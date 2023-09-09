@@ -131,7 +131,7 @@ impl DebugInfo {
 
             format!(
                 debug_network_string!(),
-                client.is_disconnected(),
+                !client.is_disconnected(),
                 network_info.bytes_received_per_second,
                 client.bytes_received_per_sec(),
                 client.bytes_sent_per_sec(),
