@@ -6,7 +6,8 @@ use godot::prelude::utilities::deg_to_rad;
 use godot::prelude::*;
 use std::fmt::{self, Display, Formatter};
 
-use crate::{console::console_handler::Console, controller::player_controller::PlayerMovement, main_scene::FloatType};
+use crate::controller::player_movement::PlayerMovement;
+use crate::{console::console_handler::Console, main_scene::FloatType};
 
 const ACCELERATION: f32 = 5.0;
 const BOST_MULTIPLIER: f32 = 2.5;

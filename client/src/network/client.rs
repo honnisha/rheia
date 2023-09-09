@@ -1,4 +1,4 @@
-use crate::controller::player_controller::PlayerMovement;
+use crate::controller::player_movement::PlayerMovement;
 use crate::entities::position::GodotPositionConverter;
 use crate::main_scene::Main;
 use crate::world::world_manager::WorldManager;
@@ -175,7 +175,9 @@ impl NetworkContainer {
                         tx.send((world_slug, chunk_position.clone(), decoded_sections)).unwrap();
                     });
 
-                    let input = ClientMessages::ChunkRecieved { chunk_position: chunk_position };
+                    let input = ClientMessages::ChunkRecieved {
+                        chunk_position: chunk_position,
+                    };
                     let chunk_recieved = bincode::serialize(&input).unwrap();
                     client.send_message(ClientChannel::Reliable, chunk_recieved);
                 }

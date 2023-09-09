@@ -12,7 +12,8 @@ use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::controller::player_controller::{PlayerController, PlayerMovement};
+use crate::controller::player_controller::PlayerController;
+use crate::controller::player_movement::PlayerMovement;
 use crate::main_scene::FloatType;
 use crate::network::client::NetworkContainer;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
