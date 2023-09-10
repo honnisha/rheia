@@ -3,7 +3,7 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Engine, Material, MeshInstance3D, SphereMesh},
+    engine::{Engine, Material, MeshInstance3D, SphereMesh, PhysicsServer3DManager},
     prelude::*,
 };
 use parking_lot::RwLock;
@@ -124,10 +124,6 @@ impl NodeVirtual for World {
     }
 
     fn process(&mut self, _delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
-
         self.physics.step();
         if let Some(h) = self.handle {
             let body = self.physics.get_rigid_body(&h).unwrap();

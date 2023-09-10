@@ -24,11 +24,6 @@ pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 
 pub(crate) type ChunksSectionsChannelType = (String, ChunkPosition, SectionsData);
 
-lazy_static! {
-    static ref CHUNK_LOAD_DATA: (Sender<ChunksSectionsChannelType>, Receiver<ChunksSectionsChannelType>) =
-        flume::unbounded();
-}
-
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct WorldManager {
@@ -57,10 +52,6 @@ impl WorldManager {
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
             player_controller: Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera)),
         }
-    }
-
-    pub fn get_chunk_sender() -> Sender<ChunksSectionsChannelType> {
-        CHUNK_LOAD_DATA.0.clone()
     }
 
     pub fn get_world(&self) -> Option<&Gd<World>> {
@@ -173,11 +164,5 @@ impl NodeVirtual for WorldManager {
             Callable::from_object_method(self.base.share(), "handler_player_move"),
         );
         self.base.add_child(self.player_controller.share().upcast());
-    }
-
-    fn process(&mut self, _delta: f64) {
-        for (world_slug, chunk_position, decoded_sections) in CHUNK_LOAD_DATA.1.drain() {
-            self.load_chunk(world_slug, chunk_position, decoded_sections);
-        }
     }
 }

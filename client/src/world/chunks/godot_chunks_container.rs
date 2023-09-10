@@ -19,7 +19,10 @@ use crate::{
     entities::position::GodotPositionConverter,
     main_scene::CHUNKS_DISTANCE,
     utils::textures::texture_mapper::TextureMapper,
-    world::{world_manager::{get_default_material, TextureMapperType, WorldManager}, godot_world::World},
+    world::{
+        godot_world::World,
+        world_manager::{get_default_material, TextureMapperType, WorldManager},
+    },
 };
 
 use super::{

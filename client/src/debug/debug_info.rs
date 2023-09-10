@@ -124,8 +124,9 @@ impl DebugInfo {
         };
         DebugInfo::change_text(&self.world_row, second_text);
 
-        let container = NetworkContainer::read();
-        let network_text = if container.has_client() {
+        let network_text = if NetworkContainer::has_client() {
+            let c = NetworkContainer::read();
+            let container = c.as_ref().unwrap();
             let client = container.get_client();
             let network_info = client.network_info();
 

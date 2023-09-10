@@ -80,11 +80,11 @@ impl NodeVirtual for Main {
 
         info!("Loading HonnyCraft version: {}", VERSION);
 
-        NetworkContainer::spawn_decoder();
         if let Err(e) = NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
             error!("Network connection error: {}", e);
             Main::close();
         }
+        NetworkContainer::spawn_network_thread();
     }
 
     fn process(&mut self, delta: f64) {

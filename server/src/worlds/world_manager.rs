@@ -103,7 +103,7 @@ impl WorldManager {
                 if !chunk_column.is_loaded() {
                     return None;
                 }
-                let input = ServerMessages::ChunkSectionInfo {
+                let input = ServerMessages::ChunkSectionEncodedInfo {
                     world_slug: self.slug.clone(),
                     sections: chunk_column.build_network_format(),
                     chunk_position: chunk_position.clone(),
