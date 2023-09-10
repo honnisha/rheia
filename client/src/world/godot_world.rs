@@ -143,7 +143,7 @@ impl NodeVirtual for World {
         }
 
         let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(10) {
+        if elapsed > std::time::Duration::from_millis(20) {
             println!("World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
     }

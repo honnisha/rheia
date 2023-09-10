@@ -161,7 +161,7 @@ impl NodeVirtual for ChunksContainer {
         }
 
         let elapsed = now.elapsed();
-        if elapsed > Duration::from_millis(20) {
+        if elapsed > Duration::from_millis(40) {
             println!("ChunksContainer process: {:.2?}", elapsed);
         }
     }

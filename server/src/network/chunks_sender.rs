@@ -1,11 +1,12 @@
-use crate::{entities::entity::NetworkComponent, worlds::worlds_manager::WorldsManager};
+use crate::{entities::entity::{NetworkComponent, Position}, worlds::worlds_manager::WorldsManager, CHUNKS_DISTANCE};
 use ahash::HashMap;
 use bevy_ecs::{
     prelude::Entity,
     system::{Res, ResMut},
 };
-use common::chunks::chunk_position::ChunkPosition;
+use common::chunks::{chunk_position::ChunkPosition, block_position::BlockPositionTrait};
 use log::error;
+use spiral::ManhattanIterator;
 
 use super::{clients_container::ClientsContainer, server::NetworkContainer};
 
@@ -21,7 +22,8 @@ pub fn send_chunks(
         let world = world_lock.read();
 
         // A set of chunks and players that require them to be sent
-        let mut queue: HashMap<ChunkPosition, Vec<Entity>> = Default::default();
+        let mut queue_chunks: Vec<ChunkPosition> = Default::default();
+        let mut queue_entities: Vec<Entity> = Default::default();
 
         // Iterate all loaded chunks
         for (chunk_position, chunk_col_lock) in world.chunks_map.get_chunks() {
@@ -54,30 +56,36 @@ pub fn send_chunks(
                     continue 'entity_loop;
                 }
 
-                let chunk_queue = queue.entry(chunk_position.clone()).or_insert(Default::default());
-                chunk_queue.push(entity.clone());
+                if !queue_chunks.contains(&chunk_position) {
+                    queue_chunks.push(chunk_position.clone());
+                }
+                if !queue_entities.contains(&entity) {
+                    queue_entities.push(entity.clone());
+                }
                 client.send_to_queue(&chunk_position);
             }
         }
 
-        // Sending chunks to players
-        for (chunk_position, entities) in queue {
-            let encoded = match world.get_network_chunk_bytes(&chunk_position) {
-                Some(e) => e,
-                None => {
-                    error!(
-                        "chunk_loaded_event_reader there is not chunk for player_chunks_watch:{}",
-                        chunk_position
-                    );
-                    continue;
-                }
-            };
+        let mut generated_chunks: HashMap<ChunkPosition, Vec<u8>> = Default::default();
+        for chunk_position in queue_chunks.drain(..) {
+            let encoded = world.get_network_chunk_bytes(&chunk_position).unwrap();
+            generated_chunks.insert(chunk_position, encoded);
+        }
+        for entity in queue_entities.drain(..) {
 
-            for entity in entities.iter() {
-                let player_entity = world.get_entity(&entity);
-                let network = player_entity.get::<NetworkComponent>().unwrap();
-                let mut client = clients.get_mut(&network.get_client_id());
-                client.send_loaded_chunk(&mut server, &chunk_position, encoded.clone());
+            let player_entity = world.get_entity(&entity);
+            let network = player_entity.get::<NetworkComponent>().unwrap();
+            let mut client = clients.get_mut(&network.get_client_id());
+
+            let position = player_entity.get::<Position>().unwrap();
+            let chunk_position = position.get_chunk_position();
+
+            let iter = ManhattanIterator::new(chunk_position.x as i32, chunk_position.z as i32, CHUNKS_DISTANCE);
+            for (x, z) in iter {
+                let chunk_position = ChunkPosition::new(x as i64, z as i64);
+                if let Some(c) = generated_chunks.get(&chunk_position) {
+                    client.send_loaded_chunk(&mut server, &chunk_position, c.clone());
+                }
             }
         }
     }

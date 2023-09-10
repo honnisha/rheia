@@ -37,13 +37,6 @@ impl Chunk {
         }
     }
 
-    pub fn get_chunk_column(&self) -> Option<&Gd<ChunkColumn>> {
-        match self.chunk_column.as_ref() {
-            Some(c) => Some(c),
-            None => None,
-        }
-    }
-
     pub fn get_chunk_column_mut(&mut self) -> Option<&mut Gd<ChunkColumn>> {
         match self.chunk_column.as_mut() {
             Some(c) => Some(c),
