@@ -9,7 +9,7 @@ use ndshape::ConstShape;
 
 use super::{
     godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
-    godot_chunks_container::ColumnDataType, near_chunk_data::NearChunksData,
+    near_chunk_data::NearChunksData, chunk::ColumnDataType,
 };
 
 pub fn format_chunk_data_with_boundaries(

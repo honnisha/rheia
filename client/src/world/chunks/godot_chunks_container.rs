@@ -3,17 +3,13 @@ use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
-use flume::{Receiver, Sender};
 use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
 use spiral::ManhattanIterator;
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::{
-    cell::RefCell,
-    sync::atomic::{AtomicBool, Ordering},
-};
 
 use crate::{
     entities::position::GodotPositionConverter,
@@ -26,68 +22,10 @@ use crate::{
 };
 
 use super::{
-    chunk_generator::{generate_chunk, spawn_chunk, ChunksGenerationType},
-    godot_chunk_column::ChunkColumn,
+    chunk::{Chunk, ColumnDataType},
+    chunk_generator::{generate_chunk, spawn_chunk},
     near_chunk_data::NearChunksData,
 };
-
-pub type ColumnDataType = Arc<RwLock<SectionsData>>;
-
-/// Container of godot chunk entity and blocks data
-pub struct Chunk {
-    // Godot entity
-    chunk_column: Option<Gd<ChunkColumn>>,
-
-    // Chunk data
-    data: ColumnDataType,
-
-    update_tx: Sender<ChunksGenerationType>,
-    update_rx: Receiver<ChunksGenerationType>,
-
-    sended: Arc<AtomicBool>,
-    loaded: Arc<AtomicBool>,
-}
-
-impl Chunk {
-    fn create(sections: SectionsData) -> Self {
-        let (update_tx, update_rx) = flume::bounded(1);
-        Self {
-            chunk_column: None,
-            data: Arc::new(RwLock::new(sections)),
-            sended: Arc::new(AtomicBool::new(false)),
-            loaded: Arc::new(AtomicBool::new(false)),
-            update_tx: update_tx,
-            update_rx: update_rx,
-        }
-    }
-
-    pub fn get_chunk_column(&self) -> Option<&Gd<ChunkColumn>> {
-        match self.chunk_column.as_ref() {
-            Some(c) => Some(c),
-            None => None,
-        }
-    }
-
-    pub fn get_chunk_data(&self) -> &ColumnDataType {
-        &self.data
-    }
-
-    pub fn is_sended(&self) -> bool {
-        self.sended.load(Ordering::Relaxed)
-    }
-
-    pub fn set_sended(&self) {
-        self.sended.store(true, Ordering::Relaxed);
-    }
-
-    pub fn is_loaded(&self) -> bool {
-        self.loaded.load(Ordering::Relaxed)
-    }
-
-    pub fn set_loaded(&self) {
-        self.loaded.store(true, Ordering::Relaxed);
-    }
-}
 
 pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
@@ -125,7 +63,7 @@ impl ChunksContainer {
 
     pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataType> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.borrow().data.clone()),
+            Some(c) => Some(c.borrow().get_chunk_data().clone()),
             None => None,
         }
     }
@@ -152,7 +90,7 @@ impl ChunksContainer {
         for chunk_position in chunks_positions {
             let mut unloaded = false;
             if let Some(chunk) = self.chunks.remove(&chunk_position) {
-                if let Some(c) = chunk.borrow_mut().chunk_column.as_mut() {
+                if let Some(c) = chunk.borrow_mut().get_chunk_column_mut().as_mut() {
                     c.bind_mut().base.queue_free();
                 }
                 unloaded = true;
@@ -176,6 +114,7 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
+        //let now = Instant::now();
         let mut world = self.base.get_parent().unwrap().cast::<World>();
 
         let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
@@ -200,7 +139,7 @@ impl NodeVirtual for ChunksContainer {
 
                 generate_chunk(
                     near_chunks_data,
-                    c.data.clone(),
+                    c.get_chunk_data().clone(),
                     c.update_tx.clone(),
                     self.texture_mapper.clone(),
                     self.material.instance_id(),
@@ -216,10 +155,13 @@ impl NodeVirtual for ChunksContainer {
                 for data in c.update_rx.clone().drain() {
                     let mut w = world.bind_mut();
                     let physics = w.get_physics_mut();
-                    c.chunk_column = Some(spawn_chunk(data, chunk_position, &mut self.base, physics));
+                    c.set_chunk_column(spawn_chunk(data, chunk_position, &mut self.base, physics));
                     c.set_loaded()
                 }
             }
         }
+
+        //let elapsed = now.elapsed();
+        //println!("Chunks container process: {:.2?}", elapsed);
     }
 }

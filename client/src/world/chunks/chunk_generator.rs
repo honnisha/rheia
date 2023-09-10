@@ -1,7 +1,6 @@
 use super::{
-    chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
-    godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
-    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
+    chunk::ColumnDataType, chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
+    godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
     entities::position::GodotPositionConverter,
@@ -18,6 +17,9 @@ type SectionsCollidersType = ArrayVec<Option<ColliderBuilder>, VERTICAL_SECTIONS
 pub(crate) type ChunksGenerationType = (InstanceId, SectionsCollidersType);
 
 /// Generate chunk in separate thread
+/// generate all chunk sections mesh
+/// and send gd instance id to main thread todo
+/// add_child it to the main tree
 pub(crate) fn generate_chunk(
     chunks_near: NearChunksData,
     data: ColumnDataType,
@@ -70,7 +72,8 @@ pub(crate) fn generate_chunk(
     });
 }
 
-/// Spawn chunk from main thread
+/// Recieved gd instance id from channel and
+/// spawn chunk from main thread
 pub(crate) fn spawn_chunk(
     mut data: ChunksGenerationType,
     chunk_position: &ChunkPosition,

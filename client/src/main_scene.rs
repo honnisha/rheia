@@ -88,6 +88,8 @@ impl NodeVirtual for Main {
     }
 
     fn process(&mut self, delta: f64) {
+        //let now = Instant::now();
+
         for message in Console::get_input_receiver().try_iter() {
             self.handle_console_command(message);
         }
@@ -98,7 +100,10 @@ impl NodeVirtual for Main {
         }
         self.debug_info
             .bind_mut()
-            .update_debug(self.world_manager.bind(), &self.camera)
+            .update_debug(self.world_manager.bind(), &self.camera);
+
+        //let elapsed = now.elapsed();
+        //println!("Process: {:.2?}", elapsed);
     }
 
     fn exit_tree(&mut self) {

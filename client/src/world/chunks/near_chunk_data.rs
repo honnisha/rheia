@@ -1,7 +1,6 @@
 use common::chunks::chunk_position::ChunkPosition;
 
-use super::godot_chunks_container::{ColumnDataType, ChunksType};
-
+use super::{chunk::ColumnDataType, godot_chunks_container::ChunksType};
 
 /// Tool for storing near chunks
 pub struct NearChunksData {

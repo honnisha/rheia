@@ -1,13 +1,11 @@
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
-use flume::{Receiver, Sender};
 use godot::engine::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{
     engine::Material,
     prelude::{Gd, GodotString},
 };
-use lazy_static::lazy_static;
 use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -104,38 +102,40 @@ impl WorldManager {
 
     /// Load chunk column by the network
     pub fn load_chunk(&mut self, world_slug: String, chunk_position: ChunkPosition, sections: SectionsData) {
-        match self.world.as_mut() {
-            Some(w) => {
-                let mut world = w.bind_mut();
-                if world_slug != *world.get_slug() {
-                    error!(
-                        "Tried to load chunk {} for non existed world {}",
-                        chunk_position, world_slug
-                    );
-                    return;
-                }
-                world.load_chunk(chunk_position, sections);
-            }
+        let world = match self.world.as_mut() {
+            Some(w) => w,
             None => {
                 error!("load_chunk tried to run without a world");
+                return;
             }
+        };
+
+        let mut world = world.bind_mut();
+        if world_slug != *world.get_slug() {
+            error!(
+                "Tried to load chunk {} for non existed world {}",
+                chunk_position, world_slug
+            );
+            return;
         }
+        world.load_chunk(chunk_position, sections);
     }
 
     pub fn unload_chunk(&mut self, world_slug: String, chunks_positions: Vec<ChunkPosition>) {
-        match self.world.as_mut() {
-            Some(w) => {
-                let mut world = w.bind_mut();
-                if world_slug != *world.get_slug() {
-                    error!("Tried to unload chunks for non existed world {}", world_slug);
-                    return;
-                }
-                world.unload_chunk(chunks_positions);
-            }
+        let world = match self.world.as_mut() {
+            Some(w) => w,
             None => {
                 error!("unload_chunk tried to run without a world");
+                return;
             }
+        };
+
+        let mut world = world.bind_mut();
+        if world_slug != *world.get_slug() {
+            error!("Tried to unload chunks for non existed world {}", world_slug);
+            return;
         }
+        world.unload_chunk(chunks_positions);
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {

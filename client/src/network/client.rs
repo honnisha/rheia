@@ -18,12 +18,12 @@ use renet::transport::NetcodeClientTransport;
 use renet::Bytes;
 use renet::RenetClient;
 use std::net::UdpSocket;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
 use std::time::Duration;
 use std::time::Instant;
 use std::time::SystemTime;
@@ -119,62 +119,72 @@ impl NetworkContainer {
     /// which is recieve network messages, decode and send them
     /// to the channel
     pub fn spawn_network_thread() {
-        rayon::spawn(move || loop {
-            // Network will be processed only when there is no lock
-            if NetworkContainer::is_network_locked() {
-                continue;
-            }
-            NetworkContainer::set_network_lock(true);
+        thread::spawn(move || loop {
+            {
+                // Network will be processed only when there is no lock
+                if NetworkContainer::is_network_locked() {
+                    continue;
+                }
+                NetworkContainer::set_network_lock(true);
 
-            let c = NetworkContainer::read();
-            let container = c.as_ref().unwrap();
-
-            let mut client = container.get_client_mut();
-            if client.is_disconnected() {
-                break;
-            }
-            let mut transport = container.get_transport_mut();
-
-            let delta_time = container.get_delta_time();
-            client.update(delta_time);
-            if let Err(e) = transport.update(delta_time, &mut client) {
-                NetworkContainer::send_network_error(e.to_string());
-                break;
-            }
-
-            while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
-                let decoded = NetworkContainer::decode_server_message(&server_message);
-                if let Some(d) = decoded {
-                    NetworkContainer::send_server_message(d);
+                let success = NetworkContainer::step();
+                if !success {
+                    break;
                 }
             }
-            while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
-                let decoded = NetworkContainer::decode_server_message(&server_message);
-                if let Some(d) = decoded {
-                    match d {
-                        ServerMessages::ChunkSectionInfo {
-                            world_slug: _,
-                            chunk_position,
-                            sections: _,
-                        } => {
-                            let input = ClientMessages::ChunkRecieved {
-                                chunk_position: chunk_position,
-                            };
-                            let chunk_recieved = bincode::serialize(&input).unwrap();
-                            client.send_message(ClientChannel::Reliable, chunk_recieved);
-                        }
-                        _ => (),
-                    }
-                    NetworkContainer::send_server_message(d);
-                }
-            }
-            if let Err(e) = transport.send_packets(&mut client) {
-                NetworkContainer::send_network_error(e.to_string());
-                break;
-            }
-            thread::sleep(time::Duration::from_millis(16));
+            thread::sleep(time::Duration::from_millis(50));
         });
         info!("Network thread spawned");
+    }
+
+    fn step() -> bool {
+        let c = NetworkContainer::read();
+        let container = c.as_ref().unwrap();
+
+        let mut client = container.get_client_mut();
+        if client.is_disconnected() {
+            return false;
+        }
+
+        let delta_time = container.get_delta_time();
+        client.update(delta_time);
+        let mut transport = container.get_transport_mut();
+        if let Err(e) = transport.update(delta_time, &mut client) {
+            NetworkContainer::send_network_error(e.to_string());
+            return false;
+        }
+
+        while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
+            let decoded = NetworkContainer::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                NetworkContainer::send_server_message(d);
+            }
+        }
+        while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
+            let decoded = NetworkContainer::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                match d {
+                    ServerMessages::ChunkSectionInfo {
+                        world_slug: _,
+                        chunk_position,
+                        sections: _,
+                    } => {
+                        let input = ClientMessages::ChunkRecieved {
+                            chunk_position: chunk_position,
+                        };
+                        let chunk_recieved = bincode::serialize(&input).unwrap();
+                        client.send_message(ClientChannel::Reliable, chunk_recieved);
+                    }
+                    _ => (),
+                }
+                NetworkContainer::send_server_message(d);
+            }
+        }
+        if let Err(e) = transport.send_packets(&mut client) {
+            NetworkContainer::send_network_error(e.to_string());
+            return false;
+        }
+        return true;
     }
 
     fn decode_server_message(encoded: &Bytes) -> Option<ServerMessages> {
@@ -185,7 +195,7 @@ impl NetworkContainer {
                 return None;
             }
         };
-        // Handle decoded messages mefore send them back
+        // Handle decoded messages before send them back
         let decoded: ServerMessages = match decoded {
             ServerMessages::ChunkSectionEncodedInfo {
                 world_slug,
@@ -213,14 +223,15 @@ impl NetworkContainer {
     }
 
     pub fn update(_delta: f64, main_scene: &mut Main) -> Result<(), String> {
+        //let now = Instant::now();
 
         // Recieve errors from network thread
-        for error in NETWORK_ERRORS_OUT.1.drain() {
+        for error in NETWORK_ERRORS_OUT.1.try_iter() {
             return Err(error);
         }
 
         // Recieve decoded server messages from network thread
-        for decoded in NETWORK_DECODER_OUT.1.drain() {
+        for decoded in NETWORK_DECODER_OUT.1.try_iter() {
             match decoded {
                 ServerMessages::ConsoleOutput { message } => {
                     info!("{}", message);
@@ -269,6 +280,8 @@ impl NetworkContainer {
         // can continue receiving messages
         NetworkContainer::set_network_lock(false);
 
+        //let elapsed = now.elapsed();
+        //println!("Network updated: {:.2?}", elapsed);
         return Ok(());
     }
 

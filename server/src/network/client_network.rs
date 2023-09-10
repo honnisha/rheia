@@ -155,6 +155,7 @@ impl ClientNetwork {
         let mut unload_chunks: Vec<ChunkPosition> = Default::default();
 
         // Unwatch chunks
+        // Send only those chunks, that was sended
         for chunk_position in abandoned_chunks.drain(..) {
             let removed = vec_remove_item(&mut self.already_sended, &chunk_position);
             if removed {

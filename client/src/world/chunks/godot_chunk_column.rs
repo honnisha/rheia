@@ -15,20 +15,14 @@ pub struct ChunkColumn {
     #[base]
     pub base: Base<Node3D>,
     pub sections: SectionsType,
-    chunk_position: ChunkPosition,
 }
 
 impl ChunkColumn {
-    pub fn create(base: Base<Node3D>, chunk_position: ChunkPosition) -> Self {
+    pub fn create(base: Base<Node3D>, _chunk_position: ChunkPosition) -> Self {
         Self {
             base,
             sections: Default::default(),
-            chunk_position,
         }
-    }
-
-    pub fn get_chunk_position(&self) -> &ChunkPosition {
-        &self.chunk_position
     }
 }
 

@@ -3,7 +3,7 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Engine, Material, MeshInstance3D, SphereMesh, PhysicsServer3DManager},
+    engine::{Material, MeshInstance3D, SphereMesh},
     prelude::*,
 };
 use parking_lot::RwLock;
@@ -16,7 +16,7 @@ use std::sync::Arc;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::{
-    chunks::godot_chunks_container::{Chunk, ChunksContainer},
+    chunks::{godot_chunks_container::ChunksContainer, chunk::Chunk},
     physics_handler::PhysicsController,
     world_manager::{get_default_material, TextureMapperType},
 };
