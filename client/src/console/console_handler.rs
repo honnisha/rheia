@@ -4,7 +4,8 @@ use std::sync::{
 };
 
 use chrono::Local;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use flume::{bounded, unbounded, Drain};
+use flume::{Receiver, Sender};
 use godot::{
     engine::{input::MouseMode, Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
@@ -31,14 +32,14 @@ pub struct Console {
 
 lazy_static! {
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
-    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = bounded(1);
     static ref CONSOLE_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
 #[godot_api]
 impl Console {
-    pub fn get_input_receiver() -> &'static Receiver<String> {
-        &CONSOLE_INPUT_CHANNEL.1
+    pub fn iter_console_input() -> Drain<'static, String> {
+        CONSOLE_INPUT_CHANNEL.1.drain()
     }
 
     pub fn send_message(message: String) {

@@ -1,9 +1,10 @@
-use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::world::world_manager::WorldManager;
+use crate::{client_scripts::resource_manager::ResourceManager, entities::position::GodotPositionConverter};
+use common::network::messages::ServerMessages;
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
@@ -23,16 +24,6 @@ pub struct Main {
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
     camera: Gd<Camera3D>,
-}
-
-#[godot_api]
-impl Main {
-    fn handle_console_command(&mut self, command: String) {
-        if command.len() == 0 {
-            return;
-        }
-        NetworkContainer::send_console_command(command);
-    }
 }
 
 impl Main {
@@ -87,17 +78,65 @@ impl NodeVirtual for Main {
         NetworkContainer::spawn_network_thread();
     }
 
-    fn process(&mut self, delta: f64) {
+    fn process(&mut self, _delta: f64) {
         let now = std::time::Instant::now();
 
-        for message in Console::get_input_receiver().try_iter() {
-            self.handle_console_command(message);
+        for command in Console::iter_console_input() {
+            NetworkContainer::send_console_command(command);
         }
 
-        if let Err(e) = NetworkContainer::update(delta, self) {
-            error!("Network process error: {}", e);
+        // Recieve errors from network thread
+        for error in NetworkContainer::errors_iter() {
+            error!("Network error: {}", error);
             Main::close();
         }
+
+        // Recieve decoded server messages from network thread
+        for decoded in NetworkContainer::server_messages_iter() {
+            match decoded {
+                ServerMessages::ConsoleOutput { message } => {
+                    info!("{}", message);
+                }
+                ServerMessages::Resource { slug, scripts } => {
+                    let resource_manager = self.get_resource_manager_mut();
+                    info!("Start loading client resource slug:\"{}\"", slug);
+                    match resource_manager.try_load(&slug, scripts) {
+                        Ok(_) => {
+                            info!("Client resource slug:\"{}\" loaded", slug);
+                        }
+                        Err(e) => {
+                            error!("Client resource slug:\"{}\" error: {}", slug, e);
+                        }
+                    }
+                }
+                ServerMessages::Teleport {
+                    world_slug,
+                    location,
+                    yaw,
+                    pitch,
+                } => {
+                    self.get_world_manager_mut().teleport_player(
+                        world_slug,
+                        GodotPositionConverter::vec3_from_array(&location),
+                        yaw,
+                        pitch,
+                    );
+                }
+                ServerMessages::ChunkSectionInfo {
+                    world_slug,
+                    chunk_position,
+                    sections,
+                } => {
+                    let mut world_manager = self.get_world_manager_mut();
+                    world_manager.load_chunk(world_slug, chunk_position, sections);
+                }
+                ServerMessages::UnloadChunks { chunks, world_slug } => {
+                    self.get_world_manager_mut().unload_chunk(world_slug, chunks);
+                }
+                _ => panic!("unsupported chunks message"),
+            }
+        }
+
         self.debug_info
             .bind_mut()
             .update_debug(self.world_manager.bind(), &self.camera);

@@ -1,6 +1,4 @@
 use crate::controller::player_movement::PlayerMovement;
-use crate::entities::position::GodotPositionConverter;
-use crate::main_scene::Main;
 use common::chunks::utils::unpack_network_sectioins;
 use common::network::channels::ClientChannel;
 use common::network::channels::ServerChannel;
@@ -9,6 +7,7 @@ use common::network::login::Login;
 use common::network::messages::ClientMessages;
 use common::network::messages::ServerMessages;
 use common::network::PROTOCOL_ID;
+use flume::Drain;
 use flume::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
@@ -40,6 +39,16 @@ pub struct NetworkContainer {
     client: Arc<RwLock<RenetClient>>,
     transport: Arc<RwLock<NetcodeClientTransport>>,
     timer: Arc<RwLock<Instant>>,
+    pub network_info: Arc<RwLock<NetworkInfo>>,
+}
+
+#[derive(Default)]
+pub struct NetworkInfo {
+    pub is_disconnected: bool,
+    pub bytes_received_per_second: f64,
+    pub bytes_received_per_sec: f64,
+    pub bytes_sent_per_sec: f64,
+    pub packet_loss: f64,
 }
 
 impl NetworkContainer {
@@ -48,6 +57,7 @@ impl NetworkContainer {
             client: Arc::new(RwLock::new(client)),
             transport: Arc::new(RwLock::new(transport)),
             timer: Arc::new(RwLock::new(Instant::now())),
+            network_info: Arc::new(RwLock::new(Default::default())),
         }
     }
 
@@ -96,19 +106,15 @@ impl NetworkContainer {
         NETWORK_CONTAINER.read().unwrap().is_some()
     }
 
-    pub fn get_client(&self) -> RwLockReadGuard<RenetClient> {
-        self.client.read().expect("poisoned")
-    }
-
-    pub fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
+    fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
         self.client.write().expect("poisoned")
     }
 
-    pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
+    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
         self.transport.write().expect("poisoned")
     }
 
-    pub fn get_delta_time(&self) -> Duration {
+    fn get_delta_time(&self) -> Duration {
         let mut t = self.timer.write().unwrap();
         let delta_time = t.elapsed();
         *t = Instant::now();
@@ -142,6 +148,17 @@ impl NetworkContainer {
         let container = c.as_ref().unwrap();
 
         let mut client = container.get_client_mut();
+
+        {
+            let info = client.network_info();
+            let mut network_info = container.network_info.write().unwrap();
+            network_info.is_disconnected = client.is_disconnected();
+            network_info.bytes_received_per_second = info.bytes_received_per_second;
+            network_info.bytes_received_per_sec = client.bytes_received_per_sec();
+            network_info.bytes_sent_per_sec = client.bytes_sent_per_sec();
+            network_info.packet_loss = client.packet_loss();
+        }
+
         if client.is_disconnected() {
             return false;
         }
@@ -222,67 +239,16 @@ impl NetworkContainer {
         NETWORK_ERRORS_OUT.0.send(message).unwrap();
     }
 
-    pub fn update(_delta: f64, main_scene: &mut Main) -> Result<(), String> {
-        //let now = Instant::now();
+    pub fn errors_iter() -> Drain<'static, String> {
+        NETWORK_ERRORS_OUT.1.drain()
+    }
 
-        // Recieve errors from network thread
-        for error in NETWORK_ERRORS_OUT.1.try_iter() {
-            return Err(error);
-        }
-
-        // Recieve decoded server messages from network thread
-        for decoded in NETWORK_DECODER_OUT.1.try_iter() {
-            match decoded {
-                ServerMessages::ConsoleOutput { message } => {
-                    info!("{}", message);
-                }
-                ServerMessages::Resource { slug, scripts } => {
-                    let resource_manager = main_scene.get_resource_manager_mut();
-                    info!("Start loading client resource slug:\"{}\"", slug);
-                    match resource_manager.try_load(&slug, scripts) {
-                        Ok(_) => {
-                            info!("Client resource slug:\"{}\" loaded", slug);
-                        }
-                        Err(e) => {
-                            error!("Client resource slug:\"{}\" error: {}", slug, e);
-                        }
-                    }
-                }
-                ServerMessages::Teleport {
-                    world_slug,
-                    location,
-                    yaw,
-                    pitch,
-                } => {
-                    main_scene.get_world_manager_mut().teleport_player(
-                        world_slug,
-                        GodotPositionConverter::vec3_from_array(&location),
-                        yaw,
-                        pitch,
-                    );
-                }
-                ServerMessages::ChunkSectionInfo {
-                    world_slug,
-                    chunk_position,
-                    sections,
-                } => {
-                    let mut world_manager = main_scene.get_world_manager_mut();
-                    world_manager.load_chunk(world_slug, chunk_position, sections);
-                }
-                ServerMessages::UnloadChunks { chunks, world_slug } => {
-                    main_scene.get_world_manager_mut().unload_chunk(world_slug, chunks);
-                }
-                _ => panic!("unsupported chunks message"),
-            }
-        }
-
+    pub fn server_messages_iter() -> Drain<'static, ServerMessages> {
         // Remove the restriction so that the network
         // can continue receiving messages
         NetworkContainer::set_network_lock(false);
 
-        //let elapsed = now.elapsed();
-        //println!("Network updated: {:.2?}", elapsed);
-        return Ok(());
+        NETWORK_DECODER_OUT.1.drain()
     }
 
     pub fn disconnect() {

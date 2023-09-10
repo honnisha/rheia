@@ -127,16 +127,14 @@ impl DebugInfo {
         let network_text = if NetworkContainer::has_client() {
             let c = NetworkContainer::read();
             let container = c.as_ref().unwrap();
-            let client = container.get_client();
-            let network_info = client.network_info();
-
+            let network_info = container.network_info.read().unwrap();
             format!(
                 debug_network_string!(),
-                !client.is_disconnected(),
+                !network_info.is_disconnected,
                 network_info.bytes_received_per_second,
-                client.bytes_received_per_sec(),
-                client.bytes_sent_per_sec(),
-                client.packet_loss(),
+                network_info.bytes_received_per_sec,
+                network_info.bytes_sent_per_sec,
+                network_info.packet_loss,
             )
         } else {
             "Network connected: -".to_string()
