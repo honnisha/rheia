@@ -124,6 +124,8 @@ impl NodeVirtual for World {
     }
 
     fn process(&mut self, _delta: f64) {
+        let now = std::time::Instant::now();
+
         self.physics.step();
         if let Some(h) = self.handle {
             let body = self.physics.get_rigid_body(&h).unwrap();
@@ -138,6 +140,11 @@ impl NodeVirtual for World {
                 let body = self.physics.get_rigid_body_mut(&h).unwrap();
                 body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
             }
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(10) {
+            println!("World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
     }
 }

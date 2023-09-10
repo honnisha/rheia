@@ -181,13 +181,9 @@ impl NodeVirtual for Console {
         info!("Console successfily loaded;");
     }
 
-    #[allow(unused_variables)]
-    fn process(&mut self, delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
-
-        for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
+    fn process(&mut self, _delta: f64) {
+        let now = std::time::Instant::now();
+        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
             self.append_text(message);
         }
 
@@ -205,6 +201,11 @@ impl NodeVirtual for Console {
             godot_print!("down");
         } else if input.is_action_just_pressed("ui_focus_next".into()) {
             godot_print!("tab");
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(1) {
+            println!("Console process: {:.2?}", elapsed);
         }
     }
 }

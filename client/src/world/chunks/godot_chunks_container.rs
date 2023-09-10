@@ -82,7 +82,6 @@ impl ChunksContainer {
         }
 
         let chunk = Chunk::create(sections);
-
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }
 
@@ -115,40 +114,39 @@ impl NodeVirtual for ChunksContainer {
 
     fn process(&mut self, _delta: f64) {
         let now = std::time::Instant::now();
-        let mut world = self.base.get_parent().unwrap().cast::<World>();
 
-        let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
-        let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
-        let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
-
-        let iter = ManhattanIterator::new(current_chunk.x as i32, current_chunk.z as i32, CHUNKS_DISTANCE);
-        for (x, z) in iter {
-            let chunk_position = ChunkPosition::new(x as i64, z as i64);
-            if let Some(chunk) = self.get_chunk(&chunk_position) {
-                let c = chunk.borrow();
-                if c.is_sended() {
-                    continue;
-                }
-
-                let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
-
-                // Load only if all chunks around are loaded
-                if !near_chunks_data.is_full() {
-                    continue;
-                }
-
-                generate_chunk(
-                    near_chunks_data,
-                    c.get_chunk_data().clone(),
-                    c.update_tx.clone(),
-                    self.texture_mapper.clone(),
-                    self.material.instance_id(),
-                    chunk_position.clone(),
-                );
-                c.set_sended();
+        for (chunk_position, chunk) in self.chunks.iter() {
+            let c = chunk.borrow();
+            if c.is_sended() {
+                continue;
             }
+
+            let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
+
+            // Load only if all chunks around are loaded
+            if !near_chunks_data.is_full() {
+                continue;
+            }
+
+            generate_chunk(
+                near_chunks_data,
+                c.get_chunk_data().clone(),
+                c.update_tx.clone(),
+                self.texture_mapper.clone(),
+                self.material.instance_id(),
+                chunk_position.clone(),
+            );
+            c.set_sended();
         }
 
+        let elapsed = now.elapsed();
+        if elapsed > Duration::from_millis(3) {
+            println!("ChunksContainer SEND process: {:.2?}", elapsed);
+        }
+
+        let now1 = std::time::Instant::now();
+
+        let mut world = self.base.get_parent().unwrap().cast::<World>();
         for (chunk_position, chunk) in self.chunks.iter() {
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
@@ -161,9 +159,9 @@ impl NodeVirtual for ChunksContainer {
             }
         }
 
-        let elapsed = now.elapsed();
+        let elapsed = now1.elapsed();
         if elapsed > Duration::from_millis(3) {
-            println!("ChunksContainer process: {:.2?}", elapsed);
+            println!("ChunksContainer spawn process: {:.2?}", elapsed);
         }
     }
 }

@@ -143,7 +143,7 @@ impl NodeVirtual for Main {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(3) {
-            println!("main_scene process: {:.2?}", elapsed);
+            println!("Main process: {:.2?}", elapsed);
         }
     }
 

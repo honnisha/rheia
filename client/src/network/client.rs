@@ -28,11 +28,16 @@ use std::time::Instant;
 use std::time::SystemTime;
 use std::{thread, time};
 
+type ClientMessageType = (u8, Vec<u8>);
 lazy_static! {
     static ref NETWORK_CONTAINER: Arc<RwLock<Option<NetworkContainer>>> = Arc::new(RwLock::new(None));
     static ref NETWORK_DECODER_OUT: (Sender<ServerMessages>, Receiver<ServerMessages>) = unbounded();
     static ref NETWORK_ERRORS_OUT: (Sender<String>, Receiver<String>) = unbounded();
     static ref NETWORK_LOCK: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+
+    // Messages was sended by the client
+    // must be sended to the server
+    static ref NETWORK_CLIENT_SENDED: (Sender<ClientMessageType>, Receiver<ClientMessageType>) = unbounded();
 }
 
 pub struct NetworkContainer {
@@ -197,6 +202,11 @@ impl NetworkContainer {
                 NetworkContainer::send_server_message(d);
             }
         }
+
+        for (channel, message) in NETWORK_CLIENT_SENDED.1.drain() {
+            client.send_message(channel, message);
+        }
+
         if let Err(e) = transport.send_packets(&mut client) {
             NetworkContainer::send_network_error(e.to_string());
             return false;
@@ -262,22 +272,18 @@ impl NetworkContainer {
         }
     }
 
-    pub fn send_console_command(command: String) {
-        let c = NetworkContainer::read();
-        let container = c.as_ref().unwrap();
+    fn send_message(channel: u8, decoded: Vec<u8>) {
+        NETWORK_CLIENT_SENDED.0.send((channel, decoded)).unwrap();
+    }
 
-        let mut client = container.get_client_mut();
+    pub fn send_console_command(command: String) {
         let input = ClientMessages::ConsoleInput { command: command };
-        let command_message = bincode::serialize(&input).unwrap();
-        client.send_message(ClientChannel::Reliable, command_message);
+        let message = bincode::serialize(&input).unwrap();
+        NetworkContainer::send_message(ClientChannel::Reliable.into(), message);
     }
 
     pub fn send_player_move(movement: PlayerMovement) {
-        let c = NetworkContainer::read();
-        let container = c.as_ref().unwrap();
-
-        let mut client = container.get_client_mut();
         let message = bincode::serialize(&movement.into_network()).unwrap();
-        client.send_message(ClientChannel::Unreliable, message);
+        NetworkContainer::send_message(ClientChannel::Unreliable.into(), message);
     }
 }

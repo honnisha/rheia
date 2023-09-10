@@ -71,8 +71,15 @@ impl NodeVirtual for PlayerController {
 
     #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
+        let now = std::time::Instant::now();
+
         if let Some(h) = self.handler.as_mut() {
             h.process(&mut self.base, delta, &mut self.camera);
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(3) {
+            println!("PlayerController process: {:.2?}", elapsed);
         }
     }
 }
