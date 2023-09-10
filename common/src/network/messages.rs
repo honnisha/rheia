@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::PacketChunkSectionData},
+    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::{PacketChunkSectionData, SectionsData}},
     VERTICAL_SECTIONS,
 };
 
@@ -33,10 +33,15 @@ pub enum ServerMessages {
         yaw: f32,
         pitch: f32,
     },
-    ChunkSectionInfo {
+    ChunkSectionEncodedInfo {
         world_slug: String,
         chunk_position: ChunkPosition,
         sections: NetworkSectionsType,
+    },
+    ChunkSectionInfo {
+        world_slug: String,
+        chunk_position: ChunkPosition,
+        sections: SectionsData,
     },
     UnloadChunks {
         world_slug: String,

@@ -34,9 +34,9 @@ Chunk info: {}"
 macro_rules! debug_network_string {
     () => {
         "Network connected: {}
-Bytes received per second: {:.1}
-Bytes received per sec: {:.1}
-Bytes sent per sec: {:.1}
+KB received per second: {:.1}
+KB received per sec: {:.1}
+KB sent per sec: {:.1}
 Packet loss: {:.1}"
     };
 }
@@ -124,18 +124,17 @@ impl DebugInfo {
         };
         DebugInfo::change_text(&self.world_row, second_text);
 
-        let container = NetworkContainer::read();
-        let network_text = if container.has_client() {
-            let client = container.get_client();
-            let network_info = client.network_info();
-
+        let network_text = if NetworkContainer::has_client() {
+            let c = NetworkContainer::read();
+            let container = c.as_ref().unwrap();
+            let network_info = container.network_info.read().unwrap();
             format!(
                 debug_network_string!(),
-                !client.is_disconnected(),
-                network_info.bytes_received_per_second,
-                client.bytes_received_per_sec(),
-                client.bytes_sent_per_sec(),
-                client.packet_loss(),
+                !network_info.is_disconnected,
+                network_info.bytes_received_per_second / 1024.0,
+                network_info.bytes_received_per_sec / 1024.0,
+                network_info.bytes_sent_per_sec / 1024.0,
+                network_info.packet_loss / 1024.0,
             )
         } else {
             "Network connected: -".to_string()

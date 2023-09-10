@@ -1,7 +1,6 @@
 use super::{
-    chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
-    godot_chunk_section::ChunkSection, godot_chunks_container::ColumnDataType,
-    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
+    chunk::ColumnDataType, chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
+    godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
     entities::position::GodotPositionConverter,
@@ -18,6 +17,9 @@ type SectionsCollidersType = ArrayVec<Option<ColliderBuilder>, VERTICAL_SECTIONS
 pub(crate) type ChunksGenerationType = (InstanceId, SectionsCollidersType);
 
 /// Generate chunk in separate thread
+/// generate all chunk sections mesh
+/// and send gd instance id to main thread todo
+/// add_child it to the main tree
 pub(crate) fn generate_chunk(
     chunks_near: NearChunksData,
     data: ColumnDataType,
@@ -30,39 +32,41 @@ pub(crate) fn generate_chunk(
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
         let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
-
-        let mut c = column.bind_mut();
-        let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
-        c.base.set_name(name);
-
-        for y in 0..VERTICAL_SECTIONS {
-            let mut section =
-                Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
-
-            let name = GodotString::from(format!("Section {}", y));
-            section.bind_mut().base.set_name(name.clone());
-
-            c.base.add_child(section.share().upcast());
-            section
-                .bind_mut()
-                .base
-                .set_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
-
-            c.sections.push(section);
-        }
-
-        let t = texture_mapper.read();
         let mut sections_colliders: SectionsCollidersType = Default::default();
-        for y in 0..VERTICAL_SECTIONS {
-            let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
 
-            // Create test sphere
-            // let bordered_chunk_data = get_test_sphere();
+        {
+            let mut c = column.bind_mut();
+            let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
+            c.base.set_name(name);
 
-            let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
-            let mut section = c.sections[y].bind_mut();
-            section.update_mesh(geometry.mesh_ist);
-            sections_colliders.push(geometry.collider);
+            for y in 0..VERTICAL_SECTIONS {
+                let mut section =
+                    Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
+
+                let name = GodotString::from(format!("Section {}", y));
+                section.bind_mut().base.set_name(name.clone());
+
+                c.base.add_child(section.share().upcast());
+                section
+                    .bind_mut()
+                    .base
+                    .set_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
+
+                c.sections.push(section);
+            }
+
+            let t = texture_mapper.read();
+            for y in 0..VERTICAL_SECTIONS {
+                let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+
+                // Create test sphere
+                // let bordered_chunk_data = get_test_sphere();
+
+                let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
+                let mut section = c.sections[y].bind_mut();
+                section.update_mesh(geometry.mesh_ist);
+                sections_colliders.push(geometry.collider);
+            }
         }
         if let Err(e) = update_tx.send((instance_id, sections_colliders)) {
             error!("Send chunk {} to spawn error: {:?}", chunk_position, e);
@@ -70,7 +74,8 @@ pub(crate) fn generate_chunk(
     });
 }
 
-/// Spawn chunk from main thread
+/// Recieved gd instance id from channel and
+/// spawn chunk from main thread
 pub(crate) fn spawn_chunk(
     mut data: ChunksGenerationType,
     chunk_position: &ChunkPosition,

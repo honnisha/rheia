@@ -1,7 +1,4 @@
 use crate::controller::player_movement::PlayerMovement;
-use crate::entities::position::GodotPositionConverter;
-use crate::main_scene::Main;
-use crate::world::world_manager::WorldManager;
 use common::chunks::utils::unpack_network_sectioins;
 use common::network::channels::ClientChannel;
 use common::network::channels::ServerChannel;
@@ -10,6 +7,7 @@ use common::network::login::Login;
 use common::network::messages::ClientMessages;
 use common::network::messages::ServerMessages;
 use common::network::PROTOCOL_ID;
+use flume::Drain;
 use flume::{unbounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
@@ -19,31 +17,52 @@ use renet::transport::NetcodeClientTransport;
 use renet::Bytes;
 use renet::RenetClient;
 use std::net::UdpSocket;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::RwLockReadGuard;
 use std::sync::RwLockWriteGuard;
 use std::time::Duration;
+use std::time::Instant;
 use std::time::SystemTime;
 use std::{thread, time};
 
+type ClientMessageType = (u8, Vec<u8>);
 lazy_static! {
-    static ref NETWORK_CONTAINER: Arc<RwLock<NetworkContainer>> = Arc::new(RwLock::new(NetworkContainer::default()));
-    static ref NETWORK_DECODER_IN: (Sender<Bytes>, Receiver<Bytes>) = unbounded();
+    static ref NETWORK_CONTAINER: Arc<RwLock<Option<NetworkContainer>>> = Arc::new(RwLock::new(None));
     static ref NETWORK_DECODER_OUT: (Sender<ServerMessages>, Receiver<ServerMessages>) = unbounded();
+    static ref NETWORK_ERRORS_OUT: (Sender<String>, Receiver<String>) = unbounded();
+    static ref NETWORK_LOCK: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+
+    // Messages was sended by the client
+    // must be sended to the server
+    static ref NETWORK_CLIENT_SENDED: (Sender<ClientMessageType>, Receiver<ClientMessageType>) = unbounded();
+}
+
+pub struct NetworkContainer {
+    client: Arc<RwLock<RenetClient>>,
+    transport: Arc<RwLock<NetcodeClientTransport>>,
+    timer: Arc<RwLock<Instant>>,
+    pub network_info: Arc<RwLock<NetworkInfo>>,
 }
 
 #[derive(Default)]
-pub struct NetworkContainer {
-    client: Option<Arc<RwLock<RenetClient>>>,
-    transport: Option<Arc<RwLock<NetcodeClientTransport>>>,
+pub struct NetworkInfo {
+    pub is_disconnected: bool,
+    pub bytes_received_per_second: f64,
+    pub bytes_received_per_sec: f64,
+    pub bytes_sent_per_sec: f64,
+    pub packet_loss: f64,
 }
 
 impl NetworkContainer {
     pub fn new(client: RenetClient, transport: NetcodeClientTransport) -> Self {
         Self {
-            client: Some(Arc::new(RwLock::new(client))),
-            transport: Some(Arc::new(RwLock::new(transport))),
+            client: Arc::new(RwLock::new(client)),
+            transport: Arc::new(RwLock::new(transport)),
+            timer: Arc::new(RwLock::new(Instant::now())),
+            network_info: Arc::new(RwLock::new(Default::default())),
         }
     }
 
@@ -71,130 +90,180 @@ impl NetworkContainer {
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
 
         let mut network_handler = NETWORK_CONTAINER.write().unwrap();
-        *network_handler = NetworkContainer::new(client, transport);
+        *network_handler = Some(NetworkContainer::new(client, transport));
 
         Ok(())
     }
 
-    pub fn read() -> RwLockReadGuard<'static, NetworkContainer> {
+    pub fn is_network_locked() -> bool {
+        NETWORK_LOCK.load(Ordering::Relaxed)
+    }
+
+    pub fn set_network_lock(state: bool) {
+        NETWORK_LOCK.store(state, Ordering::Relaxed);
+    }
+
+    pub fn read() -> RwLockReadGuard<'static, Option<NetworkContainer>> {
         NETWORK_CONTAINER.read().unwrap()
     }
 
-    pub fn has_client(&self) -> bool {
-        self.client.as_ref().is_some()
+    pub fn has_client() -> bool {
+        NETWORK_CONTAINER.read().unwrap().is_some()
     }
 
-    pub fn get_client(&self) -> RwLockReadGuard<RenetClient> {
-        self.client.as_ref().unwrap().read().expect("poisoned")
+    fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
+        self.client.write().expect("poisoned")
     }
 
-    pub fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
-        self.client.as_ref().unwrap().write().expect("poisoned")
+    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
+        self.transport.write().expect("poisoned")
     }
 
-    pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
-        self.transport.as_ref().unwrap().write().expect("poisoned")
+    fn get_delta_time(&self) -> Duration {
+        let mut t = self.timer.write().unwrap();
+        let delta_time = t.elapsed();
+        *t = Instant::now();
+        delta_time
     }
 
-    pub fn spawn_decoder() {
-        rayon::spawn(move || loop {
-            for server_message in NETWORK_DECODER_IN.1.drain() {
-                match bincode::deserialize(&server_message) {
-                    Ok(d) => NETWORK_DECODER_OUT.0.send(d).unwrap(),
-                    Err(e) => {
-                        error!("Decode server message error: {}", e);
-                        continue;
-                    }
-                };
+    /// Spawns network thread
+    /// which is recieve network messages, decode and send them
+    /// to the channel
+    pub fn spawn_network_thread() {
+        thread::spawn(move || loop {
+            {
+                // Network will be processed only when there is no lock
+                if NetworkContainer::is_network_locked() {
+                    continue;
+                }
+                NetworkContainer::set_network_lock(true);
+
+                let success = NetworkContainer::step();
+                if !success {
+                    break;
+                }
             }
-            thread::sleep(time::Duration::from_millis(16));
+            thread::sleep(time::Duration::from_millis(50));
         });
-        info!("Network decoder thread spawned");
+        info!("Network thread spawned");
     }
 
-    pub fn update(delta: f64, main_scene: &mut Main) -> Result<(), String> {
-        let delta_time = Duration::from_secs_f64(delta);
-        let container = NetworkContainer::read();
+    fn step() -> bool {
+        let c = NetworkContainer::read();
+        let container = c.as_ref().unwrap();
 
         let mut client = container.get_client_mut();
-        if client.is_disconnected() {
-            return Err("disconnected".to_string());
-        }
-        let mut transport = container.get_transport_mut();
 
+        {
+            let info = client.network_info();
+            let mut network_info = container.network_info.write().unwrap();
+            network_info.is_disconnected = client.is_disconnected();
+            network_info.bytes_received_per_second = info.bytes_received_per_second;
+            network_info.bytes_received_per_sec = client.bytes_received_per_sec();
+            network_info.bytes_sent_per_sec = client.bytes_sent_per_sec();
+            network_info.packet_loss = client.packet_loss();
+        }
+
+        if client.is_disconnected() {
+            return false;
+        }
+
+        let delta_time = container.get_delta_time();
         client.update(delta_time);
+        let mut transport = container.get_transport_mut();
         if let Err(e) = transport.update(delta_time, &mut client) {
-            return Err(e.to_string());
+            NetworkContainer::send_network_error(e.to_string());
+            return false;
         }
 
         while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
-            NETWORK_DECODER_IN.0.send(server_message).unwrap();
+            let decoded = NetworkContainer::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                NetworkContainer::send_server_message(d);
+            }
         }
         while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
-            NETWORK_DECODER_IN.0.send(server_message).unwrap();
-        }
-
-        for decoded in NETWORK_DECODER_OUT.1.drain() {
-            match decoded {
-                ServerMessages::ConsoleOutput { message } => {
-                    info!("{}", message);
-                }
-                ServerMessages::Resource { slug, scripts } => {
-                    let resource_manager = main_scene.get_resource_manager_mut();
-                    info!("Start loading client resource slug:\"{}\"", slug);
-                    match resource_manager.try_load(&slug, scripts) {
-                        Ok(_) => {
-                            info!("Client resource slug:\"{}\" loaded", slug);
-                        }
-                        Err(e) => {
-                            error!("Client resource slug:\"{}\" error: {}", slug, e);
-                        }
+            let decoded = NetworkContainer::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                match d {
+                    ServerMessages::ChunkSectionInfo {
+                        world_slug: _,
+                        chunk_position,
+                        sections: _,
+                    } => {
+                        let input = ClientMessages::ChunkRecieved {
+                            chunk_position: chunk_position,
+                        };
+                        let chunk_recieved = bincode::serialize(&input).unwrap();
+                        client.send_message(ClientChannel::Reliable, chunk_recieved);
                     }
+                    _ => (),
                 }
-                ServerMessages::Teleport {
-                    world_slug,
-                    location,
-                    yaw,
-                    pitch,
-                } => {
-                    main_scene.get_world_manager_mut().teleport_player(
-                        world_slug,
-                        GodotPositionConverter::vec3_from_array(&location),
-                        yaw,
-                        pitch,
-                    );
-                }
-                ServerMessages::ChunkSectionInfo {
-                    world_slug,
-                    chunk_position,
-                    mut sections,
-                } => {
-                    let tx = WorldManager::get_chunk_sender();
-                    rayon::spawn(move || {
-                        let decoded_sections = unpack_network_sectioins(&mut sections);
-                        tx.send((world_slug, chunk_position.clone(), decoded_sections)).unwrap();
-                    });
-
-                    let input = ClientMessages::ChunkRecieved {
-                        chunk_position: chunk_position,
-                    };
-                    let chunk_recieved = bincode::serialize(&input).unwrap();
-                    client.send_message(ClientChannel::Reliable, chunk_recieved);
-                }
-                ServerMessages::UnloadChunks { chunks, world_slug } => {
-                    main_scene.get_world_manager_mut().unload_chunk(world_slug, chunks);
-                }
+                NetworkContainer::send_server_message(d);
             }
         }
 
-        if let Err(e) = transport.send_packets(&mut client) {
-            return Err(e.to_string());
+        for (channel, message) in NETWORK_CLIENT_SENDED.1.drain() {
+            client.send_message(channel, message);
         }
-        return Ok(());
+
+        if let Err(e) = transport.send_packets(&mut client) {
+            NetworkContainer::send_network_error(e.to_string());
+            return false;
+        }
+        return true;
+    }
+
+    fn decode_server_message(encoded: &Bytes) -> Option<ServerMessages> {
+        let decoded: ServerMessages = match bincode::deserialize(encoded) {
+            Ok(d) => d,
+            Err(e) => {
+                error!("Decode server heavy message error: {}", e);
+                return None;
+            }
+        };
+        // Handle decoded messages before send them back
+        let decoded: ServerMessages = match decoded {
+            ServerMessages::ChunkSectionEncodedInfo {
+                world_slug,
+                chunk_position,
+                mut sections,
+            } => ServerMessages::ChunkSectionInfo {
+                world_slug,
+                chunk_position,
+                sections: unpack_network_sectioins(&mut sections),
+            },
+            other => other,
+        };
+
+        Some(decoded)
+    }
+
+    /// Send decoded message to thread server messages channel
+    fn send_server_message(decoded: ServerMessages) {
+        NETWORK_DECODER_OUT.0.send(decoded).unwrap();
+    }
+
+    /// Send error message to thread server messages channel
+    fn send_network_error(message: String) {
+        NETWORK_ERRORS_OUT.0.send(message).unwrap();
+    }
+
+    pub fn errors_iter() -> Drain<'static, String> {
+        NETWORK_ERRORS_OUT.1.drain()
+    }
+
+    pub fn server_messages_iter() -> Drain<'static, ServerMessages> {
+        // Remove the restriction so that the network
+        // can continue receiving messages
+        NetworkContainer::set_network_lock(false);
+
+        NETWORK_DECODER_OUT.1.drain()
     }
 
     pub fn disconnect() {
-        let container = NetworkContainer::read();
+        let c = NetworkContainer::read();
+        let container = c.as_ref().unwrap();
 
         let mut transport = container.get_transport_mut();
         if transport.is_connected() {
@@ -203,20 +272,18 @@ impl NetworkContainer {
         }
     }
 
-    pub fn send_console_command(command: String) {
-        let container = NetworkContainer::read();
+    fn send_message(channel: u8, decoded: Vec<u8>) {
+        NETWORK_CLIENT_SENDED.0.send((channel, decoded)).unwrap();
+    }
 
-        let mut client = container.get_client_mut();
+    pub fn send_console_command(command: String) {
         let input = ClientMessages::ConsoleInput { command: command };
-        let command_message = bincode::serialize(&input).unwrap();
-        client.send_message(ClientChannel::Reliable, command_message);
+        let message = bincode::serialize(&input).unwrap();
+        NetworkContainer::send_message(ClientChannel::Reliable.into(), message);
     }
 
     pub fn send_player_move(movement: PlayerMovement) {
-        let container = NetworkContainer::read();
-
-        let mut client = container.get_client_mut();
         let message = bincode::serialize(&movement.into_network()).unwrap();
-        client.send_message(ClientChannel::Unreliable, message);
+        NetworkContainer::send_message(ClientChannel::Unreliable.into(), message);
     }
 }

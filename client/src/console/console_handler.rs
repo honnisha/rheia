@@ -4,7 +4,8 @@ use std::sync::{
 };
 
 use chrono::Local;
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use flume::{bounded, unbounded, Drain};
+use flume::{Receiver, Sender};
 use godot::{
     engine::{input::MouseMode, Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
@@ -31,14 +32,14 @@ pub struct Console {
 
 lazy_static! {
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
-    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = unbounded();
+    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = bounded(1);
     static ref CONSOLE_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
 #[godot_api]
 impl Console {
-    pub fn get_input_receiver() -> &'static Receiver<String> {
-        &CONSOLE_INPUT_CHANNEL.1
+    pub fn iter_console_input() -> Drain<'static, String> {
+        CONSOLE_INPUT_CHANNEL.1.drain()
     }
 
     pub fn send_message(message: String) {
@@ -180,13 +181,9 @@ impl NodeVirtual for Console {
         info!("Console successfily loaded;");
     }
 
-    #[allow(unused_variables)]
-    fn process(&mut self, delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
-
-        for message in CONSOLE_OUTPUT_CHANNEL.1.try_iter() {
+    fn process(&mut self, _delta: f64) {
+        let now = std::time::Instant::now();
+        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
             self.append_text(message);
         }
 
@@ -204,6 +201,11 @@ impl NodeVirtual for Console {
             godot_print!("down");
         } else if input.is_action_just_pressed("ui_focus_next".into()) {
             godot_print!("tab");
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(1) {
+            println!("Console process: {:.2?}", elapsed);
         }
     }
 }

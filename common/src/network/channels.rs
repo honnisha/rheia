@@ -65,9 +65,9 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
         },
         ChannelConfig {
             channel_id: ServerChannel::Chunks.into(),
-            max_memory_usage_bytes: 5 * 1024 * 1024, // in MB
-            send_type: SendType::ReliableUnordered {
-                resend_time: Duration::from_secs_f32(0.5_f32),
+            max_memory_usage_bytes: 5 * 1024 * 1024,
+            send_type: SendType::ReliableOrdered {
+                resend_time: Duration::from_secs_f32(1.0_f32),
             },
         },
     ]

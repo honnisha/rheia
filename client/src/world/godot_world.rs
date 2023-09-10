@@ -3,7 +3,7 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Engine, Material, MeshInstance3D, SphereMesh},
+    engine::{Material, MeshInstance3D, SphereMesh},
     prelude::*,
 };
 use parking_lot::RwLock;
@@ -16,7 +16,7 @@ use std::sync::Arc;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::{
-    chunks::godot_chunks_container::{Chunk, ChunksContainer},
+    chunks::{godot_chunks_container::ChunksContainer, chunk::Chunk},
     physics_handler::PhysicsController,
     world_manager::{get_default_material, TextureMapperType},
 };
@@ -124,9 +124,7 @@ impl NodeVirtual for World {
     }
 
     fn process(&mut self, _delta: f64) {
-        if Engine::singleton().is_editor_hint() {
-            return;
-        }
+        let now = std::time::Instant::now();
 
         self.physics.step();
         if let Some(h) = self.handle {
@@ -142,6 +140,11 @@ impl NodeVirtual for World {
                 let body = self.physics.get_rigid_body_mut(&h).unwrap();
                 body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
             }
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(10) {
+            println!("World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
     }
 }

@@ -16,7 +16,7 @@ use crate::{
 
 use super::server::{NetworkContainer, NetworkPlugin};
 
-static SEND_CHUNK_QUEUE_LIMIT: usize = 64;
+static SEND_CHUNK_QUEUE_LIMIT: usize = 128;
 
 /// Store player current world slug and his entity
 #[derive(Clone)]
@@ -155,6 +155,7 @@ impl ClientNetwork {
         let mut unload_chunks: Vec<ChunkPosition> = Default::default();
 
         // Unwatch chunks
+        // Send only those chunks, that was sended
         for chunk_position in abandoned_chunks.drain(..) {
             let removed = vec_remove_item(&mut self.already_sended, &chunk_position);
             if removed {
