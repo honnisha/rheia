@@ -7,7 +7,7 @@ use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
 use spiral::ManhattanIterator;
-use std::cell::RefCell;
+use std::{cell::RefCell, time::Duration};
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -114,7 +114,7 @@ impl NodeVirtual for ChunksContainer {
     }
 
     fn process(&mut self, _delta: f64) {
-        //let now = Instant::now();
+        let now = std::time::Instant::now();
         let mut world = self.base.get_parent().unwrap().cast::<World>();
 
         let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
@@ -161,7 +161,9 @@ impl NodeVirtual for ChunksContainer {
             }
         }
 
-        //let elapsed = now.elapsed();
-        //println!("Chunks container process: {:.2?}", elapsed);
+        let elapsed = now.elapsed();
+        if elapsed > Duration::from_millis(3) {
+            println!("ChunksContainer process: {:.2?}", elapsed);
+        }
     }
 }

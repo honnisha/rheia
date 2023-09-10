@@ -21,8 +21,11 @@ cargo b -p honny-craft
 
 ## Debug
 ```
-use std::time::Instant;
-let now = Instant::now();
+let now = std::time::Instant::now();
 let elapsed = now.elapsed();
 println!("Chunk {} generated: {:.2?}", chunk_position, elapsed);
+
+if elapsed > std::time::Duration::from_millis(1) {
+println!("Process: {:.2?}", elapsed);
+}
 ```
