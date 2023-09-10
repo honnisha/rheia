@@ -34,9 +34,9 @@ Chunk info: {}"
 macro_rules! debug_network_string {
     () => {
         "Network connected: {}
-Bytes received per second: {:.1}
-Bytes received per sec: {:.1}
-Bytes sent per sec: {:.1}
+KB received per second: {:.1}
+KB received per sec: {:.1}
+KB sent per sec: {:.1}
 Packet loss: {:.1}"
     };
 }
@@ -131,10 +131,10 @@ impl DebugInfo {
             format!(
                 debug_network_string!(),
                 !network_info.is_disconnected,
-                network_info.bytes_received_per_second,
-                network_info.bytes_received_per_sec,
-                network_info.bytes_sent_per_sec,
-                network_info.packet_loss,
+                network_info.bytes_received_per_second / 1024.0,
+                network_info.bytes_received_per_sec / 1024.0,
+                network_info.bytes_sent_per_sec / 1024.0,
+                network_info.packet_loss / 1024.0,
             )
         } else {
             "Network connected: -".to_string()

@@ -142,7 +142,7 @@ impl NodeVirtual for Main {
             .update_debug(self.world_manager.bind(), &self.camera);
 
         let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(3) {
+        if elapsed > std::time::Duration::from_millis(20) {
             println!("Main process: {:.2?}", elapsed);
         }
     }
