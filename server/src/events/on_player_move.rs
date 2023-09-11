@@ -31,7 +31,7 @@ pub fn on_player_move(
     worlds_manager: Res<WorldsManager>,
 ) {
     for event in player_move_events.iter() {
-        let mut client = clients.get_mut(&event.client_id);
+        let client = clients.get(&event.client_id);
         if let Some(world_entity) = client.world_entity.as_ref() {
             // Handle player move in world
             let (chunk_changed, abandoned_chunks) = {

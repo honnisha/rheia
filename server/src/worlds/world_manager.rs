@@ -103,12 +103,7 @@ impl WorldManager {
                 if !chunk_column.is_loaded() {
                     return None;
                 }
-                let input = ServerMessages::ChunkSectionEncodedInfo {
-                    world_slug: self.slug.clone(),
-                    sections: chunk_column.build_network_format(),
-                    chunk_position: chunk_position.clone(),
-                };
-                Some(bincode::serialize(&input).unwrap())
+                Some(bincode::serialize(&chunk_column.build_network_format()).unwrap())
             }
             None => None,
         }

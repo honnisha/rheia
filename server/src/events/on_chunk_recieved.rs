@@ -22,12 +22,11 @@ impl ChunkRecievedEvent {
 }
 
 pub fn on_chunk_recieved(
-    network_container: Res<NetworkContainer>,
     mut chunk_recieved_events: ResMut<Events<ChunkRecievedEvent>>,
     clients: Res<ClientsContainer>,
 ) {
     for event in chunk_recieved_events.drain() {
-        let mut client = clients.get_mut(&event.client_id);
+        let client = clients.get(&event.client_id);
         client.mark_chunk_as_recieved(event.chunk_position);
     }
 }

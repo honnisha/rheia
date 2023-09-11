@@ -72,11 +72,11 @@ impl NetworkContainer {
         }
     }
 
-    pub fn _get_server(&self) -> RwLockReadGuard<RenetServer> {
+    pub fn get_server(&self) -> RwLockReadGuard<RenetServer> {
         self.server.as_ref().read().expect("poisoned")
     }
 
-    pub fn get_server_mut(&self) -> RwLockWriteGuard<RenetServer> {
+    fn get_server_mut(&self) -> RwLockWriteGuard<RenetServer> {
         self.server.as_ref().write().expect("poisoned")
     }
 
@@ -84,7 +84,7 @@ impl NetworkContainer {
         self.transport.as_ref().read().expect("poisoned")
     }
 
-    pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeServerTransport> {
+    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeServerTransport> {
         self.transport.as_ref().write().expect("poisoned")
     }
 }
@@ -173,6 +173,10 @@ fn receive_message_system(
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
+    if time.delta() > std::time::Duration::from_millis(20) {
+        println!("receive_message_system delay: {:.2?}", time.delta());
+    }
+
     let mut server = network_container.get_server_mut();
     let mut transport = network_container.get_transport_mut();
     server.update(time.delta());
