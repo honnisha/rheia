@@ -71,7 +71,7 @@ impl DebugInfo {
         self.base.set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, world_manager: GdRef<WorldManager>, camera: &Gd<Camera3D>) {
+    pub fn update_debug(&mut self, world_manager: &WorldManager, camera: &Gd<Camera3D>) {
         if !DebugInfo::is_active() {
             return;
         }

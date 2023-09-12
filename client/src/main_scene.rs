@@ -20,7 +20,7 @@ pub struct Main {
     #[base]
     base: Base<Node>,
     resource_manager: ResourceManager,
-    world_manager: Gd<WorldManager>,
+    world_manager: WorldManager,
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
     camera: Gd<Camera3D>,
@@ -31,12 +31,12 @@ impl Main {
         &mut self.resource_manager
     }
 
-    pub fn _get_world_manager(&self) -> GdRef<WorldManager> {
-        self.world_manager.bind()
+    pub fn _get_world_manager(&self) -> &WorldManager {
+        &self.world_manager
     }
 
-    pub fn get_world_manager_mut(&mut self) -> GdMut<WorldManager> {
-        self.world_manager.bind_mut()
+    pub fn get_world_manager_mut(&mut self) -> &mut WorldManager {
+        &mut self.world_manager
     }
 
     pub fn close() {
@@ -48,10 +48,11 @@ impl Main {
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
         let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
+        let world_manager = WorldManager::create(base.share(), &camera);
         Main {
             base,
             resource_manager: ResourceManager::new(),
-            world_manager: Gd::<WorldManager>::with_base(|base| WorldManager::create(base, &camera)),
+            world_manager: world_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
             camera: camera,
@@ -62,7 +63,6 @@ impl NodeVirtual for Main {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Info);
 
-        self.base.add_child(self.world_manager.share().upcast());
         self.base.add_child(self.console.share().upcast());
         self.base.add_child(self.debug_info.share().upcast());
         self.base.add_child(self.camera.share().upcast());
@@ -140,7 +140,7 @@ impl NodeVirtual for Main {
 
         self.debug_info
             .bind_mut()
-            .update_debug(self.world_manager.bind(), &self.camera);
+            .update_debug(&self.world_manager, &self.camera);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

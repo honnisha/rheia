@@ -16,11 +16,8 @@ use super::godot_world::World;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 
-#[derive(GodotClass)]
-#[class(base=Node)]
 pub struct WorldManager {
-    #[base]
-    pub base: Base<Node>,
+    base: Gd<Node>,
     camera: Gd<Camera3D>,
 
     world: Option<Gd<World>>,
@@ -30,7 +27,7 @@ pub struct WorldManager {
 }
 
 impl WorldManager {
-    pub fn create(base: Base<Node>, camera: &Gd<Camera3D>) -> Self {
+    pub fn create(base: Gd<Node>, camera: &Gd<Camera3D>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
         Self {
