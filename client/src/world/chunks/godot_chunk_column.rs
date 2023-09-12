@@ -1,4 +1,3 @@
-use crate::world::world_manager::get_default_material;
 use arrayvec::ArrayVec;
 use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
 use godot::prelude::*;

@@ -4,9 +4,9 @@ use common::{
     network::{channels::ServerChannel, messages::ServerMessages},
     utils::vec_remove_item,
 };
-use parking_lot::RwLock;
 use core::fmt;
 use log::error;
+use parking_lot::RwLock;
 use renet::RenetServer;
 use std::{fmt::Display, sync::Arc};
 
@@ -102,7 +102,7 @@ impl ClientNetwork {
     }
 
     pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
-        self.already_sended.read().contains(chunk_position)
+        self.already_sended.read().contains(chunk_position) || self.send_chunk_queue.read().contains(chunk_position)
     }
 
     /// If too many chunks currently was sended and waiting
@@ -116,8 +116,11 @@ impl ClientNetwork {
     }
 
     /// Called when the player has sent a confirmation of receiving chunk data
-    pub fn mark_chunk_as_recieved(&self, chunk_position: ChunkPosition) {
-        vec_remove_item(&mut *self.send_chunk_queue.write(), &chunk_position);
+    pub fn mark_chunks_as_recieved(&self, chunk_positions: Vec<ChunkPosition>) {
+        let mut send_chunk_queue = self.send_chunk_queue.write();
+        for chunk_position in chunk_positions {
+            vec_remove_item(&mut *send_chunk_queue, &chunk_position);
+        }
     }
 
     /// Send chunk which was just loaded

@@ -3,22 +3,24 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Material, MeshInstance3D, SphereMesh},
+    engine::{Material, MeshInstance3D, SphereMesh, StandardMaterial3D},
     prelude::*,
 };
 use parking_lot::RwLock;
 use rapier3d::prelude::RigidBodyHandle;
 use rapier3d::prelude::*;
-use std::cell::RefCell;
+use std::{cell::RefCell, sync::Arc};
 use std::rc::Rc;
-use std::sync::Arc;
 
-use crate::utils::textures::texture_mapper::TextureMapper;
+use crate::{
+    controller::{player_controller::PlayerController, player_movement::PlayerMovement},
+    network::client::NetworkContainer, utils::textures::texture_mapper::TextureMapper,
+};
 
 use super::{
-    chunks::{godot_chunks_container::ChunksContainer, chunk::Chunk},
+    chunks::{chunk::Chunk, godot_chunks_container::ChunksContainer},
     physics_handler::PhysicsController,
-    world_manager::{get_default_material, TextureMapperType},
+    world_manager::TextureMapperType,
 };
 
 /// Godot world
@@ -36,8 +38,11 @@ pub struct World {
     pub(crate) base: Base<Node>,
     slug: String,
     chunks_container: Gd<ChunksContainer>,
+    camera: Gd<Camera3D>,
 
     physics: PhysicsController,
+    player_controller: Gd<PlayerController>,
+
     handle: Option<RigidBodyHandle>,
     obj: Option<Gd<MeshInstance3D>>,
 }
@@ -49,7 +54,13 @@ impl World {
 }
 
 impl World {
-    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+    pub fn create(
+        base: Base<Node>,
+        slug: String,
+        texture_mapper: TextureMapperType,
+        material: Gd<Material>,
+        camera: &Gd<Camera3D>,
+    ) -> Self {
         let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
             ChunksContainer::create(base, texture_mapper.clone(), material.share())
         });
@@ -59,7 +70,11 @@ impl World {
             base,
             slug: slug,
             chunks_container,
+            camera: camera.share(),
+
             physics: PhysicsController::default(),
+            player_controller: Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera)),
+
             handle: None,
             obj: None,
         }
@@ -91,22 +106,50 @@ impl World {
     pub fn get_physics_mut(&mut self) -> &mut PhysicsController {
         &mut self.physics
     }
+
+    pub fn get_player_controller(&self) -> &Gd<PlayerController> {
+        &self.player_controller
+    }
+
+    pub fn get_player_controller_mut(&mut self) -> &mut Gd<PlayerController> {
+        &mut self.player_controller
+    }
+}
+
+pub fn get_default_material() -> Gd<Material> {
+    StandardMaterial3D::new().duplicate().unwrap().cast::<Material>()
+}
+
+#[godot_api]
+impl World {
+    #[func]
+    fn handler_player_move(&self, movement_var: Variant) {
+        let movement = movement_var.to::<PlayerMovement>();
+        NetworkContainer::send_player_move(movement);
+    }
 }
 
 #[godot_api]
 impl NodeVirtual for World {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
+        let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
         World::create(
             base,
             "Godot".to_string(),
             Arc::new(RwLock::new(TextureMapper::new())),
             get_default_material(),
+            &camera,
         )
     }
 
     fn ready(&mut self) {
         self.base.add_child(self.chunks_container.share().upcast());
+        self.player_controller.bind_mut().base.connect(
+            "on_player_move".into(),
+            Callable::from_object_method(self.base.share(), "handler_player_move"),
+        );
+        self.base.add_child(self.player_controller.share().upcast());
 
         self.obj = Some(MeshInstance3D::new_alloc());
         let mut sphere = self.obj.as_mut().unwrap();

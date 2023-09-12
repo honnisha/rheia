@@ -1,6 +1,5 @@
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
-use godot::engine::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{
     engine::Material,
@@ -10,17 +9,12 @@ use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::controller::player_controller::PlayerController;
-use crate::controller::player_movement::PlayerMovement;
 use crate::main_scene::FloatType;
-use crate::network::client::NetworkContainer;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
 use super::godot_world::World;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
-
-pub(crate) type ChunksSectionsChannelType = (String, ChunkPosition, SectionsData);
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -33,8 +27,6 @@ pub struct WorldManager {
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
-
-    player_controller: Gd<PlayerController>,
 }
 
 impl WorldManager {
@@ -48,7 +40,6 @@ impl WorldManager {
             world: None,
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
-            player_controller: Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera)),
         }
     }
 
@@ -60,7 +51,13 @@ impl WorldManager {
     }
 
     fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        self.player_controller.bind_mut().teleport(position, yaw, pitch);
+        self.world
+            .as_mut()
+            .unwrap()
+            .bind_mut()
+            .get_player_controller_mut()
+            .bind_mut()
+            .teleport(position, yaw, pitch);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -81,7 +78,13 @@ impl WorldManager {
 
     pub fn create_world(&mut self, world_slug: String) {
         let mut world = Gd::<World>::with_base(|base| {
-            World::create(base, world_slug, self.texture_mapper.clone(), self.material.share())
+            World::create(
+                base,
+                world_slug,
+                self.texture_mapper.clone(),
+                self.material.share(),
+                &self.camera,
+            )
         });
 
         let world_name = GodotString::from("World");
@@ -136,33 +139,5 @@ impl WorldManager {
             return;
         }
         world.unload_chunk(chunks_positions);
-    }
-
-    pub fn get_player_controller(&self) -> &Gd<PlayerController> {
-        &self.player_controller
-    }
-}
-
-pub fn get_default_material() -> Gd<Material> {
-    StandardMaterial3D::new().duplicate().unwrap().cast::<Material>()
-}
-
-#[godot_api]
-impl WorldManager {
-    #[func]
-    fn handler_player_move(&self, movement_var: Variant) {
-        let movement = movement_var.to::<PlayerMovement>();
-        NetworkContainer::send_player_move(movement);
-    }
-}
-
-#[godot_api]
-impl NodeVirtual for WorldManager {
-    fn ready(&mut self) {
-        self.player_controller.bind_mut().base.connect(
-            "on_player_move".into(),
-            Callable::from_object_method(self.base.share(), "handler_player_move"),
-        );
-        self.base.add_child(self.player_controller.share().upcast());
     }
 }

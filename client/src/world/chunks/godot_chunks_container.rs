@@ -7,18 +7,15 @@ use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
 use spiral::ManhattanIterator;
-use std::{cell::RefCell, time::Duration};
 use std::rc::Rc;
 use std::sync::Arc;
+use std::{cell::RefCell, time::Duration};
 
 use crate::{
     entities::position::GodotPositionConverter,
     main_scene::CHUNKS_DISTANCE,
     utils::textures::texture_mapper::TextureMapper,
-    world::{
-        godot_world::World,
-        world_manager::{get_default_material, TextureMapperType, WorldManager},
-    },
+    world::{godot_world::{World, get_default_material}, world_manager::TextureMapperType},
 };
 
 use super::{
@@ -116,8 +113,7 @@ impl NodeVirtual for ChunksContainer {
         let now = std::time::Instant::now();
         let mut world = self.base.get_parent().unwrap().cast::<World>();
 
-        let world_manager = world.get_parent().unwrap().cast::<WorldManager>();
-        let controller_positon = world_manager.bind().get_player_controller().bind().get_position();
+        let controller_positon = world.bind().get_player_controller().bind().get_position();
         let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
 
         let iter = ManhattanIterator::new(current_chunk.x as i32, current_chunk.z as i32, CHUNKS_DISTANCE);

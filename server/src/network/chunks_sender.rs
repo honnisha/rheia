@@ -1,14 +1,12 @@
-use crate::{
-    entities::entity::{NetworkComponent, Position},
-    worlds::worlds_manager::WorldsManager,
-    CHUNKS_DISTANCE,
-};
+use crate::{entities::entity::NetworkComponent, worlds::worlds_manager::WorldsManager};
 use ahash::HashMap;
-use bevy_ecs::{prelude::Entity, system::Res};
-use common::chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition};
-use spiral::ManhattanIterator;
+use bevy_ecs::system::Res;
+use common::chunks::chunk_position::ChunkPosition;
 
-use super::{clients_container::ClientsContainer, server::NetworkContainer};
+use super::{
+    clients_container::{ClientRef, ClientsContainer},
+    server::NetworkContainer,
+};
 
 pub fn send_chunks(
     worlds_manager: Res<WorldsManager>,
@@ -18,16 +16,12 @@ pub fn send_chunks(
     let now = std::time::Instant::now();
     let server = network_container.get_server();
 
-    let mut chunks_count: usize = 0;
-    let mut entities_count: usize = 0;
-
     // Iterate all worlds
     for (_world_slug, world_lock) in worlds_manager.get_worlds() {
         let world = world_lock.read();
 
         // A set of chunks and players that require them to be sent
-        let mut queue_chunks: Vec<ChunkPosition> = Default::default();
-        let mut queue_entities: Vec<Entity> = Default::default();
+        let mut queue: HashMap<ChunkPosition, Vec<ClientRef>> = Default::default();
 
         // Iterate all loaded chunks
         for (chunk_position, chunk_col_lock) in world.chunks_map.get_chunks() {
@@ -60,44 +54,22 @@ pub fn send_chunks(
                     continue 'entity_loop;
                 }
 
-                if !queue_chunks.contains(&chunk_position) {
-                    queue_chunks.push(chunk_position.clone());
-                }
-                if !queue_entities.contains(&entity) {
-                    queue_entities.push(entity.clone());
-                }
+                let clients_queue = queue.entry(chunk_position.clone()).or_insert(Default::default());
                 client.send_to_queue(&chunk_position);
+                clients_queue.push(client);
             }
         }
 
-        chunks_count += queue_chunks.len();
-        entities_count += queue_entities.len();
-
-        let mut generated_chunks: HashMap<ChunkPosition, Vec<u8>> = Default::default();
-        for chunk_position in queue_chunks.drain(..) {
+        for (chunk_position, clients) in queue {
             let encoded = world.get_network_chunk_bytes(&chunk_position).unwrap();
-            generated_chunks.insert(chunk_position, encoded);
-        }
-        for entity in queue_entities.drain(..) {
-            let player_entity = world.get_entity(&entity);
-            let network = player_entity.get::<NetworkComponent>().unwrap();
-            let client = clients.get(&network.get_client_id());
-
-            let position = player_entity.get::<Position>().unwrap();
-            let chunk_position = position.get_chunk_position();
-
-            let iter = ManhattanIterator::new(chunk_position.x as i32, chunk_position.z as i32, CHUNKS_DISTANCE);
-            for (x, z) in iter {
-                let chunk_position = ChunkPosition::new(x as i64, z as i64);
-                if let Some(c) = generated_chunks.get(&chunk_position) {
-                    client.send_loaded_chunk(&chunk_position, c.clone());
-                }
+            for client in clients.iter() {
+                client.send_loaded_chunk(&chunk_position, encoded.clone());
             }
         }
     }
 
     let elapsed = now.elapsed();
-    if elapsed > std::time::Duration::from_millis(20) {
-        println!("send_chunks: {:.2?} chunks_count: {} entities_count: {}", elapsed, chunks_count, entities_count);
+    if elapsed > std::time::Duration::from_millis(100) {
+        println!("send_chunks: {:.2?}", elapsed);
     }
 }

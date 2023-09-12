@@ -173,7 +173,7 @@ fn receive_message_system(
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
-    if time.delta() > std::time::Duration::from_millis(20) {
+    if time.delta() > std::time::Duration::from_millis(100) {
         println!("receive_message_system delay: {:.2?}", time.delta());
     }
 
@@ -198,8 +198,8 @@ fn receive_message_system(
                 ClientMessages::ConsoleInput { command } => {
                     CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
                 }
-                ClientMessages::ChunkRecieved { chunk_position } => {
-                    chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_position));
+                ClientMessages::ChunkRecieved { chunk_positions } => {
+                    chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_positions));
                 }
                 _ => panic!("unsupported message"),
             }

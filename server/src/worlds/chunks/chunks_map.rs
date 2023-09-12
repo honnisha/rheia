@@ -50,10 +50,6 @@ impl ChunkMap {
         self.chunks_load_state.take_chunks_entities(&chunk_position)
     }
 
-    pub fn take_entity_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
-        self.chunks_load_state.take_entity_chunks(&entity)
-    }
-
     /// Create player in the world
     pub fn start_chunks_render(&mut self, entity: Entity, to: &ChunkPosition, chunks_distance: u16) {
         let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance);

@@ -7,7 +7,7 @@ use godot::{
 };
 use ndshape::{ConstShape, ConstShape3u32};
 
-use crate::world::world_manager::get_default_material;
+use crate::world::godot_world::get_default_material;
 
 //pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;

@@ -1,4 +1,5 @@
 use crate::controller::player_movement::PlayerMovement;
+use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::unpack_network_sectioins;
 use common::network::channels::ClientChannel;
 use common::network::channels::ServerChannel;
@@ -182,6 +183,7 @@ impl NetworkContainer {
                 NetworkContainer::send_server_message(d);
             }
         }
+        let mut chunks: Vec<ChunkPosition> = Default::default();
         while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
             let decoded = NetworkContainer::decode_server_message(&server_message);
             if let Some(d) = decoded {
@@ -191,16 +193,20 @@ impl NetworkContainer {
                         chunk_position,
                         sections: _,
                     } => {
-                        let input = ClientMessages::ChunkRecieved {
-                            chunk_position: chunk_position,
-                        };
-                        let chunk_recieved = bincode::serialize(&input).unwrap();
-                        client.send_message(ClientChannel::Reliable, chunk_recieved);
+                        chunks.push(chunk_position);
                     }
                     _ => (),
                 }
                 NetworkContainer::send_server_message(d);
             }
+        }
+
+        if chunks.len() > 0 {
+            let input = ClientMessages::ChunkRecieved {
+                chunk_positions: chunks,
+            };
+            let chunk_recieved = bincode::serialize(&input).unwrap();
+            client.send_message(ClientChannel::Reliable, chunk_recieved);
         }
 
         for (channel, message) in NETWORK_CLIENT_SENDED.1.drain() {

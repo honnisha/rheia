@@ -76,20 +76,21 @@ impl DebugInfo {
             return;
         }
 
-        let controller_positioin = match world_manager.get_player_controller().bind().get_handler() {
-            Some(h) => {
-                let controller_pos = h.get_position(&camera);
-                format!(
-                    "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
-                    controller_pos.x,
-                    controller_pos.y,
-                    controller_pos.z,
-                    h.get_yaw(&camera),
-                    h.get_pitch(&camera),
-                )
-            }
-            None => "-".to_string(),
-        };
+        //let controller_positioin = match world_manager.get_player_controller().bind().get_handler() {
+        //    Some(h) => {
+        //        let controller_pos = h.get_position(&camera);
+        //        format!(
+        //            "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
+        //            controller_pos.x,
+        //            controller_pos.y,
+        //            controller_pos.z,
+        //            h.get_yaw(&camera),
+        //            h.get_pitch(&camera),
+        //        )
+        //    }
+        //    None => "-".to_string(),
+        //};
+        let controller_positioin = "-".to_string();
 
         let first_text = format!(
             debug_first_string!(),
