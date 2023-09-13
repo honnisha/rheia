@@ -47,6 +47,7 @@ impl WorldManager {
         }
     }
 
+    /// Raise exception if there is no world
     fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
         self.world
             .as_mut()
