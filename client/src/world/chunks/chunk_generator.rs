@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     entities::position::GodotPositionConverter,
-    world::{physics_handler::PhysicsController, world_manager::TextureMapperType},
+    world::{physics_handler::{PhysicsController, PhysicsContainer}, world_manager::TextureMapperType},
 };
 use arrayvec::ArrayVec;
 use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
@@ -40,17 +40,17 @@ pub(crate) fn generate_chunk(
             c.base.set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
-                let mut section =
-                    Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), y as u8));
+                let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share()));
 
                 let name = GodotString::from(format!("Section {}", y));
                 section.bind_mut().base.set_name(name.clone());
 
                 c.base.add_child(section.share().upcast());
-                section
-                    .bind_mut()
-                    .base
-                    .set_position(Vector3::new(0.0, y as f32 * CHUNK_SIZE as f32 - 1_f32, 0.0));
+                section.bind_mut().base.set_position(Vector3::new(
+                    0.0,
+                    GodotPositionConverter::get_chunk_y_local(y as u8),
+                    0.0,
+                ));
 
                 c.sections.push(section);
             }
@@ -80,21 +80,21 @@ pub(crate) fn spawn_chunk(
     mut data: ChunksGenerationType,
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
-    physics: &mut PhysicsController,
+    physics_container: &mut PhysicsContainer,
 ) -> Gd<ChunkColumn> {
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(data.0);
     let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
     base.add_child(column.share().upcast());
 
-    let mut y = 0;
+    let mut y: u8 = 0;
     for collider in data.1.drain(..) {
         let section_position = Vector3::new(
             chunk_pos_vector.x,
-            y as f32 * CHUNK_SIZE as f32 - 1_f32,
+            GodotPositionConverter::get_chunk_y_local(y),
             chunk_pos_vector.z,
         );
         if let Some(c) = collider {
-            physics.create_mesh(c, &section_position);
+            physics_container.create_mesh(c, &section_position);
         }
         y += 1;
     }

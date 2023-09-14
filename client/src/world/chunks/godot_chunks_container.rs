@@ -149,8 +149,8 @@ impl NodeVirtual for ChunksContainer {
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
                     let mut w = world.bind_mut();
-                    let physics = w.get_physics_mut();
-                    c.set_chunk_column(spawn_chunk(data, chunk_position, &mut self.base, physics));
+                    let physics_container = w.get_physics_container();
+                    c.set_chunk_column(spawn_chunk(data, chunk_position, &mut self.base, physics_container));
                     c.set_loaded()
                 }
             }

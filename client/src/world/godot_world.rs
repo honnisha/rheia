@@ -3,23 +3,23 @@ use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
 };
 use godot::{
-    engine::{Material, MeshInstance3D, SphereMesh, StandardMaterial3D},
+    engine::{Material, StandardMaterial3D},
     prelude::*,
 };
 use parking_lot::RwLock;
-use rapier3d::prelude::RigidBodyHandle;
 use rapier3d::prelude::*;
-use std::{cell::RefCell, sync::Arc};
 use std::rc::Rc;
+use std::{cell::RefCell, sync::Arc};
 
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
-    network::client::NetworkContainer, utils::textures::texture_mapper::TextureMapper,
+    network::client::NetworkContainer,
+    utils::textures::texture_mapper::TextureMapper,
 };
 
 use super::{
     chunks::{chunk::Chunk, godot_chunks_container::ChunksContainer},
-    physics_handler::PhysicsController,
+    physics_handler::PhysicsContainer,
     world_manager::TextureMapperType,
 };
 
@@ -40,11 +40,8 @@ pub struct World {
     chunks_container: Gd<ChunksContainer>,
     camera: Gd<Camera3D>,
 
-    physics: PhysicsController,
+    physics_container: PhysicsContainer,
     player_controller: Gd<PlayerController>,
-
-    handle: Option<RigidBodyHandle>,
-    obj: Option<Gd<MeshInstance3D>>,
 }
 
 impl World {
@@ -66,17 +63,18 @@ impl World {
         });
         let container_name = GodotString::from("ChunksContainer");
         chunks_container.bind_mut().base.set_name(container_name.clone());
+        let mut physics_container = PhysicsContainer::default();
+        let player_controller =
+            Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera, &mut physics_container));
+
         World {
             base,
             slug: slug,
             chunks_container,
             camera: camera.share(),
 
-            physics: PhysicsController::default(),
-            player_controller: Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera)),
-
-            handle: None,
-            obj: None,
+            physics_container,
+            player_controller,
         }
     }
 
@@ -103,8 +101,8 @@ impl World {
         self.chunks_container.bind_mut().unload_chunk(chunks_positions);
     }
 
-    pub fn get_physics_mut(&mut self) -> &mut PhysicsController {
-        &mut self.physics
+    pub fn get_physics_container(&mut self) -> &PhysicsContainer {
+        &self.physics_container
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
@@ -150,40 +148,12 @@ impl NodeVirtual for World {
             Callable::from_object_method(self.base.share(), "handler_player_move"),
         );
         self.base.add_child(self.player_controller.share().upcast());
-
-        self.obj = Some(MeshInstance3D::new_alloc());
-        let mut sphere = self.obj.as_mut().unwrap();
-        let mesh = SphereMesh::new();
-        sphere.set_mesh(mesh.upcast());
-        self.base.add_child(sphere.share().upcast());
-        sphere.set_position(Vector3 {
-            x: 0.0,
-            y: 60.0,
-            z: 0.0,
-        });
-
-        let (rigid_handle, _collider_handle) = self.physics.create_ball(&sphere.get_position());
-        self.handle = Some(rigid_handle);
     }
 
     fn process(&mut self, _delta: f64) {
         let now = std::time::Instant::now();
 
-        self.physics.step();
-        if let Some(h) = self.handle {
-            let body = self.physics.get_rigid_body(&h).unwrap();
-            let mut sphere = self.obj.as_mut().unwrap();
-            let new_pos = Vector3::new(body.translation()[0], body.translation()[1], body.translation()[2]);
-            sphere.set_position(new_pos);
-        }
-
-        let input = Input::singleton();
-        if input.is_action_just_pressed("ui_up".into()) {
-            if let Some(h) = self.handle {
-                let body = self.physics.get_rigid_body_mut(&h).unwrap();
-                body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
-            }
-        }
+        self.physics_container.step();
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

@@ -23,16 +23,15 @@ pub struct ChunkSection {
     #[base]
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
-    y: u8,
 }
 
 impl ChunkSection {
-    pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8) -> Self {
+    pub fn create(base: Base<Node3D>, material: Gd<Material>) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
         mesh.set_material_overlay(material.share());
 
-        Self { base, mesh, y }
+        Self { base, mesh }
     }
 
     pub fn update_mesh(&mut self, new_mesh: Gd<ArrayMesh>) {
@@ -47,7 +46,7 @@ impl ChunkSection {
 impl NodeVirtual for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
-        Self::create(base, get_default_material(), 0)
+        Self::create(base, get_default_material())
     }
 
     fn ready(&mut self) {

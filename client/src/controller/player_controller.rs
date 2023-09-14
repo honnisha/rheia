@@ -2,10 +2,12 @@ use godot::engine::{
     global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
     InputEventMouseMotion,
 };
+use godot::engine::{CylinderMesh, MeshInstance3D};
 use godot::prelude::*;
 
 use crate::console::console_handler::Console;
 use crate::main_scene::FloatType;
+use crate::world::physics_handler::{PhysicsEntity, PhysicsContainer};
 
 use super::{input_data::InputData, player_movement::PlayerMovement};
 
@@ -17,15 +19,30 @@ pub struct PlayerController {
     camera: Gd<Camera3D>,
     input_data: InputData,
     cache_movement: Option<PlayerMovement>,
+
+    body: Gd<MeshInstance3D>,
+    physics_entity: PhysicsEntity,
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node>, camera: &Gd<Camera3D>) -> Self {
+    pub fn create(base: Base<Node>, camera: &Gd<Camera3D>, physics_container: &mut PhysicsContainer) -> Self {
+        let body = MeshInstance3D::new_alloc();
+        let mesh = CylinderMesh::new();
+        body.set_mesh(mesh.upcast());
+        base.add_child(body.share().upcast());
+        body.set_position(Vector3 {
+            x: 0.0,
+            y: 60.0,
+            z: 0.0,
+        });
+
         Self {
             base,
             camera: camera.share(),
             input_data: Default::default(),
             cache_movement: None,
+            body,
+            physics_entity: physics_container.create_cylinder(&body.get_position(), 0.25, 0.5),
         }
     }
 
@@ -33,7 +50,8 @@ impl PlayerController {
     pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
         self.camera.set_position(position);
         self.camera.rotate_y(yaw);
-        self.camera.rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
+        self.camera
+            .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
     }
 
     // Get position of the controller
@@ -60,7 +78,8 @@ impl PlayerController {
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node>) -> Self {
         let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
-        Self::create(base, &camera)
+        let mut physics = PhysicsContainer::default();
+        Self::create(base, &camera, &mut physics)
     }
 
     fn ready(&mut self) {}
@@ -133,8 +152,13 @@ impl NodeVirtual for PlayerController {
             }
         }
 
-        self.base.emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
+        self.base
+            .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
         self.cache_movement = Some(new_movement);
+
+        let rigid_body = self.physics_entity.get_rigid_body();
+        self.base.set_position(PhysicsEntity::transform_to_vector3(rigid_body.translation()));
+        //body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(3) {

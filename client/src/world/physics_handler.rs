@@ -1,7 +1,79 @@
-use godot::prelude::Vector3;
-use rapier3d::prelude::*;
+use std::sync::Arc;
 
-pub struct PhysicsController {
+use godot::prelude::Vector3;
+use rapier3d::{prelude::*};
+use std::cell::RefCell;
+
+pub type PhysicsContainerLock = Arc<RefCell<PhysicsController>>;
+
+pub struct PhysicsEntity {
+    world_physics: PhysicsContainerLock,
+
+    rigid_handle: Option<RigidBodyHandle>,
+    collider_handle: ColliderHandle,
+}
+
+impl PhysicsEntity {
+    pub fn create(
+        physics: PhysicsContainerLock,
+        rigid_handle: Option<RigidBodyHandle>,
+        collider_handle: ColliderHandle,
+    ) -> Self {
+        Self {
+            world_physics: physics,
+            rigid_handle,
+            collider_handle,
+        }
+    }
+
+    pub fn get_rigid_body(&self) -> &RigidBody {
+        self.world_physics
+            .borrow()
+            .get_rigid_body(&self.rigid_handle.expect("rigid_handle is None"))
+            .expect("rigid body has not been created yet")
+    }
+
+    pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
+        Vector3::new(translation[0], translation[1], translation[2])
+    }
+}
+
+#[derive(Default)]
+pub struct PhysicsContainer {
+    world_physics: PhysicsContainerLock,
+}
+
+impl PhysicsContainer {
+    pub fn step(&self) {
+        self.world_physics.borrow_mut().step();
+    }
+
+    pub fn create_cylinder(&mut self, position: &Vector3, half_height: Real, radius: Real) -> PhysicsEntity {
+        let mut physics = self.world_physics.borrow_mut();
+
+        let rigid_body = RigidBodyBuilder::dynamic()
+            .translation(vector![position.x, position.y, position.z])
+            .build();
+        let collider = ColliderBuilder::cylinder(half_height, radius);
+        let rigid_handle = physics.rigid_body_set.insert(rigid_body);
+        let collider_handle =
+            physics
+                .collider_set
+                .insert_with_parent(collider, rigid_handle, &mut physics.rigid_body_set);
+
+        PhysicsEntity::create(self.world_physics.clone(), Some(rigid_handle), collider_handle)
+    }
+
+    pub fn create_mesh(&mut self, collider: ColliderBuilder, position: &Vector3) -> PhysicsEntity {
+        let mut physics = self.world_physics.borrow_mut();
+
+        let collider = collider.translation(vector![position.x, position.y, position.z]);
+        let collider_handle = physics.collider_set.insert(collider);
+        PhysicsEntity::create(self.world_physics.clone(), None, collider_handle)
+    }
+}
+
+struct PhysicsController {
     gravity: Vector<Real>,
     rigid_body_set: RigidBodySet,
     collider_set: ColliderSet,
@@ -34,18 +106,6 @@ impl Default for PhysicsController {
 }
 
 impl PhysicsController {
-    pub fn create_ball(&mut self, position: &Vector3) -> (RigidBodyHandle, ColliderHandle) {
-        let rigid_body = RigidBodyBuilder::dynamic().translation(vector![position.x, position.y, position.z]).build();
-        let collider = ColliderBuilder::ball(0.5).restitution(0.7).build();
-        let rigid_handle = self.rigid_body_set.insert(rigid_body);
-        let collider_handle = self.collider_set.insert_with_parent(collider, rigid_handle, &mut self.rigid_body_set);
-        (rigid_handle, collider_handle)
-    }
-    pub fn create_mesh(&mut self, collider: ColliderBuilder, position: &Vector3) -> ColliderHandle {
-        let collider = collider.translation(vector![position.x, position.y, position.z]);
-        self.collider_set.insert(collider)
-    }
-
     pub fn get_rigid_body(&self, handle: &RigidBodyHandle) -> Option<&RigidBody> {
         self.rigid_body_set.get(*handle)
     }
