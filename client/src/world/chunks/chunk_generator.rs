@@ -4,10 +4,10 @@ use super::{
 };
 use crate::{
     entities::position::GodotPositionConverter,
-    world::{physics_handler::{PhysicsController, PhysicsContainer}, world_manager::TextureMapperType},
+    world::{physics_handler::{PhysicsContainer}, world_manager::TextureMapperType},
 };
 use arrayvec::ArrayVec;
-use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE, VERTICAL_SECTIONS};
+use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
@@ -80,7 +80,7 @@ pub(crate) fn spawn_chunk(
     mut data: ChunksGenerationType,
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
-    physics_container: &mut PhysicsContainer,
+    physics_container: &PhysicsContainer,
 ) -> Gd<ChunkColumn> {
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(data.0);
     let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);

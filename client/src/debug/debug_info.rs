@@ -10,7 +10,7 @@ use godot::{
 };
 use lazy_static::lazy_static;
 
-use crate::{world::world_manager::WorldManager, network::client::NetworkContainer};
+use crate::{network::client::NetworkContainer, world::world_manager::WorldManager};
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -19,13 +19,13 @@ lazy_static! {
 macro_rules! debug_first_string {
     () => {
         "FPS: {:.0}
-Controller position: {}
 Threads count: {}"
     };
 }
 macro_rules! debug_world_string {
     () => {
         "World: {}
+Controller position: {}
 Chunks loaded: {}
 Chunk position: {}
 Chunk info: {}"
@@ -71,41 +71,39 @@ impl DebugInfo {
         self.base.set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, world_manager: &WorldManager, camera: &Gd<Camera3D>) {
+    pub fn update_debug(&mut self, world_manager: &WorldManager) {
         if !DebugInfo::is_active() {
             return;
         }
 
-        //let controller_positioin = match world_manager.get_player_controller().bind().get_handler() {
-        //    Some(h) => {
-        //        let controller_pos = h.get_position(&camera);
-        //        format!(
-        //            "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
-        //            controller_pos.x,
-        //            controller_pos.y,
-        //            controller_pos.z,
-        //            h.get_yaw(&camera),
-        //            h.get_pitch(&camera),
-        //        )
-        //    }
-        //    None => "-".to_string(),
-        //};
-        let controller_positioin = "-".to_string();
-
         let first_text = format!(
             debug_first_string!(),
             Engine::singleton().get_frames_per_second(),
-            controller_positioin,
             rayon::current_num_threads()
         );
         DebugInfo::change_text(&self.first_row, first_text);
 
-        let camera_pos = camera.get_position();
-        let chunk_pos =
-            BlockPosition::new(camera_pos.x as i64, camera_pos.y as i64, camera_pos.z as i64).get_chunk_position();
-        let second_text = match world_manager.get_world() {
+        let world_text = match world_manager.get_world() {
             Some(w) => {
                 let world = w.bind();
+                let player_controller = world.get_player_controller().bind();
+                let controller_pos = player_controller.get_position();
+                let controller_positioin = format!(
+                    "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
+                    controller_pos.x,
+                    controller_pos.y,
+                    controller_pos.z,
+                    player_controller.get_yaw(),
+                    player_controller.get_pitch(),
+                );
+
+                let chunk_pos = BlockPosition::new(
+                    controller_pos.x as i64,
+                    controller_pos.y as i64,
+                    controller_pos.z as i64,
+                )
+                .get_chunk_position();
+
                 let chunk_info = match world.get_chunk(&chunk_pos) {
                     Some(c) => {
                         let c = c.borrow();
@@ -113,9 +111,11 @@ impl DebugInfo {
                     }
                     None => "-".to_string(),
                 };
+
                 format!(
                     debug_world_string!(),
                     world.get_slug(),
+                    controller_positioin,
                     world.get_chunks_count(),
                     chunk_pos,
                     chunk_info,
@@ -123,7 +123,7 @@ impl DebugInfo {
             }
             None => "World: -".to_string(),
         };
-        DebugInfo::change_text(&self.world_row, second_text);
+        DebugInfo::change_text(&self.world_row, world_text);
 
         let network_text = if NetworkContainer::has_client() {
             let c = NetworkContainer::read();

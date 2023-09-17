@@ -23,7 +23,6 @@ pub struct Main {
     world_manager: WorldManager,
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
-    camera: Gd<Camera3D>,
 }
 
 impl Main {
@@ -47,15 +46,13 @@ impl Main {
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
-        let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
-        let world_manager = WorldManager::create(base.share(), &camera);
+        let world_manager = WorldManager::create(base.share());
         Main {
             base,
             resource_manager: ResourceManager::new(),
             world_manager: world_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
-            camera: camera,
         }
     }
 
@@ -65,7 +62,6 @@ impl NodeVirtual for Main {
 
         self.base.add_child(self.console.share().upcast());
         self.base.add_child(self.debug_info.share().upcast());
-        self.base.add_child(self.camera.share().upcast());
 
         self.debug_info.bind_mut().toggle(true);
 
@@ -127,8 +123,8 @@ impl NodeVirtual for Main {
                     chunk_position,
                     sections,
                 } => {
-                    let mut world_manager = self.get_world_manager_mut();
-                    println!("load_chunk {}", chunk_position);
+                    let world_manager = self.get_world_manager_mut();
+                    // println!("load_chunk {}", chunk_position);
                     world_manager.load_chunk(world_slug, chunk_position, sections);
                 }
                 ServerMessages::UnloadChunks { chunks, world_slug } => {
@@ -138,9 +134,7 @@ impl NodeVirtual for Main {
             }
         }
 
-        self.debug_info
-            .bind_mut()
-            .update_debug(&self.world_manager, &self.camera);
+        self.debug_info.bind_mut().update_debug(&self.world_manager);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

@@ -38,7 +38,6 @@ pub struct World {
     pub(crate) base: Base<Node>,
     slug: String,
     chunks_container: Gd<ChunksContainer>,
-    camera: Gd<Camera3D>,
 
     physics_container: PhysicsContainer,
     player_controller: Gd<PlayerController>,
@@ -56,7 +55,6 @@ impl World {
         slug: String,
         texture_mapper: TextureMapperType,
         material: Gd<Material>,
-        camera: &Gd<Camera3D>,
     ) -> Self {
         let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
             ChunksContainer::create(base, texture_mapper.clone(), material.share())
@@ -65,13 +63,12 @@ impl World {
         chunks_container.bind_mut().base.set_name(container_name.clone());
         let mut physics_container = PhysicsContainer::default();
         let player_controller =
-            Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &camera, &mut physics_container));
+            Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &mut physics_container));
 
         World {
             base,
             slug: slug,
             chunks_container,
-            camera: camera.share(),
 
             physics_container,
             player_controller,
@@ -131,13 +128,11 @@ impl World {
 impl NodeVirtual for World {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
-        let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
         World::create(
             base,
             "Godot".to_string(),
             Arc::new(RwLock::new(TextureMapper::new())),
             get_default_material(),
-            &camera,
         )
     }
 

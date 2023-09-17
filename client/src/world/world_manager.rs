@@ -18,8 +18,6 @@ pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 
 pub struct WorldManager {
     base: Gd<Node>,
-    camera: Gd<Camera3D>,
-
     world: Option<Gd<World>>,
 
     texture_mapper: TextureMapperType,
@@ -27,14 +25,13 @@ pub struct WorldManager {
 }
 
 impl WorldManager {
-    pub fn create(base: Gd<Node>, camera: &Gd<Camera3D>) -> Self {
+    pub fn create(base: Gd<Node>) -> Self {
         let mut texture_mapper = TextureMapper::new();
         let texture = build_blocks_material(&mut texture_mapper);
         Self {
             base,
-            camera: camera.share(),
-
             world: None,
+
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
         }
@@ -81,7 +78,6 @@ impl WorldManager {
                 world_slug,
                 self.texture_mapper.clone(),
                 self.material.share(),
-                &self.camera,
             )
         });
 
