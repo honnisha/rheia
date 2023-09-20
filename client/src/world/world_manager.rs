@@ -46,13 +46,11 @@ impl WorldManager {
 
     /// Raise exception if there is no world
     fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        self.world
-            .as_mut()
-            .unwrap()
-            .bind_mut()
-            .get_player_controller_mut()
-            .bind_mut()
-            .teleport(position, yaw, pitch);
+        let mut world = self.world.as_mut().unwrap().bind_mut();
+        let mut player_controller = world.get_player_controller_mut().bind_mut();
+
+        player_controller.set_position(position);
+        player_controller.set_rotation(yaw, pitch);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -73,12 +71,7 @@ impl WorldManager {
 
     pub fn create_world(&mut self, world_slug: String) {
         let mut world = Gd::<World>::with_base(|base| {
-            World::create(
-                base,
-                world_slug,
-                self.texture_mapper.clone(),
-                self.material.share(),
-            )
+            World::create(base, world_slug, self.texture_mapper.clone(), self.material.share())
         });
 
         let world_name = GodotString::from("World");

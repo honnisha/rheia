@@ -6,6 +6,7 @@ use godot::engine::{
 use godot::engine::{CapsuleMesh, MeshInstance3D};
 use godot::prelude::*;
 use rapier3d::prelude::RigidBodyType;
+use rapier3d::prelude::*;
 
 use crate::console::console_handler::Console;
 use crate::main_scene::FloatType;
@@ -36,11 +37,6 @@ impl PlayerController {
         mesh.set_height(2.0);
         mesh.set_radius(0.5);
         body.set_mesh(mesh.upcast());
-        body.set_position(Vector3 {
-            x: 0.0,
-            y: 60.0,
-            z: 0.0,
-        });
 
         Self {
             base,
@@ -52,29 +48,34 @@ impl PlayerController {
         }
     }
 
-    /// Handle network packet for changing position
-    pub fn teleport(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        self.base.set_position(position);
-        self.camera.rotate_y(yaw);
-        self.camera
-            .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
-    }
-
     // Get position of the controller
     pub fn get_position(&self) -> Vector3 {
         self.base.get_position()
     }
 
+    /// Horizontal angle
     pub fn get_yaw(&self) -> f32 {
         self.camera.get_rotation().x
     }
 
+    /// Vertical angle
     pub fn get_pitch(&self) -> f32 {
         self.camera.get_rotation().y
     }
 
-    pub fn get_camera_position(&self) -> Vector3 {
-        self.camera.get_position()
+    pub fn set_position(&mut self, position: Vector3) {
+        self.base.set_position(position);
+
+        let mut body = self.physics_entity.get_rigid_body_mut();
+        let body = body.as_mut().unwrap();
+
+        body.set_translation(vector![position.x, position.y, position.z], true);
+    }
+
+    pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
+        self.camera.rotate_y(yaw);
+        self.camera
+            .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
     }
 }
 
@@ -148,16 +149,6 @@ impl NodeVirtual for PlayerController {
             return;
         }
 
-        // Rotate camera look at
-        if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
-            let (yaw, pitch) = self.input_data.get_mouselook_vector();
-            self.camera.rotate_y(yaw as f32);
-            self.camera
-                .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
-        }
-
-        // self.camera.translate(self.input_data.get_movement_vector(delta));
-
         let world = self.base.get_parent().unwrap().cast::<World>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
@@ -166,32 +157,49 @@ impl NodeVirtual for PlayerController {
             None => false,
         };
 
-        let mut body = self.physics_entity.get_rigid_body_mut();
-        let body = body.as_mut().unwrap();
-
-        if chunk_loaded && !body.is_dynamic() {
-            body.set_body_type(RigidBodyType::Dynamic);
-        }
-        else if !chunk_loaded && !body.is_fixed() {
-            body.set_body_type(RigidBodyType::Fixed);
+        // Rotate camera look at
+        if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
+            let (yaw, pitch) = self.input_data.get_mouselook_vector();
+            self.set_rotation(yaw as f32, pitch as f32);
         }
 
-        self.base.set_position(PhysicsEntity::transform_to_vector3(&body.translation()));
-        self.base.set_rotation(PhysicsEntity::rotation_to_vector3(&body.rotation()));
+        let pitch = self.get_pitch();
+        {
+            let mut body = self.physics_entity.get_rigid_body_mut();
+            let body = body.as_mut().unwrap();
+
+            if chunk_loaded && !body.is_dynamic() {
+                body.set_body_type(RigidBodyType::Dynamic);
+            } else if !chunk_loaded && !body.is_fixed() {
+                body.set_body_type(RigidBodyType::Fixed);
+            }
+
+            self.base
+                .set_position(PhysicsEntity::transform_to_vector3(&body.translation()));
+            self.base
+                .set_rotation(PhysicsEntity::rotation_to_vector3(&body.rotation()));
+
+            let vec = self.input_data.get_movement_vector(delta);
+            let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
+            body.apply_impulse(Vector::new(vec.x, vec.y, vec.z), true);
+
+            let input = Input::singleton();
+            if input.is_action_just_pressed("ui_text_backspace".into()) {
+                println!("rotate {:?}", self.camera.get_rotation())
+            }
+        }
 
         // Handle player movement
         let new_movement = PlayerMovement::create(
-            self.base.get_position(),
-            self.camera.get_rotation().y,
-            self.camera.get_rotation().x,
+            self.get_position(),
+            self.get_yaw(),
+            self.get_pitch(),
         );
         if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
             self.base
                 .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
             self.cache_movement = Some(new_movement);
         }
-
-        //body.apply_impulse(Vector::new(-0.5, 10.0, 0.0), true);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(3) {

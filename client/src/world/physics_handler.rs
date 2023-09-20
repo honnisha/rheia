@@ -1,5 +1,4 @@
 use godot::prelude::Vector3;
-use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::prelude::*;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
@@ -85,9 +84,11 @@ impl PhysicsContainer {
     pub fn create_capsule(&self, position: &Vector3, half_height: Real, radius: Real) -> PhysicsEntity {
         let mut physics = self.get_physics_mut();
 
-        let rigid_body = RigidBodyBuilder::dynamic()
+        let mut rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![position.x, position.y, position.z])
             .build();
+        rigid_body.restrict_rotations(false, false, false, true);
+
         let collider = ColliderBuilder::capsule_y(half_height, radius);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 
