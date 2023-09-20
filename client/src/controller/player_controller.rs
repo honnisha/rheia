@@ -35,15 +35,16 @@ impl PlayerController {
         let mut body = MeshInstance3D::new_alloc();
         let mut mesh = CapsuleMesh::new();
         mesh.set_height(2.0);
-        mesh.set_radius(0.5);
+        mesh.set_radius(0.4);
         body.set_mesh(mesh.upcast());
+        body.set_position(Vector3::new(0.0, 1.0, 0.0));
 
         Self {
             base,
             camera: camera,
             input_data: Default::default(),
             cache_movement: None,
-            physics_entity: physics_container.create_capsule(&body.get_position(), 0.25, 0.5),
+            physics_entity: physics_container.create_capsule(&Vector3::new(0.0, 0.0, 0.0), 0.25, 0.4),
             body,
         }
     }
@@ -136,6 +137,9 @@ impl NodeVirtual for PlayerController {
                 Key::KEY_SHIFT => {
                     self.input_data.multiplier = e.is_pressed();
                 }
+                Key::KEY_SPACE => {
+                    self.input_data.space = e.is_pressed();
+                }
                 _ => (),
             };
         }
@@ -183,18 +187,13 @@ impl NodeVirtual for PlayerController {
             let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
             body.apply_impulse(Vector::new(vec.x, vec.y, vec.z), true);
 
-            let input = Input::singleton();
-            if input.is_action_just_pressed("ui_text_backspace".into()) {
-                println!("rotate {:?}", self.camera.get_rotation())
+            if self.input_data.space {
+                body.apply_impulse(Vector::new(0.0, 1.0, 0.0), true);
             }
         }
 
         // Handle player movement
-        let new_movement = PlayerMovement::create(
-            self.get_position(),
-            self.get_yaw(),
-            self.get_pitch(),
-        );
+        let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
         if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
             self.base
                 .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);

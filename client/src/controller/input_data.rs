@@ -15,6 +15,7 @@ pub(crate) struct InputData {
     pub(crate) forward: FloatType,
     pub(crate) back: FloatType,
 
+    pub(crate) space: bool,
     pub(crate) multiplier: bool,
 
     pub(crate) mouse_position: Vector2,

@@ -37,7 +37,10 @@ impl PhysicsEntity {
     }
 
     pub fn get_rigid_body_mut(&mut self) -> Option<RefMut<RigidBody>> {
-        RefMut::filter_map(self.rigid_body_set.borrow_mut(), |p| p.get_mut(self.rigid_handle.unwrap())).ok()
+        RefMut::filter_map(self.rigid_body_set.borrow_mut(), |p| {
+            p.get_mut(self.rigid_handle.unwrap())
+        })
+        .ok()
     }
 
     pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
@@ -73,18 +76,12 @@ impl PhysicsContainer {
             .step(self.rigid_body_set.borrow_mut(), self.collider_set.borrow_mut());
     }
 
-    pub fn get_physics(&self) -> Ref<PhysicsController> {
-        self.world_physics.borrow()
-    }
-
-    pub fn get_physics_mut(&self) -> RefMut<PhysicsController> {
-        self.world_physics.borrow_mut()
-    }
-
     pub fn create_capsule(&self, position: &Vector3, half_height: Real, radius: Real) -> PhysicsEntity {
-        let mut physics = self.get_physics_mut();
-
         let mut rigid_body = RigidBodyBuilder::dynamic()
+            // .additional_mass(1.0)
+            .gravity_scale(1.0)
+            .linear_damping(1.0)
+            .angular_damping(1.0)
             .translation(vector![position.x, position.y, position.z])
             .build();
         rigid_body.restrict_rotations(false, false, false, true);
@@ -101,8 +98,6 @@ impl PhysicsContainer {
     }
 
     pub fn create_mesh(&self, collider: ColliderBuilder, position: &Vector3) -> PhysicsEntity {
-        let mut physics = self.get_physics_mut();
-
         let collider = collider.translation(vector![position.x, position.y, position.z]);
         let collider_handle = self.collider_set.borrow_mut().insert(collider);
         PhysicsEntity::create(&self, None, collider_handle)
