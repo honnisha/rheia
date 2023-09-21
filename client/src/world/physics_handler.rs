@@ -80,8 +80,9 @@ impl PhysicsContainer {
         let mut rigid_body = RigidBodyBuilder::dynamic()
             // .additional_mass(1.0)
             .gravity_scale(1.0)
-            .linear_damping(1.0)
+            .linear_damping(0.5)
             .angular_damping(1.0)
+            .linvel(vector![1.0, 3.0, 4.0])
             .translation(vector![position.x, position.y, position.z])
             .build();
         rigid_body.restrict_rotations(false, false, false, true);
