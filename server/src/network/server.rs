@@ -8,7 +8,6 @@ use bevy_ecs::{
     world::World,
 };
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use common::network::renet::server::RenetServerNetwork;
 use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
@@ -46,7 +45,8 @@ lazy_static! {
     static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
-pub type NetworkServerType = RenetServerNetwork;
+// pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
+pub type NetworkServerType = common::network::rak_rs::server::RakNetServerNetwork;
 
 #[derive(Resource)]
 pub struct NetworkContainer {
