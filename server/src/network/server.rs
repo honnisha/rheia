@@ -1,11 +1,9 @@
-use std::borrow::{Borrow, BorrowMut};
-
 use bevy::prelude::{Event, IntoSystemConfigs};
 use bevy::time::Time;
 use bevy_app::{App, Update};
 use bevy_ecs::change_detection::Mut;
 use bevy_ecs::{
-    prelude::{EventWriter, Events},
+    prelude::EventWriter,
     system::{Res, ResMut, Resource},
     world::World,
 };
@@ -15,7 +13,7 @@ use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::info;
-use renet::ServerEvent;
+use std::borrow::Borrow;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
@@ -73,8 +71,6 @@ impl NetworkPlugin {
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
         info!("Starting server on {}", ip_port);
-
-        app.init_resource::<Events<ServerEvent>>();
 
         app.insert_resource(NetworkContainer::new(ip_port));
         app.insert_resource(ClientsContainer::default());

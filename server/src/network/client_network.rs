@@ -7,7 +7,6 @@ use common::{
 use core::fmt;
 use log::error;
 use parking_lot::RwLock;
-use renet::RenetServer;
 use std::{fmt::Display, sync::Arc};
 
 use crate::{
@@ -77,10 +76,6 @@ impl ClientNetwork {
 
     pub fn get_client_id(&self) -> &u64 {
         &self.client_id
-    }
-
-    pub fn is_connected(&self, server: &RenetServer) -> bool {
-        server.clients_id().contains(&self.client_id)
     }
 
     pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {

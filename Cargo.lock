@@ -3229,7 +3229,6 @@ dependencies = [
  "bevy",
  "bevy_app",
  "bevy_ecs",
- "bincode",
  "bracket-lib",
  "bracket-noise",
  "bracket-random",
@@ -3247,13 +3246,11 @@ dependencies = [
  "parking_lot 0.12.1",
  "rayon",
  "regex",
- "renet",
  "rustyline",
  "send_wrapper 0.6.0",
  "serde",
  "serde_yaml",
  "spiral",
- "tokio",
  "uuid",
 ]
 
