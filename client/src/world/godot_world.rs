@@ -7,13 +7,12 @@ use godot::{
     prelude::*,
 };
 use parking_lot::RwLock;
-use rapier3d::prelude::*;
 use std::rc::Rc;
 use std::{cell::RefCell, sync::Arc};
 
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
-    network::client::NetworkContainer,
+    main_scene::Main,
     utils::textures::texture_mapper::TextureMapper,
 };
 
@@ -50,12 +49,7 @@ impl World {
 }
 
 impl World {
-    pub fn create(
-        base: Base<Node>,
-        slug: String,
-        texture_mapper: TextureMapperType,
-        material: Gd<Material>,
-    ) -> Self {
+    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
             ChunksContainer::create(base, texture_mapper.clone(), material.share())
         });
@@ -119,8 +113,9 @@ pub fn get_default_material() -> Gd<Material> {
 impl World {
     #[func]
     fn handler_player_move(&self, movement_var: Variant) {
+        let main = self.base.get_parent().unwrap().cast::<Main>();
         let movement = movement_var.to::<PlayerMovement>();
-        NetworkContainer::send_player_move(movement);
+        //network.send_message(&movement.into_network(), NetworkMessageType::Movement);
     }
 }
 

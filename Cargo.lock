@@ -3185,7 +3185,6 @@ version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
  "arrayvec 0.7.4",
- "bincode",
  "bracket-lib",
  "bracket-noise",
  "bracket-random",
@@ -3209,7 +3208,6 @@ dependencies = [
  "rapier3d",
  "rayon",
  "regex",
- "renet",
  "rhai",
  "send_wrapper 0.6.0",
  "serde",
@@ -3217,7 +3215,6 @@ dependencies = [
  "spiral",
  "strum",
  "strum_macros",
- "tokio",
 ]
 
 [[package]]

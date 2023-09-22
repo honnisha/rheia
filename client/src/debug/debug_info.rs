@@ -3,14 +3,17 @@ use std::sync::{
     Arc,
 };
 
-use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
+use common::{
+    chunks::block_position::{BlockPosition, BlockPositionTrait}, network::client::ClientNetwork,
+};
 use godot::{
     engine::{Engine, HBoxContainer, MarginContainer, RichTextLabel, VBoxContainer},
     prelude::*,
 };
 use lazy_static::lazy_static;
+use parking_lot::RwLockReadGuard;
 
-use crate::{network::client::NetworkContainer, world::world_manager::WorldManager};
+use crate::{network::client::NetworkClientType, world::world_manager::WorldManager};
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -71,7 +74,7 @@ impl DebugInfo {
         self.base.set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, world_manager: &WorldManager) {
+    pub fn update_debug(&mut self, world_manager: &WorldManager, network: RwLockReadGuard<NetworkClientType>) {
         if !DebugInfo::is_active() {
             return;
         }
@@ -125,21 +128,15 @@ impl DebugInfo {
         };
         DebugInfo::change_text(&self.world_row, world_text);
 
-        let network_text = if NetworkContainer::has_client() {
-            let c = NetworkContainer::read();
-            let container = c.as_ref().unwrap();
-            let network_info = container.network_info.read().unwrap();
-            format!(
-                debug_network_string!(),
-                !network_info.is_disconnected,
-                network_info.bytes_received_per_second / 1024.0,
-                network_info.bytes_received_per_sec / 1024.0,
-                network_info.bytes_sent_per_sec / 1024.0,
-                network_info.packet_loss / 1024.0,
-            )
-        } else {
-            "Network connected: -".to_string()
-        };
+        let network_info = network.get_network_info();
+        let network_text = format!(
+            debug_network_string!(),
+            !network_info.is_disconnected,
+            network_info.bytes_received_per_second / 1024.0,
+            network_info.bytes_received_per_sec / 1024.0,
+            network_info.bytes_sent_per_sec / 1024.0,
+            network_info.packet_loss / 1024.0,
+        );
         DebugInfo::change_text(&self.network_row, network_text);
     }
 }

@@ -12,6 +12,7 @@ use common::network::renet::server::RenetServerNetwork;
 use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use log::error;
 use log::info;
 use std::borrow::Borrow;
 
@@ -133,6 +134,10 @@ fn receive_message_system(
     }
     let network = network_container.server_network.as_ref().borrow();
     network.step(time.delta());
+
+    for message in network.iter_errors() {
+        error!("Network error: {}", message);
+    }
 
     for (client_id, decoded) in network.iter_client_messages() {
         match decoded {

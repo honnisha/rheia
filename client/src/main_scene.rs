@@ -1,10 +1,13 @@
 use crate::console::console_handler::Console;
 use crate::debug::debug_info::DebugInfo;
+use crate::entities::position::GodotPositionConverter;
 use crate::logger::CONSOLE_LOGGER;
-use crate::network::client::NetworkContainer;
+use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::world::world_manager::WorldManager;
-use crate::{client_scripts::resource_manager::ResourceManager, entities::position::GodotPositionConverter};
-use common::network::messages::ServerMessages;
+use crate::{client_scripts::resource_manager::ResourceManager};
+use common::chunks::chunk_position::ChunkPosition;
+use common::network::client::ClientNetwork;
+use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
@@ -19,6 +22,9 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub struct Main {
     #[base]
     base: Base<Node>,
+
+    network: Option<NetworkContainer>,
+
     resource_manager: ResourceManager,
     world_manager: WorldManager,
     console: Gd<Console>,
@@ -26,6 +32,17 @@ pub struct Main {
 }
 
 impl Main {
+
+    fn get_network_lock(&self) -> NetworkLockType {
+        self.network.as_ref().unwrap().get_network_lock()
+    }
+
+    pub fn network_send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
+        let lock = self.network.as_ref().unwrap().get_network_lock();
+        let network = lock.read();
+        network.send_message(message, message_type);
+    }
+
     pub fn get_resource_manager_mut(&mut self) -> &mut ResourceManager {
         &mut self.resource_manager
     }
@@ -49,6 +66,7 @@ impl NodeVirtual for Main {
         let world_manager = WorldManager::create(base.share());
         Main {
             base,
+            network: None,
             resource_manager: ResourceManager::new(),
             world_manager: world_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
@@ -67,28 +85,38 @@ impl NodeVirtual for Main {
 
         info!("Loading HonnyCraft version: {}", VERSION);
 
-        if let Err(e) = NetworkContainer::create_client("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
-            error!("Network connection error: {}", e);
-            Main::close();
-        }
-        NetworkContainer::spawn_network_thread();
+        let network = match NetworkContainer::new("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Network connection error: {}", e);
+                Main::close();
+                return;
+            }
+        };
+        self.network = Some(network);
     }
 
     fn process(&mut self, _delta: f64) {
         let now = std::time::Instant::now();
 
-        for command in Console::iter_console_input() {
-            NetworkContainer::send_console_command(command);
-        }
+        let lock = self.get_network_lock();
+        let network = lock.read();
 
         // Recieve errors from network thread
-        for error in NetworkContainer::errors_iter() {
+        for error in network.iter_errors() {
             error!("Network error: {}", error);
             Main::close();
         }
 
+        for command in Console::iter_console_input() {
+            let message = ClientMessages::ConsoleInput { command };
+            network.send_message(&message, NetworkMessageType::Message);
+        }
+
+        let mut chunks: Vec<ChunkPosition> = Default::default();
+
         // Recieve decoded server messages from network thread
-        for decoded in NetworkContainer::server_messages_iter() {
+        for decoded in network.iter_server_messages() {
             match decoded {
                 ServerMessages::ConsoleOutput { message } => {
                     info!("{}", message);
@@ -126,6 +154,7 @@ impl NodeVirtual for Main {
                     let world_manager = self.get_world_manager_mut();
                     // println!("load_chunk {}", chunk_position);
                     world_manager.load_chunk(world_slug, chunk_position, sections);
+                    chunks.push(chunk_position);
                 }
                 ServerMessages::UnloadChunks { chunks, world_slug } => {
                     self.get_world_manager_mut().unload_chunk(world_slug, chunks);
@@ -134,7 +163,16 @@ impl NodeVirtual for Main {
             }
         }
 
-        self.debug_info.bind_mut().update_debug(&self.world_manager);
+        if chunks.len() > 0 {
+            let input = ClientMessages::ChunkRecieved {
+                chunk_positions: chunks,
+            };
+            network.send_message(&input, NetworkMessageType::Message);
+        }
+
+        self.debug_info
+            .bind_mut()
+            .update_debug(&self.world_manager, network);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {
@@ -143,7 +181,9 @@ impl NodeVirtual for Main {
     }
 
     fn exit_tree(&mut self) {
-        NetworkContainer::disconnect();
+        if let Some(n) = self.network.as_ref() {
+            n.disconnect();
+        }
         info!("Exiting the game");
     }
 }

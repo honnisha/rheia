@@ -14,14 +14,15 @@ use super::{connection_config, PROTOCOL_ID, channels::{ClientChannel, ServerChan
 use crate::network::{messages::{ClientMessages, ServerMessages, NetworkMessageType}, server::{ServerNetwork, ConnectionMessages}};
 use log::error;
 
-pub type ServerLock = Arc<RwLock<RenetServer>>;
-pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
+type ServerLock = Arc<RwLock<RenetServer>>;
+type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
 
 pub struct RenetServerNetwork {
     server: ServerLock,
     transport: TransferLock,
     channel_client_messages: (Sender<(u64, ClientMessages)>, Receiver<(u64, ClientMessages)>),
     channel_connections: (Sender<ConnectionMessages>, Receiver<ConnectionMessages>),
+    channel_errors: (Sender<String>, Receiver<String>),
 }
 
 impl RenetServerNetwork {
@@ -70,17 +71,18 @@ impl ServerNetwork for RenetServerNetwork {
             transport: Arc::new(RwLock::new(transport)),
             channel_client_messages: flume::unbounded(),
             channel_connections: flume::unbounded(),
+            channel_errors: flume::unbounded(),
         };
         network
     }
 
-    fn step(&self, delta: Duration) {
+    fn step(&self, delta: Duration) -> bool {
         let mut server = self.get_server_mut();
         let mut transport = self.get_transport_mut();
         server.update(delta);
 
         if let Err(e) = transport.update(delta, &mut server) {
-            error!("Transport error: {}", e.to_string());
+            self.channel_errors.0.send(e.to_string()).unwrap();
         }
 
         for client_id in server.clients_id().into_iter() {
@@ -129,6 +131,7 @@ impl ServerNetwork for RenetServerNetwork {
         }
 
         transport.send_packets(&mut server);
+        return true;
     }
 
     fn iter_client_messages(&self) -> Drain<(u64, ClientMessages)> {
@@ -137,6 +140,10 @@ impl ServerNetwork for RenetServerNetwork {
 
     fn iter_connections(&self) -> Drain<ConnectionMessages> {
         self.channel_connections.1.drain()
+    }
+
+    fn iter_errors(&self) -> Drain<String> {
+        self.channel_errors.1.drain()
     }
 
     fn is_connected(&self, client_id: u64) -> bool {
