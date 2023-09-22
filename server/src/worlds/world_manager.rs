@@ -5,6 +5,7 @@ use bevy_ecs::prelude::Entity;
 use bevy_ecs::world::{EntityRef, World};
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
+use common::network::messages::ServerMessages;
 use parking_lot::RwLock;
 
 use crate::entities::entity::{NetworkComponent, Position, Rotation};
@@ -96,13 +97,13 @@ impl WorldManager {
             .update_chunks(delta, &world_slug, self.world_generator.clone());
     }
 
-    pub fn get_network_chunk_bytes(&self, chunk_position: &ChunkPosition) -> Option<Vec<u8>> {
+    pub fn get_network_chunk_bytes(&self, chunk_position: &ChunkPosition) -> Option<ServerMessages> {
         match self.chunks_map.get_chunk_column(&chunk_position) {
             Some(chunk_column) => {
                 if !chunk_column.is_loaded() {
                     return None;
                 }
-                Some(bincode::serialize(&chunk_column.build_network_format()).unwrap())
+                Some(chunk_column.build_network_format())
             }
             None => None,
         }

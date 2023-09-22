@@ -11,7 +11,7 @@ use crate::{
 
 use super::block_position::ChunkBlockPosition;
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct PacketChunkSectionData {
     pallete: Vec<BlockInfo>,
     block_indexes: HashMap<ChunkBlockPosition, u32>,

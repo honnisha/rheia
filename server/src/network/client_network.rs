@@ -1,7 +1,7 @@
 use bevy::prelude::Entity;
 use common::{
     chunks::chunk_position::ChunkPosition,
-    network::{channels::ServerChannel, messages::ServerMessages},
+    network::messages::{NetworkMessageType, ServerMessages},
     utils::vec_remove_item,
 };
 use core::fmt;
@@ -84,8 +84,8 @@ impl ClientNetwork {
     }
 
     pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
-        let server = network_container.get_server();
-        if !server.clients_id().contains(&self.client_id) {
+        let connected = network_container.is_connected(self.get_client_id());
+        if !connected {
             error!("send_teleport runs on disconnected user {}", self.login);
             return;
         }
@@ -97,8 +97,7 @@ impl ClientNetwork {
             yaw: rotation.get_yaw().clone(),
             pitch: rotation.get_pitch().clone(),
         };
-        let encoded = bincode::serialize(&input).unwrap();
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), ServerChannel::Reliable.into(), encoded);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Message, input);
     }
 
     pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
@@ -124,15 +123,11 @@ impl ClientNetwork {
     }
 
     /// Send chunk which was just loaded
-    pub fn send_loaded_chunk(&self, chunk_position: &ChunkPosition, encoded: Vec<u8>) {
+    pub fn send_loaded_chunk(&self, chunk_position: &ChunkPosition, message: ServerMessages) {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        NetworkPlugin::send_static_message(
-            self.get_client_id().clone(),
-            ServerChannel::Chunks.into(),
-            encoded.clone(),
-        );
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Chunks, message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
@@ -149,8 +144,8 @@ impl ClientNetwork {
             return;
         }
 
-        let server = network_container.get_server();
-        if !self.is_connected(&*server) {
+        let connected = network_container.is_connected(&self.client_id);
+        if !connected {
             error!("send_unload_chunks runs on disconnected user {}", self.login);
             return;
         }
@@ -169,8 +164,7 @@ impl ClientNetwork {
             world_slug: world_slug.clone(),
             chunks: unload_chunks,
         };
-        let encoded = bincode::serialize(&input).unwrap();
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), ServerChannel::Chunks.into(), encoded);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Chunks, input);
     }
 }
 

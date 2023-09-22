@@ -25,14 +25,12 @@ arrayvec = "0.7.4"
 ahash = "0.8.3"
 dashmap = "5.4.0"
 parking_lot = "0.12.1"
+flume = "0.10.14"
 
 # Network
 renet = { version = "0.0.13", features = ["bevy"] }
 tokio = { version = "1.28.0", features = ["net", "io-util", "rt-multi-thread", "sync", "macros"] }
 bincode = "1.3.2"
-
-# Fast RwLock
-flume = "0.10.14"
 
 bevy = { version = "0.11.2", default-features = false }
 bevy_app = "0.11.2"

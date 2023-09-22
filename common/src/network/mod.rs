@@ -1,18 +1,9 @@
-use renet::{transport::NETCODE_KEY_BYTES, ConnectionConfig};
-
-use self::channels::{get_client_channels_config, get_server_channels_config};
-
-pub mod channels;
-pub mod login;
 pub mod messages;
+pub mod client;
+pub mod server;
 
-pub const PRIVATE_KEY: &[u8; NETCODE_KEY_BYTES] = b"an example very very secret key."; // 32-bytes
-pub const PROTOCOL_ID: u64 = 7;
+//#[cfg(feature = "network-renet")]
+pub mod renet;
 
-pub fn connection_config() -> ConnectionConfig {
-    ConnectionConfig {
-        available_bytes_per_tick: 1024 * 1024,
-        client_channels_config: get_client_channels_config(),
-        server_channels_config: get_server_channels_config(),
-    }
-}
+#[cfg(feature = "network-rak-rs")]
+pub mod rak_rs;

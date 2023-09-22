@@ -18,7 +18,7 @@ pub enum ClientMessages {
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
 pub type NetworkSectionsType = [PacketChunkSectionData; VERTICAL_SECTIONS];
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerMessages {
     ConsoleOutput {
         message: String,
@@ -47,4 +47,10 @@ pub enum ServerMessages {
         world_slug: String,
         chunks: Vec<ChunkPosition>,
     },
+}
+
+pub enum NetworkMessageType {
+    Chunks,
+    Movement,
+    Message,
 }

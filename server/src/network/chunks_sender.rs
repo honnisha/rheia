@@ -14,7 +14,6 @@ pub fn send_chunks(
     clients: Res<ClientsContainer>,
 ) {
     let now = std::time::Instant::now();
-    let server = network_container.get_server();
 
     // Iterate all worlds
     for (_world_slug, world_lock) in worlds_manager.get_worlds() {
@@ -40,12 +39,13 @@ pub fn send_chunks(
             'entity_loop: for entity in watch_entities {
                 let player_entity = world.get_entity(entity);
                 let network = player_entity.get::<NetworkComponent>().unwrap();
-                let client = clients.get(&network.get_client_id());
 
-                if !client.is_connected(&*server) {
+                let connected = network_container.is_connected(network.get_client_id());
+                if !connected {
                     continue 'entity_loop;
                 }
 
+                let client = clients.get(&network.get_client_id());
                 if client.is_queue_limit() {
                     continue 'entity_loop;
                 }
@@ -61,9 +61,9 @@ pub fn send_chunks(
         }
 
         for (chunk_position, clients) in queue {
-            let encoded = world.get_network_chunk_bytes(&chunk_position).unwrap();
+            let message = world.get_network_chunk_bytes(&chunk_position).unwrap();
             for client in clients.iter() {
-                client.send_loaded_chunk(&chunk_position, encoded.clone());
+                client.send_loaded_chunk(&chunk_position, message.clone());
             }
         }
     }

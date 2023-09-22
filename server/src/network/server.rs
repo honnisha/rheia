@@ -1,36 +1,28 @@
+use std::borrow::{Borrow, BorrowMut};
+
 use bevy::prelude::{Event, IntoSystemConfigs};
 use bevy::time::Time;
 use bevy_app::{App, Update};
 use bevy_ecs::change_detection::Mut;
 use bevy_ecs::{
-    prelude::{EventReader, EventWriter, Events},
+    prelude::{EventWriter, Events},
     system::{Res, ResMut, Resource},
     world::World,
 };
-use common::network::messages::{ClientMessages, ServerMessages};
-use common::network::{channels::ClientChannel, channels::ServerChannel, connection_config, login::Login, PROTOCOL_ID};
+use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use common::network::renet::server::RenetServerNetwork;
+use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
-use log::error;
 use log::info;
-use renet::{
-    transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
-    RenetServer, ServerEvent,
-};
-use std::sync::{RwLockReadGuard, RwLockWriteGuard};
-use std::{
-    net::UdpSocket,
-    sync::{Arc, RwLock},
-    time::SystemTime,
-};
+use renet::ServerEvent;
 
-use crate::entities::entity::Rotation;
+use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
 use crate::network::clients_container::ClientsContainer;
 use crate::{
     client_resources::resources_manager::ResourceManager,
     console::commands_executer::CommandsHandler,
-    entities::entity::Position,
     events::{
         on_chunk_recieved::{on_chunk_recieved, ChunkRecievedEvent},
         on_connection::{on_connection, PlayerConnectionEvent},
@@ -45,8 +37,8 @@ pub struct NetworkPlugin;
 #[derive(Event)]
 pub(crate) struct SendClientMessageEvent {
     client_id: u64,
-    channel: u8,
-    bytes: Vec<u8>,
+    message_type: NetworkMessageType,
+    message: ServerMessages,
 }
 
 lazy_static! {
@@ -55,37 +47,23 @@ lazy_static! {
     static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
-pub type ServerLock = Arc<RwLock<RenetServer>>;
-pub type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
+pub type NetworkServerType = RenetServerNetwork;
 
 #[derive(Resource)]
 pub struct NetworkContainer {
-    server: ServerLock,
-    transport: TransferLock,
+    server_network: Box<NetworkServerType>,
 }
 
 impl NetworkContainer {
-    pub fn new(server: RenetServer, transport: NetcodeServerTransport) -> Self {
+    pub fn new(ip_port: String) -> Self {
         Self {
-            server: Arc::new(RwLock::new(server)),
-            transport: Arc::new(RwLock::new(transport)),
+            server_network: Box::new(NetworkServerType::new(ip_port)),
         }
     }
 
-    pub fn get_server(&self) -> RwLockReadGuard<RenetServer> {
-        self.server.as_ref().read().expect("poisoned")
-    }
-
-    fn get_server_mut(&self) -> RwLockWriteGuard<RenetServer> {
-        self.server.as_ref().write().expect("poisoned")
-    }
-
-    pub fn get_transport(&self) -> RwLockReadGuard<NetcodeServerTransport> {
-        self.transport.as_ref().read().expect("poisoned")
-    }
-
-    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeServerTransport> {
-        self.transport.as_ref().write().expect("poisoned")
+    pub fn is_connected(&self, client_id: &u64) -> bool {
+        let network = self.server_network.as_ref().borrow();
+        network.is_connected(*client_id)
     }
 }
 
@@ -98,21 +76,7 @@ impl NetworkPlugin {
 
         app.init_resource::<Events<ServerEvent>>();
 
-        let server = RenetServer::new(connection_config());
-
-        let public_addr = ip_port.parse().unwrap();
-        let socket = UdpSocket::bind(public_addr).unwrap();
-        let server_config = ServerConfig {
-            max_clients: 64,
-            protocol_id: PROTOCOL_ID,
-            public_addr,
-            authentication: ServerAuthentication::Unsecure,
-        };
-        let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-
-        let transport = NetcodeServerTransport::new(current_time, server_config, socket).unwrap();
-
-        app.insert_resource(NetworkContainer::new(server, transport));
+        app.insert_resource(NetworkContainer::new(ip_port));
         app.insert_resource(ClientsContainer::default());
 
         app.add_systems(Update, receive_message_system);
@@ -139,8 +103,7 @@ impl NetworkPlugin {
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
-        let encoded = bincode::serialize(&input).unwrap();
-        NetworkPlugin::send_static_message(client_id, ServerChannel::Reliable.into(), encoded)
+        NetworkPlugin::send_static_message(client_id, NetworkMessageType::Message, input);
     }
 
     pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
@@ -149,87 +112,49 @@ impl NetworkPlugin {
                 slug: resource.get_slug().clone(),
                 scripts: resource.get_client_scripts().clone(),
             };
-            let encoded = bincode::serialize(&input).unwrap();
-            NetworkPlugin::send_static_message(client_id.clone(), ServerChannel::Reliable.into(), encoded)
+            NetworkPlugin::send_static_message(client_id.clone(), NetworkMessageType::Message, input);
         }
     }
 
-    pub(crate) fn send_static_message(client_id: u64, channel: u8, bytes: Vec<u8>) {
-        CLIENT_MESSAGES_OUTPUT
-            .0
-            .send(SendClientMessageEvent {
-                client_id: client_id,
-                bytes: bytes,
-                channel: channel,
-            })
-            .unwrap();
+    pub(crate) fn send_static_message(client_id: u64, message_type: NetworkMessageType, message: ServerMessages) {
+        let msg = SendClientMessageEvent {
+            client_id,
+            message_type,
+            message,
+        };
+        CLIENT_MESSAGES_OUTPUT.0.send(msg).unwrap();
     }
 }
 
 fn receive_message_system(
     network_container: Res<NetworkContainer>,
     time: Res<Time>,
-    mut server_events: EventWriter<ServerEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
     if time.delta() > std::time::Duration::from_millis(100) {
         println!("receive_message_system delay: {:.2?}", time.delta());
     }
+    let network = network_container.server_network.as_ref().borrow();
+    network.step(time.delta());
 
-    let mut server = network_container.get_server_mut();
-    let mut transport = network_container.get_transport_mut();
-    server.update(time.delta());
-
-    if let Err(e) = transport.update(time.delta(), &mut server) {
-        error!("Transport error: {}", e.to_string());
-    }
-
-    for client_id in server.clients_id().into_iter() {
-        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Reliable) {
-            let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                Ok(d) => d,
-                Err(e) => {
-                    error!("Decode client reliable message error: {}", e);
-                    continue;
-                }
-            };
-            match decoded {
-                ClientMessages::ConsoleInput { command } => {
-                    CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
-                }
-                ClientMessages::ChunkRecieved { chunk_positions } => {
-                    chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_positions));
-                }
-                _ => panic!("unsupported message"),
+    for (client_id, decoded) in network.iter_client_messages() {
+        match decoded {
+            ClientMessages::ConsoleInput { command } => {
+                CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
             }
-        }
-        while let Some(client_message) = server.receive_message(client_id, ClientChannel::Unreliable) {
-            let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                Ok(d) => d,
-                Err(e) => {
-                    error!("Decode client unreliable message error: {}", e);
-                    continue;
-                }
-            };
-            match decoded {
-                ClientMessages::PlayerMove { position, yaw, pitch } => {
-                    player_move_events.send(PlayerMoveEvent::new(
-                        client_id.clone(),
-                        Position::from_array(position),
-                        Rotation::new(pitch, yaw),
-                    ));
-                }
-                _ => panic!("unsupported message"),
+            ClientMessages::ChunkRecieved { chunk_positions } => {
+                chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_positions));
+            }
+            ClientMessages::PlayerMove { position, yaw, pitch } => {
+                player_move_events.send(PlayerMoveEvent::new(
+                    client_id.clone(),
+                    Position::from_array(position),
+                    Rotation::new(pitch, yaw),
+                ));
             }
         }
     }
-
-    while let Some(event) = server.get_event() {
-        server_events.send(event);
-    }
-
-    transport.send_packets(&mut server);
 }
 
 #[allow(unused_mut)]
@@ -243,33 +168,31 @@ fn console_client_command_event(world: &mut World) {
 }
 
 fn handle_events_system(
-    mut server_events: EventReader<ServerEvent>,
     mut clients: ResMut<ClientsContainer>,
     network_container: Res<NetworkContainer>,
 
     mut connection_events: EventWriter<PlayerConnectionEvent>,
     mut disconnection_events: EventWriter<PlayerDisconnectEvent>,
 ) {
-    let transport = network_container.get_transport();
+    let network = network_container.server_network.as_ref().borrow();
 
-    for event in server_events.iter() {
-        match event {
-            ServerEvent::ClientConnected { client_id } => {
-                let user_data = transport.user_data(client_id.clone()).unwrap();
-                let login = Login::from_user_data(&user_data).0;
-                clients.add(client_id, login.clone());
-                connection_events.send(PlayerConnectionEvent::new(client_id.clone()));
+    for connection in network.iter_connections() {
+        match connection {
+            ConnectionMessages::Connect { client_id, login } => {
+                clients.add(&client_id, login);
+                connection_events.send(PlayerConnectionEvent::new(client_id));
             }
-            ServerEvent::ClientDisconnected { client_id, reason } => {
-                disconnection_events.send(PlayerDisconnectEvent::new(client_id.clone(), reason.clone()));
+            ConnectionMessages::Disconnect { client_id, reason } => {
+                disconnection_events.send(PlayerDisconnectEvent::new(client_id, reason));
             }
         }
     }
 }
 
 fn send_client_messages(network_container: Res<NetworkContainer>) {
-    let mut server = network_container.server.write().expect("poisoned");
+    let network = network_container.server_network.as_ref().borrow();
+
     for event in CLIENT_MESSAGES_OUTPUT.1.drain() {
-        server.send_message(event.client_id, event.channel, event.bytes);
+        network.send_message(event.client_id, &event.message, event.message_type);
     }
 }
