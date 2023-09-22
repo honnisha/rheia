@@ -226,7 +226,9 @@ impl ClientNetwork for RenetClientNetwork {
     }
 
     fn iter_server_messages(&self) -> Drain<ServerMessages> {
-        self.network_decoder_out.1.drain()
+        let drain = self.network_decoder_out.1.drain();
+        self.set_network_lock(false);
+        drain
     }
 
     fn iter_errors(&self) -> Drain<String> {

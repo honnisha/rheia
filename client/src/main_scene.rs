@@ -38,7 +38,7 @@ impl Main {
     }
 
     pub fn network_send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
-        let lock = self.network.as_ref().unwrap().get_network_lock();
+        let lock = self.get_network_lock();
         let network = lock.read();
         network.send_message(message, message_type);
     }
