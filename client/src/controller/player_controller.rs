@@ -66,11 +66,7 @@ impl PlayerController {
 
     pub fn set_position(&mut self, position: Vector3) {
         self.base.set_position(position);
-
-        let mut body = self.physics_entity.get_rigid_body_mut();
-        let body = body.as_mut().unwrap();
-
-        body.set_translation(vector![position.x, position.y, position.z], true);
+        self.physics_entity.set_position(position);
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
@@ -172,6 +168,7 @@ impl NodeVirtual for PlayerController {
             // Set lock if chunk is in loading
             self.physics_entity.set_lock(!chunk_loaded);
 
+            println!("self.physics_entity.get_position():{:?}", self.physics_entity.get_position());
             self.base.set_position(self.physics_entity.get_position());
 
             let vec = self.input_data.get_movement_vector(delta);

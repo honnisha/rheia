@@ -33,5 +33,5 @@ bincode = "1.3.2"
 # Network
 renet = { version = "0.0.13", features = ["bevy"], optional = true }
 
-rak-rs = { version = "0.3.1", default-features = false, features = [ "async_tokio", "debug", "debug_all" ], optional = true }
+rak-rs = { git = "https://github.com/NetrexMC/RakNet", default-features = false, features = [ "async_tokio", "debug", "debug_all" ], optional = true }
 tokio = "1.32.0"

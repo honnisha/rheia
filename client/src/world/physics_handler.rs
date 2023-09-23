@@ -54,12 +54,18 @@ impl PhysicsEntity {
             |_| {}, // We don’t care about events in this example.
         );
         let mut body = self.get_rigid_body_mut().unwrap();
-        body.set_translation(corrected_movement.translation, true);
+        let translation = body.translation().clone();
+        body.set_translation(translation + corrected_movement.translation, true);
     }
 
     pub fn set_lock(&mut self, state: bool) {
         let mut body = self.get_rigid_body_mut().unwrap();
-        body.lock_translations(state, true);
+        if state && !body.is_fixed() {
+            body.set_body_type(RigidBodyType::Fixed, true);
+        }
+        if !state && !body.is_dynamic() {
+            body.set_body_type(RigidBodyType::Dynamic, true);
+        }
     }
 
     pub fn apply_impulse(&mut self, impulse: Vector<Real>) {
@@ -70,6 +76,12 @@ impl PhysicsEntity {
     pub fn get_position(&self) -> Vector3 {
         let body = self.get_rigid_body().unwrap();
         PhysicsEntity::transform_to_vector3(&body.translation())
+    }
+
+    pub fn set_position(&mut self, position: Vector3) {
+        println!("position {}", position);
+        let mut body = self.get_rigid_body_mut().unwrap();
+        body.set_translation(vector![position.x, position.y, position.z], true);
     }
 
     pub fn get_collider(&self) -> Option<Ref<Collider>> {
@@ -116,23 +128,20 @@ impl Default for PhysicsContainer {
 
 impl PhysicsContainer {
     pub fn step(&self) {
-        self.world_physics
-            .as_ref()
-            .borrow_mut()
-            .step(
-                &mut *self.rigid_body_set.borrow_mut(),
-                &mut *self.collider_set.borrow_mut(),
-                &mut *self.query_pipeline.borrow_mut(),
-            );
+        self.world_physics.as_ref().borrow_mut().step(
+            self.rigid_body_set.borrow_mut(),
+            self.collider_set.borrow_mut(),
+            self.query_pipeline.borrow_mut(),
+        );
     }
 
     pub fn create_capsule(&self, position: &Vector3, half_height: Real, radius: Real) -> PhysicsEntity {
-        let mut rigid_body = RigidBodyBuilder::kinematic_velocity_based()
+        let mut rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![position.x, position.y, position.z])
             .build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let collider = ColliderBuilder::capsule_y(half_height, radius).density(1.0);
+        let collider = ColliderBuilder::capsule_y(half_height, radius);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 
         let mut collider_set = self.collider_set.borrow_mut();
@@ -179,7 +188,12 @@ impl Default for PhysicsController {
 }
 
 impl PhysicsController {
-    pub fn step(&mut self, rigid_body_set: &mut RigidBodySet, collider_set: &mut ColliderSet, query_pipeline: &mut QueryPipeline) {
+    pub fn step(
+        &mut self,
+        mut rigid_body_set: RefMut<RigidBodySet>,
+        mut collider_set: RefMut<ColliderSet>,
+        mut query_pipeline: RefMut<QueryPipeline>,
+    ) {
         let physics_hooks = ();
         let event_handler = ();
         self.physics_pipeline.step(
@@ -188,12 +202,12 @@ impl PhysicsController {
             &mut self.island_manager,
             &mut self.broad_phase,
             &mut self.narrow_phase,
-            rigid_body_set,
-            collider_set,
+            &mut rigid_body_set,
+            &mut collider_set,
             &mut self.impulse_joint_set,
             &mut self.multibody_joint_set,
             &mut self.ccd_solver,
-            Some(query_pipeline),
+            Some(&mut query_pipeline),
             &physics_hooks,
             &event_handler,
         );
