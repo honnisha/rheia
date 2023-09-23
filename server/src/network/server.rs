@@ -100,7 +100,7 @@ impl NetworkPlugin {
 
     pub(crate) fn send_console_output(client_id: u64, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
-        NetworkPlugin::send_static_message(client_id, NetworkMessageType::Message, input);
+        NetworkPlugin::send_static_message(client_id, NetworkMessageType::ReliableOrdered, input);
     }
 
     pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
@@ -109,7 +109,7 @@ impl NetworkPlugin {
                 slug: resource.get_slug().clone(),
                 scripts: resource.get_client_scripts().clone(),
             };
-            NetworkPlugin::send_static_message(client_id.clone(), NetworkMessageType::Message, input);
+            NetworkPlugin::send_static_message(client_id.clone(), NetworkMessageType::ReliableOrdered, input);
         }
     }
 

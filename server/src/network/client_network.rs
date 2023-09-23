@@ -92,7 +92,7 @@ impl ClientNetwork {
             yaw: rotation.get_yaw().clone(),
             pitch: rotation.get_pitch().clone(),
         };
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Message, input);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, input);
     }
 
     pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
@@ -122,7 +122,7 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Chunks, message);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Unreliable, message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
@@ -159,7 +159,7 @@ impl ClientNetwork {
             world_slug: world_slug.clone(),
             chunks: unload_chunks,
         };
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Chunks, input);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Unreliable, input);
     }
 }
 

@@ -44,9 +44,9 @@ impl RenetServerNetwork {
 
     fn map_type_channel(message_type: NetworkMessageType) -> ServerChannel {
         match message_type {
-            NetworkMessageType::Chunks => ServerChannel::Chunks,
-            NetworkMessageType::Movement => ServerChannel::Unreliable,
-            NetworkMessageType::Message => ServerChannel::Reliable,
+            NetworkMessageType::ReliableOrdered => ServerChannel::ReliableOrdered,
+            NetworkMessageType::Unreliable => ServerChannel::Unreliable,
+            NetworkMessageType::ReliableUnordered => ServerChannel::ReliableUnordered,
         }
     }
 }
@@ -86,7 +86,7 @@ impl ServerNetwork for RenetServerNetwork {
         }
 
         for client_id in server.clients_id().into_iter() {
-            while let Some(client_message) = server.receive_message(client_id, ClientChannel::Reliable) {
+            while let Some(client_message) = server.receive_message(client_id, ClientChannel::ReliableOrdered) {
                 let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                     Ok(d) => d,
                     Err(e) => {

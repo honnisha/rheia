@@ -1,9 +1,11 @@
-use common::network::{client::ClientNetwork, renet::client::RenetClientNetwork};
+use common::network::client::ClientNetwork;
 use log::info;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-pub type NetworkClientType = RenetClientNetwork;
+//pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
+pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
+
 pub type NetworkLockType = Arc<RwLock<NetworkClientType>>;
 
 pub struct NetworkContainer {
@@ -17,7 +19,6 @@ impl NetworkContainer {
             Ok(n) => n,
             Err(e) => return Err(e),
         };
-        network.spawn_network_thread();
         Ok(Self {
             client_network: Arc::new(RwLock::new(network)),
         })

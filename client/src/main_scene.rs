@@ -110,7 +110,7 @@ impl NodeVirtual for Main {
 
         for command in Console::iter_console_input() {
             let message = ClientMessages::ConsoleInput { command };
-            network.send_message(&message, NetworkMessageType::Message);
+            network.send_message(&message, NetworkMessageType::ReliableOrdered);
         }
 
         let mut chunks: Vec<ChunkPosition> = Default::default();
@@ -167,7 +167,7 @@ impl NodeVirtual for Main {
             let input = ClientMessages::ChunkRecieved {
                 chunk_positions: chunks,
             };
-            network.send_message(&input, NetworkMessageType::Message);
+            network.send_message(&input, NetworkMessageType::ReliableOrdered);
         }
 
         self.debug_info

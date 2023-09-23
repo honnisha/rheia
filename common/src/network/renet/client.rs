@@ -113,9 +113,9 @@ impl RenetClientNetwork {
 
     fn map_type_channel(message_type: NetworkMessageType) -> ServerChannel {
         match message_type {
-            NetworkMessageType::Chunks => ServerChannel::Chunks,
-            NetworkMessageType::Movement => ServerChannel::Unreliable,
-            NetworkMessageType::Message => ServerChannel::Reliable,
+            NetworkMessageType::ReliableOrdered => ServerChannel::ReliableOrdered,
+            NetworkMessageType::ReliableUnordered => ServerChannel::ReliableUnordered,
+            NetworkMessageType::Unreliable => ServerChannel::Unreliable,
         }
     }
 
@@ -143,13 +143,13 @@ impl RenetClientNetwork {
             return false;
         }
 
-        while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
+        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
             let decoded = RenetClientNetwork::decode_server_message(&server_message);
             if let Some(d) = decoded {
                 self.send_server_message(d);
             }
         }
-        while let Some(server_message) = client.receive_message(ServerChannel::Chunks) {
+        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
             let decoded = RenetClientNetwork::decode_server_message(&server_message);
             if let Some(d) = decoded {
                 self.send_server_message(d);
@@ -165,6 +165,27 @@ impl RenetClientNetwork {
             return false;
         }
         return true;
+    }
+
+    fn spawn_network_thread(&self) {
+        let container = self.clone();
+        thread::spawn(move || loop {
+            {
+                // Network will be processed only when there is no lock
+                if container.is_network_locked() {
+                    continue;
+                }
+                container.set_network_lock(true);
+
+                let delta_time = container.get_delta_time();
+                let success = container.step(delta_time);
+                if !success {
+                    break;
+                }
+            }
+            thread::sleep(time::Duration::from_millis(50));
+        });
+        info!("Network thread spawned");
     }
 }
 
@@ -201,28 +222,8 @@ impl ClientNetwork for RenetClientNetwork {
             network_lock: Arc::new(AtomicBool::new(false)),
             network_client_sended: flume::unbounded(),
         };
+        network.spawn_network_thread();
         Ok(network)
-    }
-
-    fn spawn_network_thread(&self) {
-        let container = self.clone();
-        thread::spawn(move || loop {
-            {
-                // Network will be processed only when there is no lock
-                if container.is_network_locked() {
-                    continue;
-                }
-                container.set_network_lock(true);
-
-                let delta_time = container.get_delta_time();
-                let success = container.step(delta_time);
-                if !success {
-                    break;
-                }
-            }
-            thread::sleep(time::Duration::from_millis(50));
-        });
-        info!("Network thread spawned");
     }
 
     fn iter_server_messages(&self) -> Drain<ServerMessages> {

@@ -16,11 +16,6 @@ pub trait ClientNetwork: Sized {
     fn new(ip_port: String, login: String) -> Result<Self, String>;
     // fn step(&self, delta: Duration) -> bool;
 
-    /// Spawns network thread
-    /// which is recieve network messages, decode and send them
-    /// to the channel
-    fn spawn_network_thread(&self);
-
     fn iter_server_messages(&self) -> Drain<ServerMessages>;
     fn iter_errors(&self) -> Drain<String>;
 

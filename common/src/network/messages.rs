@@ -8,7 +8,7 @@ use crate::{
     VERTICAL_SECTIONS,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientMessages {
     ConsoleInput { command: String },
     PlayerMove { position: [f32; 3], yaw: f32, pitch: f32 },
@@ -50,7 +50,7 @@ pub enum ServerMessages {
 }
 
 pub enum NetworkMessageType {
-    Chunks,
-    Movement,
-    Message,
+    ReliableOrdered,
+    ReliableUnordered,
+    Unreliable,
 }
