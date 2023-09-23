@@ -24,6 +24,7 @@ use crate::{
     events::{
         on_chunk_recieved::{on_chunk_recieved, ChunkRecievedEvent},
         on_connection::{on_connection, PlayerConnectionEvent},
+        on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
         on_disconnect::{on_disconnect, PlayerDisconnectEvent},
         on_player_move::{on_player_move, PlayerMoveEvent},
     },
@@ -85,6 +86,9 @@ impl NetworkPlugin {
         app.add_event::<PlayerConnectionEvent>();
         app.add_systems(Update, on_connection.after(handle_events_system));
 
+        app.add_event::<PlayerConnectionInfoEvent>();
+        app.add_systems(Update, on_connection_info.after(handle_events_system));
+
         app.add_event::<PlayerDisconnectEvent>();
         app.add_systems(Update, on_disconnect.after(handle_events_system));
 
@@ -126,6 +130,7 @@ impl NetworkPlugin {
 fn receive_message_system(
     network_container: Res<NetworkContainer>,
     time: Res<Time>,
+    mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
@@ -142,17 +147,23 @@ fn receive_message_system(
     for (client_id, decoded) in network.iter_client_messages() {
         match decoded {
             ClientMessages::ConsoleInput { command } => {
-                CONSOLE_INPUT.0.send((client_id.clone(), command)).unwrap();
+                CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
             ClientMessages::ChunkRecieved { chunk_positions } => {
-                chunk_recieved_events.send(ChunkRecievedEvent::new(client_id.clone(), chunk_positions));
+                let chunks = ChunkRecievedEvent::new(client_id, chunk_positions);
+                chunk_recieved_events.send(chunks);
             }
             ClientMessages::PlayerMove { position, yaw, pitch } => {
-                player_move_events.send(PlayerMoveEvent::new(
+                let movement = PlayerMoveEvent::new(
                     client_id.clone(),
                     Position::from_array(position),
                     Rotation::new(pitch, yaw),
-                ));
+                );
+                player_move_events.send(movement);
+            }
+            ClientMessages::ConnectionInfo { login } => {
+                let info = PlayerConnectionInfoEvent::new(client_id, login);
+                connection_info_events.send(info);
             }
         }
     }
@@ -179,9 +190,9 @@ fn handle_events_system(
 
     for connection in network.iter_connections() {
         match connection {
-            ConnectionMessages::Connect { client_id, login } => {
-                clients.add(&client_id, login);
-                connection_events.send(PlayerConnectionEvent::new(client_id));
+            ConnectionMessages::Connect { client_id, ip } => {
+                clients.add(client_id.clone(), ip.clone());
+                connection_events.send(PlayerConnectionEvent::new(client_id, ip));
             }
             ConnectionMessages::Disconnect { client_id, reason } => {
                 disconnection_events.send(PlayerDisconnectEvent::new(client_id, reason));

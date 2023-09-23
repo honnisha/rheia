@@ -1,4 +1,4 @@
-use flume::{Receiver, Sender, Drain};
+use flume::{Drain, Receiver, Sender};
 use std::{
     net::UdpSocket,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
@@ -10,8 +10,14 @@ use renet::{
     RenetServer, ServerEvent,
 };
 
-use super::{connection_config, PROTOCOL_ID, channels::{ClientChannel, ServerChannel}, login::Login};
-use crate::network::{messages::{ClientMessages, ServerMessages, NetworkMessageType}, server::{ServerNetwork, ConnectionMessages}};
+use super::{
+    channels::{ClientChannel, ServerChannel},
+    connection_config, PROTOCOL_ID,
+};
+use crate::network::{
+    messages::{ClientMessages, NetworkMessageType, ServerMessages},
+    server::{ConnectionMessages, ServerNetwork},
+};
 use log::error;
 
 type ServerLock = Arc<RwLock<RenetServer>>;
@@ -94,7 +100,10 @@ impl ServerNetwork for RenetServerNetwork {
                         continue;
                     }
                 };
-                self.channel_client_messages.0.send((client_id.clone(), decoded)).unwrap();
+                self.channel_client_messages
+                    .0
+                    .send((client_id.clone(), decoded))
+                    .unwrap();
             }
             while let Some(client_message) = server.receive_message(client_id, ClientChannel::Unreliable) {
                 let decoded: ClientMessages = match bincode::deserialize(&client_message) {
@@ -104,18 +113,20 @@ impl ServerNetwork for RenetServerNetwork {
                         continue;
                     }
                 };
-                self.channel_client_messages.0.send((client_id.clone(), decoded)).unwrap();
+                self.channel_client_messages
+                    .0
+                    .send((client_id.clone(), decoded))
+                    .unwrap();
             }
         }
 
         while let Some(event) = server.get_event() {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
-                    let user_data = transport.user_data(client_id.clone()).unwrap();
-                    let login = Login::from_user_data(&user_data).0;
+                    let addr = transport.client_addr(client_id.clone()).unwrap();
                     let connect = ConnectionMessages::Connect {
                         client_id: client_id.clone(),
-                        login: login,
+                        ip: addr.to_string(),
                     };
                     self.channel_connections.0.send(connect).unwrap();
                 }
@@ -152,6 +163,7 @@ impl ServerNetwork for RenetServerNetwork {
 
     fn send_message(&self, client_id: u64, message: &ServerMessages, message_type: NetworkMessageType) {
         let encoded = bincode::serialize(message).unwrap();
-        self.get_server_mut().send_message(client_id, RenetServerNetwork::map_type_channel(message_type), encoded);
+        self.get_server_mut()
+            .send_message(client_id, RenetServerNetwork::map_type_channel(message_type), encoded);
     }
 }

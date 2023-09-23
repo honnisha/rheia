@@ -10,6 +10,7 @@ use crate::{
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientMessages {
+    ConnectionInfo { login: String },
     ConsoleInput { command: String },
     PlayerMove { position: [f32; 3], yaw: f32, pitch: f32 },
     ChunkRecieved { chunk_positions: Vec<ChunkPosition> },

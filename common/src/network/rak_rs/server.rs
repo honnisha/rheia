@@ -72,6 +72,13 @@ impl ServerNetwork for RakNetServerNetwork {
                     Ok(c) => {
                         let client = RakNetClient::new();
                         network.add_client(client.clone());
+
+                        let connection = ConnectionMessages::Connect {
+                            client_id: client.client_id.clone(),
+                            ip: c.address.ip().to_string(),
+                        };
+                        network.channel_connections.0.send(connection).unwrap();
+
                         tokio::task::spawn(handle(
                             c,
                             client,

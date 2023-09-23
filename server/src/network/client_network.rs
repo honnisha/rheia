@@ -43,9 +43,28 @@ impl WorldEntity {
 }
 
 #[derive(Clone)]
+pub struct ClientInfo {
+    login: String,
+}
+
+impl ClientInfo {
+    pub fn new(login: String) -> Self {
+        Self {
+            login,
+        }
+    }
+
+    pub fn get_login(&self) -> &String {
+        &self.login
+    }
+}
+
+#[derive(Clone)]
 pub struct ClientNetwork {
     client_id: u64,
-    login: String,
+    ip: String,
+
+    client_info: Option<ClientInfo>,
 
     // For fast finding player current world slug
     pub world_entity: Option<WorldEntity>,
@@ -60,28 +79,40 @@ pub struct ClientNetwork {
 }
 
 impl ClientNetwork {
-    pub fn new(client_id: u64, login: String) -> Self {
+    pub fn new(client_id: u64, ip: String) -> Self {
         ClientNetwork {
             client_id,
-            login,
+            ip,
+            client_info: None,
             world_entity: None,
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
         }
     }
 
-    pub fn get_login(&self) -> &String {
-        &self.login
+    pub fn set_client_info(&mut self, info: ClientInfo) {
+        self.client_info = Some(info);
+    }
+
+    pub fn get_client_info(&self) -> Option<&ClientInfo> {
+        match self.client_info.as_ref() {
+            Some(i) => Some(&i),
+            None => None,
+        }
     }
 
     pub fn get_client_id(&self) -> &u64 {
         &self.client_id
     }
 
+    pub fn get_client_ip(&self) -> &String {
+        &self.ip
+    }
+
     pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
         let connected = network_container.is_connected(self.get_client_id());
         if !connected {
-            error!("send_teleport runs on disconnected user {}", self.login);
+            error!("send_teleport runs on disconnected user ip:{}", self.get_client_ip());
             return;
         }
 
@@ -141,7 +172,7 @@ impl ClientNetwork {
 
         let connected = network_container.is_connected(&self.client_id);
         if !connected {
-            error!("send_unload_chunks runs on disconnected user {}", self.login);
+            error!("send_unload_chunks runs on disconnected user ip:{}", self.get_client_ip());
             return;
         }
 
@@ -165,7 +196,11 @@ impl ClientNetwork {
 
 impl Display for ClientNetwork {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.login)
+        let login = match self.client_info.as_ref() {
+            Some(i) => i.get_login().clone(),
+            None => "-".to_string(),
+        };
+        write!(f, "ip:{} login:{}", self.get_client_ip(), login)
     }
 }
 

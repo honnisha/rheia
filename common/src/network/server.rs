@@ -19,7 +19,7 @@ pub trait ServerNetwork {
 pub enum ConnectionMessages {
     Connect{
         client_id: u64,
-        login: String,
+        ip: String,
     },
     Disconnect{
         client_id: u64,

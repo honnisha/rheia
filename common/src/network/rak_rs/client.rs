@@ -1,11 +1,12 @@
 use flume::{Drain, Receiver, Sender};
 use log::error;
-use log::info;
 use parking_lot::RwLock;
 use parking_lot::RwLockReadGuard;
 use rak_rs::client::{Client, DEFAULT_MTU};
 use rak_rs::protocol::reliability::Reliability;
 use std::net::ToSocketAddrs;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::network::client::NetworkInfo;
@@ -22,6 +23,8 @@ pub struct RakNetClientNetwork {
     network_server_messages: (Sender<ServerMessages>, Receiver<ServerMessages>),
     network_client_messages: (Sender<ClientMessageType>, Receiver<ClientMessageType>),
     network_errors_out: (Sender<String>, Receiver<String>),
+    connected: Arc<AtomicBool>,
+    disconnect: (Sender<bool>, Receiver<bool>),
 }
 
 impl RakNetClientNetwork {
@@ -31,6 +34,10 @@ impl RakNetClientNetwork {
             NetworkMessageType::ReliableUnordered => Reliability::Reliable,
             NetworkMessageType::Unreliable => Reliability::Unreliable,
         }
+    }
+
+    pub fn set_connected(&self, state: bool) {
+        self.connected.store(state, Ordering::Relaxed);
     }
 }
 
@@ -46,6 +53,8 @@ impl ClientNetwork for RakNetClientNetwork {
             network_server_messages: flume::unbounded(),
             network_client_messages: flume::unbounded(),
             network_errors_out: flume::unbounded(),
+            connected: Arc::new(AtomicBool::new(false)),
+            disconnect: flume::bounded(1),
         };
         runtime.block_on(async {
             let network = network.clone();
@@ -59,9 +68,17 @@ impl ClientNetwork for RakNetClientNetwork {
                     .unwrap();
                 return;
             }
+            network.set_connected(true);
+
+            let connection_info = ClientMessages::ConnectionInfo { login };
+            network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
 
             // Messages reciever
             loop {
+                for _ in network.disconnect.1.drain() {
+                    break;
+                }
+
                 let encoded = match client.recv().await {
                     Ok(e) => e,
                     Err(_) => {
@@ -72,7 +89,7 @@ impl ClientNetwork for RakNetClientNetwork {
                 let decoded: ServerMessages = match bincode::deserialize(&encoded) {
                     Ok(d) => d,
                     Err(e) => {
-                        error!("Decode server heavy message error: {}", e);
+                        error!("Decode server message error: {}", e);
                         continue;
                     }
                 };
@@ -101,11 +118,12 @@ impl ClientNetwork for RakNetClientNetwork {
     }
 
     fn is_connected(&self) -> bool {
-        todo!()
+        self.connected.load(Ordering::Relaxed)
     }
 
     fn disconnect(&self) {
-        todo!()
+        self.disconnect.0.send(true).unwrap();
+        self.set_connected(false);
     }
 
     fn send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {

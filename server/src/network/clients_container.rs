@@ -24,10 +24,10 @@ impl Default for ClientsContainer {
 }
 
 impl ClientsContainer {
-    pub fn add(&mut self, client_id: &u64, login: String) {
+    pub fn add(&mut self, client_id: u64, ip: String) {
         self.players.insert(
             client_id.clone(),
-            Arc::new(RwLock::new(ClientNetwork::new(client_id.clone(), login))),
+            Arc::new(RwLock::new(ClientNetwork::new(client_id, ip))),
         );
     }
 

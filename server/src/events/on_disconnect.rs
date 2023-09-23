@@ -24,7 +24,14 @@ pub fn on_disconnect(
     for event in disconnection_events.iter() {
         {
             let mut client = clients.get_mut(&event.client_id);
-            info!("Disconnected login \"{}\" reason {}", client.get_login(), event.reason);
+            if let Some(i) = client.get_client_info() {
+                info!(
+                    "Disconnected ip:{} login:{} reason:{}",
+                    client.get_client_ip(),
+                    i.get_login(),
+                    event.reason
+                );
+            }
 
             worlds_manager.despawn_player(&mut client)
         }
