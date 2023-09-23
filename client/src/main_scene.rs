@@ -1,10 +1,10 @@
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::debug::debug_info::DebugInfo;
 use crate::entities::position::GodotPositionConverter;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::world::world_manager::WorldManager;
-use crate::{client_scripts::resource_manager::ResourceManager};
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
@@ -32,7 +32,6 @@ pub struct Main {
 }
 
 impl Main {
-
     fn get_network_lock(&self) -> NetworkLockType {
         self.network.as_ref().unwrap().get_network_lock()
     }
@@ -93,10 +92,6 @@ impl NodeVirtual for Main {
                 return;
             }
         };
-        let connection_info = ClientMessages::ConnectionInfo { login: "Test_cl".to_string() };
-        network.get_network_lock().read().send_message(
-            &connection_info, NetworkMessageType::ReliableOrdered
-        );
 
         self.network = Some(network);
     }
@@ -123,6 +118,12 @@ impl NodeVirtual for Main {
         // Recieve decoded server messages from network thread
         for decoded in network.iter_server_messages() {
             match decoded {
+                ServerMessages::AllowConnection => {
+                    let connection_info = ClientMessages::ConnectionInfo {
+                        login: "Test_cl".to_string(),
+                    };
+                    network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
+                }
                 ServerMessages::ConsoleOutput { message } => {
                     info!("{}", message);
                 }
@@ -157,7 +158,7 @@ impl NodeVirtual for Main {
                     sections,
                 } => {
                     let world_manager = self.get_world_manager_mut();
-                    // println!("load_chunk {}", chunk_position);
+                    println!("load_chunk {}", chunk_position);
                     world_manager.load_chunk(world_slug, chunk_position, sections);
                     chunks.push(chunk_position);
                 }
@@ -175,9 +176,7 @@ impl NodeVirtual for Main {
             network.send_message(&input, NetworkMessageType::ReliableOrdered);
         }
 
-        self.debug_info
-            .bind_mut()
-            .update_debug(&self.world_manager, network);
+        self.debug_info.bind_mut().update_debug(&self.world_manager, network);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

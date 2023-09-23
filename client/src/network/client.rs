@@ -3,8 +3,8 @@ use log::info;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-//pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
-pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
+pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
+// pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
 
 pub type NetworkLockType = Arc<RwLock<NetworkClientType>>;
 

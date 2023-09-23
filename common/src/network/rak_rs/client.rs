@@ -58,7 +58,7 @@ impl ClientNetwork for RakNetClientNetwork {
         };
         runtime.block_on(async {
             let network = network.clone();
-            let mut client = Client::new(1, DEFAULT_MTU);
+            let mut client = Client::new(10, DEFAULT_MTU);
             let mut addr = ip_port.clone().to_socket_addrs().unwrap();
             if let Err(e) = client.connect(addr.next().unwrap()).await {
                 let err_sender = network.network_errors_out.0;

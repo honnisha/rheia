@@ -46,8 +46,8 @@ lazy_static! {
     static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
-// pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
-pub type NetworkServerType = common::network::rak_rs::server::RakNetServerNetwork;
+pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
+// pub type NetworkServerType = common::network::rak_rs::server::RakNetServerNetwork;
 
 #[derive(Resource)]
 pub struct NetworkContainer {

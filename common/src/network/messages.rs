@@ -21,6 +21,7 @@ pub type NetworkSectionsType = [PacketChunkSectionData; VERTICAL_SECTIONS];
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ServerMessages {
+    AllowConnection,
     ConsoleOutput {
         message: String,
     },

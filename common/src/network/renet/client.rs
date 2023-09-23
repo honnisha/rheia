@@ -149,7 +149,13 @@ impl RenetClientNetwork {
                 self.send_server_message(d);
             }
         }
-        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
+        while let Some(server_message) = client.receive_message(ServerChannel::ReliableUnordered) {
+            let decoded = RenetClientNetwork::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                self.send_server_message(d);
+            }
+        }
+        while let Some(server_message) = client.receive_message(ServerChannel::Unreliable) {
             let decoded = RenetClientNetwork::decode_server_message(&server_message);
             if let Some(d) = decoded {
                 self.send_server_message(d);

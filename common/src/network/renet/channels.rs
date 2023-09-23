@@ -62,22 +62,22 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
     vec![
         ChannelConfig {
             channel_id: ServerChannel::ReliableOrdered.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024, // in MB
+            max_memory_usage_bytes: 5 * 1024 * 1024, // in MB
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
         },
         ChannelConfig {
             channel_id: ServerChannel::ReliableUnordered.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024,
-            send_type: SendType::Unreliable,
+            max_memory_usage_bytes: 5 * 1024 * 1024,
+            send_type: SendType::ReliableUnordered {
+                resend_time: Duration::from_secs_f32(0.5_f32),
+            },
         },
         ChannelConfig {
             channel_id: ServerChannel::Unreliable.into(),
             max_memory_usage_bytes: 5 * 1024 * 1024,
-            send_type: SendType::ReliableOrdered {
-                resend_time: Duration::from_secs_f32(1.0_f32),
-            },
+            send_type: SendType::Unreliable,
         },
     ]
 }

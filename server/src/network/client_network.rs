@@ -49,9 +49,7 @@ pub struct ClientInfo {
 
 impl ClientInfo {
     pub fn new(login: String) -> Self {
-        Self {
-            login,
-        }
+        Self { login }
     }
 
     pub fn get_login(&self) -> &String {
@@ -88,6 +86,14 @@ impl ClientNetwork {
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
         }
+    }
+
+    pub fn allow_connection(&self) {
+        NetworkPlugin::send_static_message(
+            self.get_client_id().clone(),
+            NetworkMessageType::ReliableOrdered,
+            ServerMessages::AllowConnection {},
+        );
     }
 
     pub fn set_client_info(&mut self, info: ClientInfo) {
@@ -153,7 +159,7 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Unreliable, message);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
@@ -172,7 +178,10 @@ impl ClientNetwork {
 
         let connected = network_container.is_connected(&self.client_id);
         if !connected {
-            error!("send_unload_chunks runs on disconnected user ip:{}", self.get_client_ip());
+            error!(
+                "send_unload_chunks runs on disconnected user ip:{}",
+                self.get_client_ip()
+            );
             return;
         }
 
@@ -190,7 +199,7 @@ impl ClientNetwork {
             world_slug: world_slug.clone(),
             chunks: unload_chunks,
         };
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::Unreliable, input);
+        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, input);
     }
 }
 
