@@ -192,7 +192,7 @@ fn handle_events_system(
         match connection {
             ConnectionMessages::Connect { client_id, ip } => {
                 clients.add(client_id.clone(), ip.clone());
-                connection_events.send(PlayerConnectionEvent::new(client_id, ip));
+                connection_events.send(PlayerConnectionEvent::new(client_id));
             }
             ConnectionMessages::Disconnect { client_id, reason } => {
                 disconnection_events.send(PlayerDisconnectEvent::new(client_id, reason));

@@ -13,7 +13,7 @@ pub struct NetworkInfo {
 }
 
 pub trait ClientNetwork: Sized {
-    fn new(ip_port: String, login: String) -> Result<Self, String>;
+    fn new(ip_port: String) -> Result<Self, String>;
     // fn step(&self, delta: Duration) -> bool;
 
     fn iter_server_messages(&self) -> Drain<ServerMessages>;

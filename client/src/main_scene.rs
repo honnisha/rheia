@@ -85,7 +85,7 @@ impl NodeVirtual for Main {
 
         info!("Loading HonnyCraft version: {}", VERSION);
 
-        let network = match NetworkContainer::new("127.0.0.1:14191".to_string(), "Test_cl".to_string()) {
+        let network = match NetworkContainer::new("127.0.0.1:14191".to_string()) {
             Ok(c) => c,
             Err(e) => {
                 error!("Network connection error: {}", e);
@@ -93,6 +93,11 @@ impl NodeVirtual for Main {
                 return;
             }
         };
+        let connection_info = ClientMessages::ConnectionInfo { login: "Test_cl".to_string() };
+        network.get_network_lock().read().send_message(
+            &connection_info, NetworkMessageType::ReliableOrdered
+        );
+
         self.network = Some(network);
     }
 

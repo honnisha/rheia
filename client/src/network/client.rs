@@ -13,9 +13,9 @@ pub struct NetworkContainer {
 }
 
 impl NetworkContainer {
-    pub fn new(ip_port: String, login: String) -> Result<Self, String> {
+    pub fn new(ip_port: String) -> Result<Self, String> {
         info!("Connecting to the server at {}", ip_port);
-        let network = match NetworkClientType::new(ip_port, login) {
+        let network = match NetworkClientType::new(ip_port) {
             Ok(n) => n,
             Err(e) => return Err(e),
         };

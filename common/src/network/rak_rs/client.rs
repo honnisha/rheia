@@ -42,7 +42,7 @@ impl RakNetClientNetwork {
 }
 
 impl ClientNetwork for RakNetClientNetwork {
-    fn new(ip_port: String, login: String) -> Result<Self, String> {
+    fn new(ip_port: String) -> Result<Self, String> {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
@@ -59,19 +59,14 @@ impl ClientNetwork for RakNetClientNetwork {
         runtime.block_on(async {
             let network = network.clone();
             let mut client = Client::new(1, DEFAULT_MTU);
-            let mut addr = ip_port.to_socket_addrs().unwrap();
+            let mut addr = ip_port.clone().to_socket_addrs().unwrap();
             if let Err(e) = client.connect(addr.next().unwrap()).await {
-                network
-                    .network_errors_out
-                    .0
-                    .send(format!("Failed to connect to server: {:?}", e))
-                    .unwrap();
+                let err_sender = network.network_errors_out.0;
+                let err = format!("Failed to connect to {} server: {:?}", ip_port, e);
+                err_sender.send(err).unwrap();
                 return;
             }
             network.set_connected(true);
-
-            let connection_info = ClientMessages::ConnectionInfo { login };
-            network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
 
             // Messages reciever
             loop {

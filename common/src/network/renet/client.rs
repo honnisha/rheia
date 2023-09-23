@@ -24,7 +24,7 @@ use crate::network::messages::NetworkMessageType;
 use crate::network::{client::ClientNetwork, client::NetworkInfo, messages::ServerMessages};
 
 use super::channels::ServerChannel;
-use super::{connection_config, login::Login, PROTOCOL_ID};
+use super::{connection_config, PROTOCOL_ID};
 
 type ClientLock = Arc<RwLock<RenetClient>>;
 type TransferLock = Arc<RwLock<NetcodeClientTransport>>;
@@ -190,7 +190,7 @@ impl RenetClientNetwork {
 }
 
 impl ClientNetwork for RenetClientNetwork {
-    fn new(ip_port: String, login: String) -> Result<Self, String> {
+    fn new(ip_port: String) -> Result<Self, String> {
         let client = RenetClient::new(connection_config());
 
         // Setup transport layer
@@ -206,7 +206,7 @@ impl ClientNetwork for RenetClientNetwork {
         let authentication = ClientAuthentication::Unsecure {
             server_addr: server_addr,
             client_id,
-            user_data: Some(Login(login).to_netcode_user_data()),
+            user_data: None,
             protocol_id: PROTOCOL_ID,
         };
 

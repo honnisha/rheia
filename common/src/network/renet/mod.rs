@@ -5,7 +5,6 @@ use self::channels::{get_client_channels_config, get_server_channels_config};
 pub mod client;
 pub mod server;
 pub mod channels;
-pub mod login;
 
 pub const PRIVATE_KEY: &[u8; NETCODE_KEY_BYTES] = b"an example very very secret key."; // 32-bytes
 pub const PROTOCOL_ID: u64 = 7;
