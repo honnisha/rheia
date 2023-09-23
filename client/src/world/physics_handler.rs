@@ -10,13 +10,13 @@ pub type ColliderSetLock = Rc<RefCell<ColliderSet>>;
 pub type QueryPipelineLock = Rc<RefCell<QueryPipeline>>;
 
 pub struct PhysicsEntity {
-    world_physics: PhysicsContainerLock,
     rigid_body_set: RigidBodySetLock,
     collider_set: ColliderSetLock,
     query_pipeline: QueryPipelineLock,
 
     rigid_handle: Option<RigidBodyHandle>,
     collider_handle: ColliderHandle,
+    character_controller: KinematicCharacterController,
 }
 
 impl PhysicsEntity {
@@ -26,21 +26,19 @@ impl PhysicsEntity {
         collider_handle: ColliderHandle,
     ) -> Self {
         Self {
-            world_physics: physics_container.world_physics.clone(),
             rigid_body_set: physics_container.rigid_body_set.clone(),
             collider_set: physics_container.collider_set.clone(),
             query_pipeline: physics_container.query_pipeline.clone(),
 
             rigid_handle,
             collider_handle,
+            character_controller: KinematicCharacterController::default(),
         }
     }
 
     pub fn controller_move(&mut self, delta: f64, impulse: Vector<Real>) {
         let collider = self.get_collider().unwrap().clone();
-
-        let character_controller = KinematicCharacterController::default();
-        let corrected_movement = character_controller.move_shape(
+        let corrected_movement = self.character_controller.move_shape(
             delta as f32,
             &self.rigid_body_set.borrow(),
             &self.collider_set.borrow(),
@@ -48,24 +46,19 @@ impl PhysicsEntity {
             collider.shape(),
             collider.position(),
             impulse,
-            QueryFilter::default()
-                // Make sure the the character we are trying to move isn’t considered an obstacle.
-                .exclude_rigid_body(self.rigid_handle.unwrap()),
-            |_| {}, // We don’t care about events in this example.
+            // Make sure the the character we are trying to move isn’t considered an obstacle.
+            QueryFilter::default().exclude_rigid_body(self.rigid_handle.unwrap()),
+            // We don’t care about events in this example.
+            |_| {},
         );
         let mut body = self.get_rigid_body_mut().unwrap();
         let translation = body.translation().clone();
         body.set_translation(translation + corrected_movement.translation, true);
     }
 
-    pub fn set_lock(&mut self, state: bool) {
+    pub fn set_enabled(&mut self, active: bool) {
         let mut body = self.get_rigid_body_mut().unwrap();
-        if state && !body.is_fixed() {
-            body.set_body_type(RigidBodyType::Fixed, true);
-        }
-        if !state && !body.is_dynamic() {
-            body.set_body_type(RigidBodyType::Dynamic, true);
-        }
+        body.set_enabled(active);
     }
 
     pub fn apply_impulse(&mut self, impulse: Vector<Real>) {
@@ -102,10 +95,6 @@ impl PhysicsEntity {
     pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
         Vector3::new(translation[0], translation[1], translation[2])
     }
-
-    pub fn rotation_to_vector3(rotation: &Rotation<Real>) -> Vector3 {
-        Vector3::new(rotation[0], rotation[1], rotation[2])
-    }
 }
 
 pub struct PhysicsContainer {
@@ -141,7 +130,7 @@ impl PhysicsContainer {
             .build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let collider = ColliderBuilder::capsule_y(half_height, radius);
+        let collider = ColliderBuilder::capsule_y(half_height, radius).density(3.0);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 
         let mut collider_set = self.collider_set.borrow_mut();

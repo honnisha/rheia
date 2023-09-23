@@ -5,7 +5,6 @@ use godot::engine::{
 };
 use godot::engine::{CapsuleMesh, MeshInstance3D};
 use godot::prelude::*;
-use rapier3d::prelude::RigidBodyType;
 use rapier3d::prelude::*;
 
 use crate::console::console_handler::Console;
@@ -166,23 +165,20 @@ impl NodeVirtual for PlayerController {
         let pitch = self.get_pitch();
         {
             // Set lock if chunk is in loading
-            self.physics_entity.set_lock(!chunk_loaded);
+            self.physics_entity.set_enabled(chunk_loaded);
 
-            println!("self.physics_entity.get_position():{:?}", self.physics_entity.get_position());
-            self.base.set_position(self.physics_entity.get_position());
-
+            // Move
             let vec = self.input_data.get_movement_vector(delta);
             let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
             self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
 
-            //let t = body.translation().clone();
-            //body.set_translation(Vector::new(t.x + vec.x, t.y + vec.y, t.z + vec.z), true);
+            // Sync godot object position
+            self.base.set_position(self.physics_entity.get_position());
 
-            // camera.translate(self.data.get_movement_vector(delta));
-
+            // Jump
             let input = Input::singleton();
             if input.is_action_just_pressed("jump".into()) {
-                self.physics_entity.apply_impulse(Vector::new(0.0, 3.0, 0.0));
+                self.physics_entity.apply_impulse(Vector::new(0.0, 6.0, 0.0));
             }
         }
 
