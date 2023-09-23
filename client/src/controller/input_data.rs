@@ -1,4 +1,4 @@
-use godot::prelude::{Vector2, Vector3, utilities::deg_to_rad};
+use godot::prelude::{utilities::deg_to_rad, Input, Vector2, Vector3};
 use std::fmt::{self, Display, Formatter};
 
 use crate::main_scene::FloatType;

@@ -37,7 +37,7 @@ impl PlayerController {
         mesh.set_height(1.8);
         mesh.set_radius(0.4);
         body.set_mesh(mesh.upcast());
-        body.set_position(Vector3::new(0.0, 0.0, 0.0));
+        body.set_position(Vector3::new(0.0, 0.9, 0.0));
 
         Self {
             base,
@@ -169,30 +169,23 @@ impl NodeVirtual for PlayerController {
 
         let pitch = self.get_pitch();
         {
-            let mut body = self.physics_entity.get_rigid_body_mut();
-            let body = body.as_mut().unwrap();
+            // Set lock if chunk is in loading
+            self.physics_entity.set_lock(!chunk_loaded);
 
-            if chunk_loaded && !body.is_dynamic() {
-                body.set_body_type(RigidBodyType::Dynamic);
-            } else if !chunk_loaded && !body.is_fixed() {
-                body.set_body_type(RigidBodyType::Fixed);
-            }
-
-            self.base
-                .set_position(PhysicsEntity::transform_to_vector3(&body.translation()));
-            self.base
-                .set_rotation(PhysicsEntity::rotation_to_vector3(&body.rotation()));
+            self.base.set_position(self.physics_entity.get_position());
 
             let vec = self.input_data.get_movement_vector(delta);
             let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
-            //body.apply_impulse(Vector::new(vec.x, vec.y, vec.z), true);
-            let t = body.translation().clone();
-            body.set_translation(Vector::new(t.x + vec.x, t.y + vec.y, t.z + vec.z), true);
+            self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+
+            //let t = body.translation().clone();
+            //body.set_translation(Vector::new(t.x + vec.x, t.y + vec.y, t.z + vec.z), true);
+
             // camera.translate(self.data.get_movement_vector(delta));
 
             let input = Input::singleton();
             if input.is_action_just_pressed("jump".into()) {
-                body.apply_impulse(Vector::new(0.0, 3.0, 0.0), true);
+                self.physics_entity.apply_impulse(Vector::new(0.0, 3.0, 0.0));
             }
         }
 

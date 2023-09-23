@@ -22,7 +22,6 @@ use crate::{
     client_resources::resources_manager::ResourceManager,
     console::commands_executer::CommandsHandler,
     events::{
-        on_chunk_recieved::{on_chunk_recieved, ChunkRecievedEvent},
         on_connection::{on_connection, PlayerConnectionEvent},
         on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
         on_disconnect::{on_disconnect, PlayerDisconnectEvent},
@@ -95,9 +94,6 @@ impl NetworkPlugin {
         app.add_event::<PlayerMoveEvent>();
         app.add_systems(Update, on_player_move.after(handle_events_system));
 
-        app.add_event::<ChunkRecievedEvent>();
-        app.add_systems(Update, on_chunk_recieved.after(handle_events_system));
-
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
     }
@@ -130,9 +126,9 @@ impl NetworkPlugin {
 fn receive_message_system(
     network_container: Res<NetworkContainer>,
     time: Res<Time>,
+    clients: Res<ClientsContainer>,
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
-    mut chunk_recieved_events: EventWriter<ChunkRecievedEvent>,
 ) {
     if time.delta() > std::time::Duration::from_millis(100) {
         println!("receive_message_system delay: {:.2?}", time.delta());
@@ -150,8 +146,8 @@ fn receive_message_system(
                 CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
             ClientMessages::ChunkRecieved { chunk_positions } => {
-                let chunks = ChunkRecievedEvent::new(client_id, chunk_positions);
-                chunk_recieved_events.send(chunks);
+                let client = clients.get(&client_id);
+                client.mark_chunks_as_recieved(chunk_positions);
             }
             ClientMessages::PlayerMove { position, yaw, pitch } => {
                 let movement = PlayerMoveEvent::new(

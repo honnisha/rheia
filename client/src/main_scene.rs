@@ -158,7 +158,6 @@ impl NodeVirtual for Main {
                     sections,
                 } => {
                     let world_manager = self.get_world_manager_mut();
-                    println!("load_chunk {}", chunk_position);
                     world_manager.load_chunk(world_slug, chunk_position, sections);
                     chunks.push(chunk_position);
                 }

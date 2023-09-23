@@ -59,4 +59,4 @@ fastnbt = "2"
 
 image = "0.24.5"
 
-rapier3d = { version = "0.12.0-aplha.0", features = [ "simd-stable" ] }
+rapier3d = { version = "0.17.2", features = [ "simd-stable" ] }

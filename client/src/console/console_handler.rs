@@ -7,7 +7,7 @@ use chrono::Local;
 use flume::{bounded, unbounded, Drain};
 use flume::{Receiver, Sender};
 use godot::{
-    engine::{input::MouseMode, Engine, LineEdit, MarginContainer, RichTextLabel, TextureButton},
+    engine::{input::MouseMode, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
 };
 use lazy_static::lazy_static;

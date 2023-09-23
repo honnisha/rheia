@@ -1,6 +1,6 @@
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData}, network::messages::NetworkMessageType,
 };
 use godot::{
     engine::{Material, StandardMaterial3D},
@@ -114,8 +114,9 @@ impl World {
     #[func]
     fn handler_player_move(&self, movement_var: Variant) {
         let main = self.base.get_parent().unwrap().cast::<Main>();
+        let main = main.bind();
         let movement = movement_var.to::<PlayerMovement>();
-        //network.send_message(&movement.into_network(), NetworkMessageType::Movement);
+        main.network_send_message(&movement.into_network(), NetworkMessageType::Unreliable);
     }
 }
 
