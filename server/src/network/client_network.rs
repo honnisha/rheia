@@ -6,8 +6,8 @@ use common::{
 };
 use core::fmt;
 use log::error;
-use parking_lot::RwLock;
-use std::{fmt::Display, sync::Arc};
+use parking_lot::{RwLock, RwLockReadGuard};
+use std::{any::Any, fmt::Display, sync::Arc};
 
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
@@ -65,7 +65,7 @@ pub struct ClientNetwork {
     client_info: Option<ClientInfo>,
 
     // For fast finding player current world slug
-    pub world_entity: Option<WorldEntity>,
+    world_entity: Arc<RwLock<Option<WorldEntity>>>,
 
     // Current chunks that player can see
     // Tp prevent resend chunks
@@ -82,7 +82,7 @@ impl ClientNetwork {
             client_id,
             ip,
             client_info: None,
-            world_entity: None,
+            world_entity: Arc::new(RwLock::new(None)),
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
         }
@@ -115,14 +115,24 @@ impl ClientNetwork {
         &self.ip
     }
 
-    pub fn send_teleport(&mut self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
+    pub fn get_world_entity(&self) -> RwLockReadGuard<Option<WorldEntity>> {
+        self.world_entity.as_ref().read()
+    }
+
+    pub fn set_world_entity(&self, world_entity: Option<WorldEntity>) {
+        *self.world_entity.write() = world_entity;
+    }
+
+    /// Sends information about the player's new position over the network
+    pub fn network_send_teleport(&self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
         let connected = network_container.is_connected(self.get_client_id());
         if !connected {
             error!("send_teleport runs on disconnected user ip:{}", self.get_client_ip());
             return;
         }
 
-        let world_entity = self.world_entity.as_ref().unwrap();
+        let lock = self.get_world_entity();
+        let world_entity = lock.as_ref().unwrap();
         let input = ServerMessages::Teleport {
             world_slug: world_entity.get_world_slug().clone(),
             location: position.to_array(),
@@ -159,7 +169,11 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, message);
+        NetworkPlugin::send_static_message(
+            self.get_client_id().clone(),
+            NetworkMessageType::ReliableOrdered,
+            message,
+        );
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
@@ -218,4 +232,8 @@ impl ConsoleSender for ClientNetwork {
         NetworkPlugin::send_console_output(self.client_id.clone(), message);
     }
 }
-impl ConsoleSenderType for ClientNetwork {}
+impl ConsoleSenderType for ClientNetwork {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}

@@ -1,8 +1,10 @@
 use godot::prelude::Vector3;
-use rapier3d::control::KinematicCharacterController;
+use rapier3d::control::{KinematicCharacterController, CharacterLength};
 use rapier3d::prelude::*;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
+
+use crate::controller::player_controller::{CONTROLLER_RADIUS, CONTROLLER_HEIGHT};
 
 pub type PhysicsContainerLock = Rc<RefCell<PhysicsController>>;
 pub type RigidBodySetLock = Rc<RefCell<RigidBodySet>>;
@@ -25,6 +27,8 @@ impl PhysicsEntity {
         rigid_handle: Option<RigidBodyHandle>,
         collider_handle: ColliderHandle,
     ) -> Self {
+        let mut character_controller = KinematicCharacterController::default();
+        character_controller.offset = CharacterLength::Relative(0.05);
         Self {
             rigid_body_set: physics_container.rigid_body_set.clone(),
             collider_set: physics_container.collider_set.clone(),
@@ -32,7 +36,7 @@ impl PhysicsEntity {
 
             rigid_handle,
             collider_handle,
-            character_controller: KinematicCharacterController::default(),
+            character_controller,
         }
     }
 
@@ -40,8 +44,8 @@ impl PhysicsEntity {
         let collider = self.get_collider().unwrap().clone();
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-            &self.rigid_body_set.borrow(),
-            &self.collider_set.borrow(),
+            &RigidBodySet::new(),// &self.rigid_body_set.borrow(),
+            &ColliderSet::new(),// &self.collider_set.borrow(),
             &self.query_pipeline.borrow(),
             collider.shape(),
             collider.position(),
@@ -71,10 +75,9 @@ impl PhysicsEntity {
         PhysicsEntity::transform_to_vector3(&body.translation())
     }
 
-    pub fn set_position(&mut self, position: Vector3) {
-        println!("position {}", position);
+    pub fn set_position(&mut self, position: Vector<Real>) {
         let mut body = self.get_rigid_body_mut().unwrap();
-        body.set_translation(vector![position.x, position.y, position.z], true);
+        body.set_translation(position, true);
     }
 
     pub fn get_collider(&self) -> Option<Ref<Collider>> {
@@ -124,13 +127,17 @@ impl PhysicsContainer {
         );
     }
 
-    pub fn create_capsule(&self, position: &Vector3, half_height: Real, radius: Real) -> PhysicsEntity {
+    pub fn create_controller(&self) -> PhysicsEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![position.x, position.y, position.z])
+            .translation(vector![0.0, 0.0, 0.0])
             .build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let collider = ColliderBuilder::capsule_y(half_height, radius).density(3.0);
+        let half_height = CONTROLLER_HEIGHT;
+        let radius = CONTROLLER_RADIUS;
+        let collider = ColliderBuilder::cylinder(half_height, radius)
+            .density(3.0)
+            .restitution(0.0);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 
         let mut collider_set = self.collider_set.borrow_mut();

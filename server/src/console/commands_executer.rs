@@ -6,7 +6,7 @@ use regex::Regex;
 pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
 
 // https://github.com/clap-rs/clap/blob/master/examples/pacman.rs
-type CommandFN = fn(world: &mut World, sender: &dyn ConsoleSenderType, ArgMatches);
+type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, ArgMatches);
 
 #[derive(Clone)]
 pub struct CommandExecuter {
@@ -42,7 +42,7 @@ impl CommandsHandler {
         self.commands.push(executer);
     }
 
-    pub fn execute_command(world: &mut World, sender: &dyn ConsoleSenderType, command: &String) {
+    pub fn execute_command(world: &mut World, sender: Box<dyn ConsoleSenderType>, command: &String) {
         let re = Regex::new(REGEX_COMMAND).unwrap();
         let command_sequence: Vec<String> = re.find_iter(&command).map(|e| e.as_str().to_string()).collect();
         let lead_command = command_sequence[0].clone();

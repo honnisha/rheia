@@ -23,7 +23,7 @@ pub fn on_disconnect(
 ) {
     for event in disconnection_events.iter() {
         {
-            let mut client = clients.get_mut(&event.client_id);
+            let client = clients.get(&event.client_id);
             if let Some(i) = client.get_client_info() {
                 info!(
                     "Disconnected ip:{} login:{} reason:{}",
@@ -33,7 +33,16 @@ pub fn on_disconnect(
                 );
             }
 
-            worlds_manager.despawn_player(&mut client)
+            // Check if player was in the world
+            // despawn if so
+            let lock = client.get_world_entity();
+            let world_entity = match lock.as_ref() {
+                Some(c) => {
+                    let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
+                    world_manager.despawn_player(&c);
+                },
+                None => return,
+            };
         }
         clients.remove(&event.client_id);
     }

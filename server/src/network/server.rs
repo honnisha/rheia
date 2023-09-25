@@ -170,7 +170,7 @@ fn console_client_command_event(world: &mut World) {
     world.resource_scope(|world, mut clients: Mut<ClientsContainer>| {
         for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
             let client = clients.get(&client_id);
-            CommandsHandler::execute_command(world, &client.to_owned(), &command);
+            CommandsHandler::execute_command(world, Box::new(client.clone()), &command);
         }
     });
 }

@@ -97,7 +97,7 @@ impl ConsoleHandler {
     pub fn handler_console_input(world: &mut World) {
         for command in CONSOLE_INPUT_CHANNEL.1.try_iter() {
             let sender = Console::default();
-            CommandsHandler::execute_command(world, &sender, &command);
+            CommandsHandler::execute_command(world, Box::new(sender), &command);
         }
     }
 }

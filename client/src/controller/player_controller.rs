@@ -14,6 +14,15 @@ use crate::world::physics_handler::{PhysicsContainer, PhysicsEntity};
 
 use super::{input_data::InputData, player_movement::PlayerMovement};
 
+pub(crate) const ACCELERATION: f32 = 4.0;
+pub(crate) const BOST_MULTIPLIER: f32 = 1.5;
+pub(crate) const SENSITIVITY: f32 = 0.3;
+
+const JUMP_IMPULSE: f32 = 10.0;
+
+pub const CONTROLLER_HEIGHT: f32 = 1.8;
+pub const CONTROLLER_RADIUS: f32 = 0.4;
+
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct PlayerController {
@@ -33,17 +42,17 @@ impl PlayerController {
 
         let mut body = MeshInstance3D::new_alloc();
         let mut mesh = CapsuleMesh::new();
-        mesh.set_height(1.8);
-        mesh.set_radius(0.4);
+        mesh.set_height(CONTROLLER_HEIGHT);
+        mesh.set_radius(CONTROLLER_RADIUS);
         body.set_mesh(mesh.upcast());
-        body.set_position(Vector3::new(0.0, 0.9, 0.0));
+        body.set_position(Vector3::new(0.0, CONTROLLER_HEIGHT / 2.0, 0.0));
 
         Self {
             base,
             camera: camera,
             input_data: Default::default(),
             cache_movement: None,
-            physics_entity: physics_container.create_capsule(&Vector3::new(0.0, 0.0, 0.0), 0.25, 0.4),
+            physics_entity: physics_container.create_controller(),
             body,
         }
     }
@@ -65,7 +74,9 @@ impl PlayerController {
 
     pub fn set_position(&mut self, position: Vector3) {
         self.base.set_position(position);
-        self.physics_entity.set_position(position);
+
+        let physics_pos = vector![position.x, position.y, position.z];
+        self.physics_entity.set_position(physics_pos);
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
@@ -173,12 +184,13 @@ impl NodeVirtual for PlayerController {
             self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
 
             // Sync godot object position
-            self.base.set_position(self.physics_entity.get_position());
+            let physics_pos = self.physics_entity.get_position();
+            self.base.set_position(Vector3::new(physics_pos.x, physics_pos.y, physics_pos.z));
 
             // Jump
             let input = Input::singleton();
             if input.is_action_just_pressed("jump".into()) {
-                self.physics_entity.apply_impulse(Vector::new(0.0, 6.0, 0.0));
+                self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
             }
         }
 

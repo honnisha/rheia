@@ -6,7 +6,7 @@ use bevy::time::Time;
 use bevy_ecs::system::Res;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::network::clients_container::ClientMut;
+use crate::network::{clients_container::ClientRef, client_network::WorldEntity};
 
 use super::world_manager::WorldManager;
 
@@ -60,16 +60,6 @@ impl WorldsManager {
             Some(w) => Some(w.write()),
             None => return None,
         }
-    }
-
-    pub fn despawn_player(&mut self, client: &mut ClientMut) {
-        let world_entity = match client.world_entity.as_ref() {
-            Some(c) => c,
-            None => return,
-        };
-        let mut world_manager = self.get_world_manager_mut(&world_entity.get_world_slug()).unwrap();
-        world_manager.despawn_player(&world_entity);
-        client.world_entity = None;
     }
 }
 

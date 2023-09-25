@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bgi08vwkv4oy3"
-path="res://.godot/imported/person.glb-b03a48b4abe0117ab1e5c3c41b88dfd2.scn"
+uid="uid://qdifcn3tfecx"
+path="res://.godot/imported/scene.gltf-b2d4f2286545b2904b7ddf00de8c82fb.scn"
 
 [deps]
 
-source_file="res://person.glb"
-dest_files=["res://.godot/imported/person.glb-b03a48b4abe0117ab1e5c3c41b88dfd2.scn"]
+source_file="res://temp/scene.gltf"
+dest_files=["res://.godot/imported/scene.gltf-b2d4f2286545b2904b7ddf00de8c82fb.scn"]
 
 [params]
 

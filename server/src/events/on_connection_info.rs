@@ -46,13 +46,11 @@ pub fn on_connection_info(
             let position = Position::new(0.0, 60.0, 0.0);
             let rotation = Rotation::new(0.0, 0.0);
 
-            {
-                let mut world_manager = worlds_manager.get_world_manager_mut(&default_world).unwrap();
-                let world_entity = world_manager.spawn_player(client.get_client_id(), position, rotation);
-                client.world_entity = Some(world_entity);
-            }
+            let mut world_manager = worlds_manager.get_world_manager_mut(&default_world).unwrap();
+            let world_entity = world_manager.spawn_player(client.get_client_id(), position, rotation);
+            client.set_world_entity(Some(world_entity));
 
-            client.send_teleport(&network_container, &position, &rotation);
+            client.network_send_teleport(&network_container, &position, &rotation);
         }
     }
 }

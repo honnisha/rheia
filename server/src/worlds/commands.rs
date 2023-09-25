@@ -2,11 +2,14 @@ use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
-use crate::console::console_sender::ConsoleSenderType;
+use crate::entities::entity::{Position, Rotation};
+use crate::network::client_network::ClientNetwork;
+use crate::network::server::NetworkContainer;
+use crate::{console::console_sender::ConsoleSenderType, network::clients_container::ClientsContainer};
 
 use super::worlds_manager::WorldsManager;
 
-pub(crate) fn get_command_parser() -> Command {
+pub(crate) fn command_parser_world() -> Command {
     Command::new("world")
         .subcommand_required(true)
         .subcommand(Command::new("list").short_flag('l').long_flag("list"))
@@ -22,7 +25,7 @@ pub(crate) fn get_command_parser() -> Command {
         )
 }
 
-pub(crate) fn world_command(world: &mut World, sender: &dyn ConsoleSenderType, args: ArgMatches) {
+pub(crate) fn command_world(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) {
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
     match args.subcommand() {
         Some(("list", _)) => {
@@ -58,4 +61,56 @@ pub(crate) fn world_command(world: &mut World, sender: &dyn ConsoleSenderType, a
             sender.send_console_message("Error".to_string());
         }
     }
+}
+
+pub(crate) fn command_parser_teleport() -> Command {
+    Command::new("tp")
+        .arg(
+            Arg::new("x")
+                .required(true)
+                .action(ArgAction::Set)
+                .value_parser(clap::value_parser!(f32)),
+        )
+        .arg(
+            Arg::new("y")
+                .required(true)
+                .action(ArgAction::Set)
+                .value_parser(clap::value_parser!(f32)),
+        )
+        .arg(
+            Arg::new("z")
+                .required(true)
+                .action(ArgAction::Set)
+                .value_parser(clap::value_parser!(f32)),
+        )
+}
+
+pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) {
+    let mut worlds_manager = world.resource_mut::<WorldsManager>();
+    let clients = world.resource::<ClientsContainer>();
+    let network_container = world.resource::<NetworkContainer>();
+
+    let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
+        Some(c) => c,
+        None => {
+            sender.send_console_message("Only player call allowed".to_string());
+            return;
+        },
+    };
+    let x: f32 = args.get_one::<String>("x").unwrap().parse().unwrap();
+    let y: f32 = args.get_one::<String>("y").unwrap().parse().unwrap();
+    let z: f32 = args.get_one::<String>("z").unwrap().parse().unwrap();
+
+    let position = Position::new(x, y, z);
+    let rotation = Rotation::new(0.0, 0.0);
+
+    let world_entity_lock = client.get_world_entity();
+    match world_entity_lock.as_ref() {
+        Some(world_entity) => {
+            con ti nue
+        },
+        None => todo!(),
+    }
+
+    client.network_send_teleport(&network_container, &position, &rotation);
 }

@@ -3,10 +3,7 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::main_scene::FloatType;
 
-const ACCELERATION: f32 = 5.0;
-const BOST_MULTIPLIER: f32 = 2.5;
-
-const SENSITIVITY: f32 = 0.25;
+use super::player_controller::{ACCELERATION, BOST_MULTIPLIER, SENSITIVITY};
 
 #[derive(Default)]
 pub(crate) struct InputData {

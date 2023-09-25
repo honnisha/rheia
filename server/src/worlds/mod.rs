@@ -5,7 +5,7 @@ use log::info;
 use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
 
 use self::{
-    commands::{get_command_parser, world_command},
+    commands::{command_parser_teleport, command_parser_world, command_teleport, command_world},
     worlds_manager::{update_world_chunks, WorldsManager},
 };
 
@@ -26,7 +26,8 @@ impl Default for WorldsHandlerPlugin {
 impl Plugin for WorldsHandlerPlugin {
     fn build(&self, app: &mut App) {
         let mut commands_handler = app.world.get_resource_mut::<CommandsHandler>().unwrap();
-        commands_handler.add_command_executer(CommandExecuter::new(get_command_parser(), world_command));
+        commands_handler.add_command_executer(CommandExecuter::new(command_parser_world(), command_world));
+        commands_handler.add_command_executer(CommandExecuter::new(command_parser_teleport(), command_teleport));
 
         let mut wm = WorldsManager::default();
 

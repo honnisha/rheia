@@ -54,6 +54,9 @@ impl WorldGenerator {
                         has_any_block = true;
                         chunk_data.insert(pos, BlockInfo::new(BlockType::GrassBlock));
                     }
+                    if x == 0 && y_global as f32 == 24.0 && z == 0 {
+                        chunk_data.insert(pos, BlockInfo::new(BlockType::GrassBlock));
+                    }
                 }
             }
         }
