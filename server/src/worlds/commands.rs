@@ -2,6 +2,7 @@ use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
@@ -25,13 +26,13 @@ pub(crate) fn command_parser_world() -> Command {
         )
 }
 
-pub(crate) fn command_world(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) {
+pub(crate) fn command_world(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) -> Result<(), CommandError> {
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
     match args.subcommand() {
         Some(("list", _)) => {
             if worlds_manager.count() == 0 {
                 sender.send_console_message("Worlds list is empty".to_string());
-                return;
+                return Ok(());
             }
             let worlds = worlds_manager.get_worlds();
             sender.send_console_message("Worlds list:".to_string());
@@ -61,6 +62,7 @@ pub(crate) fn command_world(world: &mut World, sender: Box<dyn ConsoleSenderType
             sender.send_console_message("Error".to_string());
         }
     }
+    return Ok(());
 }
 
 pub(crate) fn command_parser_teleport() -> Command {
@@ -85,7 +87,7 @@ pub(crate) fn command_parser_teleport() -> Command {
         )
 }
 
-pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) {
+pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) -> Result<(), CommandError> {
     let worlds_manager = world.resource::<WorldsManager>();
     let network_container = world.resource::<NetworkContainer>();
 
@@ -93,7 +95,7 @@ pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderT
         Some(c) => c,
         None => {
             sender.send_console_message("This command is allowed to be used only for players".to_string());
-            return;
+            return Ok(());
         }
     };
     let x = args.get_one::<f32>("x").unwrap().clone();
@@ -121,4 +123,5 @@ pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderT
     }
 
     client.network_send_teleport(&network_container, &position, &rotation);
+    return Ok(());
 }

@@ -1,12 +1,14 @@
 use super::console_sender::ConsoleSenderType;
 use bevy_ecs::{system::Resource, world::World};
 use clap::{error::ErrorKind, ArgMatches, Command};
+use log::error;
 use regex::Regex;
 
 pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
 
 // https://github.com/clap-rs/clap/blob/master/examples/pacman.rs
-type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, ArgMatches);
+pub type CommandError = String;
+type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, ArgMatches) -> Result<(), CommandError>;
 
 #[derive(Clone)]
 pub struct CommandExecuter {
@@ -77,7 +79,10 @@ impl CommandsHandler {
         }
         match handler {
             Some((h, args)) => {
-                (h)(world, sender, args);
+                let sender_title = format!("{}", sender);
+                if let Err(e) = (h)(world, sender, args) {
+                    error!("Command {} by:{} error: {}", command, sender_title, e);
+                }
             }
             None => {
                 sender.send_console_message(format!("Command \"{}\" not found", command));
