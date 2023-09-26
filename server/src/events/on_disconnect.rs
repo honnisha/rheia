@@ -1,5 +1,8 @@
 use bevy::prelude::Event;
-use bevy_ecs::{prelude::EventReader, system::ResMut};
+use bevy_ecs::{
+    prelude::EventReader,
+    system::{Res, ResMut},
+};
 use log::info;
 
 use crate::{network::clients_container::ClientsContainer, worlds::worlds_manager::WorldsManager};
@@ -19,7 +22,7 @@ impl PlayerDisconnectEvent {
 pub fn on_disconnect(
     mut disconnection_events: EventReader<PlayerDisconnectEvent>,
     mut clients: ResMut<ClientsContainer>,
-    mut worlds_manager: ResMut<WorldsManager>,
+    worlds_manager: Res<WorldsManager>,
 ) {
     for event in disconnection_events.iter() {
         {
@@ -35,12 +38,12 @@ pub fn on_disconnect(
 
             // Check if player was in the world
             // despawn if so
-            let lock = client.get_world_entity();
-            let world_entity = match lock.as_ref() {
+            let world_entity = client.get_world_entity().clone();
+            match world_entity {
                 Some(c) => {
                     let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
                     world_manager.despawn_player(&c);
-                },
+                }
                 None => return,
             };
         }

@@ -2,10 +2,10 @@ use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
 use crate::network::server::NetworkContainer;
-use crate::{console::console_sender::ConsoleSenderType, network::clients_container::ClientsContainer};
 
 use super::worlds_manager::WorldsManager;
 
@@ -86,29 +86,37 @@ pub(crate) fn command_parser_teleport() -> Command {
 }
 
 pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) {
-    let mut worlds_manager = world.resource_mut::<WorldsManager>();
-    let clients = world.resource::<ClientsContainer>();
+    let worlds_manager = world.resource::<WorldsManager>();
     let network_container = world.resource::<NetworkContainer>();
 
     let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
         Some(c) => c,
         None => {
-            sender.send_console_message("Only player call allowed".to_string());
+            sender.send_console_message("This command is allowed to be used only for players".to_string());
             return;
-        },
+        }
     };
-    let x: f32 = args.get_one::<String>("x").unwrap().parse().unwrap();
-    let y: f32 = args.get_one::<String>("y").unwrap().parse().unwrap();
-    let z: f32 = args.get_one::<String>("z").unwrap().parse().unwrap();
+    let x = args.get_one::<f32>("x").unwrap().clone();
+    let y = args.get_one::<f32>("y").unwrap().clone();
+    let z = args.get_one::<f32>("z").unwrap().clone();
 
     let position = Position::new(x, y, z);
     let rotation = Rotation::new(0.0, 0.0);
 
-    let world_entity_lock = client.get_world_entity();
-    match world_entity_lock.as_ref() {
+    let world_entity = client.get_world_entity().clone();
+    match world_entity {
         Some(world_entity) => {
-            con ti nue
-        },
+            let world_manager = worlds_manager
+                .get_world_manager(&world_entity.get_world_slug())
+                .unwrap();
+            let (chunk_changed, abandoned_chunks) =
+                world_manager.player_move(&world_entity, position.clone(), rotation.clone());
+
+            if chunk_changed {
+                let world_slug = world_entity.get_world_slug().clone();
+                client.send_unload_chunks(&network_container, &world_slug, abandoned_chunks);
+            }
+        }
         None => todo!(),
     }
 

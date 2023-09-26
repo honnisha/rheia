@@ -1,6 +1,7 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
+use log::error;
 
 use crate::entities::entity::Rotation;
 use crate::network::clients_container::ClientsContainer;
@@ -34,20 +35,26 @@ pub fn on_player_move(
         let client = clients.get(&event.client_id);
 
         let world_entity_lock = client.get_world_entity();
-        if let Some(world_entity) = world_entity_lock.as_ref() {
-            // Handle player move in world
-            let (chunk_changed, abandoned_chunks) = {
-                let mut world_manager = worlds_manager
-                    .get_world_manager_mut(&world_entity.get_world_slug())
-                    .unwrap();
-                world_manager.player_move(&world_entity, event.position, event.rotation)
-            };
-
-            if chunk_changed {
-                let world_slug = world_entity.get_world_slug().clone();
-                // Send abandoned chunks to unload
-                client.send_unload_chunks(&network_container, &world_slug, abandoned_chunks);
+        let world_entity = match world_entity_lock.as_ref() {
+            Some(w) => w,
+            None => {
+                error!(
+                    "Client ip:{} tries to send move packets but he not in the world!",
+                    client
+                );
+                continue;
             }
+        };
+
+        let world_manager = worlds_manager
+            .get_world_manager(&world_entity.get_world_slug())
+            .unwrap();
+        let (chunk_changed, abandoned_chunks) =
+            world_manager.player_move(&world_entity, event.position, event.rotation);
+
+        if chunk_changed {
+            let world_slug = world_entity.get_world_slug().clone();
+            client.send_unload_chunks(&network_container, &world_slug, abandoned_chunks);
         }
     }
 }

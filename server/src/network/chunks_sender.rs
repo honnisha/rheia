@@ -22,23 +22,26 @@ pub fn send_chunks(
         // A set of chunks and players that require them to be sent
         let mut queue: HashMap<ChunkPosition, Vec<ClientRef>> = Default::default();
 
+        let chunks_map = world.get_chunks_map();
+
         // Iterate all loaded chunks
-        for (chunk_position, chunk_col_lock) in world.chunks_map.get_chunks() {
+        for (chunk_position, chunk_col_lock) in chunks_map.get_chunks() {
             let chunk_col = chunk_col_lock.read();
             if !chunk_col.is_loaded() {
                 continue;
             }
 
             // Get all entites that watch this chunk
-            let watch_entities = match world.chunks_map.take_chunks_entities(&chunk_position) {
+            let watch_entities = match chunks_map.take_chunks_entities(&chunk_position) {
                 Some(v) => v,
                 None => {
                     panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
                 }
             };
             'entity_loop: for entity in watch_entities {
-                let player_entity = world.get_entity(entity);
-                let network = player_entity.get::<NetworkComponent>().unwrap();
+                let w = world.get_ecs();
+                let player_entity = w.entity(*entity).get::<NetworkComponent>().unwrap();
+                let network = player_entity;
 
                 let connected = network_container.is_connected(network.get_client_id());
                 if !connected {

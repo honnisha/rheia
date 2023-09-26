@@ -6,8 +6,6 @@ use bevy::time::Time;
 use bevy_ecs::system::Res;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::network::{clients_container::ClientRef, client_network::WorldEntity};
-
 use super::world_manager::WorldManager;
 
 type WorldsType = HashMap<String, Arc<RwLock<WorldManager>>>;
@@ -48,7 +46,7 @@ impl WorldsManager {
         &self.worlds
     }
 
-    pub fn _get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<WorldManager>> {
+    pub fn get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<WorldManager>> {
         match self.worlds.get(key) {
             Some(w) => Some(w.read()),
             None => None,
