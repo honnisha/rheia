@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::{sync::Arc};
 
-use bevy::utils::HashMap;
+use bevy::utils::{HashMap};
 use bevy_ecs::system::Resource;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -24,6 +24,10 @@ impl Default for ClientsContainer {
 }
 
 impl ClientsContainer {
+    pub fn iter(&self) -> bevy::utils::hashbrown::hash_map::Iter<'_, u64, ClientCell>  {
+        self.players.iter()
+    }
+
     pub fn add(&mut self, client_id: u64, ip: String) {
         self.players.insert(
             client_id.clone(),

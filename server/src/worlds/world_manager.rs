@@ -5,7 +5,7 @@ use bevy_ecs::world::World;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::messages::ServerMessages;
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use parking_lot::RwLock;
 
 use crate::entities::entity::{NetworkComponent, Position, Rotation};
 use crate::CHUNKS_DISTANCE;
@@ -17,8 +17,8 @@ use super::world_generator::WorldGenerator;
 
 pub struct WorldManager {
     slug: String,
-    world: Arc<RwLock<World>>,
-    chunks_map: Arc<RwLock<ChunkMap>>,
+    world: World,
+    chunks_map: ChunkMap,
     world_generator: Arc<RwLock<WorldGenerator>>,
 }
 
@@ -26,26 +26,26 @@ impl WorldManager {
     pub fn new(slug: String, seed: u64) -> Self {
         WorldManager {
             slug: slug,
-            world: Arc::new(RwLock::new(World::new())),
-            chunks_map: Arc::new(RwLock::new(ChunkMap::new())),
+            world: World::new(),
+            chunks_map: ChunkMap::new(),
             world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
         }
     }
 
-    pub fn get_ecs(&self) -> RwLockReadGuard<World> {
-        self.world.read()
+    pub fn get_ecs(&self) -> &World {
+        &self.world
     }
 
-    pub fn get_ecs_mut(&self) -> RwLockWriteGuard<World> {
-        self.world.write()
+    pub fn get_ecs_mut(&mut self) -> &mut World {
+        &mut self.world
     }
 
-    pub fn get_chunks_map(&self) -> RwLockReadGuard<ChunkMap> {
-        self.chunks_map.read()
+    pub fn get_chunks_map(&self) -> &ChunkMap {
+        &self.chunks_map
     }
 
-    pub fn get_chunks_map_mut(&self) -> RwLockWriteGuard<ChunkMap> {
-        self.chunks_map.write()
+    pub fn get_chunks_map_mut(&mut self) -> &mut ChunkMap {
+        &mut self.chunks_map
     }
 
     pub fn get_slug(&self) -> &String {
@@ -60,7 +60,7 @@ impl WorldManager {
         let ecs = (position, rotation, NetworkComponent::new(client_id.clone()));
 
         let entity = {
-            let mut world = self.get_ecs_mut();
+            let world = self.get_ecs_mut();
             world.spawn(ecs).id()
         };
 
@@ -73,22 +73,21 @@ impl WorldManager {
     /// Returns boolean if player changed his chunk
     /// and his despawned chunks if so
     pub fn player_move(
-        &self,
+        &mut self,
         world_entity: &WorldEntity,
         position: Position,
         rotation: Rotation,
     ) -> (bool, Vec<ChunkPosition>) {
         let mut abandoned_chunks: Vec<ChunkPosition> = Default::default();
 
-        let mut w = self.get_ecs_mut();
-        let mut player_entity = w.entity_mut(world_entity.get_entity());
+        let mut player_entity = self.world.entity_mut(world_entity.get_entity());
         let mut old_position = player_entity.get_mut::<Position>().unwrap();
 
         let old_chunk = old_position.get_chunk_position();
         let new_chunk = position.get_chunk_position();
         let chunk_changed = old_chunk != new_chunk;
         if chunk_changed {
-            abandoned_chunks = self.get_chunks_map_mut().update_chunks_render(
+            abandoned_chunks = self.chunks_map.update_chunks_render(
                 world_entity.get_entity(),
                 &old_chunk,
                 &new_chunk,
@@ -110,7 +109,7 @@ impl WorldManager {
     /// Proxy for sending update_chunks
     pub fn update_chunks(&mut self, delta: Duration) {
         let world_slug = self.get_slug().clone();
-        self.get_chunks_map_mut()
+        self.chunks_map
             .update_chunks(delta, &world_slug, self.world_generator.clone());
     }
 

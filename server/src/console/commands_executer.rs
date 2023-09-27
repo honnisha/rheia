@@ -47,6 +47,9 @@ impl CommandsHandler {
     pub fn execute_command(world: &mut World, sender: Box<dyn ConsoleSenderType>, command: &String) {
         let re = Regex::new(REGEX_COMMAND).unwrap();
         let command_sequence: Vec<String> = re.find_iter(&command).map(|e| e.as_str().to_string()).collect();
+        if command_sequence.len() == 0 {
+            return;
+        }
         let lead_command = command_sequence[0].clone();
 
         let mut handlers = world.resource_mut::<CommandsHandler>();

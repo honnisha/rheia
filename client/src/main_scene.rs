@@ -84,7 +84,7 @@ impl NodeVirtual for Main {
 
         info!("Loading HonnyCraft version: {}", VERSION);
 
-        let network = match NetworkContainer::new("127.0.0.1:14191".to_string()) {
+        let network = match NetworkContainer::new("127.0.0.1:19134".to_string()) {
             Ok(c) => c,
             Err(e) => {
                 error!("Network connection error: {}", e);
@@ -176,6 +176,22 @@ impl NodeVirtual for Main {
         }
 
         self.debug_info.bind_mut().update_debug(&self.world_manager, network);
+
+        let input = Input::singleton();
+        if input.is_action_just_pressed("ui_toggle_console".into()) {
+            self.console.bind_mut().toggle(!Console::is_active());
+
+            if Console::is_active() {
+                self.debug_info.bind_mut().toggle(false);
+            }
+        }
+        if input.is_action_just_pressed("ui_toggle_debug".into()) {
+            self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
+
+            if DebugInfo::is_active() {
+                self.console.bind_mut().toggle(false);
+            }
+        }
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

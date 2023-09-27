@@ -7,7 +7,7 @@ pub struct MainCommand {
     #[arg(short, long, default_value_t = String::from("127.0.0.1"))]
     pub ip: String,
 
-    #[arg(short, long, default_value_t = String::from("14191"))]
+    #[arg(short, long, default_value_t = String::from("19134"))]
     pub port: String,
 
     #[arg(long, default_value_t = 512)]

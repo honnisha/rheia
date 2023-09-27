@@ -6,7 +6,6 @@ use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
-use crate::network::server::NetworkContainer;
 
 use super::worlds_manager::WorldsManager;
 
@@ -88,8 +87,7 @@ pub(crate) fn command_parser_teleport() -> Command {
 }
 
 pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) -> Result<(), CommandError> {
-    let worlds_manager = world.resource::<WorldsManager>();
-    let network_container = world.resource::<NetworkContainer>();
+    let worlds_manager = world.resource_mut::<WorldsManager>();
 
     let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
         Some(c) => c,
@@ -105,23 +103,23 @@ pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderT
     let position = Position::new(x, y, z);
     let rotation = Rotation::new(0.0, 0.0);
 
-    let world_entity = client.get_world_entity().clone();
+    let world_entity = client.get_world_entity();
     match world_entity {
         Some(world_entity) => {
-            let world_manager = worlds_manager
-                .get_world_manager(&world_entity.get_world_slug())
+            let mut world_manager = worlds_manager
+                .get_world_manager_mut(&world_entity.get_world_slug())
                 .unwrap();
             let (chunk_changed, abandoned_chunks) =
                 world_manager.player_move(&world_entity, position.clone(), rotation.clone());
 
             if chunk_changed {
                 let world_slug = world_entity.get_world_slug().clone();
-                client.send_unload_chunks(&network_container, &world_slug, abandoned_chunks);
+                client.send_unload_chunks(&world_slug, abandoned_chunks);
             }
         }
         None => todo!(),
     }
 
-    client.network_send_teleport(&network_container, &position, &rotation);
+    client.network_send_teleport(&position, &rotation);
     return Ok(());
 }

@@ -1,10 +1,10 @@
 use godot::prelude::Vector3;
-use rapier3d::control::{KinematicCharacterController, CharacterLength};
+use rapier3d::control::{CharacterLength, KinematicCharacterController};
 use rapier3d::prelude::*;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
-use crate::controller::player_controller::{CONTROLLER_RADIUS, CONTROLLER_HEIGHT};
+use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_RADIUS};
 
 pub type PhysicsContainerLock = Rc<RefCell<PhysicsController>>;
 pub type RigidBodySetLock = Rc<RefCell<RigidBodySet>>;
@@ -44,8 +44,8 @@ impl PhysicsEntity {
         let collider = self.get_collider().unwrap().clone();
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-            &RigidBodySet::new(),// &self.rigid_body_set.borrow(),
-            &ColliderSet::new(),// &self.collider_set.borrow(),
+            &RigidBodySet::new(), // &self.rigid_body_set.borrow(),
+            &ColliderSet::new(),  // &self.collider_set.borrow(),
             &self.query_pipeline.borrow(),
             collider.shape(),
             collider.position(),
@@ -128,15 +128,13 @@ impl PhysicsContainer {
     }
 
     pub fn create_controller(&self) -> PhysicsEntity {
-        let mut rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![0.0, 0.0, 0.0])
-            .build();
+        let mut rigid_body = RigidBodyBuilder::dynamic().translation(vector![0.0, 0.0, 0.0]).build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let half_height = CONTROLLER_HEIGHT;
+        let half_height = CONTROLLER_HEIGHT / 2.0;
         let radius = CONTROLLER_RADIUS;
         let collider = ColliderBuilder::cylinder(half_height, radius)
-            .density(3.0)
+            .mass(2.0)
             .restitution(0.0);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 

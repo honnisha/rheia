@@ -5,8 +5,8 @@ use common::{
     utils::vec_remove_item,
 };
 use core::fmt;
-use log::error;
-use parking_lot::{RwLock, RwLockReadGuard};
+use flume::{Drain, Receiver, Sender};
+use parking_lot::RwLock;
 use std::{any::Any, fmt::Display, sync::Arc};
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     entities::entity::{Position, Rotation},
 };
 
-use super::server::{NetworkContainer, NetworkPlugin};
+use super::server::{NetworkPlugin, SendClientMessageEvent};
 
 static SEND_CHUNK_QUEUE_LIMIT: usize = 128;
 
@@ -74,6 +74,8 @@ pub struct ClientNetwork {
     // Chunks was sended by network
     // but not yet recieved by the player
     send_chunk_queue: Arc<RwLock<Vec<ChunkPosition>>>,
+
+    client_messages_output: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>),
 }
 
 impl ClientNetwork {
@@ -85,19 +87,12 @@ impl ClientNetwork {
             world_entity: Arc::new(RwLock::new(None)),
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
+            client_messages_output: flume::unbounded(),
         }
     }
 
     pub fn allow_connection(&self) {
-        NetworkPlugin::send_static_message(
-            self.get_client_id().clone(),
-            NetworkMessageType::ReliableOrdered,
-            ServerMessages::AllowConnection {},
-        );
-    }
-
-    pub fn set_client_info(&mut self, info: ClientInfo) {
-        self.client_info = Some(info);
+        self.send_message(NetworkMessageType::ReliableOrdered, ServerMessages::AllowConnection {});
     }
 
     pub fn get_client_info(&self) -> Option<&ClientInfo> {
@@ -105,6 +100,10 @@ impl ClientNetwork {
             Some(i) => Some(&i),
             None => None,
         }
+    }
+
+    pub fn set_client_info(&mut self, info: ClientInfo) {
+        self.client_info = Some(info);
     }
 
     pub fn get_client_id(&self) -> &u64 {
@@ -115,8 +114,10 @@ impl ClientNetwork {
         &self.ip
     }
 
-    pub fn get_world_entity(&self) -> RwLockReadGuard<Option<WorldEntity>> {
-        self.world_entity.as_ref().read()
+    /// Stores the player's information about which world he is in
+    pub fn get_world_entity(&self) -> Option<WorldEntity> {
+        let lock = self.world_entity.as_ref().read();
+        lock.clone()
     }
 
     pub fn set_world_entity(&self, world_entity: Option<WorldEntity>) {
@@ -124,13 +125,7 @@ impl ClientNetwork {
     }
 
     /// Sends information about the player's new position over the network
-    pub fn network_send_teleport(&self, network_container: &NetworkContainer, position: &Position, rotation: &Rotation) {
-        let connected = network_container.is_connected(self.get_client_id());
-        if !connected {
-            error!("send_teleport runs on disconnected user ip:{}", self.get_client_ip());
-            return;
-        }
-
+    pub fn network_send_teleport(&self, position: &Position, rotation: &Rotation) {
         let lock = self.get_world_entity();
         let world_entity = lock.as_ref().unwrap();
         let input = ServerMessages::Teleport {
@@ -139,7 +134,7 @@ impl ClientNetwork {
             yaw: rotation.get_yaw().clone(),
             pitch: rotation.get_pitch().clone(),
         };
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, input);
+        self.send_message(NetworkMessageType::ReliableOrdered, input);
     }
 
     pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
@@ -169,33 +164,15 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        NetworkPlugin::send_static_message(
-            self.get_client_id().clone(),
-            NetworkMessageType::ReliableOrdered,
-            message,
-        );
+        self.send_message(NetworkMessageType::ReliableOrdered, message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
     }
 
     /// Send chunks to unload
-    pub fn send_unload_chunks(
-        &self,
-        network_container: &NetworkContainer,
-        world_slug: &String,
-        mut abandoned_chunks: Vec<ChunkPosition>,
-    ) {
+    pub fn send_unload_chunks(&self, world_slug: &String, mut abandoned_chunks: Vec<ChunkPosition>) {
         if abandoned_chunks.len() == 0 {
-            return;
-        }
-
-        let connected = network_container.is_connected(&self.client_id);
-        if !connected {
-            error!(
-                "send_unload_chunks runs on disconnected user ip:{}",
-                self.get_client_ip()
-            );
             return;
         }
 
@@ -213,7 +190,16 @@ impl ClientNetwork {
             world_slug: world_slug.clone(),
             chunks: unload_chunks,
         };
-        NetworkPlugin::send_static_message(self.get_client_id().clone(), NetworkMessageType::ReliableOrdered, input);
+        self.send_message(NetworkMessageType::ReliableOrdered, input);
+    }
+
+    pub fn send_message(&self, message_type: NetworkMessageType, message: ServerMessages) {
+        let msg = SendClientMessageEvent::new(self.get_client_id().clone(), message_type, message);
+        self.client_messages_output.0.send(msg).unwrap()
+    }
+
+    pub fn drain_client_messages(&self) -> Drain<SendClientMessageEvent> {
+        self.client_messages_output.1.drain()
     }
 }
 
@@ -229,7 +215,7 @@ impl Display for ClientNetwork {
 
 impl ConsoleSender for ClientNetwork {
     fn send_console_message(&self, message: String) {
-        NetworkPlugin::send_console_output(self.client_id.clone(), message);
+        NetworkPlugin::send_console_output(&self, message);
     }
 }
 impl ConsoleSenderType for ClientNetwork {

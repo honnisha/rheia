@@ -17,6 +17,7 @@ use std::borrow::Borrow;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
+use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::{
     client_resources::resources_manager::ResourceManager,
@@ -33,16 +34,24 @@ use crate::{
 pub struct NetworkPlugin;
 
 #[derive(Event)]
-pub(crate) struct SendClientMessageEvent {
+pub struct SendClientMessageEvent {
     client_id: u64,
     message_type: NetworkMessageType,
     message: ServerMessages,
 }
 
+impl SendClientMessageEvent {
+    pub fn new(client_id: u64, message_type: NetworkMessageType, message: ServerMessages) -> Self {
+        Self {
+            client_id,
+            message_type,
+            message,
+        }
+    }
+}
+
 lazy_static! {
     static ref CONSOLE_INPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
-    // static ref CLIENT_MESSAGES_OUTPUT: Arc<RwLock<Events<SendClientMessageEvent>>> = Arc::new(RwLock::new(Events::<SendClientMessageEvent>::default()));
-    static ref CLIENT_MESSAGES_OUTPUT: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>) = flume::unbounded();
 }
 
 pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
@@ -98,28 +107,19 @@ impl NetworkPlugin {
         app.add_systems(Update, send_client_messages.after(on_disconnect));
     }
 
-    pub(crate) fn send_console_output(client_id: u64, message: String) {
+    pub(crate) fn send_console_output(client: &ClientNetwork, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
-        NetworkPlugin::send_static_message(client_id, NetworkMessageType::ReliableOrdered, input);
+        client.send_message(NetworkMessageType::ReliableOrdered, input);
     }
 
-    pub(crate) fn send_resources(client_id: &u64, resources_manager: &Res<ResourceManager>) {
+    pub(crate) fn send_resources(client: &ClientNetwork, resources_manager: &Res<ResourceManager>) {
         for resource in resources_manager.get_resources().values() {
             let input = ServerMessages::Resource {
                 slug: resource.get_slug().clone(),
                 scripts: resource.get_client_scripts().clone(),
             };
-            NetworkPlugin::send_static_message(client_id.clone(), NetworkMessageType::ReliableOrdered, input);
+            client.send_message(NetworkMessageType::ReliableOrdered, input);
         }
-    }
-
-    pub(crate) fn send_static_message(client_id: u64, message_type: NetworkMessageType, message: ServerMessages) {
-        let msg = SendClientMessageEvent {
-            client_id,
-            message_type,
-            message,
-        };
-        CLIENT_MESSAGES_OUTPUT.0.send(msg).unwrap();
     }
 }
 
@@ -197,10 +197,17 @@ fn handle_events_system(
     }
 }
 
-fn send_client_messages(network_container: Res<NetworkContainer>) {
+fn send_client_messages(network_container: Res<NetworkContainer>, clients: Res<ClientsContainer>) {
     let network = network_container.server_network.as_ref().borrow();
 
-    for event in CLIENT_MESSAGES_OUTPUT.1.drain() {
-        network.send_message(event.client_id, &event.message, event.message_type);
+    for (client_id, client_lock) in clients.iter() {
+        if !network_container.is_connected(&client_id) {
+            continue;
+        }
+
+        let client = client_lock.read();
+        for message in client.drain_client_messages() {
+            network.send_message(message.client_id, &message.message, message.message_type);
+        }
     }
 }

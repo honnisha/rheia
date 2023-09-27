@@ -46,7 +46,7 @@ impl WorldsManager {
         &self.worlds
     }
 
-    pub fn get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<WorldManager>> {
+    pub fn _get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<WorldManager>> {
         match self.worlds.get(key) {
             Some(w) => Some(w.read()),
             None => None,

@@ -6,7 +6,6 @@ use log::info;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientInfo;
 use crate::network::clients_container::ClientsContainer;
-use crate::network::server::NetworkContainer;
 use crate::worlds::worlds_manager::WorldsManager;
 use crate::{client_resources::resources_manager::ResourceManager, network::server::NetworkPlugin};
 
@@ -23,7 +22,6 @@ impl PlayerConnectionInfoEvent {
 }
 
 pub fn on_connection_info(
-    network_container: Res<NetworkContainer>,
     mut connection_info_events: EventReader<PlayerConnectionInfoEvent>,
     resources_manager: Res<ResourceManager>,
     clients: Res<ClientsContainer>,
@@ -39,7 +37,7 @@ pub fn on_connection_info(
             client.get_client_info().unwrap().get_login(),
             client.get_client_id()
         );
-        NetworkPlugin::send_resources(&event.client_id, &resources_manager);
+        NetworkPlugin::send_resources(&client, &resources_manager);
 
         let default_world = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_world) {
@@ -50,7 +48,7 @@ pub fn on_connection_info(
             let world_entity = world_manager.spawn_player(client.get_client_id(), position, rotation);
             client.set_world_entity(Some(world_entity));
 
-            client.network_send_teleport(&network_container, &position, &rotation);
+            client.network_send_teleport(&position, &rotation);
         }
     }
 }

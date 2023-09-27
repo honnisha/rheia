@@ -62,7 +62,7 @@ impl Console {
         CONSOLE_ACTIVE.load(Ordering::Relaxed)
     }
 
-    fn toggle(&mut self, state: bool) {
+    pub fn toggle(&mut self, state: bool) {
         CONSOLE_ACTIVE.store(state, Ordering::Relaxed);
         let active = Console::is_active();
         self.base.set_visible(active);
@@ -187,14 +187,11 @@ impl NodeVirtual for Console {
             self.append_text(message);
         }
 
-        let input = Input::singleton();
-        if input.is_action_just_pressed("ui_toggle_console".into()) {
-            self.toggle(!Console::is_active());
-        }
         if !Console::is_active() {
             return;
         }
 
+        let input = Input::singleton();
         if input.is_action_just_pressed("ui_up".into()) {
             godot_print!("up");
         } else if input.is_action_just_pressed("ui_down".into()) {

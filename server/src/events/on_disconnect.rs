@@ -38,7 +38,7 @@ pub fn on_disconnect(
 
             // Check if player was in the world
             // despawn if so
-            let world_entity = client.get_world_entity().clone();
+            let world_entity = client.get_world_entity();
             match world_entity {
                 Some(c) => {
                     let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
