@@ -41,7 +41,7 @@ pub fn on_connection_info(
 
         let default_world = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_world) {
-            let position = Position::new(0.0, 60.0, 0.0);
+            let position = Position::new(0.0, 30.0, 0.0);
             let rotation = Rotation::new(0.0, 0.0);
 
             let mut world_manager = worlds_manager.get_world_manager_mut(&default_world).unwrap();

@@ -4,7 +4,7 @@ use rapier3d::prelude::*;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
-use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_RADIUS};
+use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS};
 
 pub type PhysicsContainerLock = Rc<RefCell<PhysicsController>>;
 pub type RigidBodySetLock = Rc<RefCell<RigidBodySet>>;
@@ -77,6 +77,8 @@ impl PhysicsEntity {
 
     pub fn set_position(&mut self, position: Vector<Real>) {
         let mut body = self.get_rigid_body_mut().unwrap();
+        // Reset velocity
+        body.sleep();
         body.set_translation(position, true);
     }
 
@@ -128,13 +130,13 @@ impl PhysicsContainer {
     }
 
     pub fn create_controller(&self) -> PhysicsEntity {
-        let mut rigid_body = RigidBodyBuilder::dynamic().translation(vector![0.0, 0.0, 0.0]).build();
+        let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let half_height = CONTROLLER_HEIGHT / 2.0;
-        let radius = CONTROLLER_RADIUS;
+        let half_height = CONTROLLER_HEIGHT / 2.0; // CONTROLLER_HEIGHT - 1.8
+        let radius = CONTROLLER_RADIUS; // CONTROLLER_RADIUS - 0.4
         let collider = ColliderBuilder::cylinder(half_height, radius)
-            .mass(2.0)
+            .mass(CONTROLLER_MASS)
             .restitution(0.0);
         let rigid_handle = self.rigid_body_set.borrow_mut().insert(rigid_body);
 

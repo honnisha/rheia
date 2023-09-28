@@ -18,10 +18,12 @@ pub(crate) const ACCELERATION: f32 = 4.0;
 pub(crate) const BOST_MULTIPLIER: f32 = 1.5;
 pub(crate) const SENSITIVITY: f32 = 0.3;
 
-const JUMP_IMPULSE: f32 = 10.0;
-
 pub const CONTROLLER_HEIGHT: f32 = 1.8;
+const CAMERA_VERTICAL_OFFSET: f32 = 1.7;
+
 pub const CONTROLLER_RADIUS: f32 = 0.4;
+pub const CONTROLLER_MASS: f32 = 4.0;
+const JUMP_IMPULSE: f32 = 20.0;
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
@@ -38,14 +40,14 @@ pub struct PlayerController {
 
 impl PlayerController {
     pub fn create(base: Base<Node3D>, physics_container: &mut PhysicsContainer) -> Self {
-        let camera = load::<PackedScene>("res://scenes/camera_3d.tscn").instantiate_as::<Camera3D>();
+        let mut camera = Camera3D::new_alloc();
+        camera.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
 
         let mut body = MeshInstance3D::new_alloc();
         let mut mesh = CapsuleMesh::new();
         mesh.set_height(CONTROLLER_HEIGHT);
         mesh.set_radius(CONTROLLER_RADIUS);
         body.set_mesh(mesh.upcast());
-        body.set_position(Vector3::new(0.0, CONTROLLER_HEIGHT / 2.0, 0.0));
 
         Self {
             base,
@@ -75,7 +77,9 @@ impl PlayerController {
     pub fn set_position(&mut self, position: Vector3) {
         self.base.set_position(position);
 
-        let physics_pos = vector![position.x, position.y, position.z];
+        // The center of the physical collider at his center
+        // So it shifts to half the height
+        let physics_pos = vector![position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z];
         self.physics_entity.set_position(physics_pos);
     }
 
@@ -100,10 +104,7 @@ impl NodeVirtual for PlayerController {
     }
 
     fn ready(&mut self) {
-        self.body.set_position(Vector3::new(0.0, 1.0, 0.0));
         self.base.add_child(self.body.share().upcast());
-
-        self.camera.set_position(Vector3::new(0.0, 1.5, 0.0));
         self.base.add_child(self.camera.share().upcast());
     }
 
@@ -181,11 +182,14 @@ impl NodeVirtual for PlayerController {
             // Move
             let vec = self.input_data.get_movement_vector(delta);
             let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
-            self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+            if vec != Vector3::ZERO {
+                self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+            }
 
             // Sync godot object position
             let physics_pos = self.physics_entity.get_position();
-            self.base.set_position(Vector3::new(physics_pos.x, physics_pos.y, physics_pos.z));
+            // Controller position is lowered by half of the center of mass position
+            self.base.set_position(Vector3::new(physics_pos.x, physics_pos.y - CONTROLLER_HEIGHT / 2.0, physics_pos.z));
 
             // Jump
             let input = Input::singleton();
