@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::slice::Iter;
 
 use ahash::HashMap;
 
@@ -31,6 +32,10 @@ impl Command {
     pub fn subcommand_required(mut self, required: bool) -> Self {
         self.subcommand_required = required;
         self
+    }
+
+    pub fn commands(&self) -> Iter<Command> {
+        self.commands.iter()
     }
 
     /// command_sequence example:
@@ -233,6 +238,19 @@ mod tests {
         let command = world_command();
 
         let cmd = "world ".to_string();
+        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let result = command.get_current(&command_sequence[1..]);
+
+        assert_eq!(result.is_some(), true, "Command must be found");
+        assert_eq!(result.as_ref().unwrap().0.name, "world".to_string());
+        assert_eq!(result.as_ref().unwrap().1.is_none(), true);
+    }
+
+    #[test]
+    fn test_command_current_world_part() {
+        let command = world_command();
+
+        let cmd = "world c".to_string();
         let command_sequence = CommandsHandler::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 

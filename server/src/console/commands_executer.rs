@@ -145,6 +145,16 @@ impl CommandsHandler {
             }
 
             let command = command_handler.command_parser.clone();
+            if let Some((command, arg)) = command.get_current(&command_sequence[1..]) {
+                match arg {
+                    Some(_a) => {},
+                    None => {
+                        for c in command.commands() {
+                            con ti nue
+                        }
+                    },
+                }
+            }
             break;
         }
 
