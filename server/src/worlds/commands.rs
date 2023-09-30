@@ -1,9 +1,8 @@
 use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
-use clap::{Arg, ArgAction, ArgMatches, Command};
 
+use crate::console::command::{Arg, ArgMatches, Command};
 use crate::console::commands_executer::CommandError;
-use crate::console::completer::CompleteResponse;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
@@ -11,19 +10,10 @@ use crate::network::client_network::ClientNetwork;
 use super::worlds_manager::WorldsManager;
 
 pub(crate) fn command_parser_world() -> Command {
-    Command::new("world")
-        .subcommand_required(true)
-        .subcommand(Command::new("list").short_flag('l').long_flag("list"))
-        .subcommand(
-            Command::new("create").short_flag('c').long_flag("create").arg(
-                Arg::new("slug")
-                    .short('s')
-                    .long("slug")
-                    .help("slug of the new world")
-                    .required(true)
-                    .action(ArgAction::Set),
-            ),
-        )
+    Command::new("world".to_string()).subcommand_required(true).subcommand(
+        Command::new("list".to_owned())
+            .subcommand(Command::new("create".to_owned()).arg(Arg::new("slug".to_owned()).required(true))),
+    )
 }
 
 pub(crate) fn command_world(
@@ -50,7 +40,7 @@ pub(crate) fn command_world(
             }
         }
         Some(("create", create_matches)) => {
-            let slug = create_matches.get_one::<String>("slug").unwrap();
+            let slug = create_matches.get_arg::<String>("slug".to_owned()).unwrap();
             let mut rng = RandomNumberGenerator::new();
             let seed = rng.next_u64();
             match worlds_manager.create_world(slug.clone(), seed) {
@@ -70,25 +60,10 @@ pub(crate) fn command_world(
 }
 
 pub(crate) fn command_parser_teleport() -> Command {
-    Command::new("tp")
-        .arg(
-            Arg::new("x")
-                .required(true)
-                .action(ArgAction::Set)
-                .value_parser(clap::value_parser!(f32)),
-        )
-        .arg(
-            Arg::new("y")
-                .required(true)
-                .action(ArgAction::Set)
-                .value_parser(clap::value_parser!(f32)),
-        )
-        .arg(
-            Arg::new("z")
-                .required(true)
-                .action(ArgAction::Set)
-                .value_parser(clap::value_parser!(f32)),
-        )
+    Command::new("tp".to_owned())
+        .arg(Arg::new("x".to_owned()).required(true))
+        .arg(Arg::new("y".to_owned()).required(true))
+        .arg(Arg::new("z".to_owned()).required(true))
 }
 
 pub(crate) fn command_teleport(
@@ -105,9 +80,9 @@ pub(crate) fn command_teleport(
             return Ok(());
         }
     };
-    let x = args.get_one::<f32>("x").unwrap().clone();
-    let y = args.get_one::<f32>("y").unwrap().clone();
-    let z = args.get_one::<f32>("z").unwrap().clone();
+    let x = args.get_arg::<f32>("x".to_owned()).unwrap().clone();
+    let y = args.get_arg::<f32>("y".to_owned()).unwrap().clone();
+    let z = args.get_arg::<f32>("z".to_owned()).unwrap().clone();
 
     let position = Position::new(x, y, z);
     let rotation = Rotation::new(0.0, 0.0);

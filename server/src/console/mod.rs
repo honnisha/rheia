@@ -8,6 +8,7 @@ pub mod console_handler;
 pub mod console_sender;
 pub mod helper;
 pub mod completer;
+pub mod command;
 
 pub struct ConsolePlugin;
 

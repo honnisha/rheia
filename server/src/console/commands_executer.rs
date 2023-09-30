@@ -1,6 +1,5 @@
-use super::{completer::CompleteResponse, console_sender::ConsoleSenderType};
+use super::{completer::CompleteResponse, console_sender::ConsoleSenderType, command::{Command, ArgMatches}};
 use bevy_ecs::{system::Resource, world::World};
-use clap::{error::ErrorKind, ArgMatches, Command};
 use log::error;
 use regex::Regex;
 
@@ -68,22 +67,13 @@ impl CommandsHandler {
                 continue;
             }
 
-            let parser = command_handler.command_parser.clone();
-            match parser.try_get_matches_from(&command_sequence) {
+            let command = command_handler.command_parser.clone();
+            match command.eval(&command_sequence) {
                 Ok(e) => {
                     handler = Some((command_handler.handler.clone(), e.clone()));
                 }
                 Err(e) => {
-                    match e.kind() {
-                        ErrorKind::DisplayHelp | ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => {
-                            let mut buf = Vec::new();
-                            command_handler.command_parser.write_help(&mut buf).unwrap();
-                            sender.send_console_message(String::from_utf8(buf).unwrap())
-                        }
-                        _ => {
-                            sender.send_console_message(e.render().to_string());
-                        }
-                    };
+                    sender.send_console_message(e.to_string());
                     return;
                 }
             };
@@ -135,11 +125,13 @@ impl CommandsHandler {
                 continue;
             }
             complete_handler = command_handler.complete_handler;
+
+            let command = command_handler.command_parser.clone();
             break;
         }
 
-        if let Some(h) = complete_handler {
-            (h)(world, sender, complete_response);
-        }
+        //if let Some(h) = complete_handler {
+        //    (h)(world, sender, complete_response);
+        //}
     }
 }
