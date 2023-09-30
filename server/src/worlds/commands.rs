@@ -45,9 +45,14 @@ pub(crate) fn command_world(
                 }
             }
             "create" => {
-                let slug = world_subcommand.get_arg::<String>(&"slug".to_owned()).unwrap();
-                let mut rng = RandomNumberGenerator::new();
-                let seed = rng.next_u64();
+                let slug = world_subcommand.get_arg::<String>(&"slug".to_owned())?;
+                let seed = match world_subcommand.get_arg::<u64>(&"slug".to_owned()) {
+                    Ok(s) => s,
+                    Err(_) => {
+                        let mut rng = RandomNumberGenerator::new();
+                        rng.next_u64()
+                    },
+                };
                 match worlds_manager.create_world(slug.clone(), seed) {
                     Ok(_) => {
                         sender.send_console_message(format!("World \"{}\" was successfully created", slug));

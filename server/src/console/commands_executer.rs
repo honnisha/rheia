@@ -9,7 +9,7 @@ use bevy_ecs::{system::Resource, world::World};
 use log::error;
 use regex::Regex;
 
-pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
+pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]*)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]*)""####;
 
 // https://github.com/clap-rs/clap/blob/master/examples/pacman.rs
 
@@ -139,12 +139,10 @@ impl CommandsHandler {
             return;
         }
 
-        let mut complete_handler: Option<CommandCompleteFN> = None;
         for command_handler in handlers.commands.iter() {
             if command_handler.name != lead_command {
                 continue;
             }
-            complete_handler = command_handler.complete_handler;
 
             let command = command_handler.command_parser.clone();
             break;
