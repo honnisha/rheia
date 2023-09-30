@@ -1,3 +1,5 @@
+use std::{thread, time::Duration};
+
 use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{
@@ -7,13 +9,51 @@ use rustyline::{
     Changeset, Context, Result,
 };
 
-pub(crate) struct CompleteRequest {
-    pub(crate) line: String,
-    pub(crate) pos: usize,
+/// Requesting options for completing the console command
+#[derive(Clone)]
+pub struct CompleteRequest {
+    line: String,
+    pos: usize,
+}
+
+impl CompleteRequest {
+    pub fn get_line(&self) -> &String {
+        &self.line
+    }
+
+    pub fn get_pos(&self) -> &usize {
+        &self.pos
+    }
+}
+
+/// Responding to a request to retrieve console command options
+pub struct CompleteResponse {
+    // Original request
+    request: CompleteRequest,
+    completions: Vec<CustomCandidate>,
+}
+
+impl CompleteResponse {
+    pub(crate) fn new(request: CompleteRequest) -> Self {
+        Self {
+            request,
+            completions: Default::default(),
+        }
+    }
+
+    pub fn get_request(&self) -> &CompleteRequest {
+        &self.request
+    }
+
+    pub fn add_completion(&mut self, completion: String) {
+        let c = CustomCandidate::new(completion);
+        self.completions.push(c);
+    }
 }
 
 lazy_static! {
-    static ref CONSOLE_COMPLETE_REQUESTS: (Sender<CompleteRequest>, Receiver<CompleteRequest>) = flume::unbounded();
+    static ref CONSOLE_COMPLETE_REQUESTS: (Sender<CompleteRequest>, Receiver<CompleteRequest>) = flume::bounded(1);
+    static ref CONSOLE_COMPLETE_RESPONSES: (Sender<CompleteResponse>, Receiver<CompleteResponse>) = flume::bounded(1);
 }
 
 #[derive(Default)]
@@ -24,8 +64,12 @@ impl CustomCompleter {
         CONSOLE_COMPLETE_REQUESTS.1.drain()
     }
 
-    pub(crate) fn send_complere_request(request: CompleteRequest) {
+    pub(crate) fn send_complete_request(request: CompleteRequest) {
         CONSOLE_COMPLETE_REQUESTS.0.send(request).unwrap();
+    }
+
+    pub(crate) fn send_complete_response(response: CompleteResponse) {
+        CONSOLE_COMPLETE_RESPONSES.0.send(response).unwrap();
     }
 }
 
@@ -33,17 +77,22 @@ impl Completer for CustomCompleter {
     type Candidate = CustomCandidate;
 
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Result<(usize, Vec<CustomCandidate>)> {
+        // log::info!("CustomCompleter::complete line:\"{}\" pos:{}", line, pos);
         let request = CompleteRequest {
             line: line.to_string(),
             pos,
         };
-        CustomCompleter::send_complere_request(request);
-        let mut reuslts = Vec::new();
-        let c = CustomCandidate::new("display1".to_string());
-        reuslts.push(c);
-        let c = CustomCandidate::new("display2".to_string());
-        reuslts.push(c);
-        Ok((pos, reuslts))
+        CustomCompleter::send_complete_request(request);
+
+        let reuslt;
+        'waiting: loop {
+            for response in CONSOLE_COMPLETE_RESPONSES.1.drain() {
+                reuslt = response.completions;
+                break 'waiting;
+            }
+            thread::sleep(Duration::from_millis(1));
+        }
+        Ok((pos, reuslt))
     }
 
     /// Updates the edited `line` with the `elected` candidate.
@@ -89,7 +138,7 @@ pub(crate) struct CustomHinter {}
 impl Hinter for CustomHinter {
     type Hint = String;
 
-    fn hint(&self, line: &str, pos: usize, ctx: &Context<'_>) -> Option<String> {
+    fn hint(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Option<String> {
         if line.is_empty() || pos < line.len() {
             return None;
         }

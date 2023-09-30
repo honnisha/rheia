@@ -3,6 +3,7 @@ use bracket_lib::random::RandomNumberGenerator;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
 use crate::console::commands_executer::CommandError;
+use crate::console::completer::CompleteResponse;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
@@ -25,7 +26,11 @@ pub(crate) fn command_parser_world() -> Command {
         )
 }
 
-pub(crate) fn command_world(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) -> Result<(), CommandError> {
+pub(crate) fn command_world(
+    world: &mut World,
+    sender: Box<dyn ConsoleSenderType>,
+    args: ArgMatches,
+) -> Result<(), CommandError> {
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
     match args.subcommand() {
         Some(("list", _)) => {
@@ -86,7 +91,11 @@ pub(crate) fn command_parser_teleport() -> Command {
         )
 }
 
-pub(crate) fn command_teleport(world: &mut World, sender: Box<dyn ConsoleSenderType>, args: ArgMatches) -> Result<(), CommandError> {
+pub(crate) fn command_teleport(
+    world: &mut World,
+    sender: Box<dyn ConsoleSenderType>,
+    args: ArgMatches,
+) -> Result<(), CommandError> {
     let worlds_manager = world.resource_mut::<WorldsManager>();
 
     let client = match sender.as_any().downcast_ref::<ClientNetwork>() {

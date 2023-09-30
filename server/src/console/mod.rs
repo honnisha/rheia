@@ -1,7 +1,7 @@
 use bevy_app::{App, Plugin, Update, Startup};
 use bevy_ecs::world::World;
 
-use self::{console_handler::ConsoleHandler, commands_executer::CommandsHandler, console_sender::Console, completer::CustomCompleter};
+use self::{console_handler::ConsoleHandler, commands_executer::CommandsHandler, console_sender::Console, completer::{CustomCompleter, CompleteResponse}};
 
 pub mod commands_executer;
 pub mod console_handler;
@@ -35,6 +35,9 @@ fn handler_console_input(world: &mut World) {
 
 fn handler_console_complete(world: &mut World) {
     for request in CustomCompleter::iter_complere_requests() {
-        log::info!("pos:{} line:{}", request.pos, request.line);
+        let mut response = CompleteResponse::new(request);
+        let sender = Console::default();
+        CommandsHandler::complete(world, Box::new(sender), &mut response);
+        CustomCompleter::send_complete_response(response);
     }
 }
