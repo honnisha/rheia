@@ -131,7 +131,7 @@ fn receive_message_system(
     mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
     if time.delta() > std::time::Duration::from_millis(100) {
-        println!("receive_message_system delay: {:.2?}", time.delta());
+        log::info!("receive_message_system delay: {:.2?}", time.delta());
     }
     let network = network_container.server_network.as_ref().borrow();
     network.step(time.delta());

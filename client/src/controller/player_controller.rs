@@ -3,7 +3,6 @@ use godot::engine::{
     global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
     InputEventMouseMotion,
 };
-use godot::engine::{CapsuleMesh, MeshInstance3D};
 use godot::prelude::*;
 use rapier3d::prelude::*;
 
@@ -25,33 +24,46 @@ pub const CONTROLLER_RADIUS: f32 = 0.4;
 pub const CONTROLLER_MASS: f32 = 4.0;
 const JUMP_IMPULSE: f32 = 20.0;
 
+const THIRD_PERSON_OFFST: Vector3 = Vector3::new(0.5, 0.0, 3.0);
+
+pub enum ContollerViewMode {
+    FirstPersonView,
+    ThirdPersonView,
+}
+
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct PlayerController {
     #[base]
     pub(crate) base: Base<Node3D>,
+
+    view_mode: ContollerViewMode,
+
+    camera_anchor: Gd<Node3D>,
     camera: Gd<Camera3D>,
+
     input_data: InputData,
     cache_movement: Option<PlayerMovement>,
 
-    body: Gd<MeshInstance3D>,
+    body: Gd<Node3D>,
     physics_entity: PhysicsEntity,
 }
 
 impl PlayerController {
     pub fn create(base: Base<Node3D>, physics_container: &mut PhysicsContainer) -> Self {
-        let mut camera = Camera3D::new_alloc();
-        camera.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
+        let mut camera_anchor = Node3D::new_alloc();
+        camera_anchor.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
 
-        let mut body = MeshInstance3D::new_alloc();
-        let mut mesh = CapsuleMesh::new();
-        mesh.set_height(CONTROLLER_HEIGHT);
-        mesh.set_radius(CONTROLLER_RADIUS);
-        body.set_mesh(mesh.upcast());
+        let camera = Camera3D::new_alloc();
+        camera_anchor.add_child(camera.share().upcast());
+
+        let body = load::<PackedScene>("res://scenes/controller_body.tscn").instantiate_as::<Node3D>();
 
         Self {
             base,
-            camera: camera,
+            view_mode: ContollerViewMode::FirstPersonView,
+            camera,
+            camera_anchor,
             input_data: Default::default(),
             cache_movement: None,
             physics_entity: physics_container.create_controller(),
@@ -66,12 +78,12 @@ impl PlayerController {
 
     /// Horizontal angle
     pub fn get_yaw(&self) -> f32 {
-        self.camera.get_rotation().x
+        self.camera_anchor.get_rotation().x
     }
 
     /// Vertical angle
     pub fn get_pitch(&self) -> f32 {
-        self.camera.get_rotation().y
+        self.camera_anchor.get_rotation().y
     }
 
     pub fn set_position(&mut self, position: Vector3) {
@@ -84,9 +96,30 @@ impl PlayerController {
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
-        self.camera.rotate_y(yaw);
-        self.camera
+        self.camera_anchor.rotate_y(yaw);
+        self.camera_anchor
             .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
+
+        // Rotate visible third_person body
+        self.body.rotate_y(yaw);
+    }
+
+    pub fn set_view_mode(&mut self, view_mode: ContollerViewMode) {
+        self.view_mode = view_mode;
+        match self.view_mode {
+            ContollerViewMode::FirstPersonView => {
+                self.body.set_visible(false);
+                self.camera.set_position(Vector3::ZERO);
+            },
+            ContollerViewMode::ThirdPersonView => {
+                self.body.set_visible(true);
+                self.camera.set_position(THIRD_PERSON_OFFST);
+            }
+        }
+    }
+
+    pub fn get_view_mode(&self) -> &ContollerViewMode {
+        &self.view_mode
     }
 }
 
@@ -105,7 +138,8 @@ impl NodeVirtual for PlayerController {
 
     fn ready(&mut self) {
         self.base.add_child(self.body.share().upcast());
-        self.base.add_child(self.camera.share().upcast());
+        self.base.add_child(self.camera_anchor.share().upcast());
+        self.set_view_mode(ContollerViewMode::FirstPersonView);
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -183,13 +217,18 @@ impl NodeVirtual for PlayerController {
             let vec = self.input_data.get_movement_vector(delta);
             let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
             if vec != Vector3::ZERO {
-                self.physics_entity.controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+                self.physics_entity
+                    .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
             }
 
             // Sync godot object position
             let physics_pos = self.physics_entity.get_position();
             // Controller position is lowered by half of the center of mass position
-            self.base.set_position(Vector3::new(physics_pos.x, physics_pos.y - CONTROLLER_HEIGHT / 2.0, physics_pos.z));
+            self.base.set_position(Vector3::new(
+                physics_pos.x,
+                physics_pos.y - CONTROLLER_HEIGHT / 2.0,
+                physics_pos.z,
+            ));
 
             // Jump
             let input = Input::singleton();

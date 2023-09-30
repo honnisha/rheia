@@ -44,6 +44,13 @@ impl WorldManager {
         }
     }
 
+    pub fn get_world_mut(&mut self) -> Option<&mut Gd<World>> {
+        match self.world.as_mut() {
+            Some(w) => Some(w),
+            None => None,
+        }
+    }
+
     /// Raise exception if there is no world
     fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
         let mut world = self.world.as_mut().unwrap().bind_mut();

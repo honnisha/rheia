@@ -1,21 +1,26 @@
-use bevy_ecs::world::World;
 use chrono::Local;
-use flume::{Receiver, Sender};
+use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::{error, info};
-use rustyline::{error::ReadlineError, history::FileHistory, Config, DefaultEditor, ExternalPrinter};
-use std::{thread, time::Duration, fs::OpenOptions};
+use rustyline::{
+    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, Config, Editor,
+    ExternalPrinter,
+};
+use std::{fs::OpenOptions, thread, time::Duration};
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
-use super::{commands_executer::CommandsHandler, console_sender::Console};
+use super::{
+    completer::{CustomCompleter, CustomHinter},
+    helper::CustomHelper,
+};
 
 lazy_static! {
     // To handle output log from entire server and draw it on console
     static ref CONSOLE_OUTPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
 
     // Console input
-    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::unbounded();
+    static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::bounded(1);
 }
 
 pub struct ConsoleHandler;
@@ -30,9 +35,17 @@ impl ConsoleHandler {
             .auto_add_history(true)
             .edit_mode(rustyline::EditMode::Emacs)
             .build();
-        let history = FileHistory::with_config(config);
 
-        let mut rl = DefaultEditor::with_history(config, history).unwrap();
+        let helper = CustomHelper {
+            completer: CustomCompleter::default(),
+            highlighter: MatchingBracketHighlighter::new(),
+            hinter: CustomHinter::default(),
+            colored_prompt: "".to_owned(),
+            validator: MatchingBracketValidator::new(),
+        };
+
+        let mut rl = Editor::with_config(config).unwrap();
+        rl.set_helper(Some(helper));
 
         let _ = OpenOptions::new()
             .create_new(true)
@@ -94,10 +107,7 @@ impl ConsoleHandler {
         }
     }
 
-    pub fn handler_console_input(world: &mut World) {
-        for command in CONSOLE_INPUT_CHANNEL.1.try_iter() {
-            let sender = Console::default();
-            CommandsHandler::execute_command(world, Box::new(sender), &command);
-        }
+    pub fn iter_commands() -> Drain<'static, String> {
+        CONSOLE_INPUT_CHANNEL.1.drain()
     }
 }
