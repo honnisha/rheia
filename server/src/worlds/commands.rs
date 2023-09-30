@@ -1,7 +1,7 @@
 use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 
-use crate::console::command::{Arg, ArgMatches, Command};
+use crate::console::command::{Arg, Command, CommandMatch};
 use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
@@ -10,50 +10,56 @@ use crate::network::client_network::ClientNetwork;
 use super::worlds_manager::WorldsManager;
 
 pub(crate) fn command_parser_world() -> Command {
-    Command::new("world".to_string()).subcommand_required(true).subcommand(
-        Command::new("list".to_owned())
-            .subcommand(Command::new("create".to_owned()).arg(Arg::new("slug".to_owned()).required(true))),
-    )
+    Command::new("world".to_string())
+        .subcommand_required(true)
+        .subcommand(Command::new("list".to_owned()))
+        .subcommand(
+            Command::new("create".to_owned())
+                .arg(Arg::new("slug".to_owned()).required(true))
+                .arg(Arg::new("seed".to_owned())),
+        )
 }
 
 pub(crate) fn command_world(
     world: &mut World,
     sender: Box<dyn ConsoleSenderType>,
-    args: ArgMatches,
+    args: CommandMatch,
 ) -> Result<(), CommandError> {
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
-    match args.subcommand() {
-        Some(("list", _)) => {
-            if worlds_manager.count() == 0 {
-                sender.send_console_message("Worlds list is empty".to_string());
-                return Ok(());
-            }
-            let worlds = worlds_manager.get_worlds();
-            sender.send_console_message("Worlds list:".to_string());
-            for (_slug, world) in worlds.iter() {
-                let world = world.read();
-                sender.send_console_message(format!(
-                    " - {} (loaded chunks: {})",
-                    world.get_slug(),
-                    world.get_chunks_count()
-                ));
-            }
-        }
-        Some(("create", create_matches)) => {
-            let slug = create_matches.get_arg::<String>("slug".to_owned()).unwrap();
-            let mut rng = RandomNumberGenerator::new();
-            let seed = rng.next_u64();
-            match worlds_manager.create_world(slug.clone(), seed) {
-                Ok(_) => {
-                    sender.send_console_message(format!("World \"{}\" was successfully created", slug));
+    if let Some(world_subcommand) = args.subcommand() {
+        match world_subcommand.get_name().as_str() {
+            "list" => {
+                if worlds_manager.count() == 0 {
+                    sender.send_console_message("Worlds list is empty".to_string());
+                    return Ok(());
                 }
-                Err(e) => {
-                    sender.send_console_message(format!("World \"{}\" creation error: {}", slug, e));
+                let worlds = worlds_manager.get_worlds();
+                sender.send_console_message("Worlds list:".to_string());
+                for (_slug, world) in worlds.iter() {
+                    let world = world.read();
+                    sender.send_console_message(format!(
+                        " - {} (loaded chunks: {})",
+                        world.get_slug(),
+                        world.get_chunks_count()
+                    ));
                 }
             }
-        }
-        _ => {
-            sender.send_console_message("Error".to_string());
+            "create" => {
+                let slug = world_subcommand.get_arg::<String>(&"slug".to_owned()).unwrap();
+                let mut rng = RandomNumberGenerator::new();
+                let seed = rng.next_u64();
+                match worlds_manager.create_world(slug.clone(), seed) {
+                    Ok(_) => {
+                        sender.send_console_message(format!("World \"{}\" was successfully created", slug));
+                    }
+                    Err(e) => {
+                        sender.send_console_message(format!("World \"{}\" creation error: {}", slug, e));
+                    }
+                }
+            }
+            _ => {
+                sender.send_console_message("Error".to_string());
+            }
         }
     }
     return Ok(());
@@ -69,7 +75,7 @@ pub(crate) fn command_parser_teleport() -> Command {
 pub(crate) fn command_teleport(
     world: &mut World,
     sender: Box<dyn ConsoleSenderType>,
-    args: ArgMatches,
+    args: CommandMatch,
 ) -> Result<(), CommandError> {
     let worlds_manager = world.resource_mut::<WorldsManager>();
 
@@ -80,9 +86,9 @@ pub(crate) fn command_teleport(
             return Ok(());
         }
     };
-    let x = args.get_arg::<f32>("x".to_owned()).unwrap().clone();
-    let y = args.get_arg::<f32>("y".to_owned()).unwrap().clone();
-    let z = args.get_arg::<f32>("z".to_owned()).unwrap().clone();
+    let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
+    let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
+    let z = args.get_arg::<f32>(&"z".to_owned())?.clone();
 
     let position = Position::new(x, y, z);
     let rotation = Rotation::new(0.0, 0.0);

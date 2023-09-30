@@ -34,6 +34,9 @@ bevy_ecs = "0.11.2"
 # Single thread links
 send_wrapper = "0.6.0"
 
+# ARGS
+clap = { version = "4.2.1", features = ["string", "derive"] }
+
 # Noise
 bracket-lib = "~0.8"
 bracket-noise = "~0.8"

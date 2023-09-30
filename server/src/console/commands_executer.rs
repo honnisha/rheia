@@ -1,4 +1,10 @@
-use super::{completer::CompleteResponse, console_sender::ConsoleSenderType, command::{Command, ArgMatches}};
+use std::{error::Error, fmt};
+
+use super::{
+    command::{Command, CommandMatch},
+    completer::CompleteResponse,
+    console_sender::ConsoleSenderType,
+};
 use bevy_ecs::{system::Resource, world::World};
 use log::error;
 use regex::Regex;
@@ -6,8 +12,19 @@ use regex::Regex;
 pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]+)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]+)""####;
 
 // https://github.com/clap-rs/clap/blob/master/examples/pacman.rs
-pub type CommandError = String;
-type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, ArgMatches) -> Result<(), CommandError>;
+
+#[derive(Debug, Clone)]
+pub struct CommandError(pub String);
+
+impl Error for CommandError {}
+
+impl fmt::Display for CommandError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, CommandMatch) -> Result<(), CommandError>;
 type CommandCompleteFN = fn(
     world: &mut World,
     sender: Box<dyn ConsoleSenderType>,
@@ -51,16 +68,20 @@ impl CommandsHandler {
         self.commands.push(executer);
     }
 
-    pub fn execute_command(world: &mut World, sender: Box<dyn ConsoleSenderType>, command: &String) {
+    pub fn parse_command(command: &String) -> Vec<String> {
         let re = Regex::new(REGEX_COMMAND).unwrap();
-        let command_sequence: Vec<String> = re.find_iter(&command).map(|e| e.as_str().to_string()).collect();
+        re.find_iter(&command).map(|e| e.as_str().to_string()).collect()
+    }
+
+    pub fn execute_command(world: &mut World, sender: Box<dyn ConsoleSenderType>, command: &String) {
+        let command_sequence = CommandsHandler::parse_command(command);
         if command_sequence.len() == 0 {
             return;
         }
         let lead_command = command_sequence[0].clone();
 
         let mut handlers = world.resource_mut::<CommandsHandler>();
-        let mut handler: Option<(CommandFN, ArgMatches)> = None;
+        let mut handler: Option<(CommandFN, CommandMatch)> = None;
 
         for command_handler in handlers.commands.iter_mut() {
             if command_handler.name != lead_command {
@@ -68,7 +89,7 @@ impl CommandsHandler {
             }
 
             let command = command_handler.command_parser.clone();
-            match command.eval(&command_sequence) {
+            match command.eval(&command_sequence[1..]) {
                 Ok(e) => {
                     handler = Some((command_handler.handler.clone(), e.clone()));
                 }
@@ -97,8 +118,7 @@ impl CommandsHandler {
         let line = complete_response.get_request().get_line().clone();
         let pos = complete_response.get_request().get_pos().clone();
 
-        let re = Regex::new(REGEX_COMMAND).unwrap();
-        let command_sequence: Vec<String> = re.find_iter(&line).map(|e| e.as_str().to_string()).collect();
+        let command_sequence = CommandsHandler::parse_command(&line);
 
         // Return all command names
         if command_sequence.len() == 0 {
