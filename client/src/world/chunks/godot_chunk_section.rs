@@ -2,12 +2,18 @@ use std::borrow::BorrowMut;
 
 use common::blocks::blocks_storage::BlockType;
 use godot::{
-    engine::{ArrayMesh, Material, MeshInstance3D},
+    engine::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
 
-use crate::world::{godot_world::get_default_material, physics_handler::{PhysicsStaticEntity, PhysicsContainer}};
+use crate::{
+    entities::position::GodotPositionConverter,
+    world::{
+        godot_world::get_default_material,
+        physics_handler::{PhysicsContainer, PhysicsStaticEntity},
+    },
+};
 
 use super::mesh::mesh_generator::Geometry;
 
@@ -26,22 +32,32 @@ pub struct ChunkSection {
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
     physics_entity: PhysicsStaticEntity,
+    y: u8,
 }
 
 impl ChunkSection {
-    pub fn create(base: Base<Node3D>, material: Gd<Material>, physics_entity: PhysicsStaticEntity) -> Self {
+    pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8, physics_entity: PhysicsStaticEntity) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
         mesh.set_material_overlay(material.share());
 
-        Self { base, mesh, physics_entity }
+        Self {
+            base,
+            mesh,
+            physics_entity,
+            y,
+        }
+    }
+
+    pub fn get_section_position(&self) -> Vector3 {
+        Vector3::new(0.0, GodotPositionConverter::get_chunk_y_local(self.y), 0.0)
     }
 
     pub fn update_mesh(&mut self, geometry: Geometry) {
         let mesh = self.mesh.borrow_mut();
-        //let c = new_mesh.get_surface_count();
         mesh.set_mesh(geometry.mesh_ist.upcast());
-        // println!("update_mesh y:{} surface_count:{}", self.y, c);
+
+        self.physics_entity.update_collider(geometry.collider, &self.get_section_position());
     }
 }
 
@@ -49,8 +65,8 @@ impl ChunkSection {
 impl NodeVirtual for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
-        let mut physics = PhysicsContainer::default();
-        Self::create(base, get_default_material(), PhysicsStaticEntity::new(&physics))
+        let physics = PhysicsContainer::default();
+        Self::create(base, get_default_material(), 0, physics.create_static())
     }
 
     fn ready(&mut self) {

@@ -50,7 +50,7 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node3D>, physics_container: &mut PhysicsContainer) -> Self {
+    pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainer) -> Self {
         let mut camera_anchor = Node3D::new_alloc();
         camera_anchor.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
 
@@ -132,8 +132,8 @@ impl PlayerController {
 #[godot_api]
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node3D>) -> Self {
-        let mut physics = PhysicsContainer::default();
-        Self::create(base, &mut physics)
+        let physics = PhysicsContainer::default();
+        Self::create(base, &physics)
     }
 
     fn ready(&mut self) {

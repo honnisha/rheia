@@ -4,7 +4,10 @@ use super::{
 };
 use crate::{
     entities::position::GodotPositionConverter,
-    world::{physics_handler::PhysicsContainer, world_manager::TextureMapperType},
+    world::{
+        physics_handler::{PhysicsContainer, PhysicsStaticEntity},
+        world_manager::TextureMapperType,
+    },
 };
 use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
 use flume::Sender;
@@ -24,8 +27,13 @@ pub(crate) fn generate_chunk(
     texture_mapper: TextureMapperType,
     material_instance_id: InstanceId,
     chunk_position: ChunkPosition,
-    physics_container: PhysicsContainer,
+    physics_container: &PhysicsContainer,
 ) {
+    let mut physics_entities: Vec<PhysicsStaticEntity> = Vec::with_capacity(VERTICAL_SECTIONS);
+    for _y in 0..VERTICAL_SECTIONS {
+        physics_entities.push(physics_container.create_static());
+    }
+
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
         let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
@@ -33,23 +41,24 @@ pub(crate) fn generate_chunk(
 
         {
             let mut c = column.bind_mut();
+
+            let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
+            c.base.set_global_position(chunk_pos_vector);
+
             let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
             c.base.set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
-                let physics_entity = physics_container.create_static();
-                let mut section =
-                    Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), physics_entity));
+                let mut section = Gd::<ChunkSection>::with_base(|base| {
+                    ChunkSection::create(base, material.share(), y as u8, physics_entities.pop().unwrap())
+                });
 
                 let name = GodotString::from(format!("Section {}", y));
                 section.bind_mut().base.set_name(name.clone());
 
                 c.base.add_child(section.share().upcast());
-                section.bind_mut().base.set_position(Vector3::new(
-                    0.0,
-                    GodotPositionConverter::get_chunk_y_local(y as u8),
-                    0.0,
-                ));
+                let pos = section.bind().get_section_position();
+                section.bind_mut().base.set_position(pos);
 
                 c.sections.push(section);
             }
@@ -75,15 +84,13 @@ pub(crate) fn generate_chunk(
 /// Recieved gd instance id from channel and
 /// spawn chunk from main thread
 pub(crate) fn spawn_chunk(
-    mut id: ChunksGenerationType,
-    chunk_position: &ChunkPosition,
+    id: ChunksGenerationType,
+    _chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
-    physics_container: &PhysicsContainer,
+    _physics_container: &PhysicsContainer,
 ) -> Gd<ChunkColumn> {
-    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(id);
-    let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
+    let column: Gd<ChunkColumn> = Gd::from_instance_id(id);
     base.add_child(column.share().upcast());
 
-    column.bind_mut().base.set_global_position(chunk_pos_vector);
     column
 }

@@ -55,6 +55,12 @@ pub struct Geometry {
     pub collider: Option<ColliderBuilder>,
 }
 
+impl Geometry {
+    pub fn mesh_ist(&self) -> &Gd<ArrayMesh> {
+        &self.mesh_ist
+    }
+}
+
 unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
