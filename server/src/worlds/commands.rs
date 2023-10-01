@@ -46,6 +46,11 @@ pub(crate) fn command_world(
             }
             "create" => {
                 let slug = world_subcommand.get_arg::<String>(&"slug".to_owned())?;
+                if slug.len() == 0 {
+                    sender.send_console_message(format!("Name of the world cannot be empty"));
+                    return Ok(());
+                }
+
                 let seed = match world_subcommand.get_arg::<u64>(&"slug".to_owned()) {
                     Ok(s) => s,
                     Err(_) => {

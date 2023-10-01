@@ -118,7 +118,7 @@ impl CommandsHandler {
         let line = complete_response.get_request().get_line().clone();
         let pos = complete_response.get_request().get_pos().clone();
 
-        let command_sequence = CommandsHandler::parse_command(&line);
+        let command_sequence = CommandsHandler::parse_command(&line[..pos].to_string());
 
         // Return all command names
         if command_sequence.len() == 0 {
@@ -145,12 +145,20 @@ impl CommandsHandler {
             }
 
             let command = command_handler.command_parser.clone();
+            let last_arg = command_sequence[command_sequence.len() - 1].clone();
+
             if let Some((command, arg)) = command.get_current(&command_sequence[1..]) {
                 match arg {
                     Some(_a) => {},
                     None => {
+                        // println!("command:{} arg:{:?} &command_sequence[1..]:{:?}", command.get_name(), arg, &command_sequence[1..]);
                         for c in command.commands() {
-                            con ti nue
+
+                            // if command name starts with arg name
+                            if c.get_name().starts_with(&last_arg) {
+                                let complete = c.get_name()[last_arg.len()..].to_string();
+                                complete_response.add_completion(complete);
+                            }
                         }
                     },
                 }

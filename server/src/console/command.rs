@@ -5,15 +5,13 @@ use ahash::HashMap;
 
 use super::commands_executer::CommandError;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Command {
     name: String,
     subcommand_required: bool,
     args: Vec<Arg>,
     commands: Vec<Command>,
 }
-
-type DurrenctType<'a> = Option<(&'a Command, Option<&'a Arg>)>;
 
 impl Command {
     pub fn new(name: String) -> Self {
@@ -44,21 +42,21 @@ impl Command {
     ///  name     name        world name  seed
     pub fn eval(&self, command_sequence: &[String]) -> Result<CommandMatch, CommandError> {
         let mut args: HashMap<String, String> = Default::default();
-        if command_sequence.len() == 0 {
-            return Ok(CommandMatch::new(self.name.clone(), None, args));
-        }
 
         let mut subcommand: Option<Box<CommandMatch>> = None;
-        for command in self.commands.iter() {
-            // if command matches
-            // println!("command.name:{} command_sequence[0]:{}", command.name, command_sequence[0]);
-            if command.name == command_sequence[0] {
-                let command_match = command.eval(&command_sequence[1..])?;
-                subcommand = Some(Box::new(command_match));
-                break;
+        if command_sequence.len() > 0 {
+            for command in self.commands.iter() {
+                // if command matches
+                // println!("command.name:{} command_sequence[0]:{}", command.name, command_sequence[0]);
+                if command.name == command_sequence[0] {
+                    let command_match = command.eval(&command_sequence[1..])?;
+                    subcommand = Some(Box::new(command_match));
+                    break;
+                }
             }
         }
 
+        // println!("subcommand:{:?} self.subcommand_required:{}", subcommand, self.subcommand_required);
         if subcommand.is_none() && self.subcommand_required {
             return Err(CommandError(format!("subcommand for \"{}\" is required", self.name)));
         }
@@ -89,22 +87,19 @@ impl Command {
         return Ok(CommandMatch::new(self.name.clone(), subcommand, args));
     }
 
-    /// command_sequence example:
-    /// "world"  "create"    "test"      "123"
-    /// ^command ^subcommand ^arg        ^arg optional
-    ///  name     name        world name  seed
-    pub fn get_current(&self, command_sequence: &[String]) -> DurrenctType {
+    pub fn get_current(&self, command_sequence: &[String]) -> Option<(&Command, Option<&Arg>)> {
+        // println!("GET_CURRENT name:{} command_sequence:{:?}", self.name, command_sequence);
+
         if command_sequence.len() > 0 {
             for c in self.commands.iter() {
-                if self.name != command_sequence[0] {
+                if c.name != command_sequence[0] {
                     continue;
                 }
-                if let Some(t) = Command::get_current(c, &command_sequence[1..]) {
-                    return Some(t);
-                }
+                return c.get_current(&command_sequence[1..]);
             }
         }
 
+        // println!("self.args.len():{} command_sequence.len():{} self.subcommand_required:{} self.name:{}", self.args.len(), command_sequence.len(), self.subcommand_required, self.name);
         if self.subcommand_required || command_sequence.len() == 0 {
             return Some((self, None));
         }
@@ -114,7 +109,7 @@ impl Command {
             return None;
         }
 
-        println!("command_sequence:{:?}", command_sequence);
+        // println!("command_sequence:{:?}", command_sequence);
         Some((self, Some(&self.args[command_sequence.len() - 1])))
     }
 
@@ -129,7 +124,7 @@ impl Command {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Arg {
     name: String,
     required: bool,
@@ -143,13 +138,17 @@ impl Arg {
         }
     }
 
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
     pub fn required(mut self, required: bool) -> Self {
         self.required = required;
         self
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CommandMatch {
     name: String,
     subcommand: Option<Box<CommandMatch>>,
@@ -234,6 +233,21 @@ mod tests {
     }
 
     #[test]
+    fn test_command_eval_world_empty() {
+        let command = world_command();
+
+        let cmd = "world".to_string();
+        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let result = command.eval(&command_sequence[1..]);
+
+        assert_eq!(result.is_err(), true);
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "subcommand for \"world\" is required".to_string()
+        );
+    }
+
+    #[test]
     fn test_command_current_world() {
         let command = world_command();
 
@@ -257,6 +271,45 @@ mod tests {
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "world".to_string());
         assert_eq!(result.as_ref().unwrap().1.is_none(), true);
+    }
+
+    #[test]
+    fn test_command_current_world_slug() {
+        let command = world_command();
+
+        let cmd = "world create te".to_string();
+        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let result = command.get_current(&command_sequence[1..]);
+
+        assert_eq!(result.is_some(), true, "Command must be found");
+        assert_eq!(result.as_ref().unwrap().0.name, "create".to_string());
+        assert_eq!(result.as_ref().unwrap().1.is_some(), true);
+        assert_eq!(result.as_ref().unwrap().1.as_ref().unwrap().name, "slug".to_string());
+    }
+
+    #[test]
+    fn test_command_current_world_slug_empty() {
+        let command = world_command();
+
+        let cmd = "world create ".to_string();
+        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let result = command.get_current(&command_sequence[1..]);
+
+        assert_eq!(result.is_some(), true, "Command must be found");
+        assert_eq!(result.as_ref().unwrap().0.name, "create".to_string());
+        assert_eq!(result.as_ref().unwrap().1.is_some(), true);
+        assert_eq!(result.as_ref().unwrap().1.as_ref().unwrap().name, "slug".to_string());
+    }
+
+    #[test]
+    fn test_command_current_world_list() {
+        let command = world_command();
+
+        let cmd = "world list ".to_string();
+        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let result = command.get_current(&command_sequence[1..]);
+
+        assert_eq!(result.is_none(), true);
     }
 
     fn tp_command() -> Command {
@@ -285,6 +338,9 @@ mod tests {
     fn test_parse_command() {
         let command_sequence = CommandsHandler::parse_command(&"tp ".to_string());
         assert_eq!(command_sequence, vec!["tp", ""]);
+
+        let command_sequence = CommandsHandler::parse_command(&"world create te".to_string());
+        assert_eq!(command_sequence, vec!["world", "create", "te"]);
     }
 
     #[test]
