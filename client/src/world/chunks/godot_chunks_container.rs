@@ -132,6 +132,9 @@ impl NodeVirtual for ChunksContainer {
                     continue;
                 }
 
+                let w = world.bind();
+                let physics_container = w.get_physics_container();
+
                 generate_chunk(
                     near_chunks_data,
                     c.get_chunk_data().clone(),
@@ -139,6 +142,7 @@ impl NodeVirtual for ChunksContainer {
                     self.texture_mapper.clone(),
                     self.material.instance_id(),
                     chunk_position.clone(),
+                    physics_container.clone()
                 );
                 c.set_sended();
             }
@@ -148,7 +152,7 @@ impl NodeVirtual for ChunksContainer {
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
-                    let mut w = world.bind_mut();
+                    let w = world.bind();
                     let physics_container = w.get_physics_container();
                     c.set_chunk_column(spawn_chunk(data, chunk_position, &mut self.base, physics_container));
                     c.set_loaded()

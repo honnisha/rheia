@@ -4,17 +4,14 @@ use super::{
 };
 use crate::{
     entities::position::GodotPositionConverter,
-    world::{physics_handler::{PhysicsContainer}, world_manager::TextureMapperType},
+    world::{physics_handler::PhysicsContainer, world_manager::TextureMapperType},
 };
-use arrayvec::ArrayVec;
 use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
-use rapier3d::prelude::ColliderBuilder;
 
-type SectionsCollidersType = ArrayVec<Option<ColliderBuilder>, VERTICAL_SECTIONS>;
-pub(crate) type ChunksGenerationType = (InstanceId, SectionsCollidersType);
+pub(crate) type ChunksGenerationType = InstanceId;
 
 /// Generate chunk in separate thread
 /// generate all chunk sections mesh
@@ -27,12 +24,12 @@ pub(crate) fn generate_chunk(
     texture_mapper: TextureMapperType,
     material_instance_id: InstanceId,
     chunk_position: ChunkPosition,
+    physics_container: PhysicsContainer,
 ) {
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
         let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
-        let mut sections_colliders: SectionsCollidersType = Default::default();
 
         {
             let mut c = column.bind_mut();
@@ -40,7 +37,9 @@ pub(crate) fn generate_chunk(
             c.base.set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
-                let mut section = Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share()));
+                let physics_entity = physics_container.create_static();
+                let mut section =
+                    Gd::<ChunkSection>::with_base(|base| ChunkSection::create(base, material.share(), physics_entity));
 
                 let name = GodotString::from(format!("Section {}", y));
                 section.bind_mut().base.set_name(name.clone());
@@ -64,11 +63,10 @@ pub(crate) fn generate_chunk(
 
                 let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
                 let mut section = c.sections[y].bind_mut();
-                section.update_mesh(geometry.mesh_ist);
-                sections_colliders.push(geometry.collider);
+                section.update_mesh(geometry);
             }
         }
-        if let Err(e) = update_tx.send((instance_id, sections_colliders)) {
+        if let Err(e) = update_tx.send(instance_id) {
             error!("Send chunk {} to spawn error: {:?}", chunk_position, e);
         }
     });
@@ -77,27 +75,14 @@ pub(crate) fn generate_chunk(
 /// Recieved gd instance id from channel and
 /// spawn chunk from main thread
 pub(crate) fn spawn_chunk(
-    mut data: ChunksGenerationType,
+    mut id: ChunksGenerationType,
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
     physics_container: &PhysicsContainer,
 ) -> Gd<ChunkColumn> {
-    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(data.0);
+    let mut column: Gd<ChunkColumn> = Gd::from_instance_id(id);
     let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
     base.add_child(column.share().upcast());
-
-    let mut y: u8 = 0;
-    for collider in data.1.drain(..) {
-        let section_position = Vector3::new(
-            chunk_pos_vector.x,
-            GodotPositionConverter::get_chunk_y_local(y),
-            chunk_pos_vector.z,
-        );
-        if let Some(c) = collider {
-            physics_container.create_mesh(c, &section_position);
-        }
-        y += 1;
-    }
 
     column.bind_mut().base.set_global_position(chunk_pos_vector);
     column

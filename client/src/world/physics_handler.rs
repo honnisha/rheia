@@ -4,19 +4,20 @@ use rapier3d::prelude::*;
 use std::cell::{Ref, RefCell, RefMut};
 use std::rc::Rc;
 
-use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS};
+use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
 
 pub type PhysicsContainerLock = Rc<RefCell<PhysicsController>>;
 pub type RigidBodySetLock = Rc<RefCell<RigidBodySet>>;
 pub type ColliderSetLock = Rc<RefCell<ColliderSet>>;
 pub type QueryPipelineLock = Rc<RefCell<QueryPipeline>>;
 
+/// For bodies with physics
 pub struct PhysicsEntity {
     rigid_body_set: RigidBodySetLock,
     collider_set: ColliderSetLock,
     query_pipeline: QueryPipelineLock,
 
-    rigid_handle: Option<RigidBodyHandle>,
+    rigid_handle: RigidBodyHandle,
     collider_handle: ColliderHandle,
     character_controller: KinematicCharacterController,
 }
@@ -24,7 +25,7 @@ pub struct PhysicsEntity {
 impl PhysicsEntity {
     pub fn create(
         physics_container: &PhysicsContainer,
-        rigid_handle: Option<RigidBodyHandle>,
+        rigid_handle: RigidBodyHandle,
         collider_handle: ColliderHandle,
     ) -> Self {
         let mut character_controller = KinematicCharacterController::default();
@@ -51,7 +52,7 @@ impl PhysicsEntity {
             collider.position(),
             impulse,
             // Make sure the the character we are trying to move isn’t considered an obstacle.
-            QueryFilter::default().exclude_rigid_body(self.rigid_handle.unwrap()),
+            QueryFilter::default().exclude_rigid_body(self.rigid_handle),
             // We don’t care about events in this example.
             |_| {},
         );
@@ -87,14 +88,11 @@ impl PhysicsEntity {
     }
 
     pub fn get_rigid_body(&self) -> Option<Ref<RigidBody>> {
-        Ref::filter_map(self.rigid_body_set.borrow(), |p| p.get(self.rigid_handle.unwrap())).ok()
+        Ref::filter_map(self.rigid_body_set.borrow(), |p| p.get(self.rigid_handle)).ok()
     }
 
     pub fn get_rigid_body_mut(&mut self) -> Option<RefMut<RigidBody>> {
-        RefMut::filter_map(self.rigid_body_set.borrow_mut(), |p| {
-            p.get_mut(self.rigid_handle.unwrap())
-        })
-        .ok()
+        RefMut::filter_map(self.rigid_body_set.borrow_mut(), |p| p.get_mut(self.rigid_handle)).ok()
     }
 
     pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
@@ -102,6 +100,27 @@ impl PhysicsEntity {
     }
 }
 
+/// For stationary bodies
+pub struct PhysicsStaticEntity {
+    collider_set: ColliderSetLock,
+    collider_handle: Option<ColliderHandle>,
+}
+
+impl PhysicsStaticEntity {
+    pub fn new(physics_container: &PhysicsContainer) -> Self {
+        Self {
+            collider_set: physics_container.collider_set.clone(),
+            collider_handle: None,
+        }
+    }
+
+    pub fn update_collider(&self, collider: ColliderBuilder, position: &Vector3) {
+        let collider = collider.translation(vector![position.x, position.y, position.z]);
+        self.collider_handle = Some(self.collider_set.borrow_mut().insert(collider));
+    }
+}
+
+#[derive(Clone)]
 pub struct PhysicsContainer {
     world_physics: PhysicsContainerLock,
     rigid_body_set: RigidBodySetLock,
@@ -145,13 +164,11 @@ impl PhysicsContainer {
 
         let collider_handle = collider_set.insert_with_parent(collider, rigid_handle, &mut rigid_body_set);
 
-        PhysicsEntity::create(&self, Some(rigid_handle), collider_handle)
+        PhysicsEntity::create(&self, rigid_handle, collider_handle)
     }
 
-    pub fn create_mesh(&self, collider: ColliderBuilder, position: &Vector3) -> PhysicsEntity {
-        let collider = collider.translation(vector![position.x, position.y, position.z]);
-        let collider_handle = self.collider_set.borrow_mut().insert(collider);
-        PhysicsEntity::create(&self, None, collider_handle)
+    pub fn create_static(&self) -> PhysicsStaticEntity {
+        PhysicsStaticEntity::new(&self)
     }
 }
 
