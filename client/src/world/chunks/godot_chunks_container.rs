@@ -142,7 +142,7 @@ impl NodeVirtual for ChunksContainer {
                     self.texture_mapper.clone(),
                     self.material.instance_id(),
                     chunk_position.clone(),
-                    &physics_container,
+                    physics_container.clone(),
                 );
                 c.set_sended();
             }

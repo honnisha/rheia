@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
 
-pub type PhysicsContainerLock = Arc<RwLock<PhysicsController>>;
+pub type PhysicsControllerLock = Arc<RwLock<PhysicsController>>;
 pub type RigidBodySetLock = Arc<RwLock<RigidBodySet>>;
 pub type ColliderSetLock = Arc<RwLock<ColliderSet>>;
 pub type QueryPipelineLock = Arc<RwLock<QueryPipeline>>;
@@ -141,7 +141,6 @@ impl PhysicsStaticEntity {
                         todo!()
                     },
                     None => {
-                        // log::info!("Spawn new collider position:{}", position);
                         // Spawn new collider
                         let collider = c.translation(vector![position.x, position.y, position.z]);
                         self.collider_handle = Some(self.collider_set.write().insert(collider));
@@ -164,7 +163,7 @@ impl PhysicsStaticEntity {
 }
 
 pub struct PhysicsContainer {
-    world_physics: PhysicsContainerLock,
+    world_physics: PhysicsControllerLock,
     rigid_body_set: RigidBodySetLock,
     collider_set: ColliderSetLock,
     query_pipeline: QueryPipelineLock,
