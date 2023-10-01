@@ -5,7 +5,7 @@ use super::{
 use crate::{
     entities::position::GodotPositionConverter,
     world::{
-        physics_handler::{PhysicsContainer, PhysicsStaticEntity},
+        physics_handler::{PhysicsContainer},
         world_manager::TextureMapperType,
     },
 };
@@ -16,10 +16,8 @@ use log::error;
 
 pub(crate) type ChunksGenerationType = InstanceId;
 
-/// Generate chunk in separate thread
-/// generate all chunk sections mesh
-/// and send gd instance id to main thread todo
-/// add_child it to the main tree
+/// Generate chunk data in separate thread
+/// and send gd instance id to the main thread to add_child it to the main tree
 pub(crate) fn generate_chunk(
     chunks_near: NearChunksData,
     data: ColumnDataType,
@@ -87,15 +85,28 @@ pub(crate) fn spawn_chunk(
     id: ChunksGenerationType,
     chunk_position: &ChunkPosition,
     base: &mut Base<Node>,
-    _physics_container: &PhysicsContainer,
 ) -> Gd<ChunkColumn> {
+    let now = std::time::Instant::now();
+
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(id);
     base.add_child(column.share().upcast());
 
-    // It must be updated in main thread because of
-    // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-    let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
-    column.bind_mut().base.set_global_position(chunk_pos_vector);
+    {
+        let mut c = column.bind_mut();
 
+        // It must be updated in main thread because of
+        // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
+        let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
+        c.base.set_global_position(chunk_pos_vector);
+
+        for section in c.sections.iter_mut() {
+            section.bind_mut().sync();
+        }
+    }
+
+    let elapsed = now.elapsed();
+    if elapsed > std::time::Duration::from_millis(2) {
+        println!("spawn_chunk process: {:.2?}", elapsed);
+    }
     column
 }

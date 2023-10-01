@@ -6,7 +6,7 @@ use super::godot_chunk_section::ChunkSection;
 
 type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 
-/// Vertical section, contains vertical section
+/// Vertical section, contains all vertical sections
 /// with VERTICAL_SECTIONS chunks sections
 #[derive(GodotClass)]
 #[class(base=Node3D)]

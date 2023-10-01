@@ -24,6 +24,7 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
+const LIMIT_CHUNK_SPAWN_PER_FRAME: i32 = 10;
 pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
@@ -111,7 +112,7 @@ impl NodeVirtual for ChunksContainer {
 
     fn process(&mut self, _delta: f64) {
         let now = std::time::Instant::now();
-        let mut world = self.base.get_parent().unwrap().cast::<World>();
+        let world = self.base.get_parent().unwrap().cast::<World>();
 
         let controller_positon = world.bind().get_player_controller().bind().get_position();
         let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
@@ -135,6 +136,7 @@ impl NodeVirtual for ChunksContainer {
                 let w = world.bind();
                 let physics_container = w.get_physics_container();
 
+                // One chunk section
                 generate_chunk(
                     near_chunks_data,
                     c.get_chunk_data().clone(),
@@ -148,14 +150,21 @@ impl NodeVirtual for ChunksContainer {
             }
         }
 
+        // Retrieving loaded chunks to add them
+        let mut i = 0;
         for (chunk_position, chunk) in self.chunks.iter() {
+            if i >= LIMIT_CHUNK_SPAWN_PER_FRAME && LIMIT_CHUNK_SPAWN_PER_FRAME != -1_i32 {
+                continue;
+            }
+
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
                     let w = world.bind();
-                    let physics_container = w.get_physics_container();
-                    c.set_chunk_column(spawn_chunk(data, chunk_position, &mut self.base, physics_container));
-                    c.set_loaded()
+                    let new_chunk_col = spawn_chunk(data, chunk_position, &mut self.base);
+                    c.set_chunk_column(new_chunk_col);
+                    c.set_loaded();
+                    i += 1;
                 }
             }
         }

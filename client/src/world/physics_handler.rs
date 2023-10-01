@@ -132,6 +132,7 @@ impl PhysicsStaticEntity {
         }
     }
 
+    // This function causes a thread lock with collider_set
     pub fn update_collider(&mut self, collider: Option<ColliderBuilder>, position: &Vector3) {
         match collider {
             Some(c) => {
@@ -162,24 +163,13 @@ impl PhysicsStaticEntity {
     }
 }
 
+#[derive(Clone)]
 pub struct PhysicsContainer {
     world_physics: PhysicsControllerLock,
     rigid_body_set: RigidBodySetLock,
     collider_set: ColliderSetLock,
     query_pipeline: QueryPipelineLock,
     island_manager: IslandManagerLock,
-}
-
-impl Clone for PhysicsContainer {
-    fn clone(&self) -> Self {
-        Self {
-            world_physics: self.world_physics.clone(),
-            rigid_body_set: self.rigid_body_set.clone(),
-            collider_set: self.collider_set.clone(),
-            query_pipeline: self.query_pipeline.clone(),
-            island_manager: self.island_manager.clone(),
-        }
-    }
 }
 
 impl Default for PhysicsContainer {
