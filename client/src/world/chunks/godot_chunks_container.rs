@@ -24,7 +24,7 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
-const LIMIT_CHUNK_SPAWN_PER_FRAME: i32 = 10;
+const LIMIT_CHUNK_SPAWN_PER_FRAME: i32 = 1;
 pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
@@ -97,26 +97,16 @@ impl ChunksContainer {
             }
         }
     }
-}
 
-#[godot_api]
-impl NodeVirtual for ChunksContainer {
-    /// For default godot init; only World::create is using
-    fn init(base: Base<Node>) -> Self {
-        Self::create(
-            base,
-            Arc::new(RwLock::new(TextureMapper::new())),
-            get_default_material(),
-        )
-    }
-
-    fn process(&mut self, _delta: f64) {
+    /// Send new recieved chunks to load (render)
+    fn send_chunks_to_load(&self) {
         let now = std::time::Instant::now();
         let world = self.base.get_parent().unwrap().cast::<World>();
 
         let controller_positon = world.bind().get_player_controller().bind().get_position();
         let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
 
+        let mut count = 0;
         let iter = ManhattanIterator::new(current_chunk.x as i32, current_chunk.z as i32, CHUNKS_DISTANCE);
         for (x, z) in iter {
             let chunk_position = ChunkPosition::new(x as i64, z as i64);
@@ -147,31 +137,56 @@ impl NodeVirtual for ChunksContainer {
                     physics_container.clone(),
                 );
                 c.set_sended();
+                count += 1;
             }
         }
 
-        // Retrieving loaded chunks to add them
-        let mut i = 0;
+        let elapsed = now.elapsed();
+        if elapsed > Duration::from_millis(1) {
+            println!("ChunksContainer.send_chunks_to_load process: {:.2?} count:{}", elapsed, count);
+        }
+    }
+
+    /// Retrieving loaded chunks to add them to the root node
+    fn spawn_loaded_chunks(&mut self) {
+        let now = std::time::Instant::now();
+        let mut count = 0;
         for (chunk_position, chunk) in self.chunks.iter() {
-            if i >= LIMIT_CHUNK_SPAWN_PER_FRAME && LIMIT_CHUNK_SPAWN_PER_FRAME != -1_i32 {
+            if count >= LIMIT_CHUNK_SPAWN_PER_FRAME && LIMIT_CHUNK_SPAWN_PER_FRAME != -1_i32 {
                 continue;
             }
 
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
-                    let w = world.bind();
                     let new_chunk_col = spawn_chunk(data, chunk_position, &mut self.base);
                     c.set_chunk_column(new_chunk_col);
                     c.set_loaded();
-                    i += 1;
+                    count += 1;
                 }
             }
         }
 
         let elapsed = now.elapsed();
-        if elapsed > Duration::from_millis(40) {
-            println!("ChunksContainer process: {:.2?}", elapsed);
+        if elapsed > Duration::from_millis(1) {
+            println!("ChunksContainer.spawn_loaded_chunks process: {:.2?} count:{}", elapsed, count);
         }
+    }
+}
+
+#[godot_api]
+impl NodeVirtual for ChunksContainer {
+    /// For default godot init; only World::create is using
+    fn init(base: Base<Node>) -> Self {
+        Self::create(
+            base,
+            Arc::new(RwLock::new(TextureMapper::new())),
+            get_default_material(),
+        )
+    }
+
+    fn process(&mut self, _delta: f64) {
+        self.send_chunks_to_load();
+        self.spawn_loaded_chunks();
     }
 }

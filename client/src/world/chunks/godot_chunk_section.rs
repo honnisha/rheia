@@ -84,7 +84,7 @@ impl ChunkSection {
     }
 
     /// Causes an update in the main thread after the entire chunk has been loaded
-    pub fn sync(&self) {
+    pub fn sync(&mut self) {
         if self.need_sync {
             self.need_sync = false;
 
