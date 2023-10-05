@@ -1,9 +1,7 @@
 [gd_scene load_steps=2 format=3 uid="uid://btya65f0vw6c4"]
 
-[ext_resource type="PackedScene" uid="uid://qdifcn3tfecx" path="res://temp/scene.gltf" id="1_fkf57"]
+[ext_resource type="PackedScene" uid="uid://b22qlkuecne50" path="res://assets/models/generic/generic.tscn" id="1_uf0ue"]
 
 [node name="ControllerBody" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
-[node name="skelet" parent="." instance=ExtResource("1_fkf57")]
-transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0, -1, 0)
+[node name="generic" parent="." instance=ExtResource("1_uf0ue")]
