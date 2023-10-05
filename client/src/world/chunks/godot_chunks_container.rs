@@ -6,16 +6,16 @@ use common::{
 use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
-use spiral::ManhattanIterator;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::{cell::RefCell, time::Duration};
 
 use crate::{
-    entities::position::GodotPositionConverter,
-    main_scene::CHUNKS_DISTANCE,
     utils::textures::texture_mapper::TextureMapper,
-    world::{godot_world::{World, get_default_material}, world_manager::TextureMapperType},
+    world::{
+        godot_world::{get_default_material, World},
+        world_manager::TextureMapperType,
+    },
 };
 
 use super::{
@@ -103,47 +103,44 @@ impl ChunksContainer {
         let now = std::time::Instant::now();
         let world = self.base.get_parent().unwrap().cast::<World>();
 
-        let controller_positon = world.bind().get_player_controller().bind().get_position();
-        let current_chunk = GodotPositionConverter::get_chunk_position(&controller_positon);
+        let w = world.bind();
+        let physics_container = w.get_physics_container();
 
         let mut count = 0;
-        let iter = ManhattanIterator::new(current_chunk.x as i32, current_chunk.z as i32, CHUNKS_DISTANCE);
-        for (x, z) in iter {
-            let chunk_position = ChunkPosition::new(x as i64, z as i64);
-            if let Some(chunk) = self.get_chunk(&chunk_position) {
-                let c = chunk.borrow();
-                if c.is_sended() {
-                    continue;
-                }
+        let iter = self
+            .chunks
+            .iter()
+            .filter(|&(_chunk_position, chunk)| !chunk.borrow().is_sended());
+        for (chunk_position, chunk) in iter {
+            let c = chunk.borrow();
 
-                let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
+            let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
-                // Load only if all chunks around are loaded
-                if !near_chunks_data.is_full() {
-                    continue;
-                }
-
-                let w = world.bind();
-                let physics_container = w.get_physics_container();
-
-                // One chunk section
-                generate_chunk(
-                    near_chunks_data,
-                    c.get_chunk_data().clone(),
-                    c.update_tx.clone(),
-                    self.texture_mapper.clone(),
-                    self.material.instance_id(),
-                    chunk_position.clone(),
-                    physics_container.clone(),
-                );
-                c.set_sended();
-                count += 1;
+            // Load only if all chunks around are loaded
+            if !near_chunks_data.is_full() {
+                continue;
             }
+
+            // One chunk section
+            generate_chunk(
+                near_chunks_data,
+                c.get_chunk_data().clone(),
+                c.update_tx.clone(),
+                self.texture_mapper.clone(),
+                self.material.instance_id(),
+                chunk_position.clone(),
+                physics_container.clone(),
+            );
+            c.set_sended();
+            count += 1;
         }
 
         let elapsed = now.elapsed();
         if elapsed > Duration::from_millis(1) {
-            println!("ChunksContainer.send_chunks_to_load process: {:.2?} count:{}", elapsed, count);
+            println!(
+                "ChunksContainer.SEND_chunks_to_load process: {:.2?} count:{}",
+                elapsed, count
+            );
         }
     }
 
@@ -169,7 +166,10 @@ impl ChunksContainer {
 
         let elapsed = now.elapsed();
         if elapsed > Duration::from_millis(1) {
-            println!("ChunksContainer.spawn_loaded_chunks process: {:.2?} count:{}", elapsed, count);
+            println!(
+                "ChunksContainer.SPAWN_loaded_chunks process: {:.2?} count:{}",
+                elapsed, count
+            );
         }
     }
 }
