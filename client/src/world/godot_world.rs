@@ -1,6 +1,7 @@
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData}, network::messages::NetworkMessageType,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    network::messages::NetworkMessageType,
 };
 use godot::{
     engine::{Material, StandardMaterial3D},
@@ -50,12 +51,17 @@ impl World {
 
 impl World {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+        let mut physics_container = PhysicsContainer::default();
         let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
-            ChunksContainer::create(base, texture_mapper.clone(), material.share())
+            ChunksContainer::create(
+                base,
+                texture_mapper.clone(),
+                material.share(),
+                physics_container.clone(),
+            )
         });
         let container_name = GodotString::from("ChunksContainer");
         chunks_container.bind_mut().base.set_name(container_name.clone());
-        let mut physics_container = PhysicsContainer::default();
         let player_controller =
             Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &mut physics_container));
 

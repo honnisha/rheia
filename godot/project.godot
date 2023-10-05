@@ -18,6 +18,10 @@ boot_splash/image="res://godot_logo.png"
 boot_splash/fullsize=false
 config/icon="res://game_logo.png"
 
+[display]
+
+window/vsync/vsync_mode=0
+
 [importer_defaults]
 
 texture={

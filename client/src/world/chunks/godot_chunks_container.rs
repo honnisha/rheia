@@ -14,7 +14,7 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::{
         godot_world::{get_default_material, World},
-        world_manager::TextureMapperType,
+        world_manager::TextureMapperType, physics_handler::PhysicsContainer,
     },
 };
 
@@ -36,15 +36,17 @@ pub struct ChunksContainer {
     chunks: ChunksType,
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
+    physics_container: PhysicsContainer,
 }
 
 impl ChunksContainer {
-    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>, physics_container: PhysicsContainer) -> Self {
         Self {
             base,
             chunks: Default::default(),
             texture_mapper,
             material,
+            physics_container,
         }
     }
 
@@ -101,10 +103,6 @@ impl ChunksContainer {
     /// Send new recieved chunks to load (render)
     fn send_chunks_to_load(&self) {
         let now = std::time::Instant::now();
-        let world = self.base.get_parent().unwrap().cast::<World>();
-
-        let w = world.bind();
-        let physics_container = w.get_physics_container();
 
         let mut count = 0;
         let iter = self
@@ -129,14 +127,14 @@ impl ChunksContainer {
                 self.texture_mapper.clone(),
                 self.material.instance_id(),
                 chunk_position.clone(),
-                physics_container.clone(),
+                self.physics_container.clone(),
             );
             c.set_sended();
             count += 1;
         }
 
         let elapsed = now.elapsed();
-        if elapsed > Duration::from_millis(1) {
+        if elapsed > Duration::from_millis(10) {
             println!(
                 "ChunksContainer.SEND_chunks_to_load process: {:.2?} count:{}",
                 elapsed, count
@@ -165,7 +163,7 @@ impl ChunksContainer {
         }
 
         let elapsed = now.elapsed();
-        if elapsed > Duration::from_millis(1) {
+        if elapsed > Duration::from_millis(5) {
             println!(
                 "ChunksContainer.SPAWN_loaded_chunks process: {:.2?} count:{}",
                 elapsed, count
@@ -182,6 +180,7 @@ impl NodeVirtual for ChunksContainer {
             base,
             Arc::new(RwLock::new(TextureMapper::new())),
             get_default_material(),
+            PhysicsContainer::default(),
         )
     }
 

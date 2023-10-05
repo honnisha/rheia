@@ -70,6 +70,7 @@ pub(crate) fn generate_chunk(
 
                 let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
                 let mut section = c.sections[y].bind_mut();
+
                 section.update_mesh(geometry);
             }
         }
@@ -105,7 +106,7 @@ pub(crate) fn spawn_chunk(
     }
 
     let elapsed = now.elapsed();
-    if elapsed > std::time::Duration::from_millis(2) {
+    if elapsed > std::time::Duration::from_millis(5) {
         println!("spawn_chunk process: {:.2?}", elapsed);
     }
     column
