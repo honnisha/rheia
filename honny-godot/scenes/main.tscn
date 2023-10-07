@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=2 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
-[ext_resource type="PackedScene" uid="uid://qdifcn3tfecx" path="res://temp/scene.gltf" id="3_3dfko"]
 
 [node name="Main" type="Main"]
 

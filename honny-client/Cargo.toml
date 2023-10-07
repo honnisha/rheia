@@ -1,5 +1,5 @@
 [package]
-name = "honny-craft"
+name = "honny-client"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -8,7 +8,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-common = { path = "../common" }
+common = { path = "../honny-common" }
 
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master"}
 

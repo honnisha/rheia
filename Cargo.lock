@@ -3038,36 +3038,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "honny-client-bevy"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.3",
- "arrayvec 0.7.4",
- "bevy",
- "bevy_app",
- "bevy_ecs",
- "bincode",
- "common",
- "dashmap",
- "env_logger",
- "flume",
- "ilattice",
- "lazy_static",
- "log",
- "ndcopy",
- "ndshape",
- "parking_lot 0.12.1",
- "rayon",
- "renet",
- "send_wrapper 0.6.0",
- "serde",
- "serde_yaml",
- "spiral",
- "tokio",
-]
-
-[[package]]
-name = "honny-craft"
+name = "honny-client"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
@@ -3105,7 +3076,36 @@ dependencies = [
 ]
 
 [[package]]
-name = "honny-craft-server"
+name = "honny-client-bevy"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.3",
+ "arrayvec 0.7.4",
+ "bevy",
+ "bevy_app",
+ "bevy_ecs",
+ "bincode",
+ "common",
+ "dashmap",
+ "env_logger",
+ "flume",
+ "ilattice",
+ "lazy_static",
+ "log",
+ "ndcopy",
+ "ndshape",
+ "parking_lot 0.12.1",
+ "rayon",
+ "renet",
+ "send_wrapper 0.6.0",
+ "serde",
+ "serde_yaml",
+ "spiral",
+ "tokio",
+]
+
+[[package]]
+name = "honny-server"
 version = "0.1.0"
 dependencies = [
  "ahash 0.8.3",
