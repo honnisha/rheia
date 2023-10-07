@@ -1,4 +1,4 @@
-use godot::{prelude::*, engine::{Skeleton3D, AnimationPlayer}};
+use godot::{prelude::*, engine::{AnimationPlayer, animation::LoopMode}};
 
 /// Responsible for controlling the full-length generic model
 #[derive(GodotClass)]
@@ -12,9 +12,13 @@ pub struct BodyController {
 
 impl BodyController {
     pub fn create(base: Base<Node3D>) -> Self {
-        let generic = load::<PackedScene>("res://assets/models/generic/generic.tscn").instantiate_as::<Node3D>();
+        let generic = load::<PackedScene>("res://assets/models/generic/generic.glb").instantiate_as::<Node3D>();
 
         let mut animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
+
+        let mut animation = animation_player.get_animation(StringName::from("animation_model_walk")).unwrap();
+        animation.set_loop_mode(LoopMode::LOOP_LINEAR);
+
         animation_player.call_deferred(StringName::from("play"), &["animation_model_walk".to_variant()]);
 
         Self {
