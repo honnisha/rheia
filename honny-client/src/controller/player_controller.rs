@@ -58,7 +58,7 @@ impl PlayerController {
         camera_anchor.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
 
         let camera = Camera3D::new_alloc();
-        camera_anchor.add_child(camera.share().upcast());
+        camera_anchor.add_child(camera.clone().upcast());
 
         let body_controller = Gd::<BodyController>::with_base(|base| BodyController::create(base));
 
@@ -140,8 +140,8 @@ impl NodeVirtual for PlayerController {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.body_controller.share().upcast());
-        self.base.add_child(self.camera_anchor.share().upcast());
+        self.base.add_child(self.body_controller.clone().upcast());
+        self.base.add_child(self.camera_anchor.clone().upcast());
         self.set_view_mode(ContollerViewMode::FirstPersonView);
     }
 
@@ -150,11 +150,11 @@ impl NodeVirtual for PlayerController {
             return;
         }
 
-        if let Some(e) = event.share().try_cast::<InputEventMouseMotion>() {
+        if let Some(e) = event.clone().try_cast::<InputEventMouseMotion>() {
             self.input_data.mouse_position = e.get_relative();
         }
 
-        if let Some(e) = event.share().try_cast::<InputEventMouseButton>() {
+        if let Some(e) = event.clone().try_cast::<InputEventMouseButton>() {
             if e.get_button_index() == MouseButton::MOUSE_BUTTON_RIGHT {
                 let mouse_mode = match e.is_pressed() {
                     true => MouseMode::MOUSE_MODE_CAPTURED,

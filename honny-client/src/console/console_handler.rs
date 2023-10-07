@@ -144,12 +144,12 @@ impl NodeVirtual for Console {
                 self.console_input = Some(e);
                 //self.console_input.as_mut().unwrap().connect(
                 //    "text_changed".into(),
-                //    Callable::from_object_method(self.base.share(), "text_changed"),
+                //    Callable::from_object_method(self.base.clone(), "text_changed"),
                 //    0,
                 //);
                 self.console_input.as_mut().unwrap().connect(
                     "text_submitted".into(),
-                    Callable::from_object_method(self.base.share(), "text_submitted"),
+                    Callable::from_object_method(self.base.clone(), "text_submitted"),
                 );
             }
             _ => {
@@ -162,7 +162,7 @@ impl NodeVirtual for Console {
                 self.console_button = Some(e);
                 self.console_button.as_mut().unwrap().connect(
                     "pressed".into(),
-                    Callable::from_object_method(self.base.share(), "button_pressed"),
+                    Callable::from_object_method(self.base.clone(), "button_pressed"),
                 );
             }
             _ => {

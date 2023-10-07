@@ -61,7 +61,7 @@ impl Main {
 #[godot_api]
 impl NodeVirtual for Main {
     fn init(base: Base<Node>) -> Self {
-        let world_manager = WorldManager::create(base.share());
+        let world_manager = WorldManager::create(base.clone());
         Main {
             base,
             network: None,
@@ -76,8 +76,8 @@ impl NodeVirtual for Main {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Info);
 
-        self.base.add_child(self.console.share().upcast());
-        self.base.add_child(self.debug_info.share().upcast());
+        self.base.add_child(self.console.clone().upcast());
+        self.base.add_child(self.debug_info.clone().upcast());
 
         self.debug_info.bind_mut().toggle(true);
 

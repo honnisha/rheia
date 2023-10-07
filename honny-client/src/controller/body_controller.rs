@@ -32,7 +32,7 @@ impl NodeVirtual for BodyController {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.generic.share().upcast());
+        self.base.add_child(self.generic.clone().upcast());
     }
 
     fn process(&mut self, _delta: f64) {}

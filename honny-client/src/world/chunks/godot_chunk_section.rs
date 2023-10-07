@@ -50,7 +50,7 @@ impl ChunkSection {
     ) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GodotString::from("ChunkMesh"));
-        mesh.set_material_overlay(material.share());
+        mesh.set_material_overlay(material.clone());
 
         Self {
             base,
@@ -111,6 +111,6 @@ impl NodeVirtual for ChunkSection {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.mesh.share().upcast());
+        self.base.add_child(self.mesh.clone().upcast());
     }
 }

@@ -78,13 +78,13 @@ impl WorldManager {
 
     pub fn create_world(&mut self, world_slug: String) {
         let mut world = Gd::<World>::with_base(|base| {
-            World::create(base, world_slug, self.texture_mapper.clone(), self.material.share())
+            World::create(base, world_slug, self.texture_mapper.clone(), self.material.clone())
         });
 
         let world_name = GodotString::from("World");
         world.bind_mut().base.set_name(world_name.clone());
 
-        self.base.add_child(world.share().upcast());
+        self.base.add_child(world.clone().upcast());
         self.world = Some(world);
 
         info!("World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
@@ -92,7 +92,7 @@ impl WorldManager {
 
     pub fn destroy_world(&mut self) {
         let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
-        self.base.remove_child(self.world.as_mut().unwrap().share().upcast());
+        self.base.remove_child(self.world.as_mut().unwrap().clone().upcast());
         self.world = None;
         info!("World \"{}\" destroyed;", slug);
     }

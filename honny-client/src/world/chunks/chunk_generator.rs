@@ -44,7 +44,7 @@ pub(crate) fn generate_chunk(
                 let mut section = Gd::<ChunkSection>::with_base(|base| {
                     ChunkSection::create(
                         base,
-                        material.share(),
+                        material.clone(),
                         y as u8,
                         physics_entity,
                         chunk_position.clone(),
@@ -54,7 +54,7 @@ pub(crate) fn generate_chunk(
                 let name = GodotString::from(format!("Section {}", y));
                 section.bind_mut().base.set_name(name.clone());
 
-                c.base.add_child(section.share().upcast());
+                c.base.add_child(section.clone().upcast());
                 let pos = section.bind().get_section_local_position();
                 section.bind_mut().base.set_position(pos);
 
@@ -90,7 +90,7 @@ pub(crate) fn spawn_chunk(
     let now = std::time::Instant::now();
 
     let mut column: Gd<ChunkColumn> = Gd::from_instance_id(id);
-    base.add_child(column.share().upcast());
+    base.add_child(column.clone().upcast());
 
     {
         let mut c = column.bind_mut();

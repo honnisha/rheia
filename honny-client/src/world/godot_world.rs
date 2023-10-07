@@ -56,7 +56,7 @@ impl World {
             ChunksContainer::create(
                 base,
                 texture_mapper.clone(),
-                material.share(),
+                material.clone(),
                 physics_container.clone(),
             )
         });
@@ -135,12 +135,12 @@ impl NodeVirtual for World {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.chunks_container.share().upcast());
+        self.base.add_child(self.chunks_container.clone().upcast());
         self.player_controller.bind_mut().base.connect(
             "on_player_move".into(),
-            Callable::from_object_method(self.base.share(), "handler_player_move"),
+            Callable::from_object_method(self.base.clone(), "handler_player_move"),
         );
-        self.base.add_child(self.player_controller.share().upcast());
+        self.base.add_child(self.player_controller.clone().upcast());
     }
 
     fn process(&mut self, _delta: f64) {

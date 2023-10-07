@@ -156,8 +156,8 @@ impl NodeVirtual for DebugInfo {
         self.base.set_visible(false);
 
         let mut base = self.base.get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
-        base.add_child(self.first_row.share().upcast());
-        base.add_child(self.world_row.share().upcast());
-        base.add_child(self.network_row.share().upcast());
+        base.add_child(self.first_row.clone().upcast());
+        base.add_child(self.world_row.clone().upcast());
+        base.add_child(self.network_row.clone().upcast());
     }
 }
