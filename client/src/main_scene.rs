@@ -13,8 +13,6 @@ use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
-pub const CHUNKS_DISTANCE: u16 = 16;
-
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

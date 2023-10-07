@@ -98,10 +98,6 @@ impl World {
         self.chunks_container.bind_mut().unload_chunk(chunks_positions);
     }
 
-    pub fn get_physics_container(&self) -> &PhysicsContainer {
-        &self.physics_container
-    }
-
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
         &self.player_controller
     }

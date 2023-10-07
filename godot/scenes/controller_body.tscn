@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://btya65f0vw6c4"]
-
-[ext_resource type="PackedScene" uid="uid://b22qlkuecne50" path="res://assets/models/generic/generic.tscn" id="1_uf0ue"]
-
-[node name="ControllerBody" type="Node3D"]
-
-[node name="generic" parent="." instance=ExtResource("1_uf0ue")]

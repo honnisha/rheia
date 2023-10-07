@@ -11,6 +11,7 @@ use crate::main_scene::FloatType;
 use crate::world::godot_world::World;
 use crate::world::physics_handler::{PhysicsContainer, PhysicsEntity};
 
+use super::body_controller::BodyController;
 use super::{input_data::InputData, player_movement::PlayerMovement};
 
 pub(crate) const ACCELERATION: f32 = 4.0;
@@ -45,7 +46,9 @@ pub struct PlayerController {
     input_data: InputData,
     cache_movement: Option<PlayerMovement>,
 
-    body: Gd<Node3D>,
+    // A full-length body
+    body_controller: Gd<BodyController>,
+
     physics_entity: PhysicsEntity,
 }
 
@@ -57,7 +60,7 @@ impl PlayerController {
         let camera = Camera3D::new_alloc();
         camera_anchor.add_child(camera.share().upcast());
 
-        let body = load::<PackedScene>("res://scenes/controller_body.tscn").instantiate_as::<Node3D>();
+        let body_controller = Gd::<BodyController>::with_base(|base| BodyController::create(base));
 
         Self {
             base,
@@ -67,7 +70,7 @@ impl PlayerController {
             input_data: Default::default(),
             cache_movement: None,
             physics_entity: physics_container.create_controller(),
-            body,
+            body_controller,
         }
     }
 
@@ -101,18 +104,18 @@ impl PlayerController {
             .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
 
         // Rotate visible third_person body
-        self.body.rotate_y(yaw);
+        self.body_controller.rotate_y(yaw);
     }
 
     pub fn set_view_mode(&mut self, view_mode: ContollerViewMode) {
         self.view_mode = view_mode;
         match self.view_mode {
             ContollerViewMode::FirstPersonView => {
-                self.body.set_visible(false);
+                self.body_controller.set_visible(false);
                 self.camera.set_position(Vector3::ZERO);
-            },
+            }
             ContollerViewMode::ThirdPersonView => {
-                self.body.set_visible(true);
+                self.body_controller.set_visible(true);
                 self.camera.set_position(THIRD_PERSON_OFFST);
             }
         }
@@ -137,7 +140,7 @@ impl NodeVirtual for PlayerController {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.body.share().upcast());
+        self.base.add_child(self.body_controller.share().upcast());
         self.base.add_child(self.camera_anchor.share().upcast());
         self.set_view_mode(ContollerViewMode::FirstPersonView);
     }
@@ -186,13 +189,8 @@ impl NodeVirtual for PlayerController {
         }
     }
 
-    #[allow(unused_variables)]
     fn process(&mut self, delta: f64) {
         let now = std::time::Instant::now();
-
-        if Console::is_active() {
-            return;
-        }
 
         let world = self.base.get_parent().unwrap().cast::<World>();
         let pos = self.get_position();
@@ -202,10 +200,14 @@ impl NodeVirtual for PlayerController {
             None => false,
         };
 
-        // Rotate camera look at
-        if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
-            let (yaw, pitch) = self.input_data.get_mouselook_vector();
-            self.set_rotation(yaw as f32, pitch as f32);
+        let console_active = Console::is_active();
+
+        if !console_active {
+            // Rotate camera look at
+            if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
+                let (yaw, pitch) = self.input_data.get_mouselook_vector();
+                self.set_rotation(yaw as f32, pitch as f32);
+            }
         }
 
         let pitch = self.get_pitch();
@@ -213,12 +215,20 @@ impl NodeVirtual for PlayerController {
             // Set lock if chunk is in loading
             self.physics_entity.set_enabled(chunk_loaded);
 
-            // Move
-            let vec = self.input_data.get_movement_vector(delta);
-            let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
-            if vec != Vector3::ZERO {
-                self.physics_entity
-                    .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+            if !console_active {
+                // Moving
+                let vec = self.input_data.get_movement_vector(delta);
+                let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
+                if vec != Vector3::ZERO {
+                    self.physics_entity
+                        .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+                }
+
+                // Jump
+                let input = Input::singleton();
+                if input.is_action_just_pressed("jump".into()) {
+                    self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
+                }
             }
 
             // Sync godot object position
@@ -229,12 +239,6 @@ impl NodeVirtual for PlayerController {
                 physics_pos.y - CONTROLLER_HEIGHT / 2.0,
                 physics_pos.z,
             ));
-
-            // Jump
-            let input = Input::singleton();
-            if input.is_action_just_pressed("jump".into()) {
-                self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
-            }
         }
 
         // Handle player movement
