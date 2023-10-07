@@ -2,8 +2,8 @@
 
 ## Server
 ```
-cargo r -p honny-craft-server
-cargo test -p honny-craft-server
+cargo r -p honny-server
+cargo test -p honny-server
 ```
 
 ## Client bevy
@@ -16,7 +16,7 @@ cargo run --features bevy/trace_tracy -p honny-client-bevy
 
 ## Client Godot
 ```
-cargo b -p honny-craft
+cargo b -p honny-client
 ```
 
 ## Debug
