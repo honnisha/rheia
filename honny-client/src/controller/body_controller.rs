@@ -76,7 +76,7 @@ impl BodyController {
         }
     }
 
-    fn replace(&mut self, source: &Node3D, part: BodyParts) {
+    fn replace(&mut self, source: &Node3D, part: BodyPart) {
         let parts = get_parts(part);
         for path in parts.iter() {
             let mut mesh = self.generic.get_node_as::<MeshInstance3D>(path);
@@ -113,7 +113,7 @@ impl NodeVirtual for BodyController {
 
         // let scene = load::<PackedScene>("res://assets/models/generic/replace.glb").instantiate_as::<Node3D>();
 
-        self.replace(&scene, BodyParts::Chest);
+        self.replace(&scene, BodyPart::Chest);
     }
 
     fn process(&mut self, _delta: f64) {}
