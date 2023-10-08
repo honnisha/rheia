@@ -3,15 +3,3 @@
 [ext_resource type="PackedScene" uid="uid://bkdvtvbb4s48g" path="res://assets/models/generic/generic.glb" id="1_0j3p8"]
 
 [node name="generic" instance=ExtResource("1_0j3p8")]
-
-[node name="leg_left_hip2" parent="Node2/root/torso_lower2" index="0"]
-transform = Transform3D(0.999048, 0.0436194, 0, -0.0436194, 0.999048, 0, 0, 0, 1, -0.0875, -0.0453125, 0.0234375)
-
-[node name="leg_right_hip2" parent="Node2/root/torso_lower2" index="1"]
-transform = Transform3D(0.999048, -0.0436194, 0, 0.0436194, 0.999048, 0, 0, 0, 1, 0.0875, -0.0453125, 0.0234375)
-
-[node name="hand_left_shoulder2" parent="Node2/root/torso_lower2/torso_middle2/torso_upper2" index="0"]
-transform = Transform3D(0.984808, 0.173648, 0, -0.173648, 0.984808, 0, 0, 0, 1, -0.1875, 0.298438, 0)
-
-[node name="hand_right_shoulder2" parent="Node2/root/torso_lower2/torso_middle2/torso_upper2" index="1"]
-transform = Transform3D(0.984808, -0.173648, 0, 0.173648, 0.984808, 0, 0, 0, 1, 0.1875, 0.298438, 0)

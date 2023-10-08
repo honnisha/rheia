@@ -25,7 +25,7 @@ pub const CONTROLLER_RADIUS: f32 = 0.4;
 pub const CONTROLLER_MASS: f32 = 4.0;
 const JUMP_IMPULSE: f32 = 20.0;
 
-const THIRD_PERSON_OFFST: Vector3 = Vector3::new(0.5, 0.0, 3.0);
+const THIRD_PERSON_OFFST: Vector3 = Vector3::new(0.4, 0.0, 3.0);
 
 pub enum ContollerViewMode {
     FirstPersonView,
