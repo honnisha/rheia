@@ -1,14 +1,15 @@
-use std::{fs::File, os::unix::prelude::FileExt, io::Read};
+use std::{fs::File, io::Read};
 
 use godot::{prelude::*, engine::{AnimationPlayer, animation::LoopMode, MeshInstance3D, GltfDocument, GltfState}};
 
 const GENERIC_MODEL: &str = "res://assets/models/generic/generic.glb";
 
-enum ArmorParts {
+enum BodyPart {
     Chest,
     Hands,
     Pants,
     Boots,
+    Head,
 }
 
 const PARTS_CHEST: &'static [&str] = &[
@@ -34,13 +35,18 @@ const PARTS_BOOTS: &'static [&str] = &[
     "Node2/root/torso_lower2/leg_right_hip2/leg_right_shin2/leg_right_foot2/leg_right_foot",
     "Node2/root/torso_lower2/leg_left_hip2/leg_left_shin2/leg_left_foot2/leg_left_foot",
 ];
+const PARTS_HEAD: &'static [&str] = &[
+    "Node2/root/torso_lower2/torso_middle2/torso_upper2/neck2/neck",
+    "Node2/root/torso_lower2/torso_middle2/torso_upper2/neck2/head2/head",
+];
 
-fn get_parts(part: ArmorParts) -> &'static [&'static str] {
+fn get_parts(part: BodyPart) -> &'static [&'static str] {
     match part {
-        ArmorParts::Chest => PARTS_CHEST,
-        ArmorParts::Hands => PARTS_HANDS,
-        ArmorParts::Pants => PARTS_PANTS,
-        ArmorParts::Boots => PARTS_BOOTS,
+        BodyPart::Chest => PARTS_CHEST,
+        BodyPart::Hands => PARTS_HANDS,
+        BodyPart::Pants => PARTS_PANTS,
+        BodyPart::Boots => PARTS_BOOTS,
+        BodyPart::Head => PARTS_HEAD,
     }
 }
 /// Responsible for controlling the full-length generic model
@@ -70,7 +76,7 @@ impl BodyController {
         }
     }
 
-    fn replace(&mut self, source: &Node3D, part: ArmorParts) {
+    fn replace(&mut self, source: &Node3D, part: BodyParts) {
         let parts = get_parts(part);
         for path in parts.iter() {
             let mut mesh = self.generic.get_node_as::<MeshInstance3D>(path);
@@ -107,7 +113,7 @@ impl NodeVirtual for BodyController {
 
         // let scene = load::<PackedScene>("res://assets/models/generic/replace.glb").instantiate_as::<Node3D>();
 
-        self.replace(&scene, ArmorParts::Chest);
+        self.replace(&scene, BodyParts::Chest);
     }
 
     fn process(&mut self, _delta: f64) {}
