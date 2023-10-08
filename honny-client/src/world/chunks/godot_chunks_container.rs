@@ -14,7 +14,8 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::{
         godot_world::{get_default_material, World},
-        world_manager::TextureMapperType, physics_handler::PhysicsContainer,
+        physics_handler::PhysicsContainer,
+        world_manager::TextureMapperType,
     },
 };
 
@@ -40,7 +41,12 @@ pub struct ChunksContainer {
 }
 
 impl ChunksContainer {
-    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>, physics_container: PhysicsContainer) -> Self {
+    pub fn create(
+        base: Base<Node>,
+        texture_mapper: TextureMapperType,
+        material: Gd<Material>,
+        physics_container: PhysicsContainer,
+    ) -> Self {
         Self {
             base,
             chunks: Default::default(),

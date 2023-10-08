@@ -6,17 +6,23 @@ cargo r -p honny-server
 cargo test -p honny-server
 ```
 
+## Client Godot
+```
+cargo b -p honny-client
+cargo test -p honny-client
+```
+
+## Common lib
+```
+cargo test -p common
+```
+
 ## Client bevy
 ```
 cargo b -p honny-client-bevy
 cargo run -p honny-client-bevy
 cargo run --features bevy/dynamic_linking -p honny-client-bevy
 cargo run --features bevy/trace_tracy -p honny-client-bevy
-```
-
-## Client Godot
-```
-cargo b -p honny-client
 ```
 
 ## Debug
