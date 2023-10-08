@@ -1,4 +1,6 @@
-use godot::{prelude::*, engine::{AnimationPlayer, animation::LoopMode, MeshInstance3D}};
+use std::{fs::File, os::unix::prelude::FileExt, io::Read};
+
+use godot::{prelude::*, engine::{AnimationPlayer, animation::LoopMode, MeshInstance3D, GltfDocument, GltfState}};
 
 const GENERIC_MODEL: &str = "res://assets/models/generic/generic.glb";
 
@@ -88,8 +90,24 @@ impl NodeVirtual for BodyController {
     fn ready(&mut self) {
         self.base.add_child(self.generic.clone().upcast());
 
-        let replace = load::<PackedScene>("res://assets/models/generic/replace.glb").instantiate_as::<Node3D>();
-        self.replace(&replace, ArmorParts::Chest);
+        let mut gltf = GltfDocument::new();
+
+        let mut b: Vec<u8> = Vec::new();
+        let path = "/home/honnisha/godot/honny-craft/honny-godot/assets/models/generic/replace.glb";
+        let mut file = File::open(path).unwrap();
+        let _bytes_read = file.read_to_end(&mut b);
+
+        let mut pba = PackedByteArray::new();
+        pba.extend(b);
+
+        let gltf_state = GltfState::new();
+        gltf.append_from_buffer(pba, GodotString::from("base_path?"), gltf_state.clone());
+        let scene = gltf.generate_scene(gltf_state).unwrap();
+        let scene = scene.cast::<Node3D>();
+
+        // let scene = load::<PackedScene>("res://assets/models/generic/replace.glb").instantiate_as::<Node3D>();
+
+        self.replace(&scene, ArmorParts::Chest);
     }
 
     fn process(&mut self, _delta: f64) {}
