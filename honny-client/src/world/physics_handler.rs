@@ -202,8 +202,8 @@ impl Default for PhysicsContainer {
 }
 
 impl PhysicsContainer {
-    pub fn step(&self) {
-        self.world_physics.as_ref().write().step(&self);
+    pub fn step(&self, delta: f32) {
+        self.world_physics.as_ref().write().step(delta, &self);
     }
 
     pub fn create_controller(&self) -> PhysicsEntity {
@@ -257,7 +257,9 @@ impl Default for PhysicsController {
 }
 
 impl PhysicsController {
-    pub fn step(&mut self, physics_container: &PhysicsContainer) {
+    pub fn step(&mut self, delta: f32, physics_container: &PhysicsContainer) {
+        self.integration_parameters.dt = delta;
+
         let physics_hooks = ();
         let event_handler = ();
         self.physics_pipeline.step(

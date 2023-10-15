@@ -4,7 +4,7 @@ use godot::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
         Engine, Image, ImageTexture, StandardMaterial3D, Texture2D,
     },
-    prelude::{try_load, Gd, PackedByteArray, StringName, ToVariant},
+    prelude::{try_load, Gd, PackedByteArray, StringName, ToGodot},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use log::error;

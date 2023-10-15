@@ -245,7 +245,7 @@ impl NodeVirtual for PlayerController {
         let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
         if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
             self.base
-                .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
+                .emit_signal("on_player_move".into(), &[new_movement.to_godot()]);
             self.cache_movement = Some(new_movement);
         }
 

@@ -6,9 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["network-renet", "rak-rs"]
+default = ["network-renet"]
 network-renet = ["renet"]
-network-rak-rs = ["rak-rs"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -33,5 +32,4 @@ bincode = "1.3.2"
 # Network
 renet = { version = "0.0.13", features = ["bevy"], optional = true }
 
-rak-rs = { git = "https://github.com/NetrexMC/RakNet", default-features = false, features = [ "async_tokio", "debug", "debug_all" ], optional = true }
 tokio = "1.32.0"

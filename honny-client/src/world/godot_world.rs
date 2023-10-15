@@ -152,10 +152,10 @@ impl NodeVirtual for World {
         self.base.add_child(self.player_controller.clone().upcast());
     }
 
-    fn process(&mut self, _delta: f64) {
+    fn process(&mut self, delta: f64) {
         let now = std::time::Instant::now();
 
-        self.physics_container.step();
+        self.physics_container.step(delta as f32);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {

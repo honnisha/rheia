@@ -3,7 +3,7 @@ use std::fmt::{self, Display, Formatter};
 
 use ahash::HashMap;
 use godot::{
-    engine::{animation::LoopMode, AnimationPlayer, MeshInstance3D},
+    engine::{animation::LoopMode, AnimationPlayer},
     prelude::*,
 };
 use lazy_static::lazy_static;
