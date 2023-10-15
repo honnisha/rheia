@@ -1,6 +1,6 @@
 use godot::prelude::Vector3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use rapier3d::control::{CharacterLength, KinematicCharacterController};
+use rapier3d::control::{CharacterLength, KinematicCharacterController, CharacterAutostep};
 use rapier3d::prelude::*;
 use std::sync::Arc;
 
@@ -23,6 +23,10 @@ pub struct PhysicsEntity {
     character_controller: KinematicCharacterController,
 }
 
+fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
+    ((target.x as f32 - point.x as f32).powf(2.0) + (target.y as f32 - point.y as f32).powf(2.0) + (target.z as f32 - point.z as f32).powf(2.0)).sqrt()
+}
+
 impl PhysicsEntity {
     pub fn create(
         physics_container: &PhysicsContainer,
@@ -30,7 +34,13 @@ impl PhysicsEntity {
         collider_handle: ColliderHandle,
     ) -> Self {
         let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Relative(0.01);
+        character_controller.offset = CharacterLength::Relative(0.025);
+        character_controller.autostep = Some(CharacterAutostep {
+            max_height: CharacterLength::Relative(0.5),
+            min_width: CharacterLength::Relative(0.5),
+            include_dynamic_bodies: true,
+        });
+
         Self {
             rigid_body_set: physics_container.rigid_body_set.clone(),
             collider_set: physics_container.collider_set.clone(),
@@ -44,16 +54,22 @@ impl PhysicsEntity {
 
     pub fn controller_move(&mut self, delta: f64, impulse: Vector<Real>) {
         let collider = self.get_collider().unwrap().clone();
+        let filter = QueryFilter::default().exclude_rigid_body(self.rigid_handle);
+
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-            &self.rigid_body_set.read(),
-            &self.collider_set.read(),
+
+            &RigidBodySet::new(),
+            // &self.rigid_body_set.read(),
+
+            &ColliderSet::new(),
+            // &self.collider_set.read(),
+
             &self.query_pipeline.read(),
             collider.shape(),
             collider.position(),
             impulse,
-            // Make sure the the character we are trying to move isn’t considered an obstacle.
-            QueryFilter::default().exclude_rigid_body(self.rigid_handle),
+            filter,
             // We don’t care about events in this example.
             |_| {},
         );
