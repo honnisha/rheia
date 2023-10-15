@@ -30,7 +30,7 @@ impl PhysicsEntity {
         collider_handle: ColliderHandle,
     ) -> Self {
         let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Relative(0.05);
+        character_controller.offset = CharacterLength::Relative(0.01);
         Self {
             rigid_body_set: physics_container.rigid_body_set.clone(),
             collider_set: physics_container.collider_set.clone(),
@@ -208,8 +208,8 @@ impl PhysicsContainer {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let half_height = CONTROLLER_HEIGHT / 2.0; // CONTROLLER_HEIGHT - 1.8
-        let radius = CONTROLLER_RADIUS; // CONTROLLER_RADIUS - 0.4
+        let half_height = CONTROLLER_HEIGHT / 2.0;
+        let radius = CONTROLLER_RADIUS;
         let collider = ColliderBuilder::cylinder(half_height, radius)
             .mass(CONTROLLER_MASS)
             .restitution(0.0);
