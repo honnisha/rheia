@@ -59,11 +59,11 @@ impl PhysicsEntity {
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
 
-            &RigidBodySet::new(),
-            // &self.rigid_body_set.read(),
+            // &RigidBodySet::new(),
+            &self.rigid_body_set.read(),
 
-            &ColliderSet::new(),
-            // &self.collider_set.read(),
+            // &ColliderSet::new(),
+            &self.collider_set.read(),
 
             &self.query_pipeline.read(),
             collider.shape(),

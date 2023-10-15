@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::engine::{
     global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
@@ -124,6 +126,57 @@ impl PlayerController {
     pub fn get_view_mode(&self) -> &ContollerViewMode {
         &self.view_mode
     }
+
+    fn rotate_camera(&mut self, delta: f64) {
+        // Rotate camera look at
+        if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
+            let (yaw, pitch) = self.input_data.get_mouselook_vector();
+            self.set_rotation(yaw as f32, pitch as f32);
+        }
+    }
+
+    fn process_physics(&mut self, delta: f64, controller_active: bool, physics_active: bool) {
+        let now = std::time::Instant::now();
+
+        let pitch = self.get_pitch();
+
+        // Set lock if chunk is in loading
+        self.physics_entity.set_enabled(physics_active);
+
+        let mut move_elapsed = Duration::ZERO;
+        if controller_active {
+            // Moving
+            let vec = self.input_data.get_movement_vector(delta);
+            let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
+
+            let move_now = std::time::Instant::now();
+            if vec != Vector3::ZERO {
+                self.physics_entity
+                    .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+            }
+            move_elapsed = move_now.elapsed();
+
+            // Jump
+            let input = Input::singleton();
+            if input.is_action_just_pressed("jump".into()) {
+                self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
+            }
+        }
+
+        // Sync godot object position
+        let physics_pos = self.physics_entity.get_position();
+        // Controller position is lowered by half of the center of mass position
+        self.base.set_position(Vector3::new(
+            physics_pos.x,
+            physics_pos.y - CONTROLLER_HEIGHT / 2.0,
+            physics_pos.z,
+        ));
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(10) {
+            println!("PlayerController PHYSICS process:{:.2?} move:{:.2?}", elapsed, move_elapsed);
+        }
+    }
 }
 
 #[godot_api]
@@ -190,8 +243,6 @@ impl NodeVirtual for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
-        let now = std::time::Instant::now();
-
         let world = self.base.get_parent().unwrap().cast::<World>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
@@ -203,43 +254,9 @@ impl NodeVirtual for PlayerController {
         let console_active = Console::is_active();
 
         if !console_active {
-            // Rotate camera look at
-            if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
-                let (yaw, pitch) = self.input_data.get_mouselook_vector();
-                self.set_rotation(yaw as f32, pitch as f32);
-            }
+            self.rotate_camera(delta);
         }
-
-        let pitch = self.get_pitch();
-        {
-            // Set lock if chunk is in loading
-            self.physics_entity.set_enabled(chunk_loaded);
-
-            if !console_active {
-                // Moving
-                let vec = self.input_data.get_movement_vector(delta);
-                let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
-                if vec != Vector3::ZERO {
-                    self.physics_entity
-                        .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
-                }
-
-                // Jump
-                let input = Input::singleton();
-                if input.is_action_just_pressed("jump".into()) {
-                    self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
-                }
-            }
-
-            // Sync godot object position
-            let physics_pos = self.physics_entity.get_position();
-            // Controller position is lowered by half of the center of mass position
-            self.base.set_position(Vector3::new(
-                physics_pos.x,
-                physics_pos.y - CONTROLLER_HEIGHT / 2.0,
-                physics_pos.z,
-            ));
-        }
+        self.process_physics(delta, !console_active, chunk_loaded);
 
         // Handle player movement
         let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
@@ -247,11 +264,6 @@ impl NodeVirtual for PlayerController {
             self.base
                 .emit_signal("on_player_move".into(), &[new_movement.to_godot()]);
             self.cache_movement = Some(new_movement);
-        }
-
-        let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(20) {
-            println!("PlayerController process: {:.2?}", elapsed);
         }
     }
 }
