@@ -11,7 +11,6 @@ use std::sync::Arc;
 use std::{cell::RefCell, time::Duration};
 
 use crate::{
-    controller::player_movement::PlayerMovement,
     utils::textures::texture_mapper::TextureMapper,
     world::{
         godot_world::get_default_material, physics_handler::PhysicsContainer,
@@ -25,7 +24,6 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
-const CHUNKS_ACTIVE_RANGE: f32 = 2.0;
 const LIMIT_CHUNK_SPAWN_PER_FRAME: i32 = 1;
 pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
@@ -39,8 +37,6 @@ pub struct ChunksContainer {
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
     physics_container: PhysicsContainer,
-
-    cache_player_chunk: Option<ChunkPosition>,
 }
 
 impl ChunksContainer {
@@ -56,7 +52,6 @@ impl ChunksContainer {
             texture_mapper,
             material,
             physics_container,
-            cache_player_chunk: None,
         }
     }
 
@@ -165,10 +160,7 @@ impl ChunksContainer {
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
-                    let mut new_chunk_col = spawn_chunk(data, chunk_position, &mut self.base);
-                    new_chunk_col
-                        .bind_mut()
-                        .change_activity(self.is_chunk_section_active(chunk_position));
+                    let new_chunk_col = spawn_chunk(data, chunk_position, &mut self.base);
                     c.set_chunk_column(new_chunk_col);
                     c.set_loaded();
                     count += 1;
@@ -182,51 +174,6 @@ impl ChunksContainer {
                 "ChunksContainer.SPAWN_loaded_chunks process: {:.2?} count:{}",
                 elapsed, count
             );
-        }
-    }
-
-    /// Updates the activity of all chunks
-    fn update_chunks_activity(&self) {
-        for (chunk_position, chunk) in self.chunks.iter() {
-            let mut c = chunk.borrow_mut();
-            if let Some(column) = c.get_chunk_column_mut() {
-                column
-                    .bind_mut()
-                    .change_activity(self.is_chunk_section_active(chunk_position));
-            }
-        }
-    }
-
-    /// Determines if a chunk is active depending on the distance
-    /// from the player's chunk position (self.cache_player_chunk)
-    pub fn is_chunk_section_active(&self, chunk_position: &ChunkPosition) -> bool {
-        match self.cache_player_chunk {
-            Some(c) => chunk_position.get_distance(&c) < CHUNKS_ACTIVE_RANGE,
-            None => false,
-        }
-    }
-}
-
-#[godot_api]
-impl ChunksContainer {
-    #[func]
-    fn handler_player_move(&mut self, movement_var: Variant) {
-        let movement = movement_var.to::<PlayerMovement>();
-        let new_chunk_position = movement.get_chunk_position();
-
-        let mut chunk_changed = false;
-        if let Some(c) = self.cache_player_chunk {
-            chunk_changed = c != new_chunk_position;
-        }
-
-        self.cache_player_chunk = Some(new_chunk_position);
-
-        if chunk_changed {
-            println!(
-                "ChunksContainer move to new chunk: {:?}",
-                self.cache_player_chunk
-            );
-            self.update_chunks_activity();
         }
     }
 }
@@ -246,28 +193,5 @@ impl NodeVirtual for ChunksContainer {
     fn process(&mut self, _delta: f64) {
         self.send_chunks_to_load();
         self.spawn_loaded_chunks();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::ChunksContainer;
-    use common::chunks::chunk_position::ChunkPosition;
-    use godot::prelude::*;
-
-    fn create_chunks_container() -> Gd<ChunksContainer> {
-        Gd::<ChunksContainer>::with_base(|base| ChunksContainer::init(base))
-    }
-
-    fn test_active() {
-        let mut chunks_container = create_chunks_container();
-        chunks_container.bind_mut().cache_player_chunk = Some(ChunkPosition::new(0, 0));
-
-        assert_eq!(
-            chunks_container
-                .bind()
-                .is_chunk_section_active(&ChunkPosition::new(0, 1)),
-            true
-        );
     }
 }

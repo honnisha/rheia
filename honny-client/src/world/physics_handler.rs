@@ -6,8 +6,6 @@ use std::sync::Arc;
 
 use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
 
-use super::chunks::godot_chunk_column::DEFAULT_CHUNK_ACTIVITY;
-
 pub type PhysicsControllerLock = Arc<RwLock<PhysicsController>>;
 pub type RigidBodySetLock = Arc<RwLock<RigidBodySet>>;
 pub type ColliderSetLock = Arc<RwLock<ColliderSet>>;
@@ -145,14 +143,8 @@ impl PhysicsStaticEntity {
         .ok()
     }
 
-    pub fn has_collider(&self) -> bool {
+    pub fn _has_collider(&self) -> bool {
         self.collider_handle.is_some()
-    }
-
-    /// Require has_collider() == true
-    pub fn set_enabled(&self, active: bool) {
-        let mut collider = self.get_collider_mut().expect("physics entity dosesn't have collider");
-        collider.set_enabled(active);
     }
 
     // This function causes a thread lock with collider_set
@@ -166,7 +158,7 @@ impl PhysicsStaticEntity {
                     },
                     None => {
                         // Spawn new collider
-                        let collider = c.translation(vector![position.x, position.y, position.z]).enabled(DEFAULT_CHUNK_ACTIVITY);
+                        let collider = c.translation(vector![position.x, position.y, position.z]);
                         self.collider_handle = Some(self.collider_set.write().insert(collider));
                     },
                 }
