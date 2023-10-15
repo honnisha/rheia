@@ -1,6 +1,14 @@
 use std::{fs::File, io::Read};
+use std::fmt::{self, Display, Formatter};
 
-use godot::{prelude::*, engine::{AnimationPlayer, animation::LoopMode, MeshInstance3D, GltfDocument, GltfState}};
+use ahash::HashMap;
+use godot::{
+    engine::{animation::LoopMode, AnimationPlayer, MeshInstance3D},
+    prelude::*,
+};
+use lazy_static::lazy_static;
+
+use crate::utils::glb::glb_import;
 
 const GENERIC_MODEL: &str = "res://assets/models/generic/generic.glb";
 
@@ -12,41 +20,70 @@ enum BodyPart {
     Head,
 }
 
-const PARTS_CHEST: &'static [&str] = &[
-    "Node2/root/torso_lower2/torso_middle2/torso_middle",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/torso_upper",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_left_shoulder2/hand_left_shoulder",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_left_shoulder2/hand_left_wrist2/hand_left_wrist",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_right_shoulder2/hand_right_shoulder",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_right_shoulder2/hand_right_wrist2/hand_right_wrist",
-];
-const PARTS_HANDS: &'static [&str] = &[
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_right_shoulder2/hand_right_wrist2/hand_right_fist2/hand_right_fist",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/hand_left_shoulder2/hand_left_wrist2/hand_left_fist2/hand_left_fist",
-];
-const PARTS_PANTS: &'static [&str] = &[
-    "Node2/root/torso_lower2/torso_lower",
-    "Node2/root/torso_lower2/leg_right_hip2/leg_right_hip",
-    "Node2/root/torso_lower2/leg_right_hip2/leg_right_shin2/leg_right_shin",
-    "Node2/root/torso_lower2/leg_left_hip2/leg_left_hip",
-    "Node2/root/torso_lower2/leg_left_hip2/leg_left_shin2/leg_left_shin",
-];
-const PARTS_BOOTS: &'static [&str] = &[
-    "Node2/root/torso_lower2/leg_right_hip2/leg_right_shin2/leg_right_foot2/leg_right_foot",
-    "Node2/root/torso_lower2/leg_left_hip2/leg_left_shin2/leg_left_foot2/leg_left_foot",
-];
-const PARTS_HEAD: &'static [&str] = &[
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/neck2/neck",
-    "Node2/root/torso_lower2/torso_middle2/torso_upper2/neck2/head2/head",
-];
+impl Display for BodyPart {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        match self {
+            Self::Chest => write!(f, "chest"),
+            Self::Hands => write!(f, "hands"),
+            Self::Pants => write!(f, "pants"),
+            Self::Boots => write!(f, "boots"),
+            Self::Head => write!(f, "head"),
+        }
+    }
+}
 
-fn get_parts(part: BodyPart) -> &'static [&'static str] {
+type PartsType = HashMap<&'static str, &'static str>;
+lazy_static! {
+    static ref PARTS_CHEST: PartsType = {
+        let mut m = HashMap::default();
+        m.insert("Node2/root/b_torso_lower/b_torso_middle", "torso_middle");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper", "torso_upper");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder", "hand_right_shoulder");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow", "hand_right_elbow");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder", "hand_left_shoulder");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow", "hand_left_elbow");
+        m
+    };
+    static ref PARTS_HANDS: PartsType = {
+        let mut m = HashMap::default();
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow/b_hand_right_fist", "hand_right_fist");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow", "hand_right_wrist");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow/b_hand_left_fist", "hand_left_fist");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow", "hand_left_wrist");
+        m
+    };
+    static ref PARTS_PANTS: PartsType = {
+        let mut m = HashMap::default();
+        m.insert("Node2/root/b_torso_lower", "torso_lower");
+        m.insert("Node2/root/b_torso_lower/b_leg_right_hip", "leg_right_hip");
+        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin", "leg_right_shin");
+        m.insert("Node2/root/b_torso_lower/b_leg_left_hip", "leg_left_hip");
+        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin", "leg_left_shin");
+        m
+    };
+    static ref PARTS_BOOTS: PartsType = {
+        let mut m = HashMap::default();
+        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin/b_leg_right_foot", "leg_right_foot");
+        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin", "leg_right_licorice");
+        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin/b_leg_left_foot", "leg_left_foot");
+        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin", "leg_left_licorice");
+        m
+    };
+    static ref PARTS_HEAD: PartsType = {
+        let mut m = HashMap::default();
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_neck", "neck");
+        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_neck/b_head", "head");
+        m
+    };
+}
+
+fn get_parts(part: &BodyPart) -> &'static PartsType {
     match part {
-        BodyPart::Chest => PARTS_CHEST,
-        BodyPart::Hands => PARTS_HANDS,
-        BodyPart::Pants => PARTS_PANTS,
-        BodyPart::Boots => PARTS_BOOTS,
-        BodyPart::Head => PARTS_HEAD,
+        BodyPart::Chest => &PARTS_CHEST,
+        BodyPart::Hands => &PARTS_HANDS,
+        BodyPart::Pants => &PARTS_PANTS,
+        BodyPart::Boots => &PARTS_BOOTS,
+        BodyPart::Head => &PARTS_HEAD,
     }
 }
 /// Responsible for controlling the full-length generic model
@@ -65,27 +102,48 @@ impl BodyController {
 
         let mut animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
 
-        let mut animation = animation_player.get_animation(StringName::from("animation_model_walk")).unwrap();
+        let mut animation = animation_player
+            .get_animation(StringName::from("animation_model_walk"))
+            .unwrap();
         animation.set_loop_mode(LoopMode::LOOP_LINEAR);
 
         animation_player.call_deferred(StringName::from("play"), &["animation_model_walk".to_variant()]);
 
-        Self {
-            base,
-            generic,
-        }
+        Self { base, generic }
     }
 
     fn replace(&mut self, source: &Node3D, part: BodyPart) {
-        let parts = get_parts(part);
-        for path in parts.iter() {
-            let mut mesh = self.generic.get_node_as::<MeshInstance3D>(path);
-            let part = source.get_node_as::<MeshInstance3D>(path);
-            mesh.set_mesh(part.get_mesh().unwrap());
+        let parts = get_parts(&part);
+        for (bone_path, mesh_prefix) in parts.iter() {
+
+            // Get original bone
+            let mut bone = match self.generic.try_get_node_as::<Node3D>(bone_path) {
+                Some(node) => node,
+                None => panic!("Generic part:{} node bone \"{}\" not found", part, bone_path),
+            };
+
+            // Remove all original meshes
+            for mut orig_child in bone.get_children().iter_shared() {
+                if orig_child.get_name().to_string().starts_with(mesh_prefix) {
+                    orig_child.queue_free();
+                }
+            }
+
+            // Get target bone
+            let target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
+                Some(node) => node,
+                None => panic!("Replace target part:{} node bone \"{}\" not found", part, bone_path),
+            };
+
+            // Append meshes from target bone
+            for mut target_child in target_bone.get_children().iter_shared() {
+                if target_child.get_name().to_string().starts_with(mesh_prefix) {
+                    target_child.reparent(bone.clone().upcast());
+                }
+            }
         }
     }
 }
-
 
 #[godot_api]
 impl NodeVirtual for BodyController {
@@ -96,22 +154,12 @@ impl NodeVirtual for BodyController {
     fn ready(&mut self) {
         self.base.add_child(self.generic.clone().upcast());
 
-        let mut gltf = GltfDocument::new();
+        let path = "/home/honnisha/godot/honny-craft/honny-godot/assets/models/generic/replace.glb";
 
         let mut b: Vec<u8> = Vec::new();
-        let path = "/home/honnisha/godot/honny-craft/honny-godot/assets/models/generic/replace.glb";
         let mut file = File::open(path).unwrap();
         let _bytes_read = file.read_to_end(&mut b);
-
-        let mut pba = PackedByteArray::new();
-        pba.extend(b);
-
-        let gltf_state = GltfState::new();
-        gltf.append_from_buffer(pba, GodotString::from("base_path?"), gltf_state.clone());
-        let scene = gltf.generate_scene(gltf_state).unwrap();
-        let scene = scene.cast::<Node3D>();
-
-        // let scene = load::<PackedScene>("res://assets/models/generic/replace.glb").instantiate_as::<Node3D>();
+        let scene = glb_import(b);
 
         self.replace(&scene, BodyPart::Chest);
     }

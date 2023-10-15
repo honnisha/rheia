@@ -46,8 +46,10 @@ impl PhysicsEntity {
         let collider = self.get_collider().unwrap().clone();
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-            &RigidBodySet::new(), // &self.rigid_body_set.borrow(),
-            &ColliderSet::new(),  // &self.collider_set.borrow(),
+            //&RigidBodySet::new(), // &self.rigid_body_set.read(),
+            &self.rigid_body_set.read(),
+            //&ColliderSet::new(),  // &self.collider_set.read(),
+            &self.collider_set.read(),
             &self.query_pipeline.read(),
             collider.shape(),
             collider.position(),
@@ -129,6 +131,21 @@ impl PhysicsStaticEntity {
             rigid_body_set: physics_container.rigid_body_set.clone(),
             island_manager: physics_container.island_manager.clone(),
             collider_handle: None,
+        }
+    }
+
+    pub fn get_collider_mut(&self) -> Option<MappedRwLockWriteGuard<'_, Collider>> {
+        RwLockWriteGuard::try_map(self.collider_set.write(), |p| match p.get_mut(self.collider_handle.unwrap()) {
+            Some(c) => Some(c),
+            None => None,
+        })
+        .ok()
+    }
+
+    pub fn set_enabled(&self, active: bool) {
+        if self.collider_handle.is_some() {
+            let mut collider = self.get_collider_mut().unwrap();
+            collider.set_enabled(active);
         }
     }
 

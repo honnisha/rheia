@@ -14,6 +14,7 @@ pub struct ChunkColumn {
     #[base]
     pub base: Base<Node3D>,
     pub sections: SectionsType,
+    active: bool,
 }
 
 impl ChunkColumn {
@@ -21,6 +22,16 @@ impl ChunkColumn {
         Self {
             base,
             sections: Default::default(),
+            active: false,
+        }
+    }
+
+    pub fn change_activity(&mut self, active: bool) {
+        if self.active != active {
+            self.active = active;
+            for section in self.sections.iter_mut() {
+                section.bind_mut().change_activity(active);
+            }
         }
     }
 }

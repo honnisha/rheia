@@ -2816,7 +2816,7 @@ dependencies = [
 [[package]]
 name = "godot"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "godot-core",
  "godot-macros",
@@ -2825,7 +2825,7 @@ dependencies = [
 [[package]]
 name = "godot-bindings"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "godot4-prebuilt",
 ]
@@ -2833,7 +2833,7 @@ dependencies = [
 [[package]]
 name = "godot-codegen"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "godot-bindings",
  "godot-fmt",
@@ -2847,7 +2847,7 @@ dependencies = [
 [[package]]
 name = "godot-core"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "glam 0.23.0",
  "godot-bindings",
@@ -2858,7 +2858,7 @@ dependencies = [
 [[package]]
 name = "godot-ffi"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "godot-bindings",
  "godot-codegen",
@@ -2868,7 +2868,7 @@ dependencies = [
 [[package]]
 name = "godot-fmt"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
  "proc-macro2",
 ]
@@ -2876,8 +2876,9 @@ dependencies = [
 [[package]]
 name = "godot-macros"
 version = "0.1.0"
-source = "git+https://github.com/godot-rust/gdext?branch=master#a92164bb3a98108b95506f80769408583421e6dc"
+source = "git+https://github.com/godot-rust/gdext?branch=master#3491d7bc91c9711dd4139b3db104aa37bb419bd1"
 dependencies = [
+ "godot-bindings",
  "proc-macro2",
  "quote",
  "venial",
@@ -3956,6 +3957,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-derive"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfb77679af88f8b125209d354a202862602672222e7f2313fdd6dc349bad4712"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.26",
+]
+
+[[package]]
 name = "num-integer"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4110,7 +4122,7 @@ dependencies = [
  "jni 0.20.0",
  "ndk 0.7.0",
  "ndk-context",
- "num-derive",
+ "num-derive 0.3.3",
  "num-traits",
  "oboe-sys",
 ]
@@ -4256,7 +4268,7 @@ dependencies = [
  "downcast-rs",
  "either",
  "nalgebra",
- "num-derive",
+ "num-derive 0.3.3",
  "num-traits",
  "rustc-hash",
  "simba",
@@ -4496,8 +4508,6 @@ checksum = "9c8a99fddc9f0ba0a85884b8d14e3592853e787d581ca1816c91349b10e4eeab"
 [[package]]
 name = "rapier3d"
 version = "0.17.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62a8a0bd9d3135f7b4eb45d0796540e7bab47b6b7c974f90567ccc5a0454f42b"
 dependencies = [
  "approx",
  "arrayvec 0.7.4",
@@ -4506,7 +4516,7 @@ dependencies = [
  "crossbeam",
  "downcast-rs",
  "nalgebra",
- "num-derive",
+ "num-derive 0.4.1",
  "num-traits",
  "parry3d",
  "rustc-hash",

@@ -114,10 +114,10 @@ pub fn get_default_material() -> Gd<Material> {
 #[godot_api]
 impl World {
     #[func]
-    fn handler_player_move(&self, movement_var: Variant) {
+    fn handler_player_move(&mut self, movement_var: Variant) {
+        let movement = movement_var.to::<PlayerMovement>();
         let main = self.base.get_parent().unwrap().cast::<Main>();
         let main = main.bind();
-        let movement = movement_var.to::<PlayerMovement>();
         main.network_send_message(&movement.into_network(), NetworkMessageType::Unreliable);
     }
 }
@@ -136,10 +136,19 @@ impl NodeVirtual for World {
 
     fn ready(&mut self) {
         self.base.add_child(self.chunks_container.clone().upcast());
+
+        // Bind world player move signal
         self.player_controller.bind_mut().base.connect(
             "on_player_move".into(),
             Callable::from_object_method(self.base.clone(), "handler_player_move"),
         );
+
+        // Bind chunks manager player move signal
+        self.player_controller.bind_mut().base.connect(
+            "on_player_move".into(),
+            Callable::from_object_method(self.chunks_container.bind().base.clone(), "handler_player_move"),
+        );
+
         self.base.add_child(self.player_controller.clone().upcast());
     }
 

@@ -35,6 +35,7 @@ pub struct ChunkSection {
     physics_entity: PhysicsStaticEntity,
     chunk_position: ChunkPosition,
     y: u8,
+    active: bool,
 
     need_sync: bool,
     new_colider: Option<ColliderBuilder>,
@@ -58,6 +59,7 @@ impl ChunkSection {
             chunk_position,
             physics_entity,
             y,
+            active: false,
 
             need_sync: false,
             new_colider: None,
@@ -91,7 +93,15 @@ impl ChunkSection {
             // This function causes a thread lock
             self.physics_entity
                 .update_collider(std::mem::take(&mut self.new_colider), &self.get_section_position());
+            self.physics_entity.set_enabled(self.active);
             self.new_colider = None;
+        }
+    }
+
+    pub fn change_activity(&mut self, active: bool) {
+        if self.active != active {
+            self.active = active;
+            self.physics_entity.set_enabled(self.active);
         }
     }
 }

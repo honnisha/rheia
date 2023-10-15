@@ -1,5 +1,11 @@
-use common::network::messages::ClientMessages;
-use godot::prelude::{Vector3, ToVariant, FromVariant};
+use common::{
+    chunks::{
+        block_position::{BlockPosition, BlockPositionTrait},
+        chunk_position::ChunkPosition,
+    },
+    network::messages::ClientMessages,
+};
+use godot::prelude::{FromVariant, ToVariant, Vector3};
 use std::fmt::{self, Display, Formatter};
 
 use crate::{entities::position::GodotPositionConverter, main_scene::FloatType};
@@ -33,5 +39,9 @@ impl PlayerMovement {
             yaw: self.yaw,
             pitch: self.pitch,
         }
+    }
+
+    pub fn get_chunk_position(&self) -> ChunkPosition {
+        BlockPosition::new(self.position.x as i64, self.position.y as i64, self.position.z as i64).get_chunk_position()
     }
 }
