@@ -13,7 +13,10 @@ use std::{cell::RefCell, time::Duration};
 use crate::{
     controller::player_movement::PlayerMovement,
     utils::textures::texture_mapper::TextureMapper,
-    world::{godot_world::get_default_material, physics_handler::PhysicsContainer, world_manager::TextureMapperType},
+    world::{
+        godot_world::get_default_material, physics_handler::PhysicsContainer,
+        world_manager::TextureMapperType,
+    },
 };
 
 use super::{
@@ -89,7 +92,8 @@ impl ChunksContainer {
         }
 
         let chunk = Chunk::create(sections);
-        self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
+        self.chunks
+            .insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
@@ -181,6 +185,7 @@ impl ChunksContainer {
         }
     }
 
+    /// Updates the activity of all chunks
     fn update_chunks_activity(&self) {
         for (chunk_position, chunk) in self.chunks.iter() {
             let mut c = chunk.borrow_mut();
@@ -192,6 +197,8 @@ impl ChunksContainer {
         }
     }
 
+    /// Determines if a chunk is active depending on the distance
+    /// from the player's chunk position (self.cache_player_chunk)
     pub fn is_chunk_section_active(&self, chunk_position: &ChunkPosition) -> bool {
         match self.cache_player_chunk {
             Some(c) => chunk_position.get_distance(&c) < CHUNKS_ACTIVE_RANGE,
@@ -215,7 +222,10 @@ impl ChunksContainer {
         self.cache_player_chunk = Some(new_chunk_position);
 
         if chunk_changed {
-            println!("ChunksContainer move to new chunk: {:?}", self.cache_player_chunk);
+            println!(
+                "ChunksContainer move to new chunk: {:?}",
+                self.cache_player_chunk
+            );
             self.update_chunks_activity();
         }
     }

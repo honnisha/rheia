@@ -250,7 +250,7 @@ impl NodeVirtual for PlayerController {
         }
 
         let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(3) {
+        if elapsed > std::time::Duration::from_millis(20) {
             println!("PlayerController process: {:.2?}", elapsed);
         }
     }

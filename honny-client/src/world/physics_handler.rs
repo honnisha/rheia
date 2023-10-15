@@ -6,6 +6,8 @@ use std::sync::Arc;
 
 use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
 
+use super::chunks::godot_chunk_column::DEFAULT_CHUNK_ACTIVITY;
+
 pub type PhysicsControllerLock = Arc<RwLock<PhysicsController>>;
 pub type RigidBodySetLock = Arc<RwLock<RigidBodySet>>;
 pub type ColliderSetLock = Arc<RwLock<ColliderSet>>;
@@ -46,9 +48,7 @@ impl PhysicsEntity {
         let collider = self.get_collider().unwrap().clone();
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-            //&RigidBodySet::new(), // &self.rigid_body_set.read(),
             &self.rigid_body_set.read(),
-            //&ColliderSet::new(),  // &self.collider_set.read(),
             &self.collider_set.read(),
             &self.query_pipeline.read(),
             collider.shape(),
@@ -65,7 +65,7 @@ impl PhysicsEntity {
     }
 
     pub fn set_enabled(&mut self, active: bool) {
-        let mut body = self.get_rigid_body_mut().unwrap();
+        let mut body = self.get_rigid_body_mut().expect("physics entity dosesn't have rigid body");
         body.set_enabled(active);
     }
 
@@ -135,6 +135,9 @@ impl PhysicsStaticEntity {
     }
 
     pub fn get_collider_mut(&self) -> Option<MappedRwLockWriteGuard<'_, Collider>> {
+        if self.collider_handle.is_none() {
+            return None;
+        }
         RwLockWriteGuard::try_map(self.collider_set.write(), |p| match p.get_mut(self.collider_handle.unwrap()) {
             Some(c) => Some(c),
             None => None,
@@ -142,11 +145,14 @@ impl PhysicsStaticEntity {
         .ok()
     }
 
+    pub fn has_collider(&self) -> bool {
+        self.collider_handle.is_some()
+    }
+
+    /// Require has_collider() == true
     pub fn set_enabled(&self, active: bool) {
-        if self.collider_handle.is_some() {
-            let mut collider = self.get_collider_mut().unwrap();
-            collider.set_enabled(active);
-        }
+        let mut collider = self.get_collider_mut().expect("physics entity dosesn't have collider");
+        collider.set_enabled(active);
     }
 
     // This function causes a thread lock with collider_set
@@ -160,7 +166,7 @@ impl PhysicsStaticEntity {
                     },
                     None => {
                         // Spawn new collider
-                        let collider = c.translation(vector![position.x, position.y, position.z]);
+                        let collider = c.translation(vector![position.x, position.y, position.z]).enabled(DEFAULT_CHUNK_ACTIVITY);
                         self.collider_handle = Some(self.collider_set.write().insert(collider));
                     },
                 }

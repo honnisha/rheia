@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-use super::mesh::mesh_generator::Geometry;
+use super::{mesh::mesh_generator::Geometry, godot_chunk_column::DEFAULT_CHUNK_ACTIVITY};
 
 //pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
@@ -59,7 +59,7 @@ impl ChunkSection {
             chunk_position,
             physics_entity,
             y,
-            active: false,
+            active: DEFAULT_CHUNK_ACTIVITY,
 
             need_sync: false,
             new_colider: None,
@@ -93,15 +93,24 @@ impl ChunkSection {
             // This function causes a thread lock
             self.physics_entity
                 .update_collider(std::mem::take(&mut self.new_colider), &self.get_section_position());
-            self.physics_entity.set_enabled(self.active);
             self.new_colider = None;
+
+            if self.physics_entity.has_collider() {
+                self.physics_entity.set_enabled(self.active);
+            }
         }
     }
 
     pub fn change_activity(&mut self, active: bool) {
         if self.active != active {
             self.active = active;
-            self.physics_entity.set_enabled(self.active);
+
+            if self.physics_entity.has_collider() {
+                if self.chunk_position.x == 0 && self.chunk_position.z == -1 {
+                    println!("----------------- update chunk:{} y:{} active:{}", self.chunk_position, self.y, self.active);
+                }
+                self.physics_entity.set_enabled(self.active);
+            }
         }
     }
 }

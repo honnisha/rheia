@@ -158,7 +158,7 @@ impl NodeVirtual for World {
         self.physics_container.step(delta as f32);
 
         let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(20) {
+        if elapsed > std::time::Duration::from_millis(30) {
             println!("World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
     }
