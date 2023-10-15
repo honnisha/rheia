@@ -130,15 +130,18 @@ impl BodyController {
             }
 
             // Get target bone
-            let target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
+            let mut target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
                 Some(node) => node,
                 None => panic!("Replace target part:{} node bone \"{}\" not found", part, bone_path),
             };
 
             // Append meshes from target bone
-            for mut target_child in target_bone.get_children().iter_shared() {
+            for target_child in target_bone.get_children().iter_shared() {
                 if target_child.get_name().to_string().starts_with(mesh_prefix) {
-                    target_child.reparent(bone.clone().upcast());
+
+                    target_bone.remove_child(target_child.clone());
+                    bone.add_child(target_child);
+                    // target_child.reparent(bone.clone().upcast());
                 }
             }
         }
