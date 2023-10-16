@@ -13,7 +13,6 @@ use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use log::error;
 use log::info;
-use std::borrow::Borrow;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
@@ -70,7 +69,7 @@ impl NetworkContainer {
     }
 
     pub fn is_connected(&self, client_id: &u64) -> bool {
-        let network = self.server_network.as_ref().borrow();
+        let network = self.server_network.as_ref();
         network.is_connected(*client_id)
     }
 }
@@ -133,7 +132,7 @@ fn receive_message_system(
     if time.delta() > std::time::Duration::from_millis(100) {
         log::info!("receive_message_system delay: {:.2?}", time.delta());
     }
-    let network = network_container.server_network.as_ref().borrow();
+    let network = network_container.server_network.as_ref();
     network.step(time.delta());
 
     for message in network.iter_errors() {
@@ -182,7 +181,7 @@ fn handle_events_system(
     mut connection_events: EventWriter<PlayerConnectionEvent>,
     mut disconnection_events: EventWriter<PlayerDisconnectEvent>,
 ) {
-    let network = network_container.server_network.as_ref().borrow();
+    let network = network_container.server_network.as_ref();
 
     for connection in network.iter_connections() {
         match connection {
@@ -198,7 +197,7 @@ fn handle_events_system(
 }
 
 fn send_client_messages(network_container: Res<NetworkContainer>, clients: Res<ClientsContainer>) {
-    let network = network_container.server_network.as_ref().borrow();
+    let network = network_container.server_network.as_ref();
 
     for (client_id, client_lock) in clients.iter() {
         if !network_container.is_connected(&client_id) {

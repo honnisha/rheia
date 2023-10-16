@@ -25,28 +25,20 @@ impl fmt::Display for CommandError {
 }
 
 type CommandFN = fn(world: &mut World, sender: Box<dyn ConsoleSenderType>, CommandMatch) -> Result<(), CommandError>;
-type CommandCompleteFN = fn(
-    world: &mut World,
-    sender: Box<dyn ConsoleSenderType>,
-    complete_response: &mut CompleteResponse,
-    command_sequence: Vec<String>,
-) -> Result<(), CommandError>;
 
 #[derive(Clone)]
 pub struct CommandExecuter {
     command_parser: Command,
     handler: CommandFN,
-    complete_handler: Option<CommandCompleteFN>,
     name: String,
 }
 
 impl CommandExecuter {
-    pub fn new(command_parser: Command, handler: CommandFN, complete_handler: Option<CommandCompleteFN>) -> Self {
+    pub fn new(command_parser: Command, handler: CommandFN) -> Self {
         let name = command_parser.get_name().to_string();
         Self {
             command_parser,
             handler,
-            complete_handler,
             name,
         }
     }

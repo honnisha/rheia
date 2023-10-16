@@ -127,7 +127,7 @@ impl PlayerController {
         &self.view_mode
     }
 
-    fn rotate_camera(&mut self, delta: f64) {
+    fn rotate_camera(&mut self, _delta: f64) {
         // Rotate camera look at
         if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
             let (yaw, pitch) = self.input_data.get_mouselook_vector();
