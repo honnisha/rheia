@@ -1,8 +1,10 @@
 use godot::prelude::Vector3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use rapier3d::control::{CharacterLength, KinematicCharacterController, CharacterAutostep};
+use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
+use rapier3d::na::{Rotation3, Point3};
 use rapier3d::prelude::*;
 use std::sync::Arc;
+use rapier3d::na;
 
 use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
 
@@ -24,7 +26,14 @@ pub struct PhysicsEntity {
 }
 
 fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
-    ((target.x as f32 - point.x as f32).powf(2.0) + (target.y as f32 - point.y as f32).powf(2.0) + (target.z as f32 - point.z as f32).powf(2.0)).sqrt()
+    ((target.x as f32 - point.x as f32).powf(2.0)
+        + (target.y as f32 - point.y as f32).powf(2.0)
+        + (target.z as f32 - point.z as f32).powf(2.0))
+    .sqrt()
+}
+
+fn vec_gd_to_na(from: Vector3) -> na::Vector3<f32> {
+    na::Vector3::new(from.x, from.y, from.z)
 }
 
 impl PhysicsEntity {
@@ -34,7 +43,7 @@ impl PhysicsEntity {
         collider_handle: ColliderHandle,
     ) -> Self {
         let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Relative(0.025);
+        character_controller.offset = CharacterLength::Relative(0.1);
         character_controller.autostep = Some(CharacterAutostep {
             max_height: CharacterLength::Relative(0.5),
             min_width: CharacterLength::Relative(0.5),
@@ -58,13 +67,10 @@ impl PhysicsEntity {
 
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
-
             // &RigidBodySet::new(),
             &self.rigid_body_set.read(),
-
             // &ColliderSet::new(),
             &self.collider_set.read(),
-
             &self.query_pipeline.read(),
             collider.shape(),
             collider.position(),
@@ -79,7 +85,9 @@ impl PhysicsEntity {
     }
 
     pub fn set_enabled(&mut self, active: bool) {
-        let mut body = self.get_rigid_body_mut().expect("physics entity dosesn't have rigid body");
+        let mut body = self
+            .get_rigid_body_mut()
+            .expect("physics entity dosesn't have rigid body");
         body.set_enabled(active);
     }
 
@@ -127,6 +135,37 @@ impl PhysicsEntity {
     pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
         Vector3::new(translation[0], translation[1], translation[2])
     }
+
+    // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
+    pub fn raycast(&self, from: Vector3, to: Vector3) -> Option<(ColliderHandle, Point<Real>)> {
+        let dir = to - from;
+        let (dir, max_toi) = (dir.normalized(), dir.length());
+        let origin = Point3::new(from.x, from.y, from.z);
+        let direction = vec_gd_to_na(dir);
+
+        let ray = Ray::new(origin, direction);
+
+        let solid = true;
+        let filter = QueryFilter::default().exclude_rigid_body(self.rigid_handle);
+
+        let pipeline = self.query_pipeline.read();
+        if let Some((handle, toi)) = pipeline.cast_ray(
+            &self.rigid_body_set.read(),
+            &self.collider_set.read(),
+            &ray,
+            max_toi,
+            solid,
+            filter,
+        ) {
+            // The first collider hit has the handle `handle` and it hit after
+            // the ray travelled a distance equal to `ray.dir * toi`.
+            // let hit_point = ; // Same as: `ray.origin + ray.dir * toi`
+            // println!("Collider {:?} hit at point {}", handle, hit_point);
+            return Some((handle, ray.point_at(toi)));
+        }
+        println!("Raycast not found origin:{} direction:{}", origin, direction);
+        return None;
+    }
 }
 
 /// For stationary bodies
@@ -152,9 +191,11 @@ impl PhysicsStaticEntity {
         if self.collider_handle.is_none() {
             return None;
         }
-        RwLockWriteGuard::try_map(self.collider_set.write(), |p| match p.get_mut(self.collider_handle.unwrap()) {
-            Some(c) => Some(c),
-            None => None,
+        RwLockWriteGuard::try_map(self.collider_set.write(), |p| {
+            match p.get_mut(self.collider_handle.unwrap()) {
+                Some(c) => Some(c),
+                None => None,
+            }
         })
         .ok()
     }
@@ -171,12 +212,12 @@ impl PhysicsStaticEntity {
                     Some(_old_collider) => {
                         // Update existing collider
                         todo!()
-                    },
+                    }
                     None => {
                         // Spawn new collider
                         let collider = c.translation(vector![position.x, position.y, position.z]);
                         self.collider_handle = Some(self.collider_set.write().insert(collider));
-                    },
+                    }
                 }
             }
             None => {

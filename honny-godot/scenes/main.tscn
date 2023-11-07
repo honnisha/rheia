@@ -11,3 +11,5 @@ clouds_height = 0.4
 clouds_size = 0.52
 clouds_quality = 100
 wind_strength = 0.05
+
+[node name="RayCast3D" type="RayCast3D" parent="."]

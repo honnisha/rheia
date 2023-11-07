@@ -174,7 +174,10 @@ impl PlayerController {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(10) {
-            println!("PlayerController PHYSICS process:{:.2?} move:{:.2?}", elapsed, move_elapsed);
+            println!(
+                "PlayerController PHYSICS process:{:.2?} move:{:.2?}",
+                elapsed, move_elapsed
+            );
         }
     }
 }
@@ -257,6 +260,16 @@ impl NodeVirtual for PlayerController {
             self.rotate_camera(delta);
         }
         self.process_physics(delta, !console_active, chunk_loaded);
+
+        let input = Input::singleton();
+        if input.is_action_just_pressed("action_left".into()) {
+            let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+            let from = self.camera.project_ray_origin(screen / 2.0);
+            let to = from + self.camera.project_ray_normal(screen / 2.0) * 10.0;
+            if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(from, to) {
+                println!("Collider {:?} hit at point {}", collider_handle, hit_point);
+            }
+        }
 
         // Handle player movement
         let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
