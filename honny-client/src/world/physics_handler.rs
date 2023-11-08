@@ -1,29 +1,12 @@
 use godot::prelude::Vector3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
-use rapier3d::na::{Point3};
+use rapier3d::na;
+use rapier3d::na::Point3;
 use rapier3d::prelude::*;
 use std::sync::Arc;
-use rapier3d::na;
 
 use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
-
-pub type PhysicsControllerLock = Arc<RwLock<PhysicsController>>;
-pub type RigidBodySetLock = Arc<RwLock<RigidBodySet>>;
-pub type ColliderSetLock = Arc<RwLock<ColliderSet>>;
-pub type QueryPipelineLock = Arc<RwLock<QueryPipeline>>;
-pub type IslandManagerLock = Arc<RwLock<IslandManager>>;
-
-/// For bodies with physics
-pub struct PhysicsEntity {
-    rigid_body_set: RigidBodySetLock,
-    collider_set: ColliderSetLock,
-    query_pipeline: QueryPipelineLock,
-
-    rigid_handle: RigidBodyHandle,
-    collider_handle: ColliderHandle,
-    character_controller: KinematicCharacterController,
-}
 
 fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
     ((target.x as f32 - point.x as f32).powf(2.0)
@@ -36,7 +19,20 @@ fn vec_gd_to_na(from: Vector3) -> na::Vector3<f32> {
     na::Vector3::new(from.x, from.y, from.z)
 }
 
-impl PhysicsEntity {
+fn vec_na_to_gd(from: &na::Vector3<f32>) -> Vector3 {
+    Vector3::new(from.x, from.y, from.z)
+}
+
+/// For bodies with physics
+pub struct PhysicsControllerEntity {
+    physics_container: PhysicsContainer,
+
+    rigid_handle: RigidBodyHandle,
+    collider_handle: ColliderHandle,
+    character_controller: KinematicCharacterController,
+}
+
+impl PhysicsControllerEntity {
     pub fn create(
         physics_container: &PhysicsContainer,
         rigid_handle: RigidBodyHandle,
@@ -51,10 +47,7 @@ impl PhysicsEntity {
         });
 
         Self {
-            rigid_body_set: physics_container.rigid_body_set.clone(),
-            collider_set: physics_container.collider_set.clone(),
-            query_pipeline: physics_container.query_pipeline.clone(),
-
+            physics_container: physics_container.clone(),
             rigid_handle,
             collider_handle,
             character_controller,
@@ -62,77 +55,54 @@ impl PhysicsEntity {
     }
 
     pub fn controller_move(&mut self, delta: f64, impulse: Vector3) {
-        let collider = self.get_collider().unwrap().clone();
+        let collider = self
+            .physics_container
+            .get_collider(&self.collider_handle)
+            .unwrap()
+            .clone();
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_handle);
 
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
             // &RigidBodySet::new(),
-            &self.rigid_body_set.read(),
+            &self.physics_container.rigid_body_set.read(),
             // &ColliderSet::new(),
-            &self.collider_set.read(),
-            &self.query_pipeline.read(),
+            &self.physics_container.collider_set.read(),
+            &self.physics_container.query_pipeline.read(),
             collider.shape(),
             collider.position(),
             vec_gd_to_na(impulse),
             filter,
             |_| {},
         );
-        let mut body = self.get_rigid_body_mut().unwrap();
+        let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         let translation = body.translation().clone();
         body.set_translation(translation + corrected_movement.translation, true);
     }
 
     pub fn set_enabled(&mut self, active: bool) {
         let mut body = self
-            .get_rigid_body_mut()
+            .physics_container
+            .get_rigid_body_mut(&self.rigid_handle)
             .expect("physics entity dosesn't have rigid body");
         body.set_enabled(active);
     }
 
     pub fn apply_impulse(&mut self, impulse: Vector3) {
-        let mut body = self.get_rigid_body_mut().unwrap();
+        let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         body.apply_impulse(vec_gd_to_na(impulse), true);
     }
 
     pub fn get_position(&self) -> Vector3 {
-        let body = self.get_rigid_body().unwrap();
-        PhysicsEntity::transform_to_vector3(&body.translation())
+        let body = self.physics_container.get_rigid_body(&self.rigid_handle).unwrap();
+        vec_na_to_gd(&body.translation())
     }
 
     pub fn set_position(&mut self, position: Vector3) {
-        let mut body = self.get_rigid_body_mut().unwrap();
+        let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         // Reset velocity
         body.sleep();
         body.set_translation(vec_gd_to_na(position), true);
-    }
-
-    pub fn get_collider(&self) -> Option<MappedRwLockReadGuard<'_, Collider>> {
-        RwLockReadGuard::try_map(self.collider_set.read(), |p| match p.get(self.collider_handle) {
-            Some(c) => Some(c),
-            None => None,
-        })
-        .ok()
-    }
-
-    pub fn get_rigid_body(&self) -> Option<MappedRwLockReadGuard<RigidBody>> {
-        RwLockReadGuard::try_map(self.rigid_body_set.read(), |p| match p.get(self.rigid_handle) {
-            Some(c) => Some(c),
-            None => None,
-        })
-        .ok()
-    }
-
-    pub fn get_rigid_body_mut(&mut self) -> Option<MappedRwLockWriteGuard<RigidBody>> {
-        RwLockWriteGuard::try_map(self.rigid_body_set.write(), |p| match p.get_mut(self.rigid_handle) {
-            Some(c) => Some(c),
-            None => None,
-        })
-        .ok()
-    }
-
-    pub fn transform_to_vector3(translation: &Vector<Real>) -> Vector3 {
-        Vector3::new(translation[0], translation[1], translation[2])
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
@@ -147,31 +117,24 @@ impl PhysicsEntity {
         let solid = true;
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_handle);
 
-        let pipeline = self.query_pipeline.read();
+        let pipeline = self.physics_container.query_pipeline.read();
         if let Some((handle, toi)) = pipeline.cast_ray(
-            &self.rigid_body_set.read(),
-            &self.collider_set.read(),
+            &self.physics_container.rigid_body_set.read(),
+            &self.physics_container.collider_set.read(),
             &ray,
             max_toi,
             solid,
             filter,
         ) {
-            // The first collider hit has the handle `handle` and it hit after
-            // the ray travelled a distance equal to `ray.dir * toi`.
-            // let hit_point = ; // Same as: `ray.origin + ray.dir * toi`
-            // println!("Collider {:?} hit at point {}", handle, hit_point);
             return Some((handle, ray.point_at(toi)));
         }
-        println!("Raycast not found origin:{} direction:{}", origin, direction);
         return None;
     }
 }
 
 /// For stationary bodies
 pub struct PhysicsStaticEntity {
-    collider_set: ColliderSetLock,
-    rigid_body_set: RigidBodySetLock,
-    island_manager: IslandManagerLock,
+    physics_container: PhysicsContainer,
 
     collider_handle: Option<ColliderHandle>,
 }
@@ -179,24 +142,9 @@ pub struct PhysicsStaticEntity {
 impl PhysicsStaticEntity {
     pub fn new(physics_container: &PhysicsContainer) -> Self {
         Self {
-            collider_set: physics_container.collider_set.clone(),
-            rigid_body_set: physics_container.rigid_body_set.clone(),
-            island_manager: physics_container.island_manager.clone(),
+            physics_container: physics_container.clone(),
             collider_handle: None,
         }
-    }
-
-    pub fn get_collider_mut(&self) -> Option<MappedRwLockWriteGuard<'_, Collider>> {
-        if self.collider_handle.is_none() {
-            return None;
-        }
-        RwLockWriteGuard::try_map(self.collider_set.write(), |p| {
-            match p.get_mut(self.collider_handle.unwrap()) {
-                Some(c) => Some(c),
-                None => None,
-            }
-        })
-        .ok()
     }
 
     pub fn _has_collider(&self) -> bool {
@@ -215,17 +163,17 @@ impl PhysicsStaticEntity {
                     None => {
                         // Spawn new collider
                         let collider = c.translation(vector![position.x, position.y, position.z]);
-                        self.collider_handle = Some(self.collider_set.write().insert(collider));
+                        self.collider_handle = Some(self.physics_container.collider_set.write().insert(collider));
                     }
                 }
             }
             None => {
                 if let Some(stored_collider) = self.collider_handle {
                     // Remove old collider
-                    self.collider_set.write().remove(
+                    self.physics_container.collider_set.write().remove(
                         stored_collider,
-                        &mut self.island_manager.write(),
-                        &mut self.rigid_body_set.write(),
+                        &mut self.physics_container.island_manager.write(),
+                        &mut self.physics_container.rigid_body_set.write(),
                         true,
                     );
                 }
@@ -236,11 +184,11 @@ impl PhysicsStaticEntity {
 
 #[derive(Clone)]
 pub struct PhysicsContainer {
-    world_physics: PhysicsControllerLock,
-    rigid_body_set: RigidBodySetLock,
-    collider_set: ColliderSetLock,
-    query_pipeline: QueryPipelineLock,
-    island_manager: IslandManagerLock,
+    world_physics: Arc<RwLock<PhysicsController>>,
+    rigid_body_set: Arc<RwLock<RigidBodySet>>,
+    collider_set: Arc<RwLock<ColliderSet>>,
+    query_pipeline: Arc<RwLock<QueryPipeline>>,
+    island_manager: Arc<RwLock<IslandManager>>,
 }
 
 impl Default for PhysicsContainer {
@@ -260,7 +208,39 @@ impl PhysicsContainer {
         self.world_physics.as_ref().write().step(delta, &self);
     }
 
-    pub fn create_controller(&self) -> PhysicsEntity {
+    pub fn get_collider(&self, collider_handle: &ColliderHandle) -> Option<MappedRwLockReadGuard<'_, Collider>> {
+        RwLockReadGuard::try_map(self.collider_set.read(), |p| match p.get(*collider_handle) {
+            Some(c) => Some(c),
+            None => None,
+        })
+        .ok()
+    }
+
+    pub fn get_collider_mut(&self, collider_handle: &ColliderHandle) -> Option<MappedRwLockWriteGuard<'_, Collider>> {
+        RwLockWriteGuard::try_map(self.collider_set.write(), |p| match p.get_mut(*collider_handle) {
+            Some(c) => Some(c),
+            None => None,
+        })
+        .ok()
+    }
+
+    pub fn get_rigid_body(&self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockReadGuard<RigidBody>> {
+        RwLockReadGuard::try_map(self.rigid_body_set.read(), |p| match p.get(*rigid_handle) {
+            Some(c) => Some(c),
+            None => None,
+        })
+        .ok()
+    }
+
+    pub fn get_rigid_body_mut(&mut self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockWriteGuard<RigidBody>> {
+        RwLockWriteGuard::try_map(self.rigid_body_set.write(), |p| match p.get_mut(*rigid_handle) {
+            Some(c) => Some(c),
+            None => None,
+        })
+        .ok()
+    }
+
+    pub fn create_controller(&self) -> PhysicsControllerEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
@@ -276,7 +256,7 @@ impl PhysicsContainer {
 
         let collider_handle = collider_set.insert_with_parent(collider, rigid_handle, &mut rigid_body_set);
 
-        PhysicsEntity::create(&self, rigid_handle, collider_handle)
+        PhysicsControllerEntity::create(&self, rigid_handle, collider_handle)
     }
 
     pub fn create_static(&self) -> PhysicsStaticEntity {

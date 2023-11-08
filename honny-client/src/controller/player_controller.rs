@@ -10,7 +10,7 @@ use godot::prelude::*;
 use crate::console::console_handler::Console;
 use crate::main_scene::FloatType;
 use crate::world::godot_world::World;
-use crate::world::physics_handler::{PhysicsContainer, PhysicsEntity};
+use crate::world::physics_handler::{PhysicsContainer, PhysicsControllerEntity};
 
 use super::body_controller::BodyController;
 use super::{input_data::InputData, player_movement::PlayerMovement};
@@ -50,7 +50,7 @@ pub struct PlayerController {
     // A full-length body
     body_controller: Gd<BodyController>,
 
-    physics_entity: PhysicsEntity,
+    physics_entity: PhysicsControllerEntity,
 }
 
 impl PlayerController {
@@ -150,8 +150,7 @@ impl PlayerController {
 
             let move_now = std::time::Instant::now();
             if vec != Vector3::ZERO {
-                self.physics_entity
-                    .controller_move(delta, vec);
+                self.physics_entity.controller_move(delta, vec);
             }
             move_elapsed = move_now.elapsed();
 
