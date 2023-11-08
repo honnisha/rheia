@@ -1,7 +1,7 @@
 use godot::prelude::Vector3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
-use rapier3d::na::{Rotation3, Point3};
+use rapier3d::na::{Point3};
 use rapier3d::prelude::*;
 use std::sync::Arc;
 use rapier3d::na;
@@ -61,7 +61,7 @@ impl PhysicsEntity {
         }
     }
 
-    pub fn controller_move(&mut self, delta: f64, impulse: Vector<Real>) {
+    pub fn controller_move(&mut self, delta: f64, impulse: Vector3) {
         let collider = self.get_collider().unwrap().clone();
         let filter = QueryFilter::default().exclude_rigid_body(self.rigid_handle);
 
@@ -74,9 +74,8 @@ impl PhysicsEntity {
             &self.query_pipeline.read(),
             collider.shape(),
             collider.position(),
-            impulse,
+            vec_gd_to_na(impulse),
             filter,
-            // We don’t care about events in this example.
             |_| {},
         );
         let mut body = self.get_rigid_body_mut().unwrap();
@@ -91,9 +90,9 @@ impl PhysicsEntity {
         body.set_enabled(active);
     }
 
-    pub fn apply_impulse(&mut self, impulse: Vector<Real>) {
+    pub fn apply_impulse(&mut self, impulse: Vector3) {
         let mut body = self.get_rigid_body_mut().unwrap();
-        body.apply_impulse(impulse, true);
+        body.apply_impulse(vec_gd_to_na(impulse), true);
     }
 
     pub fn get_position(&self) -> Vector3 {
@@ -101,11 +100,11 @@ impl PhysicsEntity {
         PhysicsEntity::transform_to_vector3(&body.translation())
     }
 
-    pub fn set_position(&mut self, position: Vector<Real>) {
+    pub fn set_position(&mut self, position: Vector3) {
         let mut body = self.get_rigid_body_mut().unwrap();
         // Reset velocity
         body.sleep();
-        body.set_translation(position, true);
+        body.set_translation(vec_gd_to_na(position), true);
     }
 
     pub fn get_collider(&self) -> Option<MappedRwLockReadGuard<'_, Collider>> {

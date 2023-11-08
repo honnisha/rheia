@@ -6,7 +6,6 @@ use godot::engine::{
     InputEventMouseMotion,
 };
 use godot::prelude::*;
-use rapier3d::prelude::*;
 
 use crate::console::console_handler::Console;
 use crate::main_scene::FloatType;
@@ -96,7 +95,7 @@ impl PlayerController {
 
         // The center of the physical collider at his center
         // So it shifts to half the height
-        let physics_pos = vector![position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z];
+        let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
         self.physics_entity.set_position(physics_pos);
     }
 
@@ -152,14 +151,14 @@ impl PlayerController {
             let move_now = std::time::Instant::now();
             if vec != Vector3::ZERO {
                 self.physics_entity
-                    .controller_move(delta, Vector::new(vec.x, vec.y, vec.z));
+                    .controller_move(delta, vec);
             }
             move_elapsed = move_now.elapsed();
 
             // Jump
             let input = Input::singleton();
             if input.is_action_just_pressed("jump".into()) {
-                self.physics_entity.apply_impulse(Vector::new(0.0, JUMP_IMPULSE, 0.0));
+                self.physics_entity.apply_impulse(Vector3::new(0.0, JUMP_IMPULSE, 0.0));
             }
         }
 
