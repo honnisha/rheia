@@ -1,4 +1,3 @@
-use godot::prelude::Vector3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
 use rapier3d::na;
@@ -6,7 +5,9 @@ use rapier3d::na::Point3;
 use rapier3d::prelude::*;
 use std::sync::Arc;
 
-use crate::controller::player_controller::{CONTROLLER_HEIGHT, CONTROLLER_MASS, CONTROLLER_RADIUS};
+use crate::network::messages::Vector3;
+
+use super::physics::{PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity};
 
 fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
     ((target.x as f32 - point.x as f32).powf(2.0)
@@ -24,16 +25,16 @@ fn vec_na_to_gd(from: &na::Vector3<f32>) -> Vector3 {
 }
 
 /// For bodies with physics
-pub struct PhysicsRigidBodyEntity {
-    physics_container: PhysicsContainer,
+pub struct RapierPhysicsRigidBodyEntity {
+    physics_container: RapierPhysicsContainer,
 
     rigid_handle: RigidBodyHandle,
     collider_handle: ColliderHandle,
 }
 
-impl PhysicsRigidBodyEntity {
+impl RapierPhysicsRigidBodyEntity {
     pub fn create(
-        physics_container: &PhysicsContainer,
+        physics_container: &RapierPhysicsContainer,
         rigid_handle: RigidBodyHandle,
         collider_handle: ColliderHandle,
     ) -> Self {
@@ -96,11 +97,11 @@ impl PhysicsRigidBodyEntity {
     }
 }
 
-pub struct PhysicsCharacterController {
+pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
 }
 
-impl PhysicsCharacterController {
+impl RapierPhysicsCharacterController {
     pub fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Relative(0.1);
@@ -112,7 +113,7 @@ impl PhysicsCharacterController {
         Self { character_controller }
     }
 
-    pub fn controller_move(&mut self, entity: &mut PhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
+    pub fn controller_move(&mut self, entity: &mut dyn PhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
         let collider = entity
             .physics_container
             .get_collider(&entity.collider_handle)
@@ -141,14 +142,14 @@ impl PhysicsCharacterController {
 }
 
 /// For stationary bodies
-pub struct PhysicsStaticEntity {
-    physics_container: PhysicsContainer,
+pub struct RapierPhysicsStaticEntity {
+    physics_container: RapierPhysicsRigidBodyEntity,
 
     collider_handle: Option<ColliderHandle>,
 }
 
-impl PhysicsStaticEntity {
-    pub fn new(physics_container: &PhysicsContainer) -> Self {
+impl RapierPhysicsStaticEntity {
+    pub fn new(physics_container: &dyn PhysicsContainer) -> Self {
         Self {
             physics_container: physics_container.clone(),
             collider_handle: None,
@@ -191,31 +192,15 @@ impl PhysicsStaticEntity {
 }
 
 #[derive(Clone)]
-pub struct PhysicsContainer {
-    world_physics: Arc<RwLock<PhysicsController>>,
+pub struct RapierPhysicsContainer {
+    world_physics: Arc<RwLock<RapierPhysicsContainer>>,
     rigid_body_set: Arc<RwLock<RigidBodySet>>,
     collider_set: Arc<RwLock<ColliderSet>>,
     query_pipeline: Arc<RwLock<QueryPipeline>>,
     island_manager: Arc<RwLock<IslandManager>>,
 }
 
-impl Default for PhysicsContainer {
-    fn default() -> Self {
-        Self {
-            world_physics: Default::default(),
-            rigid_body_set: Arc::new(RwLock::new(RigidBodySet::new())),
-            collider_set: Arc::new(RwLock::new(ColliderSet::new())),
-            query_pipeline: Arc::new(RwLock::new(QueryPipeline::new())),
-            island_manager: Arc::new(RwLock::new(IslandManager::new())),
-        }
-    }
-}
-
-impl PhysicsContainer {
-    pub fn step(&self, delta: f32) {
-        self.world_physics.as_ref().write().step(delta, &self);
-    }
-
+impl RapierPhysicsContainer {
     pub fn get_collider(&self, collider_handle: &ColliderHandle) -> Option<MappedRwLockReadGuard<'_, Collider>> {
         RwLockReadGuard::try_map(self.collider_set.read(), |p| match p.get(*collider_handle) {
             Some(c) => Some(c),
@@ -247,8 +232,24 @@ impl PhysicsContainer {
         })
         .ok()
     }
+}
 
-    pub fn create_controller(&self) -> PhysicsRigidBodyEntity {
+impl PhysicsContainer for RapierPhysicsContainer {
+    fn create() -> Self {
+        Self {
+            world_physics: Default::default(),
+            rigid_body_set: Arc::new(RwLock::new(RigidBodySet::new())),
+            collider_set: Arc::new(RwLock::new(ColliderSet::new())),
+            query_pipeline: Arc::new(RwLock::new(QueryPipeline::new())),
+            island_manager: Arc::new(RwLock::new(IslandManager::new())),
+        }
+    }
+
+    fn step(&self, delta: f32) {
+        self.world_physics.as_ref().write().step(delta, &self);
+    }
+
+    fn create_controller(&self) -> dyn PhysicsRigidBodyEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
@@ -272,7 +273,7 @@ impl PhysicsContainer {
     }
 }
 
-pub struct PhysicsController {
+pub struct RapierPhysicsController {
     gravity: Vector<Real>,
     integration_parameters: IntegrationParameters,
     physics_pipeline: PhysicsPipeline,
@@ -283,8 +284,8 @@ pub struct PhysicsController {
     ccd_solver: CCDSolver,
 }
 
-impl Default for PhysicsController {
-    fn default() -> Self {
+impl PhysicsController for RapierPhysicsController {
+    fn create() -> Self {
         Self {
             gravity: vector![0.0, -9.81, 0.0],
             integration_parameters: IntegrationParameters::default(),
@@ -296,10 +297,8 @@ impl Default for PhysicsController {
             ccd_solver: CCDSolver::new(),
         }
     }
-}
 
-impl PhysicsController {
-    pub fn step(&mut self, delta: f32, physics_container: &PhysicsContainer) {
+    fn step(&mut self, delta: f32, physics_container: &RapierPhysicsContainer) {
         self.integration_parameters.dt = delta;
 
         let physics_hooks = ();

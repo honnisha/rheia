@@ -138,7 +138,7 @@ impl Arg {
         }
     }
 
-    pub fn get_name(&self) -> &String {
+    pub fn _get_name(&self) -> &String {
         &self.name
     }
 

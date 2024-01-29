@@ -10,7 +10,7 @@ use godot::prelude::*;
 use crate::console::console_handler::Console;
 use crate::main_scene::FloatType;
 use crate::world::godot_world::World;
-use crate::world::physics_handler::{PhysicsContainer, PhysicsControllerEntity};
+use crate::world::physics_handler::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 
 use super::body_controller::BodyController;
 use super::{input_data::InputData, player_movement::PlayerMovement};
@@ -50,7 +50,8 @@ pub struct PlayerController {
     // A full-length body
     body_controller: Gd<BodyController>,
 
-    physics_entity: PhysicsControllerEntity,
+    physics_entity: PhysicsRigidBodyEntity,
+    physics_controller: PhysicsCharacterController,
 }
 
 impl PlayerController {
@@ -70,8 +71,9 @@ impl PlayerController {
             camera_anchor,
             input_data: Default::default(),
             cache_movement: None,
-            physics_entity: physics_container.create_controller(),
             body_controller,
+            physics_entity: physics_container.create_controller(),
+            physics_controller: PhysicsCharacterController::create(),
         }
     }
 
@@ -150,7 +152,8 @@ impl PlayerController {
 
             let move_now = std::time::Instant::now();
             if vec != Vector3::ZERO {
-                self.physics_entity.controller_move(delta, vec);
+                self.physics_controller
+                    .controller_move(&mut self.physics_entity, delta, vec);
             }
             move_elapsed = move_now.elapsed();
 

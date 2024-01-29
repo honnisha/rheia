@@ -7,44 +7,44 @@ publish = false
 [dependencies]
 common = { path = "../honny-common" }
 
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-env_logger = "0.10.0"
-log = { version = "0.4" }
+serde = { version = "1.0.196", features = ["derive"] }
+serde_yaml = "0.9.30"
+env_logger = "0.11.1"
+log = { version = "0.4.20" }
 lazy_static = "1.4.0"
-rustyline = { version = "12.0.0", features = ["with-file-history", "derive"] }
-chrono = "0.4.24"
-uuid = { version = "1.3.2", features = ["v4", "fast-rng"] }
-regex = "1.8.4"
+rustyline = { version = "13.0.0", features = ["with-file-history", "derive"] }
+chrono = "0.4.33"
+uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }
+regex = "1.10.3"
 fxhash = "0.2.1"
 
 # For spiral iteration
-spiral = "0.1"
+spiral = "0.2.0"
 
 arrayvec = "0.7.4"
-ahash = "0.8.3"
-dashmap = "5.4.0"
+ahash = "0.8.7"
+dashmap = "5.5.3"
 parking_lot = "0.12.1"
-flume = "0.10.14"
+flume = "0.11.0"
 
-bevy = { version = "0.11.2", default-features = false }
-bevy_app = "0.11.2"
-bevy_ecs = "0.11.2"
+bevy = { version = "0.12.1", default-features = false }
+bevy_app = "0.12.1"
+bevy_ecs = "0.12.1"
 
 # Single thread links
 send_wrapper = "0.6.0"
 
 # ARGS
-clap = { version = "4.2.1", features = ["string", "derive"] }
+clap = { version = "4.4.18", features = ["string", "derive"] }
 
 # Noise
-bracket-lib = "~0.8"
-bracket-noise = "~0.8"
-bracket-random = "~0.8"
+bracket-lib = "0.8.7"
+bracket-noise = "0.8.7"
+bracket-random = "0.8.7"
 
 # Schematics
 flate2 = "1.0"
 fastnbt = "2"
 
 # Miltithread heavy tasks
-rayon = "1.7"
+rayon = "1.8.1"

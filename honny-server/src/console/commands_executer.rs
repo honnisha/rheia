@@ -104,7 +104,7 @@ impl CommandsHandler {
         };
     }
 
-    pub fn complete(world: &mut World, sender: Box<dyn ConsoleSenderType>, complete_response: &mut CompleteResponse) {
+    pub fn complete(world: &mut World, _sender: Box<dyn ConsoleSenderType>, complete_response: &mut CompleteResponse) {
         let handlers = world.resource::<CommandsHandler>();
 
         let line = complete_response.get_request().get_line().clone();

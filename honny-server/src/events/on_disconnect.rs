@@ -24,7 +24,7 @@ pub fn on_disconnect(
     mut clients: ResMut<ClientsContainer>,
     worlds_manager: Res<WorldsManager>,
 ) {
-    for event in disconnection_events.iter() {
+    for event in disconnection_events.read() {
         {
             let client = clients.get(&event.client_id);
             if let Some(i) = client.get_client_info() {

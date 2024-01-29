@@ -16,7 +16,7 @@ impl PlayerConnectionEvent {
 }
 
 pub fn on_connection(mut connection_events: EventReader<PlayerConnectionEvent>, clients: Res<ClientsContainer>) {
-    for event in connection_events.iter() {
+    for event in connection_events.read() {
         let client = clients.get(&event.client_id);
         client.allow_connection();
     }

@@ -22,42 +22,42 @@ log = { version = "0.4" }
 chrono = "0.4.24"
 
 arrayvec = "0.7.4"
-ahash = "0.8.3"
-dashmap = "5.4.0"
+ahash = "0.8.7"
+dashmap = "5.5.3"
 parking_lot = "0.12.1"
 
-strum = "0.24.1"
-strum_macros = "0.24.3"
+# Helpful macros for working with enums and strings
+strum = "0.25.0"
+strum_macros = "0.25.3"
 
 # Miltithread heavy tasks
-rayon = "1.7"
+rayon = "1.8.1"
 
 # Async channels
-crossbeam = "0.8.2"
-crossbeam-channel = "0.5"
-flume = "0.10.14"
+crossbeam = "0.8.4"
+crossbeam-channel = "0.5.11"
+
+# A blazingly fast multi-producer channel
+flume = "0.11"
 
 # Single thread links
 send_wrapper = "0.6.0"
 
 # Scripts
-rhai = { version = "1.13.0", features = ["internals", "serde"] }
+rhai = { version = "1.16.3", features = ["internals", "serde"] }
 
 # https://github.com/bonsairobo/block-mesh-rs/blob/main/Cargo.toml
-ilattice = "0.1"
-ndshape = "0.3"
-ndcopy = "0.3"
+ilattice = "0.4.0"
+ndshape = "0.3.0"
+ndcopy = "0.3.0"
 
 # Noise
-bracket-lib = "~0.8"
-bracket-noise = "~0.8"
-bracket-random = "~0.8"
+bracket-lib = "0.8.7"
+bracket-noise = "0.8.7"
+bracket-random = "0.8.7"
 
 # Schematics
 flate2 = "1.0"
 fastnbt = "2"
 
-image = "0.24.5"
-
-#rapier3d = { version = "0.17.2", features = [ "simd-stable" ] }
-rapier3d = { path = "/home/honnisha/Projects/rapier/crates/rapier3d", features = [ "simd-stable" ] }
+image = "0.24.8"

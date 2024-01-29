@@ -29,7 +29,7 @@ pub fn on_player_move(
     clients: Res<ClientsContainer>,
     worlds_manager: ResMut<WorldsManager>,
 ) {
-    for event in player_move_events.iter() {
+    for event in player_move_events.read() {
         let client = clients.get(&event.client_id);
 
         let world_entity = client.get_world_entity();

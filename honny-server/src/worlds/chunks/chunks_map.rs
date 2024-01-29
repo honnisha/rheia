@@ -52,7 +52,7 @@ impl ChunkMap {
 
     /// Create player in the world
     pub fn start_chunks_render(&mut self, entity: Entity, to: &ChunkPosition, chunks_distance: u16) {
-        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance);
+        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
         for (x, z) in iter {
             let chunk_pos = ChunkPosition::new(x as i64, z as i64);
             self.chunks_load_state.insert_ticket(chunk_pos, entity.clone());
@@ -83,7 +83,7 @@ impl ChunkMap {
         let mut old_chunks = self.chunks_load_state.take_entity_chunks(&entity).unwrap().clone();
 
         // Add new tickets
-        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance);
+        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
         for (x, z) in iter {
             let chunk_pos = ChunkPosition::new(x as i64, z as i64);
 

@@ -27,7 +27,7 @@ pub fn on_connection_info(
     clients: Res<ClientsContainer>,
     worlds_manager: Res<WorldsManager>,
 ) {
-    for event in connection_info_events.iter() {
+    for event in connection_info_events.read() {
         let mut client = clients.get_mut(&event.client_id);
         client.set_client_info(ClientInfo::new(event.login.clone()));
 

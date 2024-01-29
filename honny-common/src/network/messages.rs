@@ -8,11 +8,19 @@ use crate::{
     VERTICAL_SECTIONS,
 };
 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Vector3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientMessages {
     ConnectionInfo { login: String },
     ConsoleInput { command: String },
-    PlayerMove { position: [f32; 3], yaw: f32, pitch: f32 },
+    PlayerMove { position: Vector3, yaw: f32, pitch: f32 },
     ChunkRecieved { chunk_positions: Vec<ChunkPosition> },
 }
 
@@ -31,7 +39,7 @@ pub enum ServerMessages {
     },
     Teleport {
         world_slug: String,
-        location: [f32; 3],
+        location: Vector3,
         yaw: f32,
         pitch: f32,
     },
