@@ -20,14 +20,6 @@ use log::{error, info, LevelFilter};
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub type PhysicsRigidBodyEntityType = PhysxPhysicsRigidBodyEntity;
-pub type PhysicsCharacterControllerType = PhysxPhysicsCharacterController;
-pub type PhysicsStaticEntityType = PhysxPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = PhysxPhysicsColliderBuilder;
-
-pub type PhysicsContainerType = PhysxPhysicsContainer;
-pub type PhysicsControllerType = PhysxPhysicsController;
-
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct Main {

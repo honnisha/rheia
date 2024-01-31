@@ -271,11 +271,18 @@ impl NodeVirtual for PlayerController {
         let input = Input::singleton();
         if input.is_action_just_pressed("action_left".into()) {
             let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+
             let from = self.camera.project_ray_origin(screen / 2.0);
             let to = from + self.camera.project_ray_normal(screen / 2.0) * 10.0;
+
+            let dir = to - from;
+            let (dir, max_toi) = (dir.normalized(), dir.length());
+            let origin = Point3::new(from.x, from.y, from.z);
+
             if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(
-                GodotPositionConverter::vector_network_from_gd(&from),
-                GodotPositionConverter::vector_network_from_gd(&to),
+                GodotPositionConverter::vector_network_from_gd(&dir),
+                max_toi,
+                GodotPositionConverter::vector_network_from_gd(&origin),
             ) {
                 println!("Collider {:?} hit at point {}", collider_handle, hit_point);
             }

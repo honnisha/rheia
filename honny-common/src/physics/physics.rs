@@ -6,7 +6,7 @@ pub trait PhysicsRigidBodyEntity {
     fn apply_impulse(&mut self, impulse: Vector3);
     fn get_position(&self) -> Vector3;
     fn set_position(&mut self, position: Vector3);
-    fn raycast(&self, from: Vector3, to: Vector3) -> Option<(u64, Vector3)>;
+    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3) -> Option<(usize, Vector3)>;
 }
 
 pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {

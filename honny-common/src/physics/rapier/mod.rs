@@ -1,45 +1,25 @@
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
-use rapier3d::na;
 use rapier3d::na::Point3;
+use rapier3d::na::Vector3 as NaVector3;
+use rapier3d::parry::partitioning::IndexedData;
 use rapier3d::prelude::*;
 use std::sync::Arc;
 
-use crate::network::messages::Vector3;
+use crate::network::messages::Vector3 as NetworkVector3;
+use rapier3d::prelude::ColliderBuilder;
 
-use super::physics::{PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity, PhysicsStaticEntity, PhysicsCharacterController};
+use super::physics::{
+    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity,
+    PhysicsStaticEntity,
+};
 
-fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
-    ((target.x as f32 - point.x as f32).powf(2.0)
-        + (target.y as f32 - point.y as f32).powf(2.0)
-        + (target.z as f32 - point.z as f32).powf(2.0))
-    .sqrt()
+fn vec_network_to_na(from: &NetworkVector3) -> NaVector3<f32> {
+    NaVector3::new(from.x, from.y, from.z)
 }
 
-fn vec_gd_to_na(from: Vector3) -> na::Vector3<f32> {
-    na::Vector3::new(from.x, from.y, from.z)
-}
-
-fn vec_na_to_gd(from: &na::Vector3<f32>) -> Vector3 {
-    Vector3::new(from.x, from.y, from.z)
-}
-
-    let mut collider_verts: Vec<Point<Real>> = Default::default();
-let mut collider_indices: Vec<[u32; 3]> = Default::default();
-
-pub struct RapierPhysicsColliderBuilder {}
-impl PhysicsColliderBuilder for RapierPhysicsColliderBuilder {
-    fn create() -> Self {
-        todo!()
-    }
-
-    fn push_indexes(&mut self, index: [u32; 3]) {
-        todo!()
-    }
-
-    fn push_collider_verts(&mut self, x: f32, y: f32, z: f32) {
-        todo!()
-    }
+fn vec_na_to_network(from: &NaVector3<f32>) -> NetworkVector3 {
+    NetworkVector3::new(from.x, from.y, from.z)
 }
 
 /// For bodies with physics
@@ -51,16 +31,8 @@ pub struct RapierPhysicsRigidBodyEntity {
 }
 
 impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
-    fn create(
-        physics_container: &RapierPhysicsContainer,
-        rigid_handle: RigidBodyHandle,
-        collider_handle: ColliderHandle,
-    ) -> Self {
-        Self {
-            physics_container: physics_container.clone(),
-            rigid_handle,
-            collider_handle,
-        }
+    fn create() -> Self {
+        todo!();
     }
 
     fn set_enabled(&mut self, active: bool) {
@@ -71,29 +43,27 @@ impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
         body.set_enabled(active);
     }
 
-    fn apply_impulse(&mut self, impulse: Vector3) {
+    fn apply_impulse(&mut self, impulse: NetworkVector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
-        body.apply_impulse(vec_gd_to_na(impulse), true);
+        body.apply_impulse(vec_network_to_na(&impulse), true);
     }
 
-    fn get_position(&self) -> Vector3 {
+    fn get_position(&self) -> NetworkVector3 {
         let body = self.physics_container.get_rigid_body(&self.rigid_handle).unwrap();
-        vec_na_to_gd(&body.translation())
+        vec_na_to_network(&body.translation())
     }
 
-    fn set_position(&mut self, position: Vector3) {
+    fn set_position(&mut self, position: NetworkVector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         // Reset velocity
         body.sleep();
-        body.set_translation(vec_gd_to_na(position), true);
+        body.set_translation(vec_network_to_na(&position), true);
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    fn raycast(&self, from: Vector3, to: Vector3) -> Option<(ColliderHandle, Point<Real>)> {
-        let dir = to - from;
-        let (dir, max_toi) = (dir.normalized(), dir.length());
-        let origin = Point3::new(from.x, from.y, from.z);
-        let direction = vec_gd_to_na(dir);
+    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
+        let origin = Point3::new(origin.x, origin.y, origin.z);
+        let direction = vec_network_to_na(&dir);
 
         let ray = Ray::new(origin, direction);
 
@@ -109,7 +79,8 @@ impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
             solid,
             filter,
         ) {
-            return Some((handle, ray.point_at(toi)));
+            let point = ray.point_at(toi);
+            return Some((handle.index(), NetworkVector3::new(point.x, point.y, point.z)));
         }
         return None;
     }
@@ -119,7 +90,7 @@ pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
 }
 
-impl PhysicsCharacterController for RapierPhysicsCharacterController {
+impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
     fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Relative(0.1);
@@ -131,7 +102,7 @@ impl PhysicsCharacterController for RapierPhysicsCharacterController {
         Self { character_controller }
     }
 
-    fn controller_move(&mut self, entity: &mut dyn PhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
+    fn controller_move(&mut self, entity: &mut RapierPhysicsRigidBodyEntity, delta: f64, impulse: NetworkVector3) {
         let collider = entity
             .physics_container
             .get_collider(&entity.collider_handle)
@@ -146,7 +117,7 @@ impl PhysicsCharacterController for RapierPhysicsCharacterController {
             &entity.physics_container.query_pipeline.read(),
             collider.shape(),
             collider.position(),
-            vec_gd_to_na(impulse),
+            vec_network_to_na(&impulse),
             filter,
             |_| {},
         );
@@ -166,20 +137,13 @@ pub struct RapierPhysicsStaticEntity {
     collider_handle: Option<ColliderHandle>,
 }
 
-impl RapierPhysicsStaticEntity {
-    pub fn new(physics_container: &dyn PhysicsContainer<dyn PhysicsRigidBodyEntity, dyn PhysicsStaticEntity>) -> Self {
-        Self {
-            physics_container: physics_container.clone(),
-            collider_handle: None,
-        }
-    }
-
-    pub fn _has_collider(&self) -> bool {
-        self.collider_handle.is_some()
+impl PhysicsStaticEntity for RapierPhysicsStaticEntity {
+    fn create() -> Self {
+        todo!();
     }
 
     // This function causes a thread lock with collider_set
-    pub fn update_collider(&mut self, collider: Option<ColliderBuilder>, position: &Vector3) {
+    fn update_collider(&mut self, collider: Option<ColliderBuilder>, position: &NetworkVector3) {
         match collider {
             Some(c) => {
                 match self.collider_handle {
@@ -206,6 +170,43 @@ impl RapierPhysicsStaticEntity {
                 }
             }
         }
+    }
+}
+
+pub struct RapierPhysicsColliderBuilder {
+    collider_verts: Vec<Point<Real>>,
+    collider_indices: Vec<[u32; 3]>,
+    builder: Option<ColliderBuilder>,
+}
+impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsColliderBuilder {
+    fn create() -> Self {
+        Self {
+            collider_verts: Default::default(),
+            collider_indices: Default::default(),
+            builder: None,
+        }
+    }
+
+    fn push_indexes(&mut self, index: [u32; 3]) {
+        self.collider_indices.push(index);
+    }
+
+    fn push_verts(&mut self, x: f32, y: f32, z: f32) {
+        self.collider_verts.push(Point::new(x, y, z));
+    }
+
+    fn len(&self) -> usize {
+        self.collider_indices.len()
+    }
+
+    fn update_collider(&mut self, static_entity: &RapierPhysicsStaticEntity, position: &NetworkVector3) {
+        todo!();
+    }
+
+    fn compile(&mut self) {
+        self.builder = Some(ColliderBuilder::trimesh(self.collider_verts, self.collider_indices));
+        self.collider_verts.clone();
+        self.collider_indices.clone();
     }
 }
 
@@ -283,7 +284,7 @@ impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> f
 
         let collider_handle = collider_set.insert_with_parent(collider, rigid_handle, &mut rigid_body_set);
 
-        PhysicsRigidBodyEntity::create(&self, rigid_handle, collider_handle)
+        RapierPhysicsRigidBodyEntity::create(&self, rigid_handle, collider_handle)
     }
 
     fn create_static(&self) -> RapierPhysicsStaticEntity {
