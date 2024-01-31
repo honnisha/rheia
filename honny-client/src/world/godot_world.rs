@@ -1,7 +1,7 @@
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    network::messages::NetworkMessageType,
+    network::messages::NetworkMessageType, physics::physics::PhysicsContainer,
 };
 use godot::{
     engine::{Material, StandardMaterial3D},
@@ -13,13 +13,12 @@ use std::{cell::RefCell, sync::Arc};
 
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
-    main_scene::Main,
+    main_scene::{Main, PhysicsContainerType},
     utils::textures::texture_mapper::TextureMapper,
 };
 
 use super::{
     chunks::{chunk::Chunk, godot_chunks_container::ChunksContainer},
-    physics_handler::PhysicsContainer,
     world_manager::TextureMapperType,
 };
 
@@ -39,7 +38,7 @@ pub struct World {
     slug: String,
     chunks_container: Gd<ChunksContainer>,
 
-    physics_container: PhysicsContainer,
+    physics_container: PhysicsContainerType,
     player_controller: Gd<PlayerController>,
 }
 
@@ -51,7 +50,7 @@ impl World {
 
 impl World {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
-        let mut physics_container = PhysicsContainer::default();
+        let mut physics_container = PhysicsContainerType::create();
         let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
             ChunksContainer::create(
                 base,

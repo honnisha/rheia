@@ -243,7 +243,7 @@ impl ClientNetwork for RenetClientNetwork {
     }
 
     fn is_connected(&self) -> bool {
-        self.get_transport().is_connected()
+        self.get_transport().disconnect_reason().is_none()
     }
 
     fn send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
@@ -254,7 +254,7 @@ impl ClientNetwork for RenetClientNetwork {
 
     fn disconnect(&self) {
         let mut transport = self.get_transport_mut();
-        if transport.is_connected() {
+        if transport.disconnect_reason().is_none() {
             transport.disconnect();
             info!("{}", "Disconnected from the server");
         }

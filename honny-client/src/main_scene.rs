@@ -2,19 +2,31 @@ use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::player_controller::ContollerViewMode;
 use crate::debug::debug_info::DebugInfo;
-use crate::entities::position::GodotPositionConverter;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
+use crate::utils::position::GodotPositionConverter;
 use crate::world::world_manager::WorldManager;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use common::physics::physx::{
+    PhysxPhysicsCharacterController, PhysxPhysicsColliderBuilder, PhysxPhysicsContainer, PhysxPhysicsController,
+    PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity,
+};
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub type PhysicsRigidBodyEntityType = PhysxPhysicsRigidBodyEntity;
+pub type PhysicsCharacterControllerType = PhysxPhysicsCharacterController;
+pub type PhysicsStaticEntityType = PhysxPhysicsStaticEntity;
+pub type PhysicsColliderBuilderType = PhysxPhysicsColliderBuilder;
+
+pub type PhysicsContainerType = PhysxPhysicsContainer;
+pub type PhysicsControllerType = PhysxPhysicsController;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -146,7 +158,7 @@ impl NodeVirtual for Main {
                 } => {
                     self.get_world_manager_mut().teleport_player(
                         world_slug,
-                        GodotPositionConverter::vec3_from_array(&location),
+                        GodotPositionConverter::vector_gd_from_network(&location),
                         yaw,
                         pitch,
                     );
@@ -199,10 +211,10 @@ impl NodeVirtual for Main {
                 match view_mode {
                     ContollerViewMode::FirstPersonView => {
                         player_controller.set_view_mode(ContollerViewMode::ThirdPersonView);
-                    },
+                    }
                     ContollerViewMode::ThirdPersonView => {
                         player_controller.set_view_mode(ContollerViewMode::FirstPersonView);
-                    },
+                    }
                 }
             }
         }

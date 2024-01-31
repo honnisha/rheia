@@ -3,13 +3,9 @@ use super::{
     godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
-    entities::position::GodotPositionConverter,
-    world::{
-        physics_handler::{PhysicsContainer},
-        world_manager::TextureMapperType,
-    },
+    main_scene::PhysicsContainerType, utils::position::GodotPositionConverter, world::world_manager::TextureMapperType,
 };
-use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
+use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS, physics::physics::PhysicsContainer};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
@@ -25,7 +21,7 @@ pub(crate) fn generate_chunk(
     texture_mapper: TextureMapperType,
     material_instance_id: InstanceId,
     chunk_position: ChunkPosition,
-    physics_container: PhysicsContainer,
+    physics_container: PhysicsContainerType,
 ) {
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
@@ -42,13 +38,7 @@ pub(crate) fn generate_chunk(
                 let physics_entity = physics_container.create_static();
 
                 let mut section = Gd::<ChunkSection>::with_base(|base| {
-                    ChunkSection::create(
-                        base,
-                        material.clone(),
-                        y as u8,
-                        physics_entity,
-                        chunk_position.clone(),
-                    )
+                    ChunkSection::create(base, material.clone(), y as u8, physics_entity, chunk_position.clone())
                 });
 
                 let name = GodotString::from(format!("Section {}", y));
@@ -97,7 +87,7 @@ pub(crate) fn spawn_chunk(
 
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-        let chunk_pos_vector = GodotPositionConverter::get_chunk_position_vector(&chunk_position);
+        let chunk_pos_vector = GodotPositionConverter::get_gd_from_chunk_position(&chunk_position);
         c.base.set_global_position(chunk_pos_vector);
 
         for section in c.sections.iter_mut() {

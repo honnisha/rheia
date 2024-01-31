@@ -1,9 +1,9 @@
 use crate::{
-    main_scene::FloatType,
+    main_scene::{FloatType, PhysicsColliderBuilderType},
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
-use common::blocks::blocks_storage::BlockType;
+use common::{blocks::blocks_storage::BlockType, physics::physics::PhysicsColliderBuilder};
 use godot::prelude::{Array, Gd};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
@@ -14,8 +14,6 @@ use godot::{obj::EngineEnum, prelude::Vector2};
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
-use rapier3d::prelude::ColliderBuilder;
-use rapier3d::prelude::*;
 
 use super::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG};
 
@@ -52,7 +50,7 @@ pub trait GeometryTrait: Send + Sync {}
 
 pub struct Geometry {
     pub mesh_ist: Gd<ArrayMesh>,
-    pub collider: Option<ColliderBuilder>,
+    pub collider: Option<PhysicsColliderBuilderType>,
 }
 
 impl Geometry {
@@ -74,8 +72,7 @@ pub fn generate_chunk_geometry(
 
     let buffer = generate_buffer(chunk_data);
 
-    let mut collider_verts: Vec<Point<Real>> = Default::default();
-    let mut collider_indices: Vec<[u32; 3]> = Default::default();
+    let mut collider_builder = PhysicsColliderBuilderType::create();
 
     let mut indices = PackedInt32Array::new();
     let mut verts = PackedVector3Array::new();
@@ -102,13 +99,13 @@ pub fn generate_chunk_geometry(
 
             let i = face.quad_mesh_indices(verts.len() as i32);
             indices.extend(i);
-            collider_indices.push([i[0] as u32, i[1] as u32, i[2] as u32]);
-            collider_indices.push([i[3] as u32, i[4] as u32, i[5] as u32]);
+            collider_builder.push_indexes([i[0] as u32, i[1] as u32, i[2] as u32]);
+            collider_builder.push_indexes([i[3] as u32, i[4] as u32, i[5] as u32]);
 
             let v = face.quad_mesh_positions(&quad.into(), 1.0);
             verts.extend(v);
             for _v in v.iter() {
-                collider_verts.push(Point::new(_v.x, _v.y, _v.z));
+                collider_builder.push_verts(_v.x, _v.y, _v.z);
             }
 
             normals.extend(face.quad_mesh_normals());
@@ -136,10 +133,11 @@ pub fn generate_chunk_geometry(
         }
     }
 
-    let collider: Option<ColliderBuilder> = if collider_verts.len() == 0 {
+    let collider: Option<PhysicsColliderBuilderType> = if collider_builder.len() == 0 {
         None
     } else {
-        Some(ColliderBuilder::trimesh(collider_verts, collider_indices))
+        collider_builder.compile();
+        Some(collider_builder)
     };
 
     let len = indices.len();

@@ -5,10 +5,10 @@ use common::{
     },
     network::messages::ClientMessages,
 };
-use godot::prelude::{Vector3, ToGodot, FromGodot, GodotConvert};
+use godot::prelude::{FromGodot, GodotConvert, ToGodot, Vector3};
 use std::fmt::{self, Display, Formatter};
 
-use crate::{entities::position::GodotPositionConverter, main_scene::FloatType};
+use crate::{main_scene::FloatType, utils::position::GodotPositionConverter};
 
 #[derive(Clone, Copy, Debug, PartialEq, ToGodot, FromGodot, GodotConvert)]
 pub struct PlayerMovement {
@@ -35,7 +35,7 @@ impl PlayerMovement {
 
     pub fn into_network(&self) -> ClientMessages {
         ClientMessages::PlayerMove {
-            position: GodotPositionConverter::vec3_to_array(&self.position),
+            position: GodotPositionConverter::vector_network_from_gd(&self.position),
             yaw: self.yaw,
             pitch: self.pitch,
         }

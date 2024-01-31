@@ -1,22 +1,23 @@
 use std::borrow::BorrowMut;
 
-use common::{blocks::blocks_storage::BlockType, chunks::chunk_position::ChunkPosition};
+use common::{
+    blocks::blocks_storage::BlockType,
+    chunks::chunk_position::ChunkPosition,
+    physics::physics::{PhysicsColliderBuilder, PhysicsContainer},
+};
 use godot::{
     engine::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
-use rapier3d::prelude::ColliderBuilder;
 
 use crate::{
-    entities::position::GodotPositionConverter,
-    world::{
-        godot_world::get_default_material,
-        physics_handler::{PhysicsContainer, PhysicsStaticEntity},
-    },
+    main_scene::{PhysicsColliderBuilderType, PhysicsContainerType, PhysicsStaticEntityType},
+    utils::position::GodotPositionConverter,
+    world::godot_world::get_default_material,
 };
 
-use super::{mesh::mesh_generator::Geometry};
+use super::mesh::mesh_generator::Geometry;
 
 //pub type ChunkShape = ConstShape3u32<16, 16, 16>;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
@@ -32,12 +33,12 @@ pub struct ChunkSection {
     #[base]
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
-    physics_entity: PhysicsStaticEntity,
+    physics_entity: PhysicsStaticEntityType,
     chunk_position: ChunkPosition,
     y: u8,
 
     need_sync: bool,
-    new_colider: Option<ColliderBuilder>,
+    new_colider: Option<PhysicsColliderBuilderType>,
 }
 
 impl ChunkSection {
@@ -45,7 +46,7 @@ impl ChunkSection {
         base: Base<Node3D>,
         material: Gd<Material>,
         y: u8,
-        physics_entity: PhysicsStaticEntity,
+        physics_entity: PhysicsStaticEntityType,
         chunk_position: ChunkPosition,
     ) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
@@ -69,7 +70,7 @@ impl ChunkSection {
     }
 
     pub fn get_section_position(&self) -> Vector3 {
-        let mut pos = GodotPositionConverter::get_chunk_position_vector(&self.chunk_position);
+        let mut pos = GodotPositionConverter::get_gd_from_chunk_position(&self.chunk_position);
         pos.y = GodotPositionConverter::get_chunk_y_local(self.y);
         pos
     }
@@ -89,8 +90,13 @@ impl ChunkSection {
             self.need_sync = false;
 
             // This function causes a thread lock
-            self.physics_entity
-                .update_collider(std::mem::take(&mut self.new_colider), &self.get_section_position());
+            let pos = self.get_section_position().clone();
+            if let Some(c) = self.new_colider.as_mut() {
+                c.update_collider(
+                    &self.physics_entity,
+                    &GodotPositionConverter::vector_network_from_gd(&pos),
+                )
+            }
             self.new_colider = None;
         }
     }
@@ -100,7 +106,7 @@ impl ChunkSection {
 impl NodeVirtual for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
-        let physics = PhysicsContainer::default();
+        let physics = PhysicsContainerType::create();
         Self::create(
             base,
             get_default_material(),

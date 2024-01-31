@@ -1,16 +1,17 @@
-use std::time::Duration;
-
+use crate::utils::position::GodotPositionConverter;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
+use common::network::messages::Vector3 as NetworkVector3;
+use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 use godot::engine::{
     global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
     InputEventMouseMotion,
 };
 use godot::prelude::*;
+use std::time::Duration;
 
 use crate::console::console_handler::Console;
-use crate::main_scene::FloatType;
+use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 use crate::world::godot_world::World;
-use crate::world::physics_handler::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 
 use super::body_controller::BodyController;
 use super::{input_data::InputData, player_movement::PlayerMovement};
@@ -50,12 +51,12 @@ pub struct PlayerController {
     // A full-length body
     body_controller: Gd<BodyController>,
 
-    physics_entity: PhysicsRigidBodyEntity,
-    physics_controller: PhysicsCharacterController,
+    physics_entity: PhysicsRigidBodyEntityType,
+    physics_controller: PhysicsCharacterControllerType,
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainer) -> Self {
+    pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainerType) -> Self {
         let mut camera_anchor = Node3D::new_alloc();
         camera_anchor.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
 
@@ -72,8 +73,8 @@ impl PlayerController {
             input_data: Default::default(),
             cache_movement: None,
             body_controller,
-            physics_entity: physics_container.create_controller(),
-            physics_controller: PhysicsCharacterController::create(),
+            physics_entity: physics_container.create_controller(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
+            physics_controller: PhysicsCharacterControllerType::create(),
         }
     }
 
@@ -98,7 +99,8 @@ impl PlayerController {
         // The center of the physical collider at his center
         // So it shifts to half the height
         let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
-        self.physics_entity.set_position(physics_pos);
+        self.physics_entity
+            .set_position(GodotPositionConverter::vector_network_from_gd(&physics_pos));
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
@@ -152,15 +154,19 @@ impl PlayerController {
 
             let move_now = std::time::Instant::now();
             if vec != Vector3::ZERO {
-                self.physics_controller
-                    .controller_move(&mut self.physics_entity, delta, vec);
+                self.physics_controller.controller_move(
+                    &mut self.physics_entity,
+                    delta,
+                    GodotPositionConverter::vector_network_from_gd(&vec),
+                );
             }
             move_elapsed = move_now.elapsed();
 
             // Jump
             let input = Input::singleton();
             if input.is_action_just_pressed("jump".into()) {
-                self.physics_entity.apply_impulse(Vector3::new(0.0, JUMP_IMPULSE, 0.0));
+                self.physics_entity
+                    .apply_impulse(NetworkVector3::new(0.0, JUMP_IMPULSE, 0.0));
             }
         }
 
@@ -192,7 +198,7 @@ impl PlayerController {
 #[godot_api]
 impl NodeVirtual for PlayerController {
     fn init(base: Base<Node3D>) -> Self {
-        let physics = PhysicsContainer::default();
+        let physics = PhysicsContainerType::create();
         Self::create(base, &physics)
     }
 
@@ -267,7 +273,10 @@ impl NodeVirtual for PlayerController {
             let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
             let from = self.camera.project_ray_origin(screen / 2.0);
             let to = from + self.camera.project_ray_normal(screen / 2.0) * 10.0;
-            if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(from, to) {
+            if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(
+                GodotPositionConverter::vector_network_from_gd(&from),
+                GodotPositionConverter::vector_network_from_gd(&to),
+            ) {
                 println!("Collider {:?} hit at point {}", collider_handle, hit_point);
             }
         }

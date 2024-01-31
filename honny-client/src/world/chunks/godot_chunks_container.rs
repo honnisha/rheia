@@ -1,7 +1,7 @@
 use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData}, physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
 use log::error;
@@ -11,11 +11,9 @@ use std::sync::Arc;
 use std::{cell::RefCell, time::Duration};
 
 use crate::{
+    main_scene::PhysicsContainerType,
     utils::textures::texture_mapper::TextureMapper,
-    world::{
-        godot_world::get_default_material, physics_handler::PhysicsContainer,
-        world_manager::TextureMapperType,
-    },
+    world::{godot_world::get_default_material, world_manager::TextureMapperType},
 };
 
 use super::{
@@ -36,7 +34,7 @@ pub struct ChunksContainer {
     chunks: ChunksType,
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
-    physics_container: PhysicsContainer,
+    physics_container: PhysicsContainerType,
 }
 
 impl ChunksContainer {
@@ -44,7 +42,7 @@ impl ChunksContainer {
         base: Base<Node>,
         texture_mapper: TextureMapperType,
         material: Gd<Material>,
-        physics_container: PhysicsContainer,
+        physics_container: PhysicsContainerType,
     ) -> Self {
         Self {
             base,
@@ -87,8 +85,7 @@ impl ChunksContainer {
         }
 
         let chunk = Chunk::create(sections);
-        self.chunks
-            .insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
+        self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }
 
     pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
@@ -186,7 +183,7 @@ impl NodeVirtual for ChunksContainer {
             base,
             Arc::new(RwLock::new(TextureMapper::new())),
             get_default_material(),
-            PhysicsContainer::default(),
+            PhysicsContainerType::create(),
         )
     }
 

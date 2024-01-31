@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{self, Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +15,16 @@ pub struct Vector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+impl Display for Vector3 {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "x:{} y:{} z:{}", self.x, self.y, self.z)
+    }
+}
+impl Vector3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Vector3 { x, y, z }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

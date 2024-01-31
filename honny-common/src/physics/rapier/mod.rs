@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use crate::network::messages::Vector3;
 
-use super::physics::{PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity};
+use super::physics::{PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity, PhysicsStaticEntity, PhysicsCharacterController};
 
 fn _distance(point: &Vector<Real>, target: &Vector<Real>) -> f32 {
     ((target.x as f32 - point.x as f32).powf(2.0)
@@ -24,6 +24,24 @@ fn vec_na_to_gd(from: &na::Vector3<f32>) -> Vector3 {
     Vector3::new(from.x, from.y, from.z)
 }
 
+    let mut collider_verts: Vec<Point<Real>> = Default::default();
+let mut collider_indices: Vec<[u32; 3]> = Default::default();
+
+pub struct RapierPhysicsColliderBuilder {}
+impl PhysicsColliderBuilder for RapierPhysicsColliderBuilder {
+    fn create() -> Self {
+        todo!()
+    }
+
+    fn push_indexes(&mut self, index: [u32; 3]) {
+        todo!()
+    }
+
+    fn push_collider_verts(&mut self, x: f32, y: f32, z: f32) {
+        todo!()
+    }
+}
+
 /// For bodies with physics
 pub struct RapierPhysicsRigidBodyEntity {
     physics_container: RapierPhysicsContainer,
@@ -32,8 +50,8 @@ pub struct RapierPhysicsRigidBodyEntity {
     collider_handle: ColliderHandle,
 }
 
-impl RapierPhysicsRigidBodyEntity {
-    pub fn create(
+impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
+    fn create(
         physics_container: &RapierPhysicsContainer,
         rigid_handle: RigidBodyHandle,
         collider_handle: ColliderHandle,
@@ -45,7 +63,7 @@ impl RapierPhysicsRigidBodyEntity {
         }
     }
 
-    pub fn set_enabled(&mut self, active: bool) {
+    fn set_enabled(&mut self, active: bool) {
         let mut body = self
             .physics_container
             .get_rigid_body_mut(&self.rigid_handle)
@@ -53,17 +71,17 @@ impl RapierPhysicsRigidBodyEntity {
         body.set_enabled(active);
     }
 
-    pub fn apply_impulse(&mut self, impulse: Vector3) {
+    fn apply_impulse(&mut self, impulse: Vector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         body.apply_impulse(vec_gd_to_na(impulse), true);
     }
 
-    pub fn get_position(&self) -> Vector3 {
+    fn get_position(&self) -> Vector3 {
         let body = self.physics_container.get_rigid_body(&self.rigid_handle).unwrap();
         vec_na_to_gd(&body.translation())
     }
 
-    pub fn set_position(&mut self, position: Vector3) {
+    fn set_position(&mut self, position: Vector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         // Reset velocity
         body.sleep();
@@ -71,7 +89,7 @@ impl RapierPhysicsRigidBodyEntity {
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    pub fn raycast(&self, from: Vector3, to: Vector3) -> Option<(ColliderHandle, Point<Real>)> {
+    fn raycast(&self, from: Vector3, to: Vector3) -> Option<(ColliderHandle, Point<Real>)> {
         let dir = to - from;
         let (dir, max_toi) = (dir.normalized(), dir.length());
         let origin = Point3::new(from.x, from.y, from.z);
@@ -101,8 +119,8 @@ pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
 }
 
-impl RapierPhysicsCharacterController {
-    pub fn create() -> Self {
+impl PhysicsCharacterController for RapierPhysicsCharacterController {
+    fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Relative(0.1);
         character_controller.autostep = Some(CharacterAutostep {
@@ -113,7 +131,7 @@ impl RapierPhysicsCharacterController {
         Self { character_controller }
     }
 
-    pub fn controller_move(&mut self, entity: &mut dyn PhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
+    fn controller_move(&mut self, entity: &mut dyn PhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
         let collider = entity
             .physics_container
             .get_collider(&entity.collider_handle)
@@ -149,7 +167,7 @@ pub struct RapierPhysicsStaticEntity {
 }
 
 impl RapierPhysicsStaticEntity {
-    pub fn new(physics_container: &dyn PhysicsContainer) -> Self {
+    pub fn new(physics_container: &dyn PhysicsContainer<dyn PhysicsRigidBodyEntity, dyn PhysicsStaticEntity>) -> Self {
         Self {
             physics_container: physics_container.clone(),
             collider_handle: None,
@@ -234,7 +252,7 @@ impl RapierPhysicsContainer {
     }
 }
 
-impl PhysicsContainer for RapierPhysicsContainer {
+impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsContainer {
     fn create() -> Self {
         Self {
             world_physics: Default::default(),
@@ -249,14 +267,14 @@ impl PhysicsContainer for RapierPhysicsContainer {
         self.world_physics.as_ref().write().step(delta, &self);
     }
 
-    fn create_controller(&self) -> dyn PhysicsRigidBodyEntity {
+    fn create_controller(&self, height: f32, radius: f32, mass: f32) -> RapierPhysicsRigidBodyEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let half_height = CONTROLLER_HEIGHT / 2.0;
-        let radius = CONTROLLER_RADIUS;
+        let half_height = height / 2.0;
+        let radius = radius;
         let collider = ColliderBuilder::cylinder(half_height, radius)
-            .mass(CONTROLLER_MASS)
+            .mass(mass)
             .restitution(0.0);
         let rigid_handle = self.rigid_body_set.write().insert(rigid_body);
 
@@ -268,7 +286,7 @@ impl PhysicsContainer for RapierPhysicsContainer {
         PhysicsRigidBodyEntity::create(&self, rigid_handle, collider_handle)
     }
 
-    pub fn create_static(&self) -> PhysicsStaticEntity {
+    fn create_static(&self) -> RapierPhysicsStaticEntity {
         PhysicsStaticEntity::new(&self)
     }
 }
@@ -284,7 +302,7 @@ pub struct RapierPhysicsController {
     ccd_solver: CCDSolver,
 }
 
-impl PhysicsController for RapierPhysicsController {
+impl PhysicsController<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsController {
     fn create() -> Self {
         Self {
             gravity: vector![0.0, -9.81, 0.0],

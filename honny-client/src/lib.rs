@@ -2,7 +2,6 @@ use godot::prelude::*;
 mod client_scripts;
 mod console;
 mod controller;
-mod entities;
 mod events;
 mod logger;
 mod main_scene;
