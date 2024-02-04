@@ -277,12 +277,11 @@ impl NodeVirtual for PlayerController {
 
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
-            let origin = Point3::new(from.x, from.y, from.z);
 
             if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(
                 GodotPositionConverter::vector_network_from_gd(&dir),
                 max_toi,
-                GodotPositionConverter::vector_network_from_gd(&origin),
+                GodotPositionConverter::vector_network_from_gd(&from),
             ) {
                 println!("Collider {:?} hit at point {}", collider_handle, hit_point);
             }

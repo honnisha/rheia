@@ -10,11 +10,14 @@ type PxMaterial = physx::material::PxMaterial<()>;
 type PxShape = physx::shape::PxShape<(), PxMaterial>;
 
 pub struct PhysxPhysicsRigidBodyEntity {}
-impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
+
+impl PhysxPhysicsRigidBodyEntity {
     fn create() -> Self {
         todo!()
     }
+}
 
+impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
     fn set_enabled(&mut self, active: bool) {
         todo!()
     }
@@ -31,7 +34,7 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
         todo!()
     }
 
-    fn raycast(&self, from: Vector3, to: Vector3) -> Option<(u64, Vector3)> {
+    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3) -> Option<(usize, Vector3)> {
         todo!()
     }
 }
@@ -48,11 +51,14 @@ impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCha
 }
 
 pub struct PhysxPhysicsStaticEntity {}
-impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
+
+impl PhysxPhysicsStaticEntity {
     fn create() -> Self {
         todo!()
     }
 }
+
+impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {}
 
 pub struct PhysxPhysicsColliderBuilder {}
 impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBuilder {
@@ -85,6 +91,7 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
 pub struct PhysxPhysicsContainer {
     physics: String,
 }
+
 impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsContainer {
     fn create() -> Self {
         todo!()
@@ -94,7 +101,7 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
         todo!()
     }
 
-    fn create_controller(&self, height: f32, radius: f32, mass: f32) -> PhysxPhysicsRigidBodyEntity {
+    fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> PhysxPhysicsRigidBodyEntity {
         todo!()
     }
 
@@ -106,16 +113,13 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
 pub struct PhysxPhysicsController {
     physics: String,
 }
-impl PhysicsController<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsController {
+
+impl PhysicsController<PhysxPhysicsContainer, PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsController {
     fn create() -> Self {
         todo!()
     }
 
-    fn step(
-        &mut self,
-        delta: f32,
-        physics_container: impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity>,
-    ) {
+    fn step(&mut self, delta: f32, physics_container: &PhysxPhysicsContainer) {
         todo!()
     }
 }

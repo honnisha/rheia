@@ -30,11 +30,21 @@ pub struct RapierPhysicsRigidBodyEntity {
     collider_handle: ColliderHandle,
 }
 
-impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
-    fn create() -> Self {
-        todo!();
+impl RapierPhysicsRigidBodyEntity {
+    fn create(
+        physics_container: &RapierPhysicsContainer,
+        rigid_handle: RigidBodyHandle,
+        collider_handle: ColliderHandle,
+    ) -> Self {
+        Self {
+            physics_container: physics_container.clone(),
+            rigid_handle,
+            collider_handle,
+        }
     }
+}
 
+impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
     fn set_enabled(&mut self, active: bool) {
         let mut body = self
             .physics_container
@@ -90,6 +100,20 @@ pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
 }
 
+impl RapierPhysicsCharacterController {
+    pub fn create() -> Self {
+        let mut character_controller = KinematicCharacterController::default();
+        character_controller.offset = CharacterLength::Relative(0.1);
+        character_controller.autostep = Some(CharacterAutostep {
+            max_height: CharacterLength::Relative(0.5),
+            min_width: CharacterLength::Relative(0.5),
+            include_dynamic_bodies: true,
+        });
+
+        Self { character_controller }
+    }
+}
+
 impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
     fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
@@ -132,46 +156,21 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
 
 /// For stationary bodies
 pub struct RapierPhysicsStaticEntity {
-    physics_container: RapierPhysicsRigidBodyEntity,
+    physics_container: RapierPhysicsContainer,
 
     collider_handle: Option<ColliderHandle>,
 }
 
-impl PhysicsStaticEntity for RapierPhysicsStaticEntity {
-    fn create() -> Self {
-        todo!();
-    }
-
-    // This function causes a thread lock with collider_set
-    fn update_collider(&mut self, collider: Option<ColliderBuilder>, position: &NetworkVector3) {
-        match collider {
-            Some(c) => {
-                match self.collider_handle {
-                    Some(_old_collider) => {
-                        // Update existing collider
-                        todo!()
-                    }
-                    None => {
-                        // Spawn new collider
-                        let collider = c.translation(vector![position.x, position.y, position.z]);
-                        self.collider_handle = Some(self.physics_container.collider_set.write().insert(collider));
-                    }
-                }
-            }
-            None => {
-                if let Some(stored_collider) = self.collider_handle {
-                    // Remove old collider
-                    self.physics_container.collider_set.write().remove(
-                        stored_collider,
-                        &mut self.physics_container.island_manager.write(),
-                        &mut self.physics_container.rigid_body_set.write(),
-                        true,
-                    );
-                }
-            }
+impl RapierPhysicsStaticEntity {
+    pub fn create(physics_container: &RapierPhysicsContainer) -> Self {
+        Self {
+            physics_container: physics_container.clone(),
+            collider_handle: None,
         }
     }
 }
+
+impl PhysicsStaticEntity for RapierPhysicsStaticEntity {}
 
 pub struct RapierPhysicsColliderBuilder {
     collider_verts: Vec<Point<Real>>,
@@ -204,15 +203,16 @@ impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsCollider
     }
 
     fn compile(&mut self) {
-        self.builder = Some(ColliderBuilder::trimesh(self.collider_verts, self.collider_indices));
-        self.collider_verts.clone();
-        self.collider_indices.clone();
+        self.builder = Some(ColliderBuilder::trimesh(
+            std::mem::take(&mut self.collider_verts),
+            std::mem::take(&mut self.collider_indices)
+        ));
     }
 }
 
 #[derive(Clone)]
 pub struct RapierPhysicsContainer {
-    world_physics: Arc<RwLock<RapierPhysicsContainer>>,
+    world_physics: Arc<RwLock<RapierPhysicsController>>,
     rigid_body_set: Arc<RwLock<RigidBodySet>>,
     collider_set: Arc<RwLock<ColliderSet>>,
     query_pipeline: Arc<RwLock<QueryPipeline>>,
@@ -256,7 +256,7 @@ impl RapierPhysicsContainer {
 impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsContainer {
     fn create() -> Self {
         Self {
-            world_physics: Default::default(),
+            world_physics: Arc::new(RwLock::new(RapierPhysicsController::create())),
             rigid_body_set: Arc::new(RwLock::new(RigidBodySet::new())),
             collider_set: Arc::new(RwLock::new(ColliderSet::new())),
             query_pipeline: Arc::new(RwLock::new(QueryPipeline::new())),
@@ -265,10 +265,10 @@ impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> f
     }
 
     fn step(&self, delta: f32) {
-        self.world_physics.as_ref().write().step(delta, &self);
+        self.world_physics.as_ref().write().step(delta, self);
     }
 
-    fn create_controller(&self, height: f32, radius: f32, mass: f32) -> RapierPhysicsRigidBodyEntity {
+    fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> RapierPhysicsRigidBodyEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
@@ -288,7 +288,7 @@ impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> f
     }
 
     fn create_static(&self) -> RapierPhysicsStaticEntity {
-        PhysicsStaticEntity::new(&self)
+        RapierPhysicsStaticEntity::create(&self)
     }
 }
 
@@ -303,7 +303,7 @@ pub struct RapierPhysicsController {
     ccd_solver: CCDSolver,
 }
 
-impl PhysicsController<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsController {
+impl PhysicsController<RapierPhysicsContainer, RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsController {
     fn create() -> Self {
         Self {
             gravity: vector![0.0, -9.81, 0.0],
@@ -338,4 +338,5 @@ impl PhysicsController<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> 
             &event_handler,
         );
     }
+
 }
