@@ -10,8 +10,7 @@ use crate::network::messages::Vector3 as NetworkVector3;
 use rapier3d::prelude::ColliderBuilder;
 
 use super::physics::{
-    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity,
-    PhysicsStaticEntity,
+    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBodyEntity, PhysicsStaticEntity,
 };
 
 fn vec_network_to_na(from: &NetworkVector3) -> NaVector3<f32> {
@@ -205,7 +204,7 @@ impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsCollider
     fn compile(&mut self) {
         self.builder = Some(ColliderBuilder::trimesh(
             std::mem::take(&mut self.collider_verts),
-            std::mem::take(&mut self.collider_indices)
+            std::mem::take(&mut self.collider_indices),
         ));
     }
 }
@@ -303,7 +302,7 @@ pub struct RapierPhysicsController {
     ccd_solver: CCDSolver,
 }
 
-impl PhysicsController<RapierPhysicsContainer, RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsController {
+impl RapierPhysicsController {
     fn create() -> Self {
         Self {
             gravity: vector![0.0, -9.81, 0.0],
@@ -338,5 +337,4 @@ impl PhysicsController<RapierPhysicsContainer, RapierPhysicsRigidBodyEntity, Rap
             &event_handler,
         );
     }
-
 }

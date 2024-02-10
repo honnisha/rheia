@@ -31,13 +31,3 @@ pub trait PhysicsContainer<T: PhysicsRigidBodyEntity, U: PhysicsStaticEntity>: C
     fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> T;
     fn create_static(&self) -> U;
 }
-
-pub trait PhysicsController<C, T, U>
-where
-    T: PhysicsRigidBodyEntity,
-    U: PhysicsStaticEntity,
-    C: PhysicsContainer<T, U>,
-{
-    fn create() -> Self;
-    fn step(&mut self, delta: f32, physics_container: &C);
-}

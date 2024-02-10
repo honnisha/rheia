@@ -10,8 +10,8 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use common::physics::rapier::{
-    RapierPhysicsCharacterController, RapierPhysicsContainer, RapierPhysicsController, RapierPhysicsRigidBodyEntity,
-    RapierPhysicsStaticEntity,
+    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer, RapierPhysicsController,
+    RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
 };
 use godot::engine::Engine;
 use godot::prelude::*;
@@ -22,11 +22,10 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type PhysicsRigidBodyEntityType = RapierPhysicsRigidBodyEntity;
 pub type PhysicsStaticEntityType = RapierPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = RapierPhysicsStaticEntity;
+pub type PhysicsColliderBuilderType = RapierPhysicsColliderBuilder;
 pub type PhysicsCharacterControllerType = RapierPhysicsCharacterController;
 
 pub type PhysicsContainerType = RapierPhysicsContainer;
-pub type PhysicsControllerType = RapierPhysicsController;
 
 #[derive(GodotClass)]
 #[class(base=Node)]

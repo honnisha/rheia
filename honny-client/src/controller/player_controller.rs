@@ -73,7 +73,7 @@ impl PlayerController {
             input_data: Default::default(),
             cache_movement: None,
             body_controller,
-            physics_entity: physics_container.create_controller(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
+            physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
             physics_controller: PhysicsCharacterControllerType::create(),
         }
     }

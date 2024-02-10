@@ -1,7 +1,7 @@
 use crate::network::messages::Vector3;
 
 use super::physics::{
-    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsController, PhysicsRigidBodyEntity,
+    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBodyEntity,
     PhysicsStaticEntity,
 };
 use physx::prelude::*;
@@ -106,20 +106,6 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
     }
 
     fn create_static(&self) -> PhysxPhysicsStaticEntity {
-        todo!()
-    }
-}
-
-pub struct PhysxPhysicsController {
-    physics: String,
-}
-
-impl PhysicsController<PhysxPhysicsContainer, PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsController {
-    fn create() -> Self {
-        todo!()
-    }
-
-    fn step(&mut self, delta: f32, physics_container: &PhysxPhysicsContainer) {
         todo!()
     }
 }
