@@ -70,7 +70,7 @@ impl DebugInfo {
     pub fn toggle(&mut self, state: bool) {
         DEBUG_ACTIVE.store(state, Ordering::Relaxed);
 
-        self.base.set_visible(DebugInfo::is_active());
+        self.base_mut().set_visible(DebugInfo::is_active());
     }
 
     pub fn update_debug(&mut self, world_manager: &WorldManager, network: RwLockReadGuard<NetworkClientType>) {
@@ -152,9 +152,9 @@ impl INode3D for DebugInfo {
     }
 
     fn ready(&mut self) {
-        self.base.set_visible(false);
+        self.base_mut().set_visible(false);
 
-        let mut base = self.base.get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
+        let mut base = self.base().get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
         base.add_child(self.first_row.clone().upcast());
         base.add_child(self.world_row.clone().upcast());
         base.add_child(self.network_row.clone().upcast());

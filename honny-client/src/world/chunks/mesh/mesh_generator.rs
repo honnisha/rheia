@@ -4,13 +4,16 @@ use crate::{
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
 use common::{blocks::blocks_storage::BlockType, physics::physics::PhysicsColliderBuilder};
-use godot::prelude::{Array, Gd};
 use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
     engine::*,
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
 use godot::{obj::EngineEnum, prelude::Vector2};
+use godot::{
+    obj::NewGd,
+    prelude::{Array, Gd},
+};
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
@@ -53,11 +56,7 @@ pub struct Geometry {
     pub collider: Option<PhysicsColliderBuilderType>,
 }
 
-impl Geometry {
-    pub fn mesh_ist(&self) -> &Gd<ArrayMesh> {
-        &self.mesh_ist
-    }
-}
+impl Geometry {}
 
 unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
@@ -67,8 +66,8 @@ pub fn generate_chunk_geometry(
     chunk_data: &ChunkDataBordered,
 ) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
-    let mut mesh_ist = ArrayMesh::new();
-    arrays.resize(mesh::ArrayType::ARRAY_MAX.ord() as usize);
+    let mut mesh_ist = ArrayMesh::new_gd();
+    arrays.resize(mesh::ArrayType::MAX.ord() as usize);
 
     let buffer = generate_buffer(chunk_data);
 
@@ -141,13 +140,13 @@ pub fn generate_chunk_geometry(
     };
 
     let len = indices.len();
-    arrays.set(mesh::ArrayType::ARRAY_INDEX.ord() as usize, Variant::from(indices));
-    arrays.set(mesh::ArrayType::ARRAY_VERTEX.ord() as usize, Variant::from(verts));
-    arrays.set(mesh::ArrayType::ARRAY_NORMAL.ord() as usize, Variant::from(normals));
-    arrays.set(mesh::ArrayType::ARRAY_TEX_UV.ord() as usize, Variant::from(uvs));
+    arrays.set(mesh::ArrayType::INDEX.ord() as usize, Variant::from(indices));
+    arrays.set(mesh::ArrayType::VERTEX.ord() as usize, Variant::from(verts));
+    arrays.set(mesh::ArrayType::NORMAL.ord() as usize, Variant::from(normals));
+    arrays.set(mesh::ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
 
     if len > 0 {
-        mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::PRIMITIVE_TRIANGLES, arrays);
+        mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::TRIANGLES, arrays);
     }
 
     Geometry { mesh_ist, collider }

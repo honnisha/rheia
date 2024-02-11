@@ -86,8 +86,11 @@ impl INode for Main {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Info);
 
-        self.base.as_gd().add_child(self.console.clone().upcast());
-        self.base.as_gd().add_child(self.debug_info.clone().upcast());
+        let console = self.console.clone().upcast();
+        self.base_mut().add_child(console);
+
+        let debug_info = self.debug_info.clone().upcast();
+        self.base_mut().add_child(debug_info);
 
         self.debug_info.bind_mut().toggle(true);
 

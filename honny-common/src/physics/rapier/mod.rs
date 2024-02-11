@@ -198,6 +198,8 @@ impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsCollider
     }
 
     fn update_collider(&mut self, static_entity: &RapierPhysicsStaticEntity, position: &NetworkVector3) {
+        assert!(self.builder.is_some());
+
         todo!();
     }
 

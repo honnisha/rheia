@@ -104,7 +104,7 @@ impl BodyController {
         let mut animation = animation_player
             .get_animation(StringName::from("animation_model_walk"))
             .unwrap();
-        animation.set_loop_mode(LoopMode::LOOP_LINEAR);
+        animation.set_loop_mode(LoopMode::LINEAR);
 
         animation_player.call_deferred(StringName::from("play"), &["animation_model_walk".to_variant()]);
 
@@ -154,7 +154,8 @@ impl INode3D for BodyController {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.generic.clone().upcast());
+        let generic = self.generic.clone().upcast();
+        self.base_mut().add_child(generic);
 
         let path = "/home/honnisha/godot/honny-craft/honny-godot/assets/models/generic/replace.glb";
 

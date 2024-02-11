@@ -4,7 +4,7 @@ use godot::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
         Engine, Image, ImageTexture, StandardMaterial3D, Texture2D,
     },
-    prelude::{try_load, Gd, PackedByteArray, StringName, ToGodot},
+    prelude::{try_load, Gd, PackedByteArray, StringName, ToGodot}, obj::NewGd,
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use log::error;
@@ -25,9 +25,9 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
     let path = format!("res://assets/block/{}", texture);
     let image = match try_load::<Texture2D>(&path) {
         //let image = match Image::load_from_file(GString::from(&path)) {
-        Some(t) => t.get_image().unwrap(),
-        None => {
-            error!("Can't load texture \"{}\"; not found;", path);
+        Ok(t) => t.get_image().unwrap(),
+        Err(e) => {
+            error!("Can't load texture \"{}\"; {:?}", path, e);
             return;
         }
     };
@@ -76,15 +76,15 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
 
 pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardMaterial3D> {
     trace!("build_blocks_material started");
-    let mut material = StandardMaterial3D::new();
+    let mut material = StandardMaterial3D::new_gd();
     if Engine::singleton().is_editor_hint() {
         return material;
     }
 
     material.set_alpha_scissor_threshold(0_f32);
-    material.set_alpha_antialiasing(AlphaAntiAliasing::ALPHA_ANTIALIASING_OFF);
+    material.set_alpha_antialiasing(AlphaAntiAliasing::OFF);
 
-    material.set_shading_mode(ShadingMode::SHADING_MODE_PER_PIXEL);
+    material.set_shading_mode(ShadingMode::PER_PIXEL);
 
     material.set_metallic(0_f32);
     material.set_specular(0_f32);
@@ -92,20 +92,20 @@ pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardM
     material.set_roughness(0_f32);
     material.set_clearcoat(0.23_f32);
 
-    material.set_texture_filter(TextureFilter::TEXTURE_FILTER_NEAREST);
+    material.set_texture_filter(TextureFilter::NEAREST);
     material.set_ao_light_affect(1.0_f32);
     material.set(StringName::from("ao_enabled"), true.to_variant());
-    material.set_depth_draw_mode(DepthDrawMode::DEPTH_DRAW_OPAQUE_ONLY);
+    material.set_depth_draw_mode(DepthDrawMode::OPAQUE_ONLY);
     material.set_refraction(0.27_f32);
 
     let mut pba = PackedByteArray::new();
     pba.extend(generate_texture(texture_mapper));
 
-    let mut image = Image::new();
+    let mut image = Image::new_gd();
     image.load_png_from_buffer(pba);
-    let mut texture = ImageTexture::new();
+    let mut texture = ImageTexture::new_gd();
     texture.set_image(image);
-    material.set_texture(TextureParam::TEXTURE_ALBEDO, texture.upcast());
+    material.set_texture(TextureParam::ALBEDO, texture.upcast());
 
     trace!("build_blocks_material completed");
     material

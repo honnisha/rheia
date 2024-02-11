@@ -64,7 +64,7 @@ impl Console {
     pub fn toggle(&mut self, state: bool) {
         CONSOLE_ACTIVE.store(state, Ordering::Relaxed);
         let active = Console::is_active();
-        self.base.set_visible(active);
+        self.base_mut().set_visible(active);
 
         if active {
             let i = self.console_input.as_mut().unwrap();
@@ -73,9 +73,9 @@ impl Console {
             }
             i.clear();
 
-            Input::singleton().set_mouse_mode(MouseMode::MOUSE_MODE_VISIBLE);
+            Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
         } else {
-            Input::singleton().set_mouse_mode(MouseMode::MOUSE_MODE_HIDDEN);
+            Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
         }
     }
 
@@ -131,14 +131,14 @@ impl INode for Console {
 
     fn ready(&mut self) {
         info!("Start loading console;");
-        match self.base.try_get_node_as::<RichTextLabel>(TEXT_PATH) {
+        match self.base().try_get_node_as::<RichTextLabel>(TEXT_PATH) {
             Some(e) => self.console_text = Some(e),
             _ => {
                 godot_error!("console_text element not found");
                 return;
             }
         };
-        match self.base.try_get_node_as::<LineEdit>(INPUT_PATH) {
+        match self.base().try_get_node_as::<LineEdit>(INPUT_PATH) {
             Some(e) => {
                 self.console_input = Some(e);
                 //self.console_input.as_mut().unwrap().connect(
@@ -148,7 +148,7 @@ impl INode for Console {
                 //);
                 self.console_input.as_mut().unwrap().connect(
                     "text_submitted".into(),
-                    Callable::from_object_method(self.base.clone(), "text_submitted"),
+                    Callable::from_object_method(&self.base.as_gd(), "text_submitted"),
                 );
             }
             _ => {
@@ -156,12 +156,12 @@ impl INode for Console {
                 return;
             }
         };
-        match self.base.as_gd().try_get_node_as::<TextureButton>(BUTTON_PATH) {
+        match self.base().try_get_node_as::<TextureButton>(BUTTON_PATH) {
             Some(e) => {
                 self.console_button = Some(e);
                 self.console_button.as_mut().unwrap().connect(
                     "pressed".into(),
-                    Callable::from_object_method(self.base.as_gd(), "button_pressed"),
+                    Callable::from_object_method(&self.base.as_gd(), "button_pressed"),
                 );
             }
             _ => {
@@ -169,14 +169,14 @@ impl INode for Console {
                 return;
             }
         };
-        match self.base.as_gd().try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
+        match self.base().try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
             Some(e) => self.console_sugestions = Some(e),
             _ => {
                 godot_error!("console_sugestions element not found");
                 return;
             }
         };
-        self.base.as_gd().set_visible(false);
+        self.base_mut().set_visible(false);
         info!("Console successfily loaded;");
     }
 

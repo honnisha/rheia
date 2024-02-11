@@ -75,7 +75,7 @@ impl ChunkSection {
     }
 
     /// Updates the mesh from a separate thread
-    pub fn update_mesh(&mut self, geometry: Geometry) {
+    pub fn send_to_update_mesh(&mut self, geometry: Geometry) {
         let mesh = self.mesh.borrow_mut();
         mesh.set_mesh(geometry.mesh_ist.upcast());
 
@@ -95,6 +95,8 @@ impl ChunkSection {
                     &self.physics_entity,
                     &GodotPositionConverter::vector_network_from_gd(&pos),
                 )
+            } else {
+                todo!();
             }
             self.new_colider = None;
         }
@@ -116,6 +118,7 @@ impl INode3D for ChunkSection {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.mesh.clone().upcast());
+        let mesh = self.mesh.clone().upcast();
+        self.base_mut().add_child(mesh);
     }
 }

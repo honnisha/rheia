@@ -59,7 +59,7 @@ impl World {
             )
         });
         let container_name = GString::from("ChunksContainer");
-        chunks_container.bind_mut().base.as_gd().set_name(container_name.clone());
+        chunks_container.bind_mut().base_mut().set_name(container_name.clone());
         let player_controller =
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));
 
@@ -106,7 +106,7 @@ impl World {
 }
 
 pub fn get_default_material() -> Gd<Material> {
-    StandardMaterial3D::new().duplicate().unwrap().cast::<Material>()
+    StandardMaterial3D::new_gd().duplicate().unwrap().cast::<Material>()
 }
 
 #[godot_api]
@@ -133,15 +133,17 @@ impl INode for World {
     }
 
     fn ready(&mut self) {
-        self.base.as_gd().add_child(self.chunks_container.clone().upcast());
+        let chunks_container = self.chunks_container.clone().upcast();
+        self.base_mut().add_child(chunks_container);
 
         // Bind world player move signal
-        self.player_controller.bind_mut().base.as_gd().connect(
+        self.player_controller.bind_mut().base_mut().connect(
             "on_player_move".into(),
             Callable::from_object_method(self.base.as_gd(), "handler_player_move"),
         );
 
-        self.base.add_child(self.player_controller.clone().upcast());
+        let player_controller = self.player_controller.clone().upcast();
+        self.base_mut().add_child(player_controller);
     }
 
     fn process(&mut self, delta: f64) {

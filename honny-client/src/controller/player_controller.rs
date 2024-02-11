@@ -79,7 +79,7 @@ impl PlayerController {
 
     // Get position of the controller
     pub fn get_position(&self) -> Vector3 {
-        self.base.as_gd().get_position()
+        self.base().get_position()
     }
 
     /// Horizontal angle
@@ -93,7 +93,7 @@ impl PlayerController {
     }
 
     pub fn set_position(&mut self, position: Vector3) {
-        self.base.as_gd().set_position(position);
+        self.base_mut().set_position(position);
 
         // The center of the physical collider at his center
         // So it shifts to half the height
@@ -131,7 +131,7 @@ impl PlayerController {
 
     fn rotate_camera(&mut self, _delta: f64) {
         // Rotate camera look at
-        if Input::singleton().get_mouse_mode() == MouseMode::MOUSE_MODE_CAPTURED {
+        if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
             let (yaw, pitch) = self.input_data.get_mouselook_vector();
             self.set_rotation(yaw as f32, pitch as f32);
         }
@@ -172,7 +172,7 @@ impl PlayerController {
         // Sync godot object position
         let physics_pos = self.physics_entity.get_position();
         // Controller position is lowered by half of the center of mass position
-        self.base.as_gd().set_position(Vector3::new(
+        self.base_mut().set_position(Vector3::new(
             physics_pos.x,
             physics_pos.y - CONTROLLER_HEIGHT / 2.0,
             physics_pos.z,
@@ -202,8 +202,11 @@ impl INode3D for PlayerController {
     }
 
     fn ready(&mut self) {
-        self.base.as_gd().add_child(self.body_controller.clone().upcast());
-        self.base.as_gd().add_child(self.camera_anchor.clone().upcast());
+        let controller = self.body_controller.clone().upcast();
+        self.base_mut().add_child(controller);
+
+        let anchor = self.camera_anchor.clone().upcast();
+        self.base_mut().add_child(anchor);
         self.set_view_mode(ContollerViewMode::FirstPersonView);
     }
 
@@ -217,10 +220,10 @@ impl INode3D for PlayerController {
         }
 
         if let Ok(e) = event.clone().try_cast::<InputEventMouseButton>() {
-            if e.get_button_index() == MouseButton::MOUSE_BUTTON_RIGHT {
+            if e.get_button_index() == MouseButton::RIGHT {
                 let mouse_mode = match e.is_pressed() {
-                    true => MouseMode::MOUSE_MODE_CAPTURED,
-                    false => MouseMode::MOUSE_MODE_VISIBLE,
+                    true => MouseMode::CAPTURED,
+                    false => MouseMode::VISIBLE,
                 };
                 Input::singleton().set_mouse_mode(mouse_mode);
             }
@@ -228,22 +231,22 @@ impl INode3D for PlayerController {
 
         if let Ok(e) = event.try_cast::<InputEventKey>() {
             match e.get_keycode() {
-                Key::KEY_D => {
+                Key::D => {
                     self.input_data.right = e.is_pressed() as i32 as FloatType;
                 }
-                Key::KEY_A => {
+                Key::A => {
                     self.input_data.left = e.is_pressed() as i32 as FloatType;
                 }
-                Key::KEY_W => {
+                Key::W => {
                     self.input_data.forward = e.is_pressed() as i32 as FloatType;
                 }
-                Key::KEY_S => {
+                Key::S => {
                     self.input_data.back = e.is_pressed() as i32 as FloatType;
                 }
-                Key::KEY_SHIFT => {
+                Key::SHIFT => {
                     self.input_data.multiplier = e.is_pressed();
                 }
-                Key::KEY_SPACE => {
+                Key::SPACE => {
                     self.input_data.space = e.is_pressed();
                 }
                 _ => (),
@@ -252,7 +255,7 @@ impl INode3D for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
-        let world = self.base.as_gd().get_parent().unwrap().cast::<World>();
+        let world = self.base().get_parent().unwrap().cast::<World>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
         let chunk_loaded = match world.bind().get_chunk(&chunk_pos) {
@@ -289,8 +292,7 @@ impl INode3D for PlayerController {
         // Handle player movement
         let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
         if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
-            self.base
-                .as_gd()
+            self.base_mut()
                 .emit_signal("on_player_move".into(), &[new_movement.to_godot()]);
             self.cache_movement = Some(new_movement);
         }

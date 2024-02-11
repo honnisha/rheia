@@ -74,12 +74,12 @@ impl WorldManager {
     }
 
     pub fn create_world(&mut self, world_slug: String) {
-        let mut world = Gd::<World>::with_base(|base| {
+        let mut world = Gd::<World>::from_init_fn(|base| {
             World::create(base, world_slug, self.texture_mapper.clone(), self.material.clone())
         });
 
         let world_name = GString::from("World");
-        world.bind_mut().base.as_gd().set_name(world_name.clone());
+        world.bind_mut().base_mut().set_name(world_name.clone());
 
         self.base.add_child(world.clone().upcast());
         self.world = Some(world);

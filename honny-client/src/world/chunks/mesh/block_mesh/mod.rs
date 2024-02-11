@@ -7,6 +7,3 @@ pub use buffer::*;
 #[doc(inline)]
 pub use geometry::*;
 pub use simple::*;
-
-pub use ilattice;
-pub use ndshape;

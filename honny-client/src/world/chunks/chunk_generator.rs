@@ -5,7 +5,7 @@ use super::{
 use crate::{
     main_scene::PhysicsContainerType, utils::position::GodotPositionConverter, world::world_manager::TextureMapperType,
 };
-use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS, physics::physics::PhysicsContainer};
+use common::{chunks::chunk_position::ChunkPosition, physics::physics::PhysicsContainer, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::{engine::Material, prelude::*};
 use log::error;
@@ -25,28 +25,28 @@ pub(crate) fn generate_chunk(
 ) {
     rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
-        let mut column = Gd::<ChunkColumn>::with_base(|base| ChunkColumn::create(base, chunk_position));
+        let mut column = Gd::<ChunkColumn>::from_init_fn(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
 
         {
             let mut c = column.bind_mut();
 
             let name = GString::from(format!("ChunkColumn {}", chunk_position));
-            c.base.set_name(name);
+            c.base_mut().set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
                 let physics_entity = physics_container.create_static();
 
-                let mut section = Gd::<ChunkSection>::with_base(|base| {
+                let mut section = Gd::<ChunkSection>::from_init_fn(|base| {
                     ChunkSection::create(base, material.clone(), y as u8, physics_entity, chunk_position.clone())
                 });
 
                 let name = GString::from(format!("Section {}", y));
-                section.bind_mut().base.set_name(name.clone());
+                section.bind_mut().base_mut().set_name(name.clone());
 
-                c.base.add_child(section.clone().upcast());
+                c.base_mut().add_child(section.clone().upcast());
                 let pos = section.bind().get_section_local_position();
-                section.bind_mut().base.set_position(pos);
+                section.bind_mut().base_mut().set_position(pos);
 
                 c.sections.push(section);
             }
@@ -61,7 +61,7 @@ pub(crate) fn generate_chunk(
                 let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
                 let mut section = c.sections[y].bind_mut();
 
-                section.update_mesh(geometry);
+                section.send_to_update_mesh(geometry);
             }
         }
         if let Err(e) = update_tx.send(instance_id) {
@@ -75,7 +75,7 @@ pub(crate) fn generate_chunk(
 pub(crate) fn spawn_chunk(
     id: ChunksGenerationType,
     chunk_position: &ChunkPosition,
-    base: &mut Base<Node>,
+    base: &mut Gd<Node>,
 ) -> Gd<ChunkColumn> {
     let now = std::time::Instant::now();
 
@@ -88,7 +88,7 @@ pub(crate) fn spawn_chunk(
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
         let chunk_pos_vector = GodotPositionConverter::get_gd_from_chunk_position(&chunk_position);
-        c.base.set_global_position(chunk_pos_vector);
+        c.base_mut().set_global_position(chunk_pos_vector);
 
         for section in c.sections.iter_mut() {
             section.bind_mut().sync();
