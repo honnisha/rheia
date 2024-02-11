@@ -33,7 +33,6 @@ use super::{
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct World {
-    #[base]
     pub(crate) base: Base<Node>,
     slug: String,
     chunks_container: Gd<ChunksContainer>,
@@ -51,7 +50,7 @@ impl World {
 impl World {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         let mut physics_container = PhysicsContainerType::create();
-        let mut chunks_container = Gd::<ChunksContainer>::with_base(|base| {
+        let mut chunks_container = Gd::<ChunksContainer>::from_init_fn(|base| {
             ChunksContainer::create(
                 base,
                 texture_mapper.clone(),
@@ -59,10 +58,10 @@ impl World {
                 physics_container.clone(),
             )
         });
-        let container_name = GodotString::from("ChunksContainer");
-        chunks_container.bind_mut().base.set_name(container_name.clone());
+        let container_name = GString::from("ChunksContainer");
+        chunks_container.bind_mut().base.as_gd().set_name(container_name.clone());
         let player_controller =
-            Gd::<PlayerController>::with_base(|base| PlayerController::create(base, &mut physics_container));
+            Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));
 
         World {
             base,
@@ -115,14 +114,14 @@ impl World {
     #[func]
     fn handler_player_move(&mut self, movement_var: Variant) {
         let movement = movement_var.to::<PlayerMovement>();
-        let main = self.base.get_parent().unwrap().cast::<Main>();
+        let main = self.base.as_gd().get_parent().unwrap().cast::<Main>();
         let main = main.bind();
         main.network_send_message(&movement.into_network(), NetworkMessageType::Unreliable);
     }
 }
 
 #[godot_api]
-impl NodeVirtual for World {
+impl INode for World {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
         World::create(
@@ -134,12 +133,12 @@ impl NodeVirtual for World {
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.chunks_container.clone().upcast());
+        self.base.as_gd().add_child(self.chunks_container.clone().upcast());
 
         // Bind world player move signal
-        self.player_controller.bind_mut().base.connect(
+        self.player_controller.bind_mut().base.as_gd().connect(
             "on_player_move".into(),
-            Callable::from_object_method(self.base.clone(), "handler_player_move"),
+            Callable::from_object_method(self.base.as_gd(), "handler_player_move"),
         );
 
         self.base.add_child(self.player_controller.clone().upcast());

@@ -1,7 +1,8 @@
 use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData}, physics::physics::PhysicsContainer,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
 use log::error;
@@ -29,7 +30,6 @@ pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct ChunksContainer {
-    #[base]
     pub(crate) base: Base<Node>,
     chunks: ChunksType,
     texture_mapper: TextureMapperType,
@@ -176,7 +176,7 @@ impl ChunksContainer {
 }
 
 #[godot_api]
-impl NodeVirtual for ChunksContainer {
+impl INode for ChunksContainer {
     /// For default godot init; only World::create is using
     fn init(base: Base<Node>) -> Self {
         Self::create(

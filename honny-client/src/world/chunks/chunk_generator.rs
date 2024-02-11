@@ -31,7 +31,7 @@ pub(crate) fn generate_chunk(
         {
             let mut c = column.bind_mut();
 
-            let name = GodotString::from(format!("ChunkColumn {}", chunk_position));
+            let name = GString::from(format!("ChunkColumn {}", chunk_position));
             c.base.set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
@@ -41,7 +41,7 @@ pub(crate) fn generate_chunk(
                     ChunkSection::create(base, material.clone(), y as u8, physics_entity, chunk_position.clone())
                 });
 
-                let name = GodotString::from(format!("Section {}", y));
+                let name = GString::from(format!("Section {}", y));
                 section.bind_mut().base.set_name(name.clone());
 
                 c.base.add_child(section.clone().upcast());

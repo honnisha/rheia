@@ -10,7 +10,7 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use common::physics::rapier::{
-    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer, RapierPhysicsController,
+    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
     RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
 };
 use godot::engine::Engine;
@@ -30,7 +30,6 @@ pub type PhysicsContainerType = RapierPhysicsContainer;
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct Main {
-    #[base]
     base: Base<Node>,
 
     network: Option<NetworkContainer>,
@@ -70,9 +69,9 @@ impl Main {
 }
 
 #[godot_api]
-impl NodeVirtual for Main {
+impl INode for Main {
     fn init(base: Base<Node>) -> Self {
-        let world_manager = WorldManager::create(base.clone());
+        let world_manager = WorldManager::create(base.as_gd().clone());
         Main {
             base,
             network: None,
@@ -87,8 +86,8 @@ impl NodeVirtual for Main {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
         log::set_max_level(LevelFilter::Info);
 
-        self.base.add_child(self.console.clone().upcast());
-        self.base.add_child(self.debug_info.clone().upcast());
+        self.base.as_gd().add_child(self.console.clone().upcast());
+        self.base.as_gd().add_child(self.debug_info.clone().upcast());
 
         self.debug_info.bind_mut().toggle(true);
 

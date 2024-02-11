@@ -11,7 +11,6 @@ type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct ChunkColumn {
-    #[base]
     pub base: Base<Node3D>,
     pub sections: SectionsType,
 }
@@ -26,7 +25,7 @@ impl ChunkColumn {
 }
 
 #[godot_api]
-impl NodeVirtual for ChunkColumn {
+impl INode3D for ChunkColumn {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
         Self::create(base, ChunkPosition::default())

@@ -30,7 +30,6 @@ pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct ChunkSection {
-    #[base]
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
     physics_entity: PhysicsStaticEntityType,
@@ -50,7 +49,7 @@ impl ChunkSection {
         chunk_position: ChunkPosition,
     ) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
-        mesh.set_name(GodotString::from("ChunkMesh"));
+        mesh.set_name(GString::from("ChunkMesh"));
         mesh.set_material_overlay(material.clone());
 
         Self {
@@ -103,7 +102,7 @@ impl ChunkSection {
 }
 
 #[godot_api]
-impl NodeVirtual for ChunkSection {
+impl INode3D for ChunkSection {
     /// For default godot init; only Self::create is using
     fn init(base: Base<Node3D>) -> Self {
         let physics = PhysicsContainerType::create();

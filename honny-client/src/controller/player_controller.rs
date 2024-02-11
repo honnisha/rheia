@@ -37,7 +37,6 @@ pub enum ContollerViewMode {
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct PlayerController {
-    #[base]
     pub(crate) base: Base<Node3D>,
 
     view_mode: ContollerViewMode,
@@ -63,7 +62,7 @@ impl PlayerController {
         let camera = Camera3D::new_alloc();
         camera_anchor.add_child(camera.clone().upcast());
 
-        let body_controller = Gd::<BodyController>::with_base(|base| BodyController::create(base));
+        let body_controller = Gd::<BodyController>::from_init_fn(|base| BodyController::create(base));
 
         Self {
             base,
@@ -80,7 +79,7 @@ impl PlayerController {
 
     // Get position of the controller
     pub fn get_position(&self) -> Vector3 {
-        self.base.get_position()
+        self.base.as_gd().get_position()
     }
 
     /// Horizontal angle
@@ -94,7 +93,7 @@ impl PlayerController {
     }
 
     pub fn set_position(&mut self, position: Vector3) {
-        self.base.set_position(position);
+        self.base.as_gd().set_position(position);
 
         // The center of the physical collider at his center
         // So it shifts to half the height
@@ -173,7 +172,7 @@ impl PlayerController {
         // Sync godot object position
         let physics_pos = self.physics_entity.get_position();
         // Controller position is lowered by half of the center of mass position
-        self.base.set_position(Vector3::new(
+        self.base.as_gd().set_position(Vector3::new(
             physics_pos.x,
             physics_pos.y - CONTROLLER_HEIGHT / 2.0,
             physics_pos.z,
@@ -196,15 +195,15 @@ impl PlayerController {
 }
 
 #[godot_api]
-impl NodeVirtual for PlayerController {
+impl INode3D for PlayerController {
     fn init(base: Base<Node3D>) -> Self {
         let physics = PhysicsContainerType::create();
         Self::create(base, &physics)
     }
 
     fn ready(&mut self) {
-        self.base.add_child(self.body_controller.clone().upcast());
-        self.base.add_child(self.camera_anchor.clone().upcast());
+        self.base.as_gd().add_child(self.body_controller.clone().upcast());
+        self.base.as_gd().add_child(self.camera_anchor.clone().upcast());
         self.set_view_mode(ContollerViewMode::FirstPersonView);
     }
 
@@ -213,11 +212,11 @@ impl NodeVirtual for PlayerController {
             return;
         }
 
-        if let Some(e) = event.clone().try_cast::<InputEventMouseMotion>() {
+        if let Ok(e) = event.clone().try_cast::<InputEventMouseMotion>() {
             self.input_data.mouse_position = e.get_relative();
         }
 
-        if let Some(e) = event.clone().try_cast::<InputEventMouseButton>() {
+        if let Ok(e) = event.clone().try_cast::<InputEventMouseButton>() {
             if e.get_button_index() == MouseButton::MOUSE_BUTTON_RIGHT {
                 let mouse_mode = match e.is_pressed() {
                     true => MouseMode::MOUSE_MODE_CAPTURED,
@@ -227,7 +226,7 @@ impl NodeVirtual for PlayerController {
             }
         }
 
-        if let Some(e) = event.try_cast::<InputEventKey>() {
+        if let Ok(e) = event.try_cast::<InputEventKey>() {
             match e.get_keycode() {
                 Key::KEY_D => {
                     self.input_data.right = e.is_pressed() as i32 as FloatType;
@@ -253,7 +252,7 @@ impl NodeVirtual for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
-        let world = self.base.get_parent().unwrap().cast::<World>();
+        let world = self.base.as_gd().get_parent().unwrap().cast::<World>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
         let chunk_loaded = match world.bind().get_chunk(&chunk_pos) {
@@ -291,6 +290,7 @@ impl NodeVirtual for PlayerController {
         let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
         if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
             self.base
+                .as_gd()
                 .emit_signal("on_player_move".into(), &[new_movement.to_godot()]);
             self.cache_movement = Some(new_movement);
         }

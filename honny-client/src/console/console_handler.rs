@@ -21,7 +21,6 @@ const SUGESTIOINS_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer3/Mar
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
 pub struct Console {
-    #[base]
     base: Base<MarginContainer>,
     console_text: Option<Gd<RichTextLabel>>,
     console_input: Option<Gd<LineEdit>>,
@@ -105,12 +104,12 @@ impl Console {
     }
 
     //#[func]
-    //fn text_changed(&mut self, new_text: GodotString) {
+    //fn text_changed(&mut self, new_text: GString) {
     //    godot_print!("text changed: {}", new_text);
     //}
 
     #[func]
-    fn text_submitted(&mut self, new_text: GodotString) {
+    fn text_submitted(&mut self, new_text: GString) {
         self.scroll_to_bottom();
         self.submit_command(new_text.to_string());
         self.console_input.as_mut().unwrap().clear();
@@ -118,7 +117,7 @@ impl Console {
 }
 
 #[godot_api]
-impl NodeVirtual for Console {
+impl INode for Console {
     fn init(base: Base<MarginContainer>) -> Self {
         Console {
             base: base,
@@ -157,12 +156,12 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self.base.try_get_node_as::<TextureButton>(BUTTON_PATH) {
+        match self.base.as_gd().try_get_node_as::<TextureButton>(BUTTON_PATH) {
             Some(e) => {
                 self.console_button = Some(e);
                 self.console_button.as_mut().unwrap().connect(
                     "pressed".into(),
-                    Callable::from_object_method(self.base.clone(), "button_pressed"),
+                    Callable::from_object_method(self.base.as_gd(), "button_pressed"),
                 );
             }
             _ => {
@@ -170,14 +169,14 @@ impl NodeVirtual for Console {
                 return;
             }
         };
-        match self.base.try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
+        match self.base.as_gd().try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
             Some(e) => self.console_sugestions = Some(e),
             _ => {
                 godot_error!("console_sugestions element not found");
                 return;
             }
         };
-        self.base.set_visible(false);
+        self.base.as_gd().set_visible(false);
         info!("Console successfily loaded;");
     }
 

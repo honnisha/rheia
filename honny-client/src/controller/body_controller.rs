@@ -90,7 +90,6 @@ fn get_parts(part: &BodyPart) -> &'static PartsType {
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct BodyController {
-    #[base]
     pub(crate) base: Base<Node3D>,
 
     generic: Gd<Node3D>,
@@ -149,7 +148,7 @@ impl BodyController {
 }
 
 #[godot_api]
-impl NodeVirtual for BodyController {
+impl INode3D for BodyController {
     fn init(base: Base<Node3D>) -> Self {
         Self::create(base)
     }

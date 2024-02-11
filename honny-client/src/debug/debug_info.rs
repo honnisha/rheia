@@ -47,7 +47,6 @@ Packet loss: {:.1}"
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
 pub struct DebugInfo {
-    #[base]
     base: Base<MarginContainer>,
     first_row: Gd<HBoxContainer>,
     world_row: Gd<HBoxContainer>,
@@ -61,7 +60,7 @@ impl DebugInfo {
 
     pub fn change_text(row: &Gd<HBoxContainer>, new_text: String) {
         let mut text = row.get_node_as::<RichTextLabel>("PanelContainer/MarginContainer/RichTextLabel");
-        text.set_text(GodotString::from(new_text));
+        text.set_text(GString::from(new_text));
     }
 
     pub fn is_active() -> bool {
@@ -142,7 +141,7 @@ impl DebugInfo {
 }
 
 #[godot_api]
-impl NodeVirtual for DebugInfo {
+impl INode3D for DebugInfo {
     fn init(base: Base<MarginContainer>) -> Self {
         Self {
             base: base,

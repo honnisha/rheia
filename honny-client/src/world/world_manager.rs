@@ -1,10 +1,7 @@
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
 use godot::prelude::*;
-use godot::{
-    engine::Material,
-    prelude::{Gd, GodotString},
-};
+use godot::{engine::Material, prelude::Gd};
 use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -81,8 +78,8 @@ impl WorldManager {
             World::create(base, world_slug, self.texture_mapper.clone(), self.material.clone())
         });
 
-        let world_name = GodotString::from("World");
-        world.bind_mut().base.set_name(world_name.clone());
+        let world_name = GString::from("World");
+        world.bind_mut().base.as_gd().set_name(world_name.clone());
 
         self.base.add_child(world.clone().upcast());
         self.world = Some(world);

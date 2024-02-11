@@ -24,7 +24,7 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
 
     let path = format!("res://assets/block/{}", texture);
     let image = match try_load::<Texture2D>(&path) {
-        //let image = match Image::load_from_file(GodotString::from(&path)) {
+        //let image = match Image::load_from_file(GString::from(&path)) {
         Some(t) => t.get_image().unwrap(),
         None => {
             error!("Can't load texture \"{}\"; not found;", path);

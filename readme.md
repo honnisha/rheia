@@ -6,7 +6,7 @@ cargo r -p honny-server
 cargo test -p honny-server
 ```
 
-## Client Godot
+## Client
 ```
 cargo b -p honny-client
 cargo test -p honny-client
