@@ -151,7 +151,7 @@ fn receive_message_system(
             ClientMessages::PlayerMove { position, yaw, pitch } => {
                 let movement = PlayerMoveEvent::new(
                     client_id.clone(),
-                    Position::from_array(position),
+                    Position::from_network(position),
                     Rotation::new(pitch, yaw),
                 );
                 player_move_events.send(movement);

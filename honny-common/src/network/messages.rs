@@ -10,6 +10,7 @@ use crate::{
 };
 
 
+/// Network 3D vector
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Vector3 {
     pub x: f32,

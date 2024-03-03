@@ -3,6 +3,7 @@ use common::{
     chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
     utils::fix_chunk_loc_pos,
 };
+use common::network::messages::Vector3 as NetworkVector3;
 
 pub type PositionFloatType = f32;
 
@@ -24,12 +25,12 @@ impl Position {
         Self { x, y, z }
     }
 
-    pub fn from_array(position: [PositionFloatType; 3]) -> Self {
-        Self::new(position[0], position[1], position[2])
+    pub fn from_network(position: NetworkVector3) -> Self {
+        Self::new(position.x, position.y, position.z)
     }
 
-    pub fn to_array(&self) -> [PositionFloatType; 3] {
-        [self.x.clone(), self.y.clone(), self.z.clone()]
+    pub fn to_network(&self) -> NetworkVector3 {
+        NetworkVector3::new(self.x, self.y, self.z)
     }
 }
 
