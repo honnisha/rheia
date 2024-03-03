@@ -3,7 +3,7 @@ use std::borrow::BorrowMut;
 use common::{
     blocks::blocks_storage::BlockType,
     chunks::chunk_position::ChunkPosition,
-    physics::physics::{PhysicsColliderBuilder, PhysicsContainer},
+    physics::physics::{PhysicsColliderBuilder, PhysicsContainer, PhysicsStaticEntity},
 };
 use godot::{
     engine::{Material, MeshInstance3D},
@@ -92,11 +92,11 @@ impl ChunkSection {
             let pos = self.get_section_position().clone();
             if let Some(c) = self.new_colider.as_mut() {
                 c.update_collider(
-                    &self.physics_entity,
+                    &mut self.physics_entity,
                     &GodotPositionConverter::vector_network_from_gd(&pos),
                 )
             } else {
-                todo!();
+                self.physics_entity.remove_collider();
             }
             self.new_colider = None;
         }

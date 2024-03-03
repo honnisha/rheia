@@ -7,6 +7,7 @@ use godot::{
     prelude::*,
 };
 use lazy_static::lazy_static;
+use log::{error, info, LevelFilter};
 
 use crate::utils::glb::glb_import;
 
@@ -111,14 +112,20 @@ impl BodyController {
         Self { base, generic }
     }
 
-    fn replace(&mut self, source: &Node3D, part: BodyPart) {
+    fn replace(&mut self, source: &Node3D, part: BodyPart) -> Result<(), String> {
         let parts = get_parts(&part);
         for (bone_path, mesh_prefix) in parts.iter() {
 
             // Get original bone
             let mut bone = match self.generic.try_get_node_as::<Node3D>(bone_path) {
                 Some(node) => node,
-                None => panic!("Generic part:{} node bone \"{}\" not found", part, bone_path),
+                None => return Err(format!("Generic part:{} node bone \"{}\" not found", part, bone_path)),
+            };
+
+            // Get target bone
+            let mut target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
+                Some(node) => node,
+                None => return Err(format!("Replace target part:{} node bone \"{}\" not found", part, bone_path)),
             };
 
             // Remove all original meshes
@@ -127,12 +134,6 @@ impl BodyController {
                     orig_child.queue_free();
                 }
             }
-
-            // Get target bone
-            let mut target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
-                Some(node) => node,
-                None => panic!("Replace target part:{} node bone \"{}\" not found", part, bone_path),
-            };
 
             // Append meshes from target bone
             for target_child in target_bone.get_children().iter_shared() {
@@ -144,6 +145,7 @@ impl BodyController {
                 }
             }
         }
+        Ok(())
     }
 }
 
@@ -164,7 +166,9 @@ impl INode3D for BodyController {
         let _bytes_read = file.read_to_end(&mut b);
         let scene = glb_import(b);
 
-        self.replace(&scene, BodyPart::Chest);
+        if let Err(e) = self.replace(&scene, BodyPart::Chest) {
+            error!("Model \"{}\" error: {}", scene.get_name(), e);
+        }
     }
 
     fn process(&mut self, _delta: f64) {}

@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 common = { path = "../honny-common" }
 
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master"}
+godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
 
 rand = "0.8"
 lazy_static = "1.4.0"

@@ -155,9 +155,9 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
 
 /// For stationary bodies
 pub struct RapierPhysicsStaticEntity {
-    physics_container: RapierPhysicsContainer,
+    pub physics_container: RapierPhysicsContainer,
 
-    collider_handle: Option<ColliderHandle>,
+    pub collider_handle: Option<ColliderHandle>,
 }
 
 impl RapierPhysicsStaticEntity {
@@ -169,7 +169,19 @@ impl RapierPhysicsStaticEntity {
     }
 }
 
-impl PhysicsStaticEntity for RapierPhysicsStaticEntity {}
+impl PhysicsStaticEntity for RapierPhysicsStaticEntity {
+    fn remove_collider(&mut self) {
+        if let Some(c) = self.collider_handle {
+            self.physics_container.collider_set.write().remove(
+                c,
+                &mut self.physics_container.island_manager.write(),
+                &mut self.physics_container.rigid_body_set.write(),
+                true,
+            );
+        }
+        self.collider_handle = None;
+    }
+}
 
 pub struct RapierPhysicsColliderBuilder {
     collider_verts: Vec<Point<Real>>,
@@ -197,10 +209,17 @@ impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsCollider
         self.collider_indices.len()
     }
 
-    fn update_collider(&mut self, static_entity: &RapierPhysicsStaticEntity, position: &NetworkVector3) {
-        assert!(self.builder.is_some());
+    fn update_collider(&mut self, static_entity: &mut RapierPhysicsStaticEntity, position: &NetworkVector3) {
+        let collider = std::mem::take(&mut self.builder).unwrap();
 
-        todo!();
+        if static_entity.collider_handle.is_some() {
+            // Update existing collider
+            todo!()
+        } else {
+            // Spawn new collider
+            let collider = collider.translation(vector![position.x, position.y, position.z]);
+            static_entity.collider_handle = Some(static_entity.physics_container.collider_set.write().insert(collider));
+        }
     }
 
     fn compile(&mut self) {

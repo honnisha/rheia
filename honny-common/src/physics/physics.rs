@@ -14,14 +14,16 @@ pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
 }
 
 /// For stationary bodies
-pub trait PhysicsStaticEntity {}
+pub trait PhysicsStaticEntity {
+    fn remove_collider(&mut self);
+}
 
 pub trait PhysicsColliderBuilder<T: PhysicsStaticEntity> {
     fn create() -> Self;
     fn push_indexes(&mut self, index: [u32; 3]);
     fn push_verts(&mut self, x: f32, y: f32, z: f32);
     fn len(&self) -> usize;
-    fn update_collider(&mut self, static_entity: &T, position: &Vector3);
+    fn update_collider(&mut self, static_entity: &mut T, position: &Vector3);
     fn compile(&mut self);
 }
 

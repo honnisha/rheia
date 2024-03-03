@@ -58,7 +58,11 @@ impl PhysxPhysicsStaticEntity {
     }
 }
 
-impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {}
+impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
+    fn remove_collider(&mut self) {
+        todo!()
+    }
+}
 
 pub struct PhysxPhysicsColliderBuilder {}
 impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBuilder {
@@ -74,7 +78,7 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         todo!()
     }
 
-    fn update_collider(&mut self, static_entity: &PhysxPhysicsStaticEntity, position: &Vector3) {
+    fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &Vector3) {
         todo!()
     }
 
