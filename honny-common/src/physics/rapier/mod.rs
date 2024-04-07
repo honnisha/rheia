@@ -232,7 +232,7 @@ impl PhysicsColliderBuilder<RapierPhysicsStaticEntity> for RapierPhysicsCollider
 
 #[derive(Clone)]
 pub struct RapierPhysicsContainer {
-    world_physics: Arc<RwLock<RapierPhysicsController>>,
+    controller: Arc<RwLock<RapierPhysicsController>>,
     rigid_body_set: Arc<RwLock<RigidBodySet>>,
     collider_set: Arc<RwLock<ColliderSet>>,
     query_pipeline: Arc<RwLock<QueryPipeline>>,
@@ -275,26 +275,26 @@ impl RapierPhysicsContainer {
 
 impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsContainer {
     fn create() -> Self {
-        Self {
-            world_physics: Arc::new(RwLock::new(RapierPhysicsController::create())),
+        let rapier_physics_container = Self {
+            controller: Arc::new(RwLock::new(RapierPhysicsController::create())),
             rigid_body_set: Arc::new(RwLock::new(RigidBodySet::new())),
             collider_set: Arc::new(RwLock::new(ColliderSet::new())),
             query_pipeline: Arc::new(RwLock::new(QueryPipeline::new())),
             island_manager: Arc::new(RwLock::new(IslandManager::new())),
-        }
+        };
+        rapier_physics_container
     }
 
     fn step(&self, delta: f32) {
-        self.world_physics.as_ref().write().step(delta, self);
+        self.controller.as_ref().write().step(delta, self);
     }
 
     fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> RapierPhysicsRigidBodyEntity {
         let mut rigid_body = RigidBodyBuilder::dynamic().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
-        let half_height = height / 2.0;
         let radius = radius;
-        let collider = ColliderBuilder::cylinder(half_height, radius)
+        let collider = ColliderBuilder::cylinder(height / 2.0, radius)
             .mass(mass)
             .restitution(0.0);
         let rigid_handle = self.rigid_body_set.write().insert(rigid_body);

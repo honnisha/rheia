@@ -36,5 +36,6 @@ tokio = "1.35.1"
 renet = { version = "0.0.14", features = ["bevy"], optional = true }
 
 # Pjysics
-rapier3d = { version = "0.17.2", features = [ "simd-stable" ], optional = true }
+rapier3d = { version = "0.18.0", features = [ "simd-stable" ], optional = true }
 physx = { version = "0.19.0", optional = false }
+physx-sys = { version = "0.11.5", optional = false }

@@ -9,10 +9,14 @@ use crate::world::world_manager::WorldManager;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use common::physics::rapier::{
-    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
-    RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
+use common::physics::physx::{
+    PhysxPhysicsCharacterController, PhysxPhysicsColliderBuilder, PhysxPhysicsContainer, PhysxPhysicsRigidBodyEntity,
+    PhysxPhysicsStaticEntity,
 };
+//use common::physics::rapier::{
+//    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
+//    RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
+//};
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
@@ -20,12 +24,12 @@ use log::{error, info, LevelFilter};
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub type PhysicsRigidBodyEntityType = RapierPhysicsRigidBodyEntity;
-pub type PhysicsStaticEntityType = RapierPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = RapierPhysicsColliderBuilder;
-pub type PhysicsCharacterControllerType = RapierPhysicsCharacterController;
+pub type PhysicsRigidBodyEntityType = PhysxPhysicsRigidBodyEntity;
+pub type PhysicsStaticEntityType = PhysxPhysicsStaticEntity;
+pub type PhysicsColliderBuilderType = PhysxPhysicsColliderBuilder;
+pub type PhysicsCharacterControllerType = PhysxPhysicsCharacterController;
 
-pub type PhysicsContainerType = RapierPhysicsContainer;
+pub type PhysicsContainerType = PhysxPhysicsContainer;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
