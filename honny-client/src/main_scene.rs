@@ -13,10 +13,10 @@ use common::physics::physx::{
     PhysxPhysicsCharacterController, PhysxPhysicsColliderBuilder, PhysxPhysicsContainer, PhysxPhysicsRigidBodyEntity,
     PhysxPhysicsStaticEntity,
 };
-//use common::physics::rapier::{
-//    RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
-//    RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
-//};
+// use common::physics::rapier::{
+//     RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
+//     RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
+// };
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
@@ -28,8 +28,13 @@ pub type PhysicsRigidBodyEntityType = PhysxPhysicsRigidBodyEntity;
 pub type PhysicsStaticEntityType = PhysxPhysicsStaticEntity;
 pub type PhysicsColliderBuilderType = PhysxPhysicsColliderBuilder;
 pub type PhysicsCharacterControllerType = PhysxPhysicsCharacterController;
-
 pub type PhysicsContainerType = PhysxPhysicsContainer;
+
+// pub type PhysicsRigidBodyEntityType = RapierPhysicsRigidBodyEntity;
+// pub type PhysicsStaticEntityType = RapierPhysicsStaticEntity;
+// pub type PhysicsColliderBuilderType = RapierPhysicsColliderBuilder;
+// pub type PhysicsCharacterControllerType = RapierPhysicsCharacterController;
+// pub type PhysicsContainerType = RapierPhysicsContainer;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
