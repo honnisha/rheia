@@ -1,9 +1,7 @@
 use super::physics::{
     PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBodyEntity, PhysicsStaticEntity,
 };
-use std::ffi::c_void;
-use crate::network::messages::Vector3;
-use arrayvec::ArrayVec;
+use crate::network::messages::Vector3 as NetworkVector3;
 use parking_lot::RwLock;
 use physx::{
     cooking::{create_triangle_mesh, PxCookingParams, TriangleMeshCookingResult},
@@ -13,9 +11,11 @@ use physx::{
     traits::Class,
 };
 use physx_sys::{
-    PxMeshGeometryFlags as MeshGeometryFlags, PxMeshScale_new_2, PxRigidActor,
+    PxMeshGeometryFlags as MeshGeometryFlags, PxMeshScale_new_2, PxRigidActor, PxScene_addActor_mut,
     PxTriangleMeshGeometry_new,
 };
+use std::ffi::c_void;
+use std::ptr::null;
 use std::sync::Arc;
 
 // https://github.com/EmbarkStudios/physx-rs
@@ -40,6 +40,10 @@ type PxScene = physx::scene::PxScene<
     OnWakeSleep,
     OnAdvance,
 >;
+
+fn vec_px_from_network(from: &NetworkVector3) -> PxVec3 {
+    PxVec3::new(from.x, from.y, from.z)
+}
 
 /// Next up, the simulation event callbacks need to be defined, and possibly an
 /// allocator callback as well.
@@ -77,12 +81,12 @@ impl AdvanceCallback<PxArticulationLink, PxRigidDynamic> for OnAdvance {
 }
 
 pub struct PhysxPhysicsRigidBodyEntity {
-    ptr: *mut PxRigidActor,
+    actor: Owner<PxRigidDynamic>,
 }
 
 impl PhysxPhysicsRigidBodyEntity {
-    fn create(ptr: *mut PxRigidActor) -> Self {
-        Self { ptr }
+    fn create(actor: Owner<PxRigidDynamic>) -> Self {
+        Self { actor }
     }
 }
 
@@ -91,19 +95,19 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
         todo!()
     }
 
-    fn apply_impulse(&mut self, impulse: Vector3) {
+    fn apply_impulse(&mut self, impulse: NetworkVector3) {
         todo!()
     }
 
-    fn get_position(&self) -> Vector3 {
+    fn get_position(&self) -> NetworkVector3 {
         todo!()
     }
 
-    fn set_position(&mut self, position: Vector3) {
+    fn set_position(&mut self, position: NetworkVector3) {
         todo!()
     }
 
-    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3) -> Option<(usize, Vector3)> {
+    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
         todo!()
     }
 }
@@ -114,18 +118,18 @@ impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCha
         todo!()
     }
 
-    fn controller_move(&mut self, entity: &mut PhysxPhysicsRigidBodyEntity, delta: f64, impulse: Vector3) {
+    fn controller_move(&mut self, entity: &mut PhysxPhysicsRigidBodyEntity, delta: f64, impulse: NetworkVector3) {
         todo!()
     }
 }
 
 pub struct PhysxPhysicsStaticEntity {
-    ptr: Option<*mut PxRigidActor>,
+    pub actor: Owner<PxRigidStatic>,
 }
 
 impl PhysxPhysicsStaticEntity {
-    fn create(ptr: Option<*mut PxRigidActor>) -> Self {
-        Self { ptr }
+    fn create(actor: Owner<PxRigidStatic>) -> Self {
+        Self { actor }
     }
 }
 
@@ -147,7 +151,6 @@ impl PhysxPhysicsColliderBuilder {
         &self,
         physics: &mut PhysicsFoundation<DefaultAllocator, PxShape>,
     ) -> Result<PxTriangleMeshGeometry, String> {
-
         let mut desc = physx::cooking::PxTriangleMeshDesc::new();
         desc.obj.points.count = self.collider_verts.len() as u32;
         desc.obj.points.stride = std::mem::size_of::<PxVec3>() as u32;
@@ -175,7 +178,9 @@ impl PhysxPhysicsColliderBuilder {
             }
             TriangleMeshCookingResult::LargeTriangle => Err("Error with generate collider: LargeTriangle".to_string()),
             TriangleMeshCookingResult::Failure => Err("Error with generate collider: Failure".to_string()),
-            TriangleMeshCookingResult::InvalidDescriptor => Err("Error with generate collider: InvalidDescriptor".to_string()),
+            TriangleMeshCookingResult::InvalidDescriptor => {
+                Err("Error with generate collider: InvalidDescriptor".to_string())
+            }
         }
     }
 }
@@ -198,7 +203,9 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         self.collider_verts.push(PxVec3::new(x, y, z));
     }
 
-    fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &Vector3) {
+    fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &NetworkVector3) {
+        static_entity.actor.attach_shape(shape);
+        // https://github.com/rlidwka/bevy_mod_physx/blob/ef9e56023fb7500c7e5d1f2b66057a16a3caf8d7/src/core/systems/create_actors.rs#L33
     }
 
     fn len(&self) -> usize {
@@ -246,23 +253,23 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
             )
             .unwrap();
 
-        let ptr: *mut PxRigidActor = actor.as_mut_ptr();
-        controller.scene.add_dynamic_actor(actor);
-        PhysxPhysicsRigidBodyEntity::create(ptr)
+        unsafe {
+            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), null());
+        }
+        PhysxPhysicsRigidBodyEntity::create(actor)
     }
 
     fn create_static(&self) -> PhysxPhysicsStaticEntity {
         let mut controller = self.controller.as_ref().write();
-        let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
-        let mut actor = controller
+
+        let mut actor: Owner<PxRigidStatic> = controller
             .physics
-            .create_plane(PxVec3::new(0.0, 1.0, 0.0), 0.0, material.as_mut(), ())
+            .create_static(PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)), ())
             .unwrap();
-        // The scene owns actors that are added to it.  They can be retrieved using the
-        // various getters on the scene.
-        let ptr: *mut PxRigidActor = actor.as_mut_ptr();
-        controller.scene.add_static_actor(actor);
-        PhysxPhysicsStaticEntity::create(None)
+        unsafe {
+            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), null());
+        }
+        PhysxPhysicsStaticEntity::create(actor)
     }
 }
 
