@@ -12,8 +12,7 @@ use physx::{
 };
 use physx_sys::{
     PxHitFlags, PxMeshGeometryFlags as MeshGeometryFlags, PxMeshScale_new_2, PxPhysics_createShape_mut,
-    PxQueryFilterData, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut,
-    PxTriangleMeshGeometry_new,
+    PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxTriangleMeshGeometry_new,
 };
 use std::ptr::null;
 use std::sync::Arc;
@@ -124,8 +123,8 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
     }
 
     fn set_position(&mut self, position: NetworkVector3) {
-        let pose = self.actor.get_global_pose();
-        self.actor.set_global_pose(&pose, true)
+        self.actor
+            .set_global_pose(&PxTransform::from_translation(&vec_px_from_network(&position)), true);
     }
 
     fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
@@ -173,20 +172,23 @@ impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCha
     }
 
     fn controller_move(&mut self, entity: &mut PhysxPhysicsRigidBodyEntity, delta: f64, impulse: NetworkVector3) {
-        todo!()
         // https://github.com/rlidwka/bevy_mod_physx/blob/ef9e56023fb7500c7e5d1f2b66057a16a3caf8d7/examples/kinematic.rs
     }
 }
 
 pub struct PhysxPhysicsStaticEntity {
     pub actor: Owner<PxRigidStatic>,
+    controller: Arc<RwLock<PhysxPhysicsController>>,
+
+    // Attached shape
     pub shape: Option<Owner<PxShape>>,
 }
 
 impl PhysxPhysicsStaticEntity {
-    fn create(actor: Owner<PxRigidStatic>) -> Self {
+    fn create(actor: Owner<PxRigidStatic>, controller: Arc<RwLock<PhysxPhysicsController>>) -> Self {
         Self {
             actor,
+            controller,
             shape: Default::default(),
         }
     }
@@ -194,14 +196,15 @@ impl PhysxPhysicsStaticEntity {
 
 impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
     fn remove_collider(&mut self) {
-        self.actor.detach_shape(&mut self.shape.take().unwrap());
+        if self.shape.is_some() {
+            self.actor.detach_shape(&mut self.shape.take().unwrap());
+        }
     }
 }
 
 pub struct PhysxPhysicsColliderBuilder {
     collider_verts: Vec<PxVec3>,
     collider_indices: Vec<[u32; 3]>,
-    geometry: Option<PxTriangleMeshGeometry>,
 }
 
 impl PhysxPhysicsColliderBuilder {
@@ -248,7 +251,6 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         Self {
             collider_verts: Default::default(),
             collider_indices: Default::default(),
-            geometry: Default::default(),
         }
     }
 
@@ -261,37 +263,42 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
     }
 
     fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &NetworkVector3) {
-        // let controller = self.controller.as_ref().read();
+        let mut controller = static_entity.controller.write();
+
+        let geometry = self.generate_mesh(&mut controller.physics).unwrap();
+
         let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
 
-        //let shape = physics.create_shape(geometry, materials, is_exclusive, shape_flags, user_data)
-        let mut shape: Owner<PxShape> = unsafe {
-            physx::shape::Shape::from_raw(
-                PxPhysics_createShape_mut(
-                    controller.physics.as_mut_ptr(),
-                    self.geometry.unwrap().as_ptr(),
-                    material.as_ptr(),
-                    true,
-                    ShapeFlags::empty(),
-                ),
-                None,
-            )
-            .unwrap()
-        };
+        // let mut shape: Owner<PxShape> = unsafe {
+        //     physx::shape::Shape::from_raw(
+        //         PxPhysics_createShape_mut(
+        //             controller.physics.as_mut_ptr(),
+        //             geometry.as_ptr(),
+        //             material.as_ptr(),
+        //             true,
+        //             ShapeFlags::empty(),
+        //         ),
+        //         (),
+        //     )
+        //     .unwrap()
+        // };
+        let mut shape = controller
+            .physics
+            .create_shape(&geometry, &mut [&mut material], true, ShapeFlags::empty(), ())
+            .unwrap();
+
         static_entity.actor.attach_shape(&mut shape);
         static_entity.shape = Some(shape);
+        static_entity
+            .actor
+            .set_global_pose(&PxTransform::from_translation(&vec_px_from_network(&position)), true);
     }
 
     fn len(&self) -> usize {
         self.collider_indices.len()
     }
 
-    fn compile(&mut self) {
-        let mut controller = self.controller.as_ref().write();
-
-        let geometry = self.generate_mesh(&mut controller.physics).unwrap();
-        self.geometry = Some(geometry);
-    }
+    fn compile(&mut self) {}
 }
 
 #[derive(Clone)]
@@ -318,7 +325,7 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
         let mut actor = controller
             .physics
             .create_rigid_dynamic(
-                PxTransform::from_translation(&PxVec3::new(0.0, 40.0, 100.0)),
+                PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)),
                 &geometry,
                 material.as_mut(),
                 10.0,
@@ -326,11 +333,12 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
                 (),
             )
             .unwrap();
+        actor.set_mass(mass);
 
         unsafe {
             PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), null());
         }
-        PhysxPhysicsRigidBodyEntity::create(actor)
+        PhysxPhysicsRigidBodyEntity::create(actor, self.controller.clone())
     }
 
     fn create_static(&self) -> PhysxPhysicsStaticEntity {
