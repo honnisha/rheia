@@ -4,15 +4,14 @@ use super::physics::{
 use crate::network::messages::Vector3 as NetworkVector3;
 use parking_lot::RwLock;
 use physx::{
-    cooking::{create_triangle_mesh, PxCookingParams, TriangleMeshCookingResult},
+    cooking::{create_triangle_mesh, PxCookingParams, PxTriangleMeshDesc, TriangleMeshCookingResult},
     foundation::DefaultAllocator,
     owner::Owner,
     prelude::*,
     traits::Class,
 };
 use physx_sys::{
-    PxHitFlags, PxMeshGeometryFlags as MeshGeometryFlags, PxMeshScale_new_2, PxPhysics_createShape_mut,
-    PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxTriangleMeshGeometry_new,
+    PxHitFlags, PxMeshScale_new, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut,
 };
 use std::ptr::null;
 use std::sync::Arc;
@@ -207,45 +206,6 @@ pub struct PhysxPhysicsColliderBuilder {
     collider_indices: Vec<[u32; 3]>,
 }
 
-impl PhysxPhysicsColliderBuilder {
-    fn generate_mesh(
-        &self,
-        physics: &mut PhysicsFoundation<DefaultAllocator, PxShape>,
-    ) -> Result<PxTriangleMeshGeometry, String> {
-        let mut desc = physx::cooking::PxTriangleMeshDesc::new();
-        desc.obj.points.count = self.collider_verts.len() as u32;
-        desc.obj.points.stride = std::mem::size_of::<PxVec3>() as u32;
-        desc.obj.points.data = self.collider_verts.as_ptr() as *const c_void;
-
-        desc.obj.triangles.count = self.collider_indices.len() as u32;
-        desc.obj.triangles.stride = std::mem::size_of::<[u32; 3]>() as u32;
-        desc.obj.triangles.data = self.collider_indices.as_ptr() as *const c_void;
-
-        let scale = PxVec3::new(1.0, 1.0, 1.0);
-
-        let params = PxCookingParams::new(physics.physics()).unwrap();
-        match create_triangle_mesh(physics.physics_mut(), &params, &desc) {
-            TriangleMeshCookingResult::Success(mut mesh) => {
-                let sys_vec: physx_sys::PxVec3 = scale.into();
-                let mesh_scale = unsafe { PxMeshScale_new_2(&sys_vec as *const physx_sys::PxVec3) };
-                let result_mesh = unsafe {
-                    PxTriangleMeshGeometry_new(
-                        mesh.as_mut().as_mut_ptr(),
-                        mesh_scale.as_ptr(),
-                        MeshGeometryFlags::empty(),
-                    )
-                };
-                Ok(result_mesh)
-            }
-            TriangleMeshCookingResult::LargeTriangle => Err("Error with generate collider: LargeTriangle".to_string()),
-            TriangleMeshCookingResult::Failure => Err("Error with generate collider: Failure".to_string()),
-            TriangleMeshCookingResult::InvalidDescriptor => {
-                Err("Error with generate collider: InvalidDescriptor".to_string())
-            }
-        }
-    }
-}
-
 impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBuilder {
     fn create() -> Self {
         Self {
@@ -265,26 +225,29 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
     fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &NetworkVector3) {
         let mut controller = static_entity.controller.write();
 
-        let geometry = self.generate_mesh(&mut controller.physics).unwrap();
+        let mut desc = PxTriangleMeshDesc::new();
+        desc.obj.points.count = self.collider_verts.len() as u32;
+        desc.obj.points.stride = std::mem::size_of::<PxVec3>() as u32;
+        desc.obj.points.data = self.collider_verts.as_ptr() as *const c_void;
+
+        desc.obj.triangles.count = self.collider_indices.len() as u32;
+        desc.obj.triangles.stride = std::mem::size_of::<[u32; 3]>() as u32;
+        desc.obj.triangles.data = self.collider_indices.as_ptr() as *const c_void;
+
+        let params = PxCookingParams::new(controller.physics.physics()).unwrap();
+        let mesh = match create_triangle_mesh(controller.physics.physics_mut(), &params, &desc) {
+            TriangleMeshCookingResult::Success(mut mesh) => {
+                PxTriangleMeshGeometry::new(&mut mesh, &unsafe { PxMeshScale_new() }, MeshGeometryFlags::TightBounds)
+            }
+            _ => {
+                panic!()
+            }
+        };
 
         let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
-
-        // let mut shape: Owner<PxShape> = unsafe {
-        //     physx::shape::Shape::from_raw(
-        //         PxPhysics_createShape_mut(
-        //             controller.physics.as_mut_ptr(),
-        //             geometry.as_ptr(),
-        //             material.as_ptr(),
-        //             true,
-        //             ShapeFlags::empty(),
-        //         ),
-        //         (),
-        //     )
-        //     .unwrap()
-        // };
         let mut shape = controller
             .physics
-            .create_shape(&geometry, &mut [&mut material], true, ShapeFlags::empty(), ())
+            .create_shape(&mesh, &mut [&mut material], true, ShapeFlags::empty(), ())
             .unwrap();
 
         static_entity.actor.attach_shape(&mut shape);
@@ -320,7 +283,7 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
     fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> PhysxPhysicsRigidBodyEntity {
         let mut controller = self.controller.as_ref().write();
         let geometry = PxCapsuleGeometry::new(radius, height / 2.0);
-        let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
+        let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
 
         let mut actor = controller
             .physics
@@ -334,6 +297,17 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
             )
             .unwrap();
         actor.set_mass(mass);
+
+        // Debug plane
+        let ground_plane = controller
+            .physics
+            .create_plane(PxVec3::new(0.0, 1.0, 0.0), 0.0, material.as_mut(), ())
+            .unwrap();
+        controller.scene.add_static_actor(ground_plane);
+
+        actor.set_rigid_dynamic_lock_flag(RigidDynamicLockFlag::LockLinearX, false);
+        actor.set_rigid_dynamic_lock_flag(RigidDynamicLockFlag::LockLinearY, false);
+        actor.set_rigid_dynamic_lock_flag(RigidDynamicLockFlag::LockLinearZ, false);
 
         unsafe {
             PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), null());
