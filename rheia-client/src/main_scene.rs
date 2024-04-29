@@ -103,7 +103,7 @@ impl INode for Main {
 
         self.debug_info.bind_mut().toggle(true);
 
-        info!("Loading HonnyCraft version: {}", VERSION);
+        info!("Loading Rheia version: {}", VERSION);
 
         let network = match NetworkContainer::new("127.0.0.1:19134".to_string()) {
             Ok(c) => c,

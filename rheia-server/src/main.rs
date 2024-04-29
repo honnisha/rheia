@@ -59,7 +59,7 @@ fn main() {
     log::set_max_level(log_level.clone());
     info!("Log level using: {}", log_level);
 
-    info!("HonnyCraft Server version {}", VERSION);
+    info!("Rheia Server version {}", VERSION);
 
     let mut app = App::new();
     app.insert_resource(server_settings);

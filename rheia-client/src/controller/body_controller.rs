@@ -159,7 +159,7 @@ impl INode3D for BodyController {
         let generic = self.generic.clone().upcast();
         self.base_mut().add_child(generic);
 
-        let path = "/home/honnisha/godot/honny-craft/honny-godot/assets/models/generic/replace.glb";
+        let path = "/home/honnisha/godot/rheia-craft/rheia-godot/assets/models/generic/replace.glb";
 
         let mut b: Vec<u8> = Vec::new();
         let mut file = File::open(path).unwrap();

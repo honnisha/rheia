@@ -1,5 +1,5 @@
 [package]
-name = "honny-client"
+name = "rheia-client"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -8,7 +8,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-common = { path = "../honny-common" }
+common = { path = "../rheia-common" }
 
 godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
 

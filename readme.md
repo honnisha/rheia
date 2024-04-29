@@ -1,15 +1,15 @@
-# Honny-Craft
+# Rheia
 
 ## Server
 ```
-cargo r -p honny-server
-cargo test -p honny-server
+cargo r -p rheia-server
+cargo test -p rheia-server
 ```
 
 ## Client
 ```
-cargo b -p honny-client
-cargo test -p honny-client
+cargo b -p rheia-client
+cargo test -p rheia-client
 ```
 
 ## Common lib
@@ -19,10 +19,10 @@ cargo test -p common
 
 ## Client bevy
 ```
-cargo b -p honny-client-bevy
-cargo run -p honny-client-bevy
-cargo run --features bevy/dynamic_linking -p honny-client-bevy
-cargo run --features bevy/trace_tracy -p honny-client-bevy
+cargo b -p rheia-client-bevy
+cargo run -p rheia-client-bevy
+cargo run --features bevy/dynamic_linking -p rheia-client-bevy
+cargo run --features bevy/trace_tracy -p rheia-client-bevy
 ```
 
 ## Debug

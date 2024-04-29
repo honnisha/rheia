@@ -10,7 +10,7 @@ mod utils;
 mod world;
 mod debug;
 
-struct HonnyCraft;
+struct Rheia;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for HonnyCraft {}
+unsafe impl ExtensionLibrary for Rheia {}

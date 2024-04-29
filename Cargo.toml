@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "honny-client",
-    "honny-client-bevy",
-    "honny-server",
-    "honny-common",
+    "rheia-client",
+    "rheia-client-bevy",
+    "rheia-server",
+    "rheia-common",
 ]
 resolver = "2"
