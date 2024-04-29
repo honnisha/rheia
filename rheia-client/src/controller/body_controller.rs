@@ -1,5 +1,5 @@
-use std::{fs::File, io::Read};
 use std::fmt::{self, Display, Formatter};
+use std::{fs::File, io::Read};
 
 use ahash::HashMap;
 use godot::{
@@ -7,7 +7,7 @@ use godot::{
     prelude::*,
 };
 use lazy_static::lazy_static;
-use log::{error, info, LevelFilter};
+use log::error;
 
 use crate::utils::glb::glb_import;
 
@@ -39,41 +39,80 @@ lazy_static! {
         let mut m = HashMap::default();
         m.insert("Node2/root/b_torso_lower/b_torso_middle", "torso_middle");
         m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper", "torso_upper");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder", "hand_right_shoulder");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow", "hand_right_elbow");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder", "hand_left_shoulder");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow", "hand_left_elbow");
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder",
+            "hand_right_shoulder",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow",
+            "hand_right_elbow",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder",
+            "hand_left_shoulder",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow",
+            "hand_left_elbow",
+        );
         m
     };
     static ref PARTS_HANDS: PartsType = {
         let mut m = HashMap::default();
         m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow/b_hand_right_fist", "hand_right_fist");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow", "hand_right_wrist");
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_right_shoulder/b_hand_right_elbow",
+            "hand_right_wrist",
+        );
         m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow/b_hand_left_fist", "hand_left_fist");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow", "hand_left_wrist");
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_hand_left_shoulder/b_hand_left_elbow",
+            "hand_left_wrist",
+        );
         m
     };
     static ref PARTS_PANTS: PartsType = {
         let mut m = HashMap::default();
         m.insert("Node2/root/b_torso_lower", "torso_lower");
         m.insert("Node2/root/b_torso_lower/b_leg_right_hip", "leg_right_hip");
-        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin", "leg_right_shin");
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin",
+            "leg_right_shin",
+        );
         m.insert("Node2/root/b_torso_lower/b_leg_left_hip", "leg_left_hip");
-        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin", "leg_left_shin");
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin",
+            "leg_left_shin",
+        );
         m
     };
     static ref PARTS_BOOTS: PartsType = {
         let mut m = HashMap::default();
-        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin/b_leg_right_foot", "leg_right_foot");
-        m.insert("Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin", "leg_right_licorice");
-        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin/b_leg_left_foot", "leg_left_foot");
-        m.insert("Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin", "leg_left_licorice");
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin/b_leg_right_foot",
+            "leg_right_foot",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_right_hip/b_leg_right_shin",
+            "leg_right_licorice",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin/b_leg_left_foot",
+            "leg_left_foot",
+        );
+        m.insert(
+            "Node2/root/b_torso_lower/b_leg_left_hip/b_leg_left_shin",
+            "leg_left_licorice",
+        );
         m
     };
     static ref PARTS_HEAD: PartsType = {
         let mut m = HashMap::default();
         m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_neck", "neck");
-        m.insert("Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_neck/b_head", "head");
+        m.insert(
+            "Node2/root/b_torso_lower/b_torso_middle/b_torso_upper/b_neck/b_head",
+            "head",
+        );
         m
     };
 }
@@ -115,17 +154,21 @@ impl BodyController {
     fn replace(&mut self, source: &Node3D, part: BodyPart) -> Result<(), String> {
         let parts = get_parts(&part);
         for (bone_path, mesh_prefix) in parts.iter() {
-
             // Get original bone
-            let mut bone = match self.generic.try_get_node_as::<Node3D>(bone_path) {
+            let mut bone = match self.generic.try_get_node_as::<Node3D>(*bone_path) {
                 Some(node) => node,
                 None => return Err(format!("Generic part:{} node bone \"{}\" not found", part, bone_path)),
             };
 
             // Get target bone
-            let mut target_bone = match source.try_get_node_as::<Node3D>(bone_path) {
+            let mut target_bone = match source.try_get_node_as::<Node3D>(*bone_path) {
                 Some(node) => node,
-                None => return Err(format!("Replace target part:{} node bone \"{}\" not found", part, bone_path)),
+                None => {
+                    return Err(format!(
+                        "Replace target part:{} node bone \"{}\" not found",
+                        part, bone_path
+                    ))
+                }
             };
 
             // Remove all original meshes
@@ -138,7 +181,6 @@ impl BodyController {
             // Append meshes from target bone
             for target_child in target_bone.get_children().iter_shared() {
                 if target_child.get_name().to_string().starts_with(mesh_prefix) {
-
                     target_bone.remove_child(target_child.clone());
                     bone.add_child(target_child);
                     // target_child.reparent(bone.clone().upcast());
@@ -159,7 +201,7 @@ impl INode3D for BodyController {
         let generic = self.generic.clone().upcast();
         self.base_mut().add_child(generic);
 
-        let path = "/home/honnisha/godot/rheia-craft/rheia-godot/assets/models/generic/replace.glb";
+        let path = "/home/honnisha/godot/rheia/rheia-godot/assets/models/generic/replace.glb";
 
         let mut b: Vec<u8> = Vec::new();
         let mut file = File::open(path).unwrap();

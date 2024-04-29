@@ -66,8 +66,7 @@ pub fn generate_chunk_geometry(
     chunk_data: &ChunkDataBordered,
 ) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
-    let mut mesh_ist = ArrayMesh::new_gd();
-    arrays.resize(mesh::ArrayType::MAX.ord() as usize);
+    arrays.resize(mesh::ArrayType::MAX.ord() as usize, &Variant::nil());
 
     let buffer = generate_buffer(chunk_data);
 
@@ -145,6 +144,7 @@ pub fn generate_chunk_geometry(
     arrays.set(mesh::ArrayType::NORMAL.ord() as usize, Variant::from(normals));
     arrays.set(mesh::ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
 
+    let mut mesh_ist = ArrayMesh::new_gd();
     if len > 0 {
         mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::TRIANGLES, arrays);
     }

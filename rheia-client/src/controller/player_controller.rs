@@ -45,7 +45,7 @@ pub struct PlayerController {
     camera: Gd<Camera3D>,
 
     input_data: InputData,
-    cache_movement: Option<PlayerMovement>,
+    cache_movement: Option<Gd<PlayerMovement>>,
 
     // A full-length body
     body_controller: Gd<BodyController>,
@@ -290,10 +290,13 @@ impl INode3D for PlayerController {
         }
 
         // Handle player movement
-        let new_movement = PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch());
-        if self.cache_movement.is_none() || new_movement != self.cache_movement.unwrap() {
+        let new_movement = Gd::<PlayerMovement>::from_init_fn(|base| {
+            PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch())
+        });
+
+        if self.cache_movement.is_none() || *new_movement.bind() != *self.cache_movement.as_ref().unwrap().bind() {
             self.base_mut()
-                .emit_signal("on_player_move".into(), &[new_movement.to_godot()]);
+                .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
             self.cache_movement = Some(new_movement);
         }
     }

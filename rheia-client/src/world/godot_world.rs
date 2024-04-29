@@ -112,11 +112,10 @@ pub fn get_default_material() -> Gd<Material> {
 #[godot_api]
 impl World {
     #[func]
-    fn handler_player_move(&mut self, movement_var: Variant) {
-        let movement = movement_var.to::<PlayerMovement>();
+    fn handler_player_move(&mut self, movement: Gd<PlayerMovement>) {
         let main = self.base.as_gd().get_parent().unwrap().cast::<Main>();
         let main = main.bind();
-        main.network_send_message(&movement.into_network(), NetworkMessageType::Unreliable);
+        main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
     }
 }
 

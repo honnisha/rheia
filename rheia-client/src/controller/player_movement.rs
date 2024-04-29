@@ -5,12 +5,13 @@ use common::{
     },
     network::messages::ClientMessages,
 };
-use godot::prelude::{FromGodot, GodotConvert, ToGodot, Vector3};
+use godot::{prelude::Vector3, register::GodotClass};
 use std::fmt::{self, Display, Formatter};
 
 use crate::{main_scene::FloatType, utils::position::GodotPositionConverter};
 
-#[derive(Clone, Copy, Debug, PartialEq, ToGodot, FromGodot, GodotConvert)]
+#[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
+#[class(init)]
 pub struct PlayerMovement {
     // Player object position
     position: Vector3,
