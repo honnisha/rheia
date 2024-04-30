@@ -11,7 +11,7 @@ use physx::{
     traits::Class,
 };
 use physx_sys::{
-    PxHitFlags, PxMeshScale_new, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut,
+    PxHitFlags, PxMeshScale_new, PxPhysics_createShape_mut, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxShape_setLocalPose_mut
 };
 use std::ptr::null;
 use std::sync::Arc;
@@ -237,7 +237,7 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         let params = PxCookingParams::new(controller.physics.physics()).unwrap();
         let mesh = match create_triangle_mesh(controller.physics.physics_mut(), &params, &desc) {
             TriangleMeshCookingResult::Success(mut mesh) => {
-                PxTriangleMeshGeometry::new(&mut mesh, &unsafe { PxMeshScale_new() }, MeshGeometryFlags::TightBounds)
+                PxTriangleMeshGeometry::new(&mut mesh, &unsafe { PxMeshScale_new() }, MeshGeometryFlags::empty())
             }
             _ => {
                 panic!()
@@ -249,12 +249,33 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
             .physics
             .create_shape(&mesh, &mut [&mut material], true, ShapeFlags::empty(), ())
             .unwrap();
+        //let mut shape: Owner<PxShape> = unsafe {
+        //    physx::shape::Shape::from_raw(
+        //        PxPhysics_createShape_mut(
+        //            controller.physics.as_mut_ptr(),
+        //            mesh.as_ptr(),
+        //            material.as_mut_ptr(),
+        //            true,
+        //            ShapeFlags::empty(),
+        //        ),
+        //        (),
+        //    )
+        //    .unwrap()
+        //};
 
-        static_entity.actor.attach_shape(&mut shape);
-        static_entity.shape = Some(shape);
+        //unsafe {
+        //    PxShape_setLocalPose_mut(
+        //        shape.as_mut_ptr(),
+        //        PxTransform::from_translation(&vec_px_from_network(&position)).as_ptr(),
+        //    );
+        //}
+
         static_entity
             .actor
             .set_global_pose(&PxTransform::from_translation(&vec_px_from_network(&position)), true);
+
+        static_entity.actor.attach_shape(&mut shape);
+        static_entity.shape = Some(shape);
     }
 
     fn len(&self) -> usize {
