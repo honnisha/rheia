@@ -11,7 +11,8 @@ use physx::{
     traits::Class,
 };
 use physx_sys::{
-    PxHitFlags, PxMeshScale_new, PxPhysics_createShape_mut, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxShape_setLocalPose_mut
+    PxHitFlags, PxMeshScale_new, PxPhysics_createShape_mut, PxQueryFilterData_new, PxSceneQueryExt_raycastSingle,
+    PxScene_addActor_mut, PxShape_setLocalPose_mut,
 };
 use std::ptr::null;
 use std::sync::Arc;
@@ -244,10 +245,11 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
             }
         };
 
+        let flags = ShapeFlags::SceneQueryShape | ShapeFlags::SimulationShape | ShapeFlags::Visualization;
         let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
         let mut shape = controller
             .physics
-            .create_shape(&mesh, &mut [&mut material], true, ShapeFlags::empty(), ())
+            .create_shape(&mesh, &mut [&mut material], true, flags, ())
             .unwrap();
         //let mut shape: Owner<PxShape> = unsafe {
         //    physx::shape::Shape::from_raw(
