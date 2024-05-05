@@ -158,7 +158,7 @@ fn handle_events_system(
         let decoded: ServerMessages = match bincode::deserialize(&server_message) {
             Ok(d) => d,
             Err(e) => {
-                error!("Decode server message error: {}", e);
+                error!("Decode server message error: \"{}\" original: {:?}", e, server_message);
                 continue;
             }
         };

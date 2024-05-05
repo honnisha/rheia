@@ -4,7 +4,8 @@ use std::sync::{
 };
 
 use common::{
-    chunks::block_position::{BlockPosition, BlockPositionTrait}, network::client::ClientNetwork,
+    chunks::block_position::{BlockPosition, BlockPositionTrait},
+    network::client::ClientNetwork,
 };
 use godot::{
     engine::{Engine, HBoxContainer, MarginContainer, RichTextLabel, VBoxContainer},
@@ -13,7 +14,7 @@ use godot::{
 use lazy_static::lazy_static;
 use parking_lot::RwLockReadGuard;
 
-use crate::{network::client::NetworkClientType, world::world_manager::WorldManager};
+use crate::{main_scene::NetworkClientType, world::world_manager::WorldManager};
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -154,7 +155,9 @@ impl INode3D for DebugInfo {
     fn ready(&mut self) {
         self.base_mut().set_visible(false);
 
-        let mut base = self.base().get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
+        let mut base = self
+            .base()
+            .get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
         base.add_child(self.first_row.clone().upcast());
         base.add_child(self.world_row.clone().upcast());
         base.add_child(self.network_row.clone().upcast());

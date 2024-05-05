@@ -18,6 +18,7 @@ use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
+use crate::NetworkServerType;
 use crate::{
     client_resources::resources_manager::ResourceManager,
     console::commands_executer::CommandsHandler,
@@ -52,9 +53,6 @@ impl SendClientMessageEvent {
 lazy_static! {
     static ref CONSOLE_INPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
 }
-
-pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
-// pub type NetworkServerType = common::network::rak_rs::server::RakNetServerNetwork;
 
 #[derive(Resource)]
 pub struct NetworkContainer {

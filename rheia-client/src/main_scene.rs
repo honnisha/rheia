@@ -9,14 +9,6 @@ use crate::world::world_manager::WorldManager;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use common::physics::physx::{
-    PhysxPhysicsCharacterController, PhysxPhysicsColliderBuilder, PhysxPhysicsContainer, PhysxPhysicsRigidBodyEntity,
-    PhysxPhysicsStaticEntity,
-};
-// use common::physics::rapier::{
-//     RapierPhysicsCharacterController, RapierPhysicsColliderBuilder, RapierPhysicsContainer,
-//     RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity,
-// };
 use godot::engine::Engine;
 use godot::prelude::*;
 use log::{error, info, LevelFilter};
@@ -24,17 +16,25 @@ use log::{error, info, LevelFilter};
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub type PhysicsRigidBodyEntityType = PhysxPhysicsRigidBodyEntity;
-pub type PhysicsStaticEntityType = PhysxPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = PhysxPhysicsColliderBuilder;
-pub type PhysicsCharacterControllerType = PhysxPhysicsCharacterController;
-pub type PhysicsContainerType = PhysxPhysicsContainer;
+// Physics Physx
+pub type PhysicsRigidBodyEntityType = common::physics::physx::PhysxPhysicsRigidBodyEntity;
+pub type PhysicsStaticEntityType = common::physics::physx::PhysxPhysicsStaticEntity;
+pub type PhysicsColliderBuilderType = common::physics::physx::PhysxPhysicsColliderBuilder;
+pub type PhysicsCharacterControllerType = common::physics::physx::PhysxPhysicsCharacterController;
+pub type PhysicsContainerType = common::physics::physx::PhysxPhysicsContainer;
 
-// pub type PhysicsRigidBodyEntityType = RapierPhysicsRigidBodyEntity;
-// pub type PhysicsStaticEntityType = RapierPhysicsStaticEntity;
-// pub type PhysicsColliderBuilderType = RapierPhysicsColliderBuilder;
-// pub type PhysicsCharacterControllerType = RapierPhysicsCharacterController;
-// pub type PhysicsContainerType = RapierPhysicsContainer;
+// Physics Rapier
+// pub type PhysicsRigidBodyEntityType = common::physics::rapier::RapierPhysicsRigidBodyEntity;
+// pub type PhysicsStaticEntityType = common::physics::rapier::RapierPhysicsStaticEntity;
+// pub type PhysicsColliderBuilderType = common::physics::rapier::RapierPhysicsColliderBuilder;
+// pub type PhysicsCharacterControllerType = common::physics::rapier::RapierPhysicsCharacterController;
+// pub type PhysicsContainerType = common::physics::rapier::RapierPhysicsContainer;
+
+// Network Renet
+//pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
+
+// Network RakNet
+pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -144,6 +144,7 @@ impl INode for Main {
                         login: "Test_cl".to_string(),
                     };
                     network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
+                    log::debug!("NETWORK Send connection info: {:?}", connection_info);
                 }
                 ServerMessages::ConsoleOutput { message } => {
                     info!("{}", message);

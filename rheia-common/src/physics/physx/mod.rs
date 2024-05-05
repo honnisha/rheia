@@ -247,36 +247,41 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
 
         let flags = ShapeFlags::SceneQueryShape | ShapeFlags::SimulationShape | ShapeFlags::Visualization;
         let mut material = controller.physics.create_material(0.5, 0.5, 0.6, ()).unwrap();
-        let mut shape = controller
-            .physics
-            .create_shape(&mesh, &mut [&mut material], true, flags, ())
-            .unwrap();
-        //let mut shape: Owner<PxShape> = unsafe {
-        //    physx::shape::Shape::from_raw(
-        //        PxPhysics_createShape_mut(
-        //            controller.physics.as_mut_ptr(),
-        //            mesh.as_ptr(),
-        //            material.as_mut_ptr(),
-        //            true,
-        //            ShapeFlags::empty(),
-        //        ),
-        //        (),
-        //    )
-        //    .unwrap()
-        //};
 
-        //unsafe {
-        //    PxShape_setLocalPose_mut(
-        //        shape.as_mut_ptr(),
-        //        PxTransform::from_translation(&vec_px_from_network(&position)).as_ptr(),
-        //    );
-        //}
+        //let mut shape = controller
+        //    .physics
+        //    .create_shape(&mesh, &mut [&mut material], true, flags, ())
+        //    .unwrap();
+        let mut shape: Owner<PxShape> = unsafe {
+            physx::shape::Shape::from_raw(
+                PxPhysics_createShape_mut(
+                    controller.physics.as_mut_ptr(),
+                    mesh.as_ptr(),
+                    material.as_mut_ptr(),
+                    true,
+                    flags,
+                ),
+                (),
+            )
+            .unwrap()
+        };
 
-        static_entity
-            .actor
-            .set_global_pose(&PxTransform::from_translation(&vec_px_from_network(&position)), true);
+        unsafe {
+            PxScene_addActor_mut(controller.scene.as_mut_ptr(), static_entity.actor.as_mut_ptr(), null());
+        }
+
+        //static_entity
+        //    .actor
+        //    .set_global_pose(&PxTransform::from_translation(&vec_px_from_network(&position)), true);
 
         static_entity.actor.attach_shape(&mut shape);
+
+        unsafe {
+            PxShape_setLocalPose_mut(
+                shape.as_mut_ptr(),
+                PxTransform::from_translation(&vec_px_from_network(&position)).as_ptr(),
+            );
+        }
         static_entity.shape = Some(shape);
     }
 
@@ -341,13 +346,10 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
     fn create_static(&self) -> PhysxPhysicsStaticEntity {
         let mut controller = self.controller.as_ref().write();
 
-        let mut actor: Owner<PxRigidStatic> = controller
+        let actor: Owner<PxRigidStatic> = controller
             .physics
             .create_static(PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)), ())
             .unwrap();
-        unsafe {
-            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), null());
-        }
         PhysxPhysicsStaticEntity::create(actor, self.controller.clone())
     }
 }
@@ -364,6 +366,7 @@ impl PhysxPhysicsController {
             .create(SceneDescriptor {
                 gravity: PxVec3::new(0.0, -9.81, 0.0),
                 on_advance: Some(OnAdvance),
+                on_collide: Some(OnCollision),
                 ..SceneDescriptor::new(std::ptr::null())
             })
             .unwrap();
