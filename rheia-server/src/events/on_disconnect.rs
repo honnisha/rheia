@@ -3,7 +3,6 @@ use bevy_ecs::{
     prelude::EventReader,
     system::{Res, ResMut},
 };
-use log::info;
 
 use crate::{network::clients_container::ClientsContainer, worlds::worlds_manager::WorldsManager};
 
@@ -28,7 +27,8 @@ pub fn on_disconnect(
         {
             let client = clients.get(&event.client_id);
             if let Some(i) = client.get_client_info() {
-                info!(
+                log::info!(
+                    target: "network",
                     "Disconnected ip:{} login:{} reason:{}",
                     client.get_client_ip(),
                     i.get_login(),

@@ -54,8 +54,8 @@ impl ConsoleHandler {
             .open(CONSOLE_HISTORY_FILE);
 
         let _ = match rl.load_history(CONSOLE_HISTORY_FILE) {
-            Ok(_) => info!("Console file history loaded from \"{}\"", CONSOLE_HISTORY_FILE),
-            Err(e) => error!("Console history \"{}\" error: {}", CONSOLE_HISTORY_FILE, e),
+            Ok(_) => info!(target: "console", "Console file history loaded from \"{}\"", CONSOLE_HISTORY_FILE),
+            Err(e) => error!(target: "console", "Console history \"{}\" error: {}", CONSOLE_HISTORY_FILE, e),
         };
 
         let mut printer = rl.create_external_printer().unwrap();
@@ -70,8 +70,8 @@ impl ConsoleHandler {
                 }
                 Err(ReadlineError::Interrupted) => {
                     let _ = match rl.save_history(CONSOLE_HISTORY_FILE) {
-                        Ok(_) => info!("Console file history saved in \"{}\"", CONSOLE_HISTORY_FILE),
-                        Err(e) => error!("Console file \"{}\" history save error: {}", CONSOLE_HISTORY_FILE, e),
+                        Ok(_) => info!(target: "console", "Console file history saved in \"{}\"", CONSOLE_HISTORY_FILE),
+                        Err(e) => error!(target: "console", "Console file \"{}\" history save error: {}", CONSOLE_HISTORY_FILE, e),
                     };
 
                     RuntimePlugin::stop();

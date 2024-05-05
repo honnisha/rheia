@@ -1,7 +1,6 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::{Res, ResMut};
-use log::error;
 
 use crate::entities::entity::Rotation;
 use crate::network::clients_container::ClientsContainer;
@@ -36,7 +35,8 @@ pub fn on_player_move(
         let world_entity = match world_entity.as_ref() {
             Some(w) => w,
             None => {
-                error!(
+                log::error!(
+                    target: "network",
                     "Client ip:{} tries to send move packets but he not in the world!",
                     client
                 );

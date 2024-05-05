@@ -63,9 +63,9 @@ fn main() {
     };
     let log_level = get_log_level(&server_settings.args.logs);
     log::set_max_level(log_level.clone());
-    info!("Log level using: {}", log_level);
+    info!(target: "main", "Log level using: {}", log_level);
 
-    info!("Rheia Server version {}", VERSION);
+    info!(target: "main", "Rheia Server version {}", VERSION);
 
     let mut app = App::new();
     app.insert_resource(server_settings);

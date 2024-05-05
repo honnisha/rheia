@@ -1,5 +1,4 @@
 use common::network::client::ClientNetwork;
-use log::info;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -13,7 +12,7 @@ pub struct NetworkContainer {
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
-        info!("Connecting to the server at {}", ip_port);
+        log::info!(target: "network", "Connecting to the server at {}", ip_port);
         let network = match NetworkClientType::new(ip_port) {
             Ok(n) => n,
             Err(e) => return Err(e),
@@ -31,7 +30,7 @@ impl NetworkContainer {
         let network = self.client_network.read();
 
         if network.is_connected() {
-            info!("{}", "Disconnected from the server");
+            log::info!(target: "network", "Disconnected from the server");
             network.disconnect();
         }
     }

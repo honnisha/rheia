@@ -97,7 +97,7 @@ pub(crate) fn spawn_chunk(
 
     let elapsed = now.elapsed();
     if elapsed > std::time::Duration::from_millis(5) {
-        println!("spawn_chunk process: {:.2?}", elapsed);
+        log::debug!(target: "chunks", "spawn_chunk process: {:.2?}", elapsed);
     }
     column
 }

@@ -11,7 +11,6 @@ use godot::{
     prelude::*,
 };
 use lazy_static::lazy_static;
-use log::info;
 
 const TEXT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText";
 const INPUT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput";
@@ -130,7 +129,7 @@ impl INode for Console {
     }
 
     fn ready(&mut self) {
-        info!("Start loading console;");
+        log::info!(target: "console", "Start loading console;");
         match self.base().try_get_node_as::<RichTextLabel>(TEXT_PATH) {
             Some(e) => self.console_text = Some(e),
             _ => {
@@ -177,7 +176,7 @@ impl INode for Console {
             }
         };
         self.base_mut().set_visible(false);
-        info!("Console successfily loaded;");
+        log::info!(target: "console", "Console successfily loaded;");
     }
 
     fn process(&mut self, _delta: f64) {
@@ -201,7 +200,7 @@ impl INode for Console {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(1) {
-            println!("Console process: {:.2?}", elapsed);
+            log::info!(target: "console", "Console process: {:.2?}", elapsed);
         }
     }
 }

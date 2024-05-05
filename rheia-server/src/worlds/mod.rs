@@ -38,10 +38,10 @@ impl Plugin for WorldsHandlerPlugin {
 
             match wm.create_world(default_world.clone(), seed) {
                 Ok(_) => {
-                    info!("Default world \"{}\" was created", default_world);
+                    info!(target: "worlds", "Default world \"{}\" was created", default_world);
                 }
                 Err(e) => {
-                    info!("Error with creating \"{}\" world: {}", default_world, e);
+                    info!(target: "worlds", "Error with creating \"{}\" world: {}", default_world, e);
                 }
             }
         }

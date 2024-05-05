@@ -1,7 +1,6 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
-use log::info;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientInfo;
@@ -31,7 +30,8 @@ pub fn on_connection_info(
         let mut client = clients.get_mut(&event.client_id);
         client.set_client_info(ClientInfo::new(event.login.clone()));
 
-        info!(
+        log::info!(
+            target: "network",
             "Connected ip:{} login:{} id:{}",
             client.get_client_ip(),
             client.get_client_info().unwrap().get_login(),

@@ -29,9 +29,9 @@ cargo run --features bevy/trace_tracy -p rheia-client-bevy
 ```
 let now = std::time::Instant::now();
 let elapsed = now.elapsed();
-println!("Chunk {} generated: {:.2?}", chunk_position, elapsed);
+log::debug!(target: "test", "Chunk {} generated: {:.2?}", chunk_position, elapsed);
 
 if elapsed > std::time::Duration::from_millis(1) {
-println!("Process: {:.2?}", elapsed);
+log::debug!(target: "test", "Process: {:.2?}", elapsed);
 }
 ```

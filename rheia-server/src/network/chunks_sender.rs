@@ -73,6 +73,6 @@ pub fn send_chunks(
 
     let elapsed = now.elapsed();
     if elapsed > std::time::Duration::from_millis(100) {
-        log::info!("send_chunks: {:.2?}", elapsed);
+        log::info!(target: "chunks", "send_chunks: {:.2?}", elapsed);
     }
 }

@@ -1,4 +1,4 @@
-use log::{Record, Level, Metadata};
+use log::{Metadata, Record};
 
 use crate::console::console_handler::ConsoleHandler;
 
@@ -8,12 +8,20 @@ pub(crate) struct ConsoleLogger;
 
 impl log::Log for ConsoleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= Level::Info
+        if metadata.target() == "rustyline" {
+            return false;
+        }
+        metadata.level() <= log::max_level()
     }
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            ConsoleHandler::send_message(record.args().to_string());
+            ConsoleHandler::send_message(format!(
+                "{} {}: {}",
+                record.metadata().target(),
+                record.level(),
+                record.args().to_string()
+            ));
         }
     }
 

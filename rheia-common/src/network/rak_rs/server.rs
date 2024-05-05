@@ -1,11 +1,11 @@
 use ahash::AHashMap;
 use flume::{Drain, Receiver, Sender};
-use log::error;
 use parking_lot::RwLock;
 use rak_rs::connection::Connection;
 use rak_rs::Listener;
 use std::sync::Arc;
 use std::time::SystemTime;
+use std::{thread, time};
 
 use crate::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use crate::network::server::{ConnectionMessages, ServerNetwork};
@@ -62,36 +62,44 @@ impl ServerNetwork for RakNetServerNetwork {
             channel_connections: flume::unbounded(),
             channel_errors: flume::unbounded(),
         };
+
         let n = network.clone();
-        runtime.spawn(async move {
-            let mut server = Listener::bind(ip_port).await.unwrap();
-            server.start().await.unwrap();
+        thread::spawn(move || {
+            runtime.block_on(async move {
+                log::debug!(target: "raknet", "Network thread spawned successfully");
 
-            loop {
-                match server.accept().await {
-                    Ok(c) => {
-                        let client = RakNetClient::new();
-                        n.add_client(client.clone());
+                let mut server = Listener::bind(ip_port).await.unwrap();
+                server.start().await.unwrap();
+                log::debug!(target: "raknet", "Server bined successfully");
 
-                        let connection = ConnectionMessages::Connect {
-                            client_id: client.client_id.clone(),
-                            ip: c.address.ip().to_string(),
-                        };
-                        n.channel_connections.0.send(connection).unwrap();
+                loop {
+                    match server.accept().await {
+                        Ok(c) => {
+                            let client = RakNetClient::new();
+                            n.add_client(client.clone());
 
-                        tokio::task::spawn(handle(
-                            c,
-                            client,
-                            n.channel_client_messages.0.clone(),
-                            n.channel_connections.0.clone(),
-                        ));
+                            let connection = ConnectionMessages::Connect {
+                                client_id: client.client_id.clone(),
+                                ip: c.address.ip().to_string(),
+                            };
+                            n.channel_connections.0.send(connection).unwrap();
+
+                            tokio::task::spawn(handle(
+                                c,
+                                client,
+                                n.channel_client_messages.0.clone(),
+                                n.channel_connections.0.clone(),
+                            ));
+                        }
+                        Err(e) => {
+                            panic!("Connection error: {:?}", e);
+                        }
                     }
-                    Err(e) => {
-                        panic!("Connection error: {:?}", e);
-                    }
+                    thread::sleep(time::Duration::from_millis(50));
                 }
-            }
+            });
         });
+        log::debug!(target: "raknet", "RakNetServerNetwork thread created");
         network
     }
 
@@ -119,7 +127,10 @@ impl ServerNetwork for RakNetServerNetwork {
     fn send_message(&self, client_id: u64, message: &ServerMessages, message_type: NetworkMessageType) {
         let clients = self.clients.read();
         match clients.get(&client_id) {
-            Some(c) => c.send_message(message.clone(), message_type),
+            Some(c) => {
+                log::trace!(target: "raknet", "SEND client {} message: {:?}", client_id, message);
+                c.send_message(message.clone(), message_type);
+            }
             None => panic!("Sended server message to non existing client {}", client_id),
         }
     }
@@ -131,6 +142,8 @@ async fn handle(
     channel_client_messages: Sender<(u64, ClientMessages)>,
     channel_connections: Sender<ConnectionMessages>,
 ) {
+    log::trace!(target: "raknet", "Handle started for client:{:?}", client.client_id);
+
     loop {
         if conn.is_closed().await {
             let message = ConnectionMessages::Disconnect {
@@ -138,20 +151,25 @@ async fn handle(
                 reason: "disconnet".to_string(),
             };
             channel_connections.send(message).unwrap();
+            log::debug!(target: "raknet", "Disconnet client {}", client.client_id);
             break;
         }
 
-        if let Ok(client_message) = conn.recv().await {
-            let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                Ok(d) => d,
-                Err(e) => {
-                    error!("Decode client message error: \"{}\" original: {:?}", e, client_message);
-                    continue;
-                }
-            };
-            channel_client_messages
-                .send((client.client_id.clone(), decoded))
-                .unwrap();
+        match conn.recv().await {
+            Ok(client_message) => {
+                let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        log::error!(target: "raknet", "Decode client message error: \"{}\" original: {:?}", e, client_message);
+                        continue;
+                    }
+                };
+                log::trace!(target: "raknet", "RECIEVED to client {} message: {:?}", client.client_id, decoded);
+                channel_client_messages
+                    .send((client.client_id.clone(), decoded))
+                    .unwrap();
+            },
+            Err(e) => panic!("conn.recv() error: {:?}", e),
         }
 
         for (message, _message_type) in client.channel_server_messages.1.drain() {

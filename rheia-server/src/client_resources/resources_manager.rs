@@ -29,12 +29,12 @@ impl ResourceManager {
         let mut path = env::current_dir().unwrap().clone();
         path.push("resources");
         let path_str = path.into_os_string().into_string().unwrap();
-        info!("▼ Rescan resources folders inside: {}", path_str);
+        info!(target: "resources", "▼ Rescan resources folders inside: {}", path_str);
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                info!("□ read directory \"{}\" error: {}", path_str, e);
+                info!(target: "resources", "□ read directory \"{}\" error: {}", path_str, e);
                 return ();
             }
         };
@@ -47,7 +47,7 @@ impl ResourceManager {
             let data = match fs::read_to_string(manifest_path.clone()) {
                 Ok(d) => d,
                 Err(e) => {
-                    info!("□ error with manifest file {}: {}", manifest_path, e);
+                    info!(target: "resources", "□ error with manifest file {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -56,7 +56,7 @@ impl ResourceManager {
             let manifest = match manifest_result {
                 Ok(m) => m,
                 Err(e) => {
-                    info!("□ error with parse manifest yaml {}: {}", manifest_path, e);
+                    info!(target: "resources", "□ error with parse manifest yaml {}: {}", manifest_path, e);
                     continue;
                 }
             };
@@ -64,11 +64,12 @@ impl ResourceManager {
             let resource_instance = match ResourceInstance::from_manifest(&manifest, current_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    info!("□ error with resource {}: {}", current_path.display(), e);
+                    info!(target: "resources", "□ error with resource {}: {}", current_path.display(), e);
                     continue;
                 }
             };
             info!(
+                target: "resources",
                 "□ Resource \"{}\"; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),

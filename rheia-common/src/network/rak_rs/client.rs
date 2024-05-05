@@ -4,7 +4,6 @@ use crate::network::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
 };
 use flume::{Drain, Receiver, Sender};
-use log::error;
 use parking_lot::RwLock;
 use parking_lot::RwLockReadGuard;
 use rak_rs::client::{Client, DEFAULT_MTU};
@@ -13,7 +12,7 @@ use std::net::ToSocketAddrs;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::thread;
+use std::{thread, time};
 
 type ClientMessageType = (ClientMessages, NetworkMessageType);
 
@@ -56,53 +55,70 @@ impl ClientNetwork for RakNetClientNetwork {
             connected: Arc::new(AtomicBool::new(false)),
             disconnect: flume::bounded(1),
         };
+
+        let mut client = Client::new(11, DEFAULT_MTU);
+
         let n = network.clone();
-        runtime.spawn(async move {
-            let mut client = Client::new(10, DEFAULT_MTU);
-            let mut addr = ip_port.clone().to_socket_addrs().unwrap();
-            if let Err(e) = client.connect(addr.next().unwrap()).await {
-                let err_sender = n.network_errors_out.0;
-                let err = format!("Failed to connect to {} server: {:?}", ip_port, e);
-                err_sender.send(err).unwrap();
-                return;
-            }
-            n.set_connected(true);
 
-            // Messages reciever
-            loop {
-                for _ in n.disconnect.1.drain() {
-                    break;
+        thread::spawn(move || {
+            runtime.block_on(async {
+                log::debug!(target: "raknet", "Network thread spawned successfully");
+
+                match Client::ping(ip_port.clone()).await {
+                    Ok(s) => log::debug!(target: "raknet", "Servet ping successfully: {:?}", s),
+                    Err(e) => log::error!(target: "raknet", "Failed to ping server: {}", e),
                 }
 
-                let encoded = match client.recv().await {
-                    Ok(e) => e,
-                    Err(_) => {
-                        error!("Serer recv message error");
-                        continue;
-                    }
-                };
-                let decoded: ServerMessages = match bincode::deserialize(&encoded) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        error!("Decode server message error: \"{}\" original: {:?}", e, encoded);
-                        continue;
-                    }
-                };
-                log::debug!("NETWORK Recieved message: {:?}", decoded);
-                n.network_server_messages.0.send(decoded).unwrap();
+                log::debug!(target: "raknet", "Connection to {}...", ip_port);
 
-                for (message, message_type) in n.network_client_messages.1.drain() {
-                    let encoded = bincode::serialize(&message).unwrap();
-                    println!("Send {:?}; encoded {:?}", message, encoded);
-                    client
-                        .send(&encoded, RakNetClientNetwork::get_reliability(message_type), 0)
-                        .await
-                        .unwrap();
+                let mut addr = ip_port.clone().to_socket_addrs().unwrap();
+                if let Err(e) = client.connect(addr.next().unwrap()).await {
+                    let err_sender = n.network_errors_out.0;
+                    let err = format!("Failed to connect to {} server: {:?}", ip_port, e);
+                    log::debug!(target: "raknet", "Error: {}", err);
+                    err_sender.send(err).unwrap();
+                    return;
                 }
-            }
+                n.set_connected(true);
+                log::debug!(target: "raknet", "Connected successfully");
+
+                loop {
+                    for _ in n.disconnect.1.drain() {
+                        log::error!(target: "raknet", "Disconnect recieved");
+                        break;
+                    }
+
+                    match client.recv().await {
+                        Ok(encoded) => {
+                            let decoded: ServerMessages = match bincode::deserialize(&encoded) {
+                                Ok(d) => d,
+                                Err(e) => {
+                                    log::error!(target: "raknet", "Decode server message error: \"{}\" original: {:?}", e, encoded);
+                                    continue;
+                                }
+                            };
+                            log::debug!(target: "raknet", "RECIEVED message: {:?}", decoded);
+                            n.network_server_messages.0.send(decoded).unwrap();
+                        },
+                        Err(_) => {
+                            log::error!(target: "raknet", "Serer recv message error");
+                            continue;
+                        }
+                    };
+
+                    for (message, message_type) in n.network_client_messages.1.drain() {
+                        let encoded = bincode::serialize(&message).unwrap();
+                        log::debug!(target: "raknet", "SEND message {:?} encoded: {:?}", message, encoded);
+                        client
+                            .send(&encoded, RakNetClientNetwork::get_reliability(message_type), 0)
+                            .await
+                            .unwrap();
+                    }
+                    thread::sleep(time::Duration::from_millis(50));
+                }
+            });
         });
-
-        // Messages sender
+        log::debug!(target: "raknet", "RakNetServerNetwork thread created");
         Ok(network)
     }
 

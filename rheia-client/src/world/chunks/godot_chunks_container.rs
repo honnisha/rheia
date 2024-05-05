@@ -138,7 +138,8 @@ impl ChunksContainer {
 
         let elapsed = now.elapsed();
         if elapsed > Duration::from_millis(10) {
-            println!(
+            log::debug!(
+                target: "chunks",
                 "ChunksContainer.SEND_chunks_to_load process: {:.2?} count:{}",
                 elapsed, count
             );
@@ -168,7 +169,8 @@ impl ChunksContainer {
 
         let elapsed = now.elapsed();
         if elapsed > Duration::from_millis(5) {
-            println!(
+            log::debug!(
+                target: "chunks",
                 "ChunksContainer.SPAWN_loaded_chunks process: {:.2?} count:{}",
                 elapsed, count
             );

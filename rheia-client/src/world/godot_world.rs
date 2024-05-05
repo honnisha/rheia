@@ -152,7 +152,7 @@ impl INode for World {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(30) {
-            println!("World \"{}\" process: {:.2?}", self.slug, elapsed);
+            log::debug!(target: "world", "World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
     }
 }

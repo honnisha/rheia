@@ -11,7 +11,6 @@ use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use godot::engine::Engine;
 use godot::prelude::*;
-use log::{error, info, LevelFilter};
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -93,7 +92,7 @@ impl INode for Main {
 
     fn ready(&mut self) {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
-        log::set_max_level(LevelFilter::Info);
+        log::set_max_level(log::LevelFilter::Trace);
 
         let console = self.console.clone().upcast();
         self.base_mut().add_child(console);
@@ -103,12 +102,12 @@ impl INode for Main {
 
         self.debug_info.bind_mut().toggle(true);
 
-        info!("Loading Rheia version: {}", VERSION);
+        log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
-        let network = match NetworkContainer::new("127.0.0.1:19134".to_string()) {
+        let network = match NetworkContainer::new("127.0.0.1:19132".to_string()) {
             Ok(c) => c,
             Err(e) => {
-                error!("Network connection error: {}", e);
+                log::error!(target: "main", "Network connection error: {}", e);
                 Main::close();
                 return;
             }
@@ -125,7 +124,7 @@ impl INode for Main {
 
         // Recieve errors from network thread
         for error in network.iter_errors() {
-            error!("Network error: {}", error);
+            log::error!(target: "main", "Network error: {}", error);
             Main::close();
         }
 
@@ -144,20 +143,19 @@ impl INode for Main {
                         login: "Test_cl".to_string(),
                     };
                     network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
-                    log::debug!("NETWORK Send connection info: {:?}", connection_info);
                 }
                 ServerMessages::ConsoleOutput { message } => {
-                    info!("{}", message);
+                    log::info!(target: "main", "{}", message);
                 }
                 ServerMessages::Resource { slug, scripts } => {
                     let resource_manager = self.get_resource_manager_mut();
-                    info!("Start loading client resource slug:\"{}\"", slug);
+                    log::info!(target: "main", "Start loading client resource slug:\"{}\"", slug);
                     match resource_manager.try_load(&slug, scripts) {
                         Ok(_) => {
-                            info!("Client resource slug:\"{}\" loaded", slug);
+                            log::info!(target: "main", "Client resource slug:\"{}\" loaded", slug);
                         }
                         Err(e) => {
-                            error!("Client resource slug:\"{}\" error: {}", slug, e);
+                            log::error!(target: "main", "Client resource slug:\"{}\" error: {}", slug, e);
                         }
                     }
                 }
@@ -232,7 +230,7 @@ impl INode for Main {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(20) {
-            println!("Main process: {:.2?}", elapsed);
+            log::debug!(target: "main", "Main process: {:.2?}", elapsed);
         }
     }
 
@@ -240,6 +238,6 @@ impl INode for Main {
         if let Some(n) = self.network.as_ref() {
             n.disconnect();
         }
-        info!("Exiting the game");
+        log::info!(target: "main", "Exiting the game");
     }
 }

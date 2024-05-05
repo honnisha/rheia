@@ -11,8 +11,6 @@ use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessag
 use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
-use log::error;
-use log::info;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
@@ -77,7 +75,7 @@ impl NetworkPlugin {
         let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
-        info!("Starting server on {}", ip_port);
+        log::info!(target: "network", "Starting server on {}", ip_port);
 
         app.insert_resource(NetworkContainer::new(ip_port));
         app.insert_resource(ClientsContainer::default());
@@ -128,13 +126,13 @@ fn receive_message_system(
     mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
     if time.delta() > std::time::Duration::from_millis(100) {
-        log::info!("receive_message_system delay: {:.2?}", time.delta());
+        log::info!(target: "network", "receive_message_system delay: {:.2?}", time.delta());
     }
     let network = network_container.server_network.as_ref();
     network.step(time.delta());
 
     for message in network.iter_errors() {
-        error!("Network error: {}", message);
+        log::error!(target: "network", "Network error: {}", message);
     }
 
     for (client_id, decoded) in network.iter_client_messages() {

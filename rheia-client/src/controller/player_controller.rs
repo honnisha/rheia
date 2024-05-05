@@ -180,7 +180,8 @@ impl PlayerController {
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(10) {
-            println!(
+            log::debug!(
+                target: "player",
                 "PlayerController PHYSICS process:{:.2?} move:{:.2?}",
                 elapsed, move_elapsed
             );
@@ -285,7 +286,7 @@ impl INode3D for PlayerController {
                 max_toi,
                 GodotPositionConverter::vector_network_from_gd(&from),
             ) {
-                println!("Collider {:?} hit at point {}", collider_handle, hit_point);
+                log::debug!(target: "player", "Collider {:?} hit at point {}", collider_handle, hit_point);
             }
         }
 
