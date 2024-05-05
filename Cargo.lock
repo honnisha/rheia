@@ -4848,8 +4848,7 @@ checksum = "17fd96390ed3feda12e1dfe2645ed587e0bea749e319333f104a33ff62f77a0b"
 [[package]]
 name = "rak-rs"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b0af89c0be745f22876ea6ce7f3cc508de55ccf49147fb8ae6bfd1b86c71ab7"
+source = "git+https://github.com/honnisha/RakNet#799a339d53928d33dd274a523fa8ae8e0c0dbf02"
 dependencies = [
  "binary-util",
  "byteorder",

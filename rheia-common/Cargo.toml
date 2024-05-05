@@ -40,4 +40,4 @@ rapier3d = { version = "0.18.0", features = [ "simd-stable" ], optional = true }
 physx = { version = "0.19.0", optional = false }
 physx-sys = { version = "0.11.5", optional = false }
 
-rak-rs = { version = "0.3.3", optional = false, default-features = false, features = [ "async_tokio", "mcpe" ] }
+rak-rs = { git = "https://github.com/honnisha/RakNet", optional = false, default-features = false, features = [ "async_tokio", "mcpe" ] }
