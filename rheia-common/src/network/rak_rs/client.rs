@@ -12,7 +12,8 @@ use std::net::ToSocketAddrs;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::{thread, time};
+use std::thread;
+use tokio::time::{sleep, Duration};
 
 type ClientMessageType = (ClientMessages, NetworkMessageType);
 
@@ -114,7 +115,7 @@ impl ClientNetwork for RakNetClientNetwork {
                             .await
                             .unwrap();
                     }
-                    thread::sleep(time::Duration::from_millis(50));
+                    sleep(Duration::from_millis(50)).await;
                 }
             });
         });
