@@ -23,7 +23,7 @@ pub(crate) fn generate_chunk(
     chunk_position: ChunkPosition,
     physics_container: PhysicsContainerType,
 ) {
-    //rayon::spawn(move || {
+    rayon::spawn(move || {
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
         let mut column = Gd::<ChunkColumn>::from_init_fn(|base| ChunkColumn::create(base, chunk_position));
         let instance_id = column.instance_id().clone();
@@ -67,7 +67,7 @@ pub(crate) fn generate_chunk(
         if let Err(e) = update_tx.send(instance_id) {
             error!("Send chunk {} to spawn error: {:?}", chunk_position, e);
         }
-    //});
+    });
 }
 
 /// Recieved gd instance id from channel and

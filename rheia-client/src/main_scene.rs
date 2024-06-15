@@ -16,24 +16,24 @@ pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Physics Physx
-pub type PhysicsRigidBodyEntityType = common::physics::physx::PhysxPhysicsRigidBodyEntity;
-pub type PhysicsStaticEntityType = common::physics::physx::PhysxPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = common::physics::physx::PhysxPhysicsColliderBuilder;
-pub type PhysicsCharacterControllerType = common::physics::physx::PhysxPhysicsCharacterController;
-pub type PhysicsContainerType = common::physics::physx::PhysxPhysicsContainer;
+// pub type PhysicsRigidBodyEntityType = common::physics::physx::PhysxPhysicsRigidBodyEntity;
+// pub type PhysicsStaticEntityType = common::physics::physx::PhysxPhysicsStaticEntity;
+// pub type PhysicsColliderBuilderType = common::physics::physx::PhysxPhysicsColliderBuilder;
+// pub type PhysicsCharacterControllerType = common::physics::physx::PhysxPhysicsCharacterController;
+// pub type PhysicsContainerType = common::physics::physx::PhysxPhysicsContainer;
 
 // Physics Rapier
-// pub type PhysicsRigidBodyEntityType = common::physics::rapier::RapierPhysicsRigidBodyEntity;
-// pub type PhysicsStaticEntityType = common::physics::rapier::RapierPhysicsStaticEntity;
-// pub type PhysicsColliderBuilderType = common::physics::rapier::RapierPhysicsColliderBuilder;
-// pub type PhysicsCharacterControllerType = common::physics::rapier::RapierPhysicsCharacterController;
-// pub type PhysicsContainerType = common::physics::rapier::RapierPhysicsContainer;
+pub type PhysicsRigidBodyEntityType = common::physics::rapier::RapierPhysicsRigidBodyEntity;
+pub type PhysicsStaticEntityType = common::physics::rapier::RapierPhysicsStaticEntity;
+pub type PhysicsColliderBuilderType = common::physics::rapier::RapierPhysicsColliderBuilder;
+pub type PhysicsCharacterControllerType = common::physics::rapier::RapierPhysicsCharacterController;
+pub type PhysicsContainerType = common::physics::rapier::RapierPhysicsContainer;
 
 // Network Renet
-//pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
+pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
 
 // Network RakNet
-pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
+//pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -92,7 +92,7 @@ impl INode for Main {
 
     fn ready(&mut self) {
         log::set_logger(&CONSOLE_LOGGER).unwrap();
-        log::set_max_level(log::LevelFilter::Trace);
+        log::set_max_level(log::LevelFilter::Info);
 
         let console = self.console.clone().upcast();
         self.base_mut().add_child(console);

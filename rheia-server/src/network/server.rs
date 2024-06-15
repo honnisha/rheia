@@ -1,3 +1,5 @@
+use std::thread;
+
 use bevy::prelude::{Event, IntoSystemConfigs};
 use bevy::time::Time;
 use bevy_app::{App, Update};
@@ -28,6 +30,8 @@ use crate::{
     },
     ServerSettings,
 };
+
+const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
 
 pub struct NetworkPlugin;
 
@@ -125,6 +129,11 @@ fn receive_message_system(
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
+    // Sleep if the tick rate is less than the minimum tick rate
+    if time.delta() < MIN_TICK_TIME {
+        thread::sleep(MIN_TICK_TIME - time.delta());
+    }
+
     if time.delta() > std::time::Duration::from_millis(100) {
         log::info!(target: "network", "receive_message_system delay: {:.2?}", time.delta());
     }

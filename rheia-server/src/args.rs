@@ -13,7 +13,7 @@ pub struct MainCommand {
     #[arg(long, default_value_t = 512)]
     pub max_packet_size: usize,
 
-    #[arg(long, default_value_t = String::from("trace"))]
+    #[arg(long, default_value_t = String::from("info"))]
     pub logs: String,
 }
 

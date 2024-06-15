@@ -16,7 +16,7 @@ pub struct RakNetClient {
     // Internal identificator
     client_id: u64,
 
-    conn: Connection,
+    ip: String,
     channel_server_messages: (
         Sender<(ServerMessages, NetworkMessageType)>,
         Receiver<(ServerMessages, NetworkMessageType)>,
@@ -24,18 +24,18 @@ pub struct RakNetClient {
 }
 
 impl RakNetClient {
-    fn new(conn: Connection) -> Self {
+    fn new(conn: &Connection) -> Self {
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         let client_id = current_time.as_millis() as u64;
         Self {
             client_id,
-            conn,
+            ip: conn.address.ip().to_string(),
             channel_server_messages: flume::unbounded(),
         }
     }
 
     fn get_ip(&self) -> String {
-        self.conn.address.ip().to_string()
+        self.ip.clone()
     }
 
     fn send_message(&self, message: ServerMessages, message_type: NetworkMessageType) {
@@ -100,7 +100,7 @@ impl ServerNetwork for RakNetServerNetwork {
                 loop {
                     match server.accept().await {
                         Ok(conn) => {
-                            let client = RakNetClient::new(conn.clone());
+                            let client = RakNetClient::new(&conn);
                             _network.add_client(client.clone());
 
                             tokio::task::spawn(handle_recv(client.clone(), _network.clone()));
@@ -152,39 +152,41 @@ impl ServerNetwork for RakNetServerNetwork {
 }
 
 async fn handle_recv(mut client: RakNetClient, network: RakNetServerNetwork) {
-    loop {
-        if client.conn.is_closed().await {
-            network.remove_client(&client);
-            log::debug!(target: "raknet", "Disconnet client {}", client.client_id);
-            break;
-        }
-
-        match client.conn.recv().await {
-            Ok(client_message) => {
-                let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        log::error!(target: "raknet", "Decode client message error: \"{}\" original: {:?}", e, client_message);
-                        continue;
-                    }
-                };
-                log::trace!(target: "raknet", "RECIEVED to client {} message: {:?}", client.client_id, decoded);
-                network
-                    .channel_client_messages
-                    .0
-                    .send((client.client_id.clone(), decoded))
-                    .unwrap();
-            }
-            Err(_) => (),
-        }
-    }
+    todo!();
+//    loop {
+//        if client.conn.is_closed().await {
+//            network.remove_client(&client);
+//            log::debug!(target: "raknet", "Disconnet client {}", client.client_id);
+//            break;
+//        }
+//
+//        match client.conn.recv().await {
+//            Ok(client_message) => {
+//                let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+//                    Ok(d) => d,
+//                    Err(e) => {
+//                        log::error!(target: "raknet", "Decode client message error: \"{}\" original: {:?}", e, client_message);
+//                        continue;
+//                    }
+//                };
+//                log::trace!(target: "raknet", "RECIEVED to client {} message: {:?}", client.client_id, decoded);
+//                network
+//                    .channel_client_messages
+//                    .0
+//                    .send((client.client_id.clone(), decoded))
+//                    .unwrap();
+//            }
+//            Err(_) => (),
+//        }
+//    }
 }
 async fn handle_send(client: RakNetClient) {
-    loop {
-        for (message, _message_type) in client.channel_server_messages.1.drain() {
-            let encoded = bincode::serialize(&message).unwrap();
-            client.conn.send(&encoded, false).await.unwrap();
-        }
-        sleep(Duration::from_millis(50)).await;
-    }
+    todo!();
+//    loop {
+//        for (message, _message_type) in client.channel_server_messages.1.drain() {
+//            let encoded = bincode::serialize(&message).unwrap();
+//            client.conn.send(&encoded, false).await.unwrap();
+//        }
+//        sleep(Duration::from_millis(50)).await;
+//    }
 }

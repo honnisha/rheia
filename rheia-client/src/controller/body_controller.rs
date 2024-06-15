@@ -13,6 +13,20 @@ use crate::utils::glb::glb_import;
 
 const GENERIC_MODEL: &str = "res://assets/models/generic/generic.glb";
 
+enum GenericAnimations {
+    Idle,
+    Walk,
+}
+
+impl GenericAnimations {
+    fn as_str(&self) -> &'static str {
+        match self {
+            GenericAnimations::Idle => "animation_model_idle",
+            GenericAnimations::Walk => "animation_model_walk",
+        }
+    }
+}
+
 enum BodyPart {
     Chest,
     Hands,
@@ -142,7 +156,7 @@ impl BodyController {
         let mut animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
 
         let mut animation = animation_player
-            .get_animation(StringName::from("animation_model_walk"))
+            .get_animation(StringName::from(GenericAnimations::Idle.as_str()))
             .unwrap();
         animation.set_loop_mode(LoopMode::LINEAR);
 

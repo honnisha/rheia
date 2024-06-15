@@ -10,6 +10,7 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::{main_scene::FloatType, utils::position::GodotPositionConverter};
 
+/// Used to transmit motion data
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
 #[class(init)]
 pub struct PlayerMovement {
