@@ -1,6 +1,6 @@
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
-use crate::controller::player_controller::ContollerViewMode;
+use crate::controller::enums::controller_actions::ControllerActions;
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
@@ -198,33 +198,18 @@ impl INode for Main {
         self.debug_info.bind_mut().update_debug(&self.world_manager, network);
 
         let input = Input::singleton();
-        if input.is_action_just_pressed("ui_toggle_console".into()) {
+        if input.is_action_just_pressed(ControllerActions::ToggleConsole.as_str().into()) {
             self.console.bind_mut().toggle(!Console::is_active());
 
             if Console::is_active() {
                 self.debug_info.bind_mut().toggle(false);
             }
         }
-        if input.is_action_just_pressed("ui_toggle_debug".into()) {
+        if input.is_action_just_pressed(ControllerActions::ToggleDebug.as_str().into()) {
             self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
 
             if DebugInfo::is_active() {
                 self.console.bind_mut().toggle(false);
-            }
-        }
-        if input.is_action_just_pressed("ui_view_mode_switch".into()) {
-            if let Some(w) = self.world_manager.get_world_mut() {
-                let mut w = w.bind_mut();
-                let mut player_controller = w.get_player_controller_mut().bind_mut();
-                let view_mode = player_controller.get_view_mode();
-                match view_mode {
-                    ContollerViewMode::FirstPersonView => {
-                        player_controller.set_view_mode(ContollerViewMode::ThirdPersonView);
-                    }
-                    ContollerViewMode::ThirdPersonView => {
-                        player_controller.set_view_mode(ContollerViewMode::FirstPersonView);
-                    }
-                }
             }
         }
 

@@ -1,4 +1,3 @@
-use std::fmt::{self, Display, Formatter};
 use std::{fs::File, io::Read};
 
 use ahash::HashMap;
@@ -11,41 +10,9 @@ use log::error;
 
 use crate::utils::glb::glb_import;
 
+use super::enums::{generic_animations::GenericAnimations, generic_body_parts::BodyPart};
+
 const GENERIC_MODEL: &str = "res://assets/models/generic/generic.glb";
-
-enum GenericAnimations {
-    Idle,
-    Walk,
-}
-
-impl GenericAnimations {
-    fn as_str(&self) -> &'static str {
-        match self {
-            GenericAnimations::Idle => "animation_model_idle",
-            GenericAnimations::Walk => "animation_model_walk",
-        }
-    }
-}
-
-enum BodyPart {
-    Chest,
-    Hands,
-    Pants,
-    Boots,
-    Head,
-}
-
-impl Display for BodyPart {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        match self {
-            Self::Chest => write!(f, "chest"),
-            Self::Hands => write!(f, "hands"),
-            Self::Pants => write!(f, "pants"),
-            Self::Boots => write!(f, "boots"),
-            Self::Head => write!(f, "head"),
-        }
-    }
-}
 
 type PartsType = HashMap<&'static str, &'static str>;
 lazy_static! {
@@ -160,7 +127,7 @@ impl BodyController {
             .unwrap();
         animation.set_loop_mode(LoopMode::LINEAR);
 
-        animation_player.call_deferred(StringName::from("play"), &["animation_model_walk".to_variant()]);
+        animation_player.call_deferred(StringName::from("play"), &[GenericAnimations::Walk.as_str().to_variant()]);
 
         Self { base, generic }
     }

@@ -2,53 +2,43 @@ use crate::utils::position::GodotPositionConverter;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
-use godot::engine::{
-    global::Key, global::MouseButton, input::MouseMode, InputEvent, InputEventKey, InputEventMouseButton,
-    InputEventMouseMotion,
-};
 use godot::prelude::*;
-use std::time::Duration;
+use utilities::{atan2, deg_to_rad, lerp, lerp_angle, lerpf};
 
 use crate::console::console_handler::Console;
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 use crate::world::godot_world::World;
 
 use super::body_controller::BodyController;
-use super::{input_data::InputData, player_movement::PlayerMovement};
+use super::camera_controller::CameraController;
+use super::controls::Controls;
+use super::enums::controller_actions::ControllerActions;
+use super::player_movement::PlayerMovement;
 
+pub const TURN_SPEED: f64 = 4.0;
+
+pub(crate) const SPEED: f32 = 4.0;
 pub(crate) const ACCELERATION: f32 = 4.0;
-pub(crate) const BOST_MULTIPLIER: f32 = 1.5;
 pub(crate) const SENSITIVITY: f32 = 0.3;
 
 pub const CONTROLLER_HEIGHT: f32 = 1.8;
-const CAMERA_VERTICAL_OFFSET: f32 = 1.7;
 
 pub const CONTROLLER_RADIUS: f32 = 0.4;
 pub const CONTROLLER_MASS: f32 = 4.0;
 const JUMP_IMPULSE: f32 = 20.0;
-
-const THIRD_PERSON_OFFST: Vector3 = Vector3::new(0.4, 0.0, 3.0);
-
-pub enum ContollerViewMode {
-    FirstPersonView,
-    ThirdPersonView,
-}
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
 
-    view_mode: ContollerViewMode,
-
-    camera_anchor: Gd<Node3D>,
-    camera: Gd<Camera3D>,
-
-    input_data: InputData,
-    cache_movement: Option<Gd<PlayerMovement>>,
-
-    // A full-length body
+    // A full-length body; skin
     body_controller: Gd<BodyController>,
+
+    camera_controller: Gd<CameraController>,
+
+    controls: Gd<Controls>,
+    cache_movement: Option<Gd<PlayerMovement>>,
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
@@ -56,40 +46,36 @@ pub struct PlayerController {
 
 impl PlayerController {
     pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainerType) -> Self {
-        let mut camera_anchor = Node3D::new_alloc();
-        camera_anchor.set_position(Vector3::new(0.0, CAMERA_VERTICAL_OFFSET, 0.0));
-
-        let camera = Camera3D::new_alloc();
-        camera_anchor.add_child(camera.clone().upcast());
-
-        let body_controller = Gd::<BodyController>::from_init_fn(|base| BodyController::create(base));
-
+        let controls = Controls::new_alloc();
         Self {
             base,
-            view_mode: ContollerViewMode::FirstPersonView,
-            camera,
-            camera_anchor,
-            input_data: Default::default(),
+
+            body_controller: Gd::<BodyController>::from_init_fn(|base| BodyController::create(base)),
+            camera_controller: Gd::<CameraController>::from_init_fn(|base| {
+                CameraController::create(base, controls.clone())
+            }),
+
+            controls,
             cache_movement: None,
-            body_controller,
+
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
             physics_controller: PhysicsCharacterControllerType::create(),
         }
     }
 
-    // Get position of the controller
+    // Get position of the character
     pub fn get_position(&self) -> Vector3 {
-        self.base().get_position()
+        self.body_controller.get_position()
     }
 
-    /// Horizontal angle
+    /// Horizontal angle of character look
     pub fn get_yaw(&self) -> f32 {
-        self.camera_anchor.get_rotation().x
+        self.body_controller.get_rotation().x
     }
 
-    /// Vertical angle
+    /// Vertical angle of character look
     pub fn get_pitch(&self) -> f32 {
-        self.camera_anchor.get_rotation().y
+        self.body_controller.get_rotation().y
     }
 
     pub fn set_position(&mut self, position: Vector3) {
@@ -103,67 +89,59 @@ impl PlayerController {
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
-        self.camera_anchor.rotate_y(yaw);
-        self.camera_anchor
+        self.camera_controller.rotate_y(yaw);
+        self.camera_controller
             .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
 
         // Rotate visible third_person body
         self.body_controller.rotate_y(yaw);
     }
 
-    pub fn set_view_mode(&mut self, view_mode: ContollerViewMode) {
-        self.view_mode = view_mode;
-        match self.view_mode {
-            ContollerViewMode::FirstPersonView => {
-                self.body_controller.set_visible(false);
-                self.camera.set_position(Vector3::ZERO);
-            }
-            ContollerViewMode::ThirdPersonView => {
-                self.body_controller.set_visible(true);
-                self.camera.set_position(THIRD_PERSON_OFFST);
-            }
-        }
-    }
+    fn process_physics(&mut self, delta: f64) {
+        let yaw = self.get_yaw();
 
-    pub fn get_view_mode(&self) -> &ContollerViewMode {
-        &self.view_mode
-    }
+        {
+            let mut controls = self.controls.bind_mut();
 
-    fn rotate_camera(&mut self, _delta: f64) {
-        // Rotate camera look at
-        if Input::singleton().get_mouse_mode() == MouseMode::CAPTURED {
-            let (yaw, pitch) = self.input_data.get_mouselook_vector();
-            self.set_rotation(yaw as f32, pitch as f32);
-        }
-    }
-
-    fn process_physics(&mut self, delta: f64, controller_active: bool, physics_active: bool) {
-        let now = std::time::Instant::now();
-
-        let pitch = self.get_pitch();
-
-        // Set lock if chunk is in loading
-        self.physics_entity.set_enabled(physics_active);
-
-        let mut move_elapsed = Duration::ZERO;
-        if controller_active {
             // Moving
-            let vec = self.input_data.get_movement_vector(delta);
-            let vec = vec.rotated(Vector3::new(0.0, 1.0, 0.0), pitch as f32);
+            let mut direction = controls.get_movement_vector();
 
-            let move_now = std::time::Instant::now();
-            if vec != Vector3::ZERO {
+            // make the player move towards where the camera is facing by lerping the current movement rotation
+            // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
+            controls.move_rot = lerpf(
+                controls.move_rot as f64,
+                deg_to_rad(yaw as f64),
+                (4.0 * delta) as f64,
+            ) as f32;
+            direction = direction.rotated(Vector3::UP, controls.move_rot as f32);
+
+            // lerp the player's current horizontal velocity towards the horizontal velocity as determined by
+            // the input direction and the given horizontal speed
+            let horizontal_velocity = Vector3::from_variant(&lerp(
+                controls.horizontal_velocity.to_variant(),
+                (direction * SPEED).to_variant(),
+                (ACCELERATION as f64 * delta).to_variant(),
+            ));
+            controls.horizontal_velocity = horizontal_velocity;
+
+            // if the player has any amount of movement, lerp the player model's rotation towards the current
+            // movement direction based checked its angle towards the X+ axis checked the XZ plane
+            if direction != Vector3::ZERO {
+                let new_skin_y = lerp_angle(
+                    self.body_controller.get_rotation().y as f64,
+                    atan2(-direction.x as f64, -direction.z as f64),
+                    TURN_SPEED * delta,
+                );
+                self.body_controller.rotate_y(new_skin_y as f32);
+
                 self.physics_controller.controller_move(
                     &mut self.physics_entity,
                     delta,
-                    GodotPositionConverter::vector_network_from_gd(&vec),
+                    GodotPositionConverter::vector_network_from_gd(&direction),
                 );
             }
-            move_elapsed = move_now.elapsed();
 
-            // Jump
-            let input = Input::singleton();
-            if input.is_action_just_pressed("jump".into()) {
+            if controls.is_jumping() {
                 self.physics_entity
                     .apply_impulse(NetworkVector3::new(0.0, JUMP_IMPULSE, 0.0));
             }
@@ -177,15 +155,6 @@ impl PlayerController {
             physics_pos.y - CONTROLLER_HEIGHT / 2.0,
             physics_pos.z,
         ));
-
-        let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(10) {
-            log::debug!(
-                target: "player",
-                "PlayerController PHYSICS process:{:.2?} move:{:.2?}",
-                elapsed, move_elapsed
-            );
-        }
     }
 }
 
@@ -206,53 +175,8 @@ impl INode3D for PlayerController {
         let controller = self.body_controller.clone().upcast();
         self.base_mut().add_child(controller);
 
-        let anchor = self.camera_anchor.clone().upcast();
-        self.base_mut().add_child(anchor);
-        self.set_view_mode(ContollerViewMode::FirstPersonView);
-    }
-
-    fn input(&mut self, event: Gd<InputEvent>) {
-        if Console::is_active() {
-            return;
-        }
-
-        if let Ok(e) = event.clone().try_cast::<InputEventMouseMotion>() {
-            self.input_data.mouse_position = e.get_relative();
-        }
-
-        if let Ok(e) = event.clone().try_cast::<InputEventMouseButton>() {
-            if e.get_button_index() == MouseButton::RIGHT {
-                let mouse_mode = match e.is_pressed() {
-                    true => MouseMode::CAPTURED,
-                    false => MouseMode::VISIBLE,
-                };
-                Input::singleton().set_mouse_mode(mouse_mode);
-            }
-        }
-
-        if let Ok(e) = event.try_cast::<InputEventKey>() {
-            match e.get_keycode() {
-                Key::D => {
-                    self.input_data.right = e.is_pressed() as i32 as FloatType;
-                }
-                Key::A => {
-                    self.input_data.left = e.is_pressed() as i32 as FloatType;
-                }
-                Key::W => {
-                    self.input_data.forward = e.is_pressed() as i32 as FloatType;
-                }
-                Key::S => {
-                    self.input_data.back = e.is_pressed() as i32 as FloatType;
-                }
-                Key::SHIFT => {
-                    self.input_data.multiplier = e.is_pressed();
-                }
-                Key::SPACE => {
-                    self.input_data.space = e.is_pressed();
-                }
-                _ => (),
-            };
-        }
+        let camera_controller = self.camera_controller.clone().upcast();
+        self.base_mut().add_child(camera_controller);
     }
 
     fn process(&mut self, delta: f64) {
@@ -264,19 +188,20 @@ impl INode3D for PlayerController {
             None => false,
         };
 
-        let console_active = Console::is_active();
+        // Set lock if chunk is in loading
+        self.physics_entity.set_enabled(chunk_loaded);
 
-        if !console_active {
-            self.rotate_camera(delta);
-        }
-        self.process_physics(delta, !console_active, chunk_loaded);
+        self.process_physics(delta);
 
         let input = Input::singleton();
-        if input.is_action_just_pressed("action_left".into()) {
-            let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+        if input.is_action_just_pressed(ControllerActions::ActionMain.as_str().into()) {
+            let camera_controller = self.camera_controller.bind();
+            let camera = camera_controller.get_camera();
 
-            let from = self.camera.project_ray_origin(screen / 2.0);
-            let to = from + self.camera.project_ray_normal(screen / 2.0) * 10.0;
+            let screen = camera.get_viewport().unwrap().get_visible_rect().size;
+
+            let from = camera.project_ray_origin(screen / 2.0);
+            let to = from + camera.project_ray_normal(screen / 2.0) * 10.0;
 
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
