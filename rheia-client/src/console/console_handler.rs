@@ -74,7 +74,7 @@ impl Console {
 
             Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
         } else {
-            Input::singleton().set_mouse_mode(MouseMode::HIDDEN);
+            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
         }
     }
 

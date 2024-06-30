@@ -1,11 +1,10 @@
 use godot::prelude::*;
-use utilities::{deg_to_rad, lerpf};
+
+use crate::main_scene::FloatType;
 
 use super::controls::Controls;
 
-const ROTATE_SPEED: f64 = 10.0;
-const ZOOM_SPEED: f64 = 10.0;
-const DISTANCE: f64 = 2.0;
+const DISTANCE: f32 = 5.0;
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
@@ -34,12 +33,14 @@ impl CameraController {
     pub fn get_camera(&self) -> &Gd<Camera3D> {
         &self.camera
     }
+
+    pub fn rotate(&mut self, yaw: FloatType, pitch: FloatType) {}
 }
 
 #[godot_api]
 impl INode3D for CameraController {
     fn init(base: Base<Node3D>) -> Self {
-        Self::create(base, Controls)
+        Self::create(base, Controls::new_alloc())
     }
 
     fn ready(&mut self) {
@@ -51,38 +52,23 @@ impl INode3D for CameraController {
 
         let camera = self.camera.clone().upcast();
         self.gimbal_v.add_child(camera);
+
+        let mut t = self.camera.get_transform();
+        t.origin.z = DISTANCE;
+        self.camera.set_transform(t);
     }
 
-    fn process(&mut self, delta: f64) {
-        // get the camera's current horizontal and vertical rotation angles and assign them to local fields
-        let cam_rot = self.controls.bind().get_camera_rotation();
-        self.rot_h = cam_rot.x;
-        self.rot_v = cam_rot.y;
+    fn process(&mut self, _delta: f64) {
+        let controls = self.controls.bind();
+        let cam_rot = controls.get_camera_rotation();
 
-        // lerp the the horizontal and vertical gimbals' rotations towards the corresponding rotation angles
-        // note that we're using lerp instead of lerp_angle because the latter tries to determine the rotation
-        // direction based checked the current and target values, which would cause the camera to twitch around
-        // the current value and not reach the target value
-        let y = lerpf(
-            self.gimbal_h.get_rotation().y as f64,
-            deg_to_rad(self.rot_h as f64),
-            ROTATE_SPEED * delta,
-        ) as f32;
-        self.gimbal_h.rotate_y(y);
+        // Prevents looking up/down too far
+        let mut r = self.gimbal_v.get_rotation_degrees();
+        r.x = cam_rot.y;
+        self.gimbal_v.set_rotation_degrees(r);
 
-        let x = lerpf(
-            self.gimbal_v.get_rotation().x as f64,
-            deg_to_rad(self.rot_v as f64),
-            ROTATE_SPEED * delta,
-        ) as f32;
-        self.gimbal_v.rotate_x(x);
-
-        // lerp the camera's current local Z position towards the distance variable as determined by the
-        // controls node's zoom scale value in the _process method
-        self.camera.get_transform().origin.z = lerpf(
-            self.camera.get_transform().origin.z as f64,
-            DISTANCE,
-            ZOOM_SPEED * delta,
-        ) as f32;
+        let mut r = self.gimbal_h.get_rotation_degrees();
+        r.y = cam_rot.x;
+        self.gimbal_h.set_rotation_degrees(r);
     }
 }

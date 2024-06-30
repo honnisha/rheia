@@ -5,7 +5,6 @@ use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, Phy
 use godot::prelude::*;
 use utilities::{atan2, deg_to_rad, lerp, lerp_angle, lerpf};
 
-use crate::console::console_handler::Console;
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 use crate::world::godot_world::World;
 
@@ -19,7 +18,6 @@ pub const TURN_SPEED: f64 = 4.0;
 
 pub(crate) const SPEED: f32 = 4.0;
 pub(crate) const ACCELERATION: f32 = 4.0;
-pub(crate) const SENSITIVITY: f32 = 0.3;
 
 pub const CONTROLLER_HEIGHT: f32 = 1.8;
 
@@ -89,9 +87,7 @@ impl PlayerController {
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
-        self.camera_controller.rotate_y(yaw);
-        self.camera_controller
-            .rotate_object_local(Vector3::new(1.0, 0.0, 0.0), pitch as f32);
+        self.camera_controller.bind_mut().rotate(yaw, pitch);
 
         // Rotate visible third_person body
         self.body_controller.rotate_y(yaw);
@@ -108,11 +104,7 @@ impl PlayerController {
 
             // make the player move towards where the camera is facing by lerping the current movement rotation
             // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
-            controls.move_rot = lerpf(
-                controls.move_rot as f64,
-                deg_to_rad(yaw as f64),
-                (4.0 * delta) as f64,
-            ) as f32;
+            controls.move_rot = lerpf(controls.move_rot as f64, deg_to_rad(yaw as f64), (4.0 * delta) as f64) as f32;
             direction = direction.rotated(Vector3::UP, controls.move_rot as f32);
 
             // lerp the player's current horizontal velocity towards the horizontal velocity as determined by
@@ -177,6 +169,9 @@ impl INode3D for PlayerController {
 
         let camera_controller = self.camera_controller.clone().upcast();
         self.base_mut().add_child(camera_controller);
+
+        let controls = self.controls.clone().upcast();
+        self.base_mut().add_child(controls);
     }
 
     fn process(&mut self, delta: f64) {
@@ -193,8 +188,7 @@ impl INode3D for PlayerController {
 
         self.process_physics(delta);
 
-        let input = Input::singleton();
-        if input.is_action_just_pressed(ControllerActions::ActionMain.as_str().into()) {
+        if self.controls.bind().is_main_action() {
             let camera_controller = self.camera_controller.bind();
             let camera = camera_controller.get_camera();
 

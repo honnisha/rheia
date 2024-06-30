@@ -9,6 +9,7 @@ use crate::world::world_manager::WorldManager;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use godot::engine::input::MouseMode;
 use godot::engine::Engine;
 use godot::prelude::*;
 
@@ -114,6 +115,8 @@ impl INode for Main {
         };
 
         self.network = Some(network);
+
+        Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
     }
 
     fn process(&mut self, _delta: f64) {
