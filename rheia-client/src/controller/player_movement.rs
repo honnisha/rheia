@@ -42,8 +42,4 @@ impl PlayerMovement {
             pitch: self.pitch,
         }
     }
-
-    pub fn get_chunk_position(&self) -> ChunkPosition {
-        BlockPosition::new(self.position.x as i64, self.position.y as i64, self.position.z as i64).get_chunk_position()
-    }
 }

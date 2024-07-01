@@ -19,15 +19,15 @@ const MAX_PITCH: f32 = 75.0;
 pub(crate) struct Controls {
     base: Base<Node>,
 
-    pub move_rot: FloatType,
-    pub horizontal_velocity: Vector3,
-
+    // Rotation degrees
     cam_rot: Vector2,
-    joyaxis: Vector2,
+
+    // Joyaxis velocity
+    joyaxis_right: Vector2,
 }
 
 impl Controls {
-    pub fn get_movement_vector(&mut self) -> Vector3 {
+    pub fn get_movement_vector(&self) -> Vector3 {
         if Input::singleton().get_mouse_mode() != MouseMode::CAPTURED {
             return Vector3::ZERO;
         }
@@ -64,16 +64,14 @@ impl INode for Controls {
     fn init(base: Base<Node>) -> Self {
         Self {
             base,
-            move_rot: Default::default(),
-            horizontal_velocity: Default::default(),
             cam_rot: Vector2::ZERO,
-            joyaxis: Vector2::ZERO,
+            joyaxis_right: Vector2::ZERO,
         }
     }
 
     fn process(&mut self, delta: f64) {
-        self.cam_rot.x += self.joyaxis.x * delta as f32 * JOYAXIS_SENSITIVITY;
-        self.cam_rot.y += self.joyaxis.y * delta as f32 * JOYAXIS_SENSITIVITY;
+        self.cam_rot.x += self.joyaxis_right.x * delta as f32 * JOYAXIS_SENSITIVITY;
+        self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
 
         self.cam_rot.y = self.cam_rot.y.min(MAX_PITCH).max(MIN_PITCH);
     }
@@ -82,10 +80,10 @@ impl INode for Controls {
 
         if let Ok(event) = event.clone().try_cast::<InputEventJoypadMotion>() {
             if event.get_axis() == JoyAxis::RIGHT_X {
-                self.joyaxis.x = event.get_axis_value();
+                self.joyaxis_right.x = event.get_axis_value();
             }
             if event.get_axis() == JoyAxis::RIGHT_Y {
-                self.joyaxis.y = event.get_axis_value();
+                self.joyaxis_right.y = event.get_axis_value();
             }
         }
 

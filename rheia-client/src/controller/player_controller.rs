@@ -11,10 +11,9 @@ use crate::world::godot_world::World;
 use super::body_controller::BodyController;
 use super::camera_controller::CameraController;
 use super::controls::Controls;
-use super::enums::controller_actions::ControllerActions;
 use super::player_movement::PlayerMovement;
 
-pub const TURN_SPEED: f64 = 4.0;
+pub const TURN_SPEED: f64 = 8.0;
 
 pub(crate) const SPEED: f32 = 4.0;
 pub(crate) const ACCELERATION: f32 = 4.0;
@@ -40,24 +39,31 @@ pub struct PlayerController {
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
+
+    pub move_rot: FloatType,
+    pub horizontal_velocity: Vector3,
 }
 
 impl PlayerController {
     pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainerType) -> Self {
         let controls = Controls::new_alloc();
+        let mut camera_controller =
+            Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
+        camera_controller.set_position(Vector3::new(0.0, CONTROLLER_HEIGHT * 0.75, 0.0));
         Self {
             base,
 
             body_controller: Gd::<BodyController>::from_init_fn(|base| BodyController::create(base)),
-            camera_controller: Gd::<CameraController>::from_init_fn(|base| {
-                CameraController::create(base, controls.clone())
-            }),
+            camera_controller,
 
             controls,
             cache_movement: None,
 
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
             physics_controller: PhysicsCharacterControllerType::create(),
+
+            move_rot: Default::default(),
+            horizontal_velocity: Default::default(),
         }
     }
 
@@ -94,37 +100,35 @@ impl PlayerController {
     }
 
     fn process_physics(&mut self, delta: f64) {
-        let yaw = self.get_yaw();
-
         {
-            let mut controls = self.controls.bind_mut();
+            let controls = self.controls.bind();
+            let cam_rot = controls.get_camera_rotation();
 
-            // Moving
             let mut direction = controls.get_movement_vector();
 
             // make the player move towards where the camera is facing by lerping the current movement rotation
             // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
-            controls.move_rot = lerpf(controls.move_rot as f64, deg_to_rad(yaw as f64), (4.0 * delta) as f64) as f32;
-            direction = direction.rotated(Vector3::UP, controls.move_rot as f32);
+            self.move_rot = lerpf(self.move_rot as f64, deg_to_rad(cam_rot.x as f64), (4.0 * delta) as f64) as f32;
+            direction = direction.rotated(Vector3::UP, self.move_rot as f32);
 
             // lerp the player's current horizontal velocity towards the horizontal velocity as determined by
             // the input direction and the given horizontal speed
-            let horizontal_velocity = Vector3::from_variant(&lerp(
-                controls.horizontal_velocity.to_variant(),
+            self.horizontal_velocity = Vector3::from_variant(&lerp(
+                self.horizontal_velocity.to_variant(),
                 (direction * SPEED).to_variant(),
                 (ACCELERATION as f64 * delta).to_variant(),
             ));
-            controls.horizontal_velocity = horizontal_velocity;
 
             // if the player has any amount of movement, lerp the player model's rotation towards the current
             // movement direction based checked its angle towards the X+ axis checked the XZ plane
             if direction != Vector3::ZERO {
-                let new_skin_y = lerp_angle(
+                let mut skin_rotation = self.body_controller.get_rotation();
+                skin_rotation.y = lerp_angle(
                     self.body_controller.get_rotation().y as f64,
                     atan2(-direction.x as f64, -direction.z as f64),
                     TURN_SPEED * delta,
-                );
-                self.body_controller.rotate_y(new_skin_y as f32);
+                ) as f32;
+                self.body_controller.set_rotation(skin_rotation);
 
                 self.physics_controller.controller_move(
                     &mut self.physics_entity,
@@ -210,7 +214,7 @@ impl INode3D for PlayerController {
         }
 
         // Handle player movement
-        let new_movement = Gd::<PlayerMovement>::from_init_fn(|base| {
+        let new_movement = Gd::<PlayerMovement>::from_init_fn(|_base| {
             PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch())
         });
 
