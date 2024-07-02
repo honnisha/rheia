@@ -1,0 +1,27 @@
+[gd_scene load_steps=7 format=3 uid="uid://dextox2gcvb51"]
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_1spj2"]
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_72di3"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_l06vd"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_4kg3s"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_t81yq"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_a7few"]
+states/Start/position = Vector2(213, 100)
+states/idle/node = SubResource("AnimationNodeBlendSpace2D_1spj2")
+states/idle/position = Vector2(357, 100)
+states/walk/node = SubResource("AnimationNodeBlendSpace2D_72di3")
+states/walk/position = Vector2(493, 100)
+transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition_l06vd"), "idle", "walk", SubResource("AnimationNodeStateMachineTransition_4kg3s"), "walk", "idle", SubResource("AnimationNodeStateMachineTransition_t81yq")]
+
+[node name="AnimationTree" type="AnimationTree"]
+tree_root = SubResource("AnimationNodeStateMachine_a7few")
+parameters/idle/blend_position = Vector2(0, 0)
+parameters/walk/blend_position = Vector2(0, 0)

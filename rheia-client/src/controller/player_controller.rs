@@ -1,7 +1,7 @@
 use crate::utils::position::GodotPositionConverter;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
-use common::physics::physics::{PhysicsContainer, PhysicsRigidBodyEntity};
+use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 use godot::global::{deg_to_rad, lerp, lerp_angle, lerpf};
 use godot::prelude::*;
 
@@ -15,15 +15,15 @@ use super::player_movement::PlayerMovement;
 
 pub const TURN_SPEED: f64 = 6.0;
 
-pub(crate) const SPEED: f32 = 4.0;
-pub(crate) const ACCELERATION: f32 = 4.0;
+pub(crate) const SPEED: f32 = 0.1;
+pub(crate) const ACCELERATION: f32 = 10.0;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 5.0;
 
 pub const CONTROLLER_HEIGHT: f32 = 1.8;
 
 pub const CONTROLLER_RADIUS: f32 = 0.4;
-pub const CONTROLLER_MASS: f32 = 4.0;
+pub const CONTROLLER_MASS: f32 = 1.0;
 const JUMP_IMPULSE: f32 = 20.0;
 
 #[derive(GodotClass)]
@@ -130,11 +130,11 @@ impl PlayerController {
             ) as f32;
             self.body_controller.set_rotation(skin_rotation);
 
-            //self.physics_controller.controller_move(
-            //    &mut self.physics_entity,
-            //    delta,
-            //    GodotPositionConverter::vector_network_from_gd(&direction),
-            //);
+            self.physics_controller.controller_move(
+                &mut self.physics_entity,
+                delta,
+                GodotPositionConverter::vector_network_from_gd(&self.horizontal_velocity),
+            );
         }
 
         if controls.is_jumping() {
