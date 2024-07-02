@@ -73,7 +73,7 @@ impl INode for Controls {
 
         self.cam_rot.y = self.cam_rot.y.min(MAX_PITCH).max(MIN_PITCH);
 
-        self.movement = Vector3::ZERO;
+        //self.movement = Vector3::ZERO;
         let input = Input::singleton();
         if self.joyaxis_left == Vector2::ZERO {
             if input.get_mouse_mode() == MouseMode::CAPTURED {
@@ -95,8 +95,6 @@ impl INode for Controls {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
-        self.movement = Vector3::ZERO;
-
         if let Ok(event) = event.clone().try_cast::<InputEventJoypadMotion>() {
             // Right stick
             if event.get_axis() == JoyAxis::RIGHT_X {
