@@ -8,7 +8,7 @@ use common::{
     network::client::ClientNetwork,
 };
 use godot::{
-    engine::{Engine, HBoxContainer, MarginContainer, RichTextLabel, VBoxContainer},
+    engine::{Engine, HBoxContainer, IMarginContainer, MarginContainer, RichTextLabel, VBoxContainer},
     prelude::*,
 };
 use lazy_static::lazy_static;
@@ -142,7 +142,7 @@ impl DebugInfo {
 }
 
 #[godot_api]
-impl INode3D for DebugInfo {
+impl IMarginContainer for DebugInfo {
     fn init(base: Base<MarginContainer>) -> Self {
         Self {
             base: base,

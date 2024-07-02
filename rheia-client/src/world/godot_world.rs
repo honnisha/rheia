@@ -113,7 +113,7 @@ pub fn get_default_material() -> Gd<Material> {
 impl World {
     #[func]
     fn handler_player_move(&mut self, movement: Gd<PlayerMovement>) {
-        let main = self.base.as_gd().get_parent().unwrap().cast::<Main>();
+        let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
         let main = main.bind();
         main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
     }
@@ -136,9 +136,10 @@ impl INode for World {
         self.base_mut().add_child(chunks_container);
 
         // Bind world player move signal
+        let obj = self.base().to_godot().clone();
         self.player_controller.bind_mut().base_mut().connect(
             "on_player_move".into(),
-            Callable::from_object_method(self.base.as_gd(), "handler_player_move"),
+            Callable::from_object_method(&obj, "handler_player_move"),
         );
 
         let player_controller = self.player_controller.clone().upcast();

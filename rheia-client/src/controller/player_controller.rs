@@ -2,8 +2,8 @@ use crate::utils::position::GodotPositionConverter;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsContainer, PhysicsRigidBodyEntity};
+use godot::global::{deg_to_rad, lerp, lerp_angle, lerpf};
 use godot::prelude::*;
-use utilities::{deg_to_rad, lerp, lerp_angle, lerpf};
 
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 use crate::world::godot_world::World;

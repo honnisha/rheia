@@ -189,7 +189,7 @@ impl RenetClientNetwork {
                     break;
                 }
             }
-            thread::sleep(time::Duration::from_millis(50));
+            // thread::sleep(time::Duration::from_millis(10));
         });
         info!("Network thread spawned");
     }

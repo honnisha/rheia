@@ -89,8 +89,9 @@ impl INode for Controls {
 
         // and set the movement direction vector to the normalized vector so the player can't unintentionally
         // move faster when moving diagonally
-        println!("self.joyaxis_left: {:?}", self.joyaxis_left);
-        self.movement = self.movement.normalized();
+        if self.movement != Vector3::ZERO {
+            self.movement = self.movement.normalized();
+        }
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {

@@ -34,7 +34,7 @@ pub type PhysicsContainerType = common::physics::rapier::RapierPhysicsContainer;
 pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
 
 // Network RakNet
-//pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
+// pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -80,7 +80,7 @@ impl Main {
 #[godot_api]
 impl INode for Main {
     fn init(base: Base<Node>) -> Self {
-        let world_manager = WorldManager::create(base.as_gd().clone());
+        let world_manager = WorldManager::create(base.to_gd().clone());
         Main {
             base,
             network: None,

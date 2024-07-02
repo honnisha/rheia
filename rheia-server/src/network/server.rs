@@ -134,9 +134,6 @@ fn receive_message_system(
         thread::sleep(MIN_TICK_TIME - time.delta());
     }
 
-    if time.delta() > std::time::Duration::from_millis(100) {
-        log::info!(target: "network", "receive_message_system delay: {:.2?}", time.delta());
-    }
     let network = network_container.server_network.as_ref();
     network.step(time.delta());
 

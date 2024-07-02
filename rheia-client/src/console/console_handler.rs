@@ -7,7 +7,7 @@ use chrono::Local;
 use flume::{bounded, unbounded, Drain};
 use flume::{Receiver, Sender};
 use godot::{
-    engine::{input::MouseMode, LineEdit, MarginContainer, RichTextLabel, TextureButton},
+    engine::{input::MouseMode, IMarginContainer, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
 };
 use lazy_static::lazy_static;
@@ -116,7 +116,7 @@ impl Console {
 }
 
 #[godot_api]
-impl INode for Console {
+impl IMarginContainer for Console {
     fn init(base: Base<MarginContainer>) -> Self {
         Console {
             base: base,
@@ -138,17 +138,12 @@ impl INode for Console {
             }
         };
         match self.base().try_get_node_as::<LineEdit>(INPUT_PATH) {
-            Some(e) => {
-                self.console_input = Some(e);
-                //self.console_input.as_mut().unwrap().connect(
-                //    "text_changed".into(),
-                //    Callable::from_object_method(self.base.clone(), "text_changed"),
-                //    0,
-                //);
-                self.console_input.as_mut().unwrap().connect(
+            Some(mut e) => {
+                e.connect(
                     "text_submitted".into(),
-                    Callable::from_object_method(&self.base.as_gd(), "text_submitted"),
+                    Callable::from_object_method(&self.base().to_godot(), "text_submitted"),
                 );
+                self.console_input = Some(e);
             }
             _ => {
                 godot_error!("console_input element not found");
@@ -156,12 +151,12 @@ impl INode for Console {
             }
         };
         match self.base().try_get_node_as::<TextureButton>(BUTTON_PATH) {
-            Some(e) => {
-                self.console_button = Some(e);
-                self.console_button.as_mut().unwrap().connect(
+            Some(mut e) => {
+                e.connect(
                     "pressed".into(),
-                    Callable::from_object_method(&self.base.as_gd(), "button_pressed"),
+                    Callable::from_object_method(&self.base().to_godot(), "button_pressed"),
                 );
+                self.console_button = Some(e);
             }
             _ => {
                 godot_error!("console_button element not found");
