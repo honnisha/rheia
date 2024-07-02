@@ -15,16 +15,16 @@ use super::player_movement::PlayerMovement;
 
 pub const TURN_SPEED: f64 = 6.0;
 
-pub(crate) const SPEED: f32 = 0.1;
-pub(crate) const ACCELERATION: f32 = 10.0;
+const SPEED: f32 = 0.2;
+const ACCELERATION: f32 = 10.0;
 
-pub(crate) const CAMERA_DISTANCE: f32 = 5.0;
+pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
 
-pub const CONTROLLER_HEIGHT: f32 = 1.8;
+const CONTROLLER_HEIGHT: f32 = 1.8;
 
-pub const CONTROLLER_RADIUS: f32 = 0.4;
-pub const CONTROLLER_MASS: f32 = 1.0;
-const JUMP_IMPULSE: f32 = 20.0;
+const CONTROLLER_RADIUS: f32 = 0.4;
+const CONTROLLER_MASS: f32 = 1.0;
+const JUMP_IMPULSE: f32 = 5.0;
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
