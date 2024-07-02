@@ -1,9 +1,9 @@
 use crate::utils::position::GodotPositionConverter;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
-use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
+use common::physics::physics::{PhysicsContainer, PhysicsRigidBodyEntity};
 use godot::prelude::*;
-use utilities::{atan2, deg_to_rad, lerp, lerp_angle, lerpf};
+use utilities::{deg_to_rad, lerp, lerp_angle, lerpf};
 
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 use crate::world::godot_world::World;
@@ -13,10 +13,12 @@ use super::camera_controller::CameraController;
 use super::controls::Controls;
 use super::player_movement::PlayerMovement;
 
-pub const TURN_SPEED: f64 = 8.0;
+pub const TURN_SPEED: f64 = 6.0;
 
 pub(crate) const SPEED: f32 = 4.0;
 pub(crate) const ACCELERATION: f32 = 4.0;
+
+pub(crate) const CAMERA_DISTANCE: f32 = 5.0;
 
 pub const CONTROLLER_HEIGHT: f32 = 1.8;
 
@@ -99,58 +101,46 @@ impl PlayerController {
         self.body_controller.rotate_y(yaw);
     }
 
-    fn process_physics(&mut self, delta: f64) {
-        {
-            let controls = self.controls.bind();
-            let cam_rot = controls.get_camera_rotation();
+    fn apply_controls(&mut self, delta: f64) {
+        let controls = self.controls.bind();
+        let cam_rot = controls.get_camera_rotation();
 
-            let mut direction = controls.get_movement_vector();
+        let mut direction = *controls.get_movement_vector();
 
-            // make the player move towards where the camera is facing by lerping the current movement rotation
-            // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
-            self.move_rot = lerpf(self.move_rot as f64, deg_to_rad(cam_rot.x as f64), (4.0 * delta) as f64) as f32;
-            direction = direction.rotated(Vector3::UP, self.move_rot as f32);
+        // make the player move towards where the camera is facing by lerping the current movement rotation
+        // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
+        self.move_rot = lerpf(self.move_rot as f64, deg_to_rad(cam_rot.x as f64), (4.0 * delta) as f64) as f32;
+        direction = direction.rotated(Vector3::UP, self.move_rot as f32);
 
-            // lerp the player's current horizontal velocity towards the horizontal velocity as determined by
-            // the input direction and the given horizontal speed
-            self.horizontal_velocity = Vector3::from_variant(&lerp(
-                self.horizontal_velocity.to_variant(),
-                (direction * SPEED).to_variant(),
-                (ACCELERATION as f64 * delta).to_variant(),
-            ));
+        self.horizontal_velocity = Vector3::from_variant(&lerp(
+            self.horizontal_velocity.to_variant(),
+            (direction * SPEED).to_variant(),
+            (ACCELERATION as f64 * delta).to_variant(),
+        ));
 
-            // if the player has any amount of movement, lerp the player model's rotation towards the current
-            // movement direction based checked its angle towards the X+ axis checked the XZ plane
-            if direction != Vector3::ZERO {
-                let mut skin_rotation = self.body_controller.get_rotation();
-                skin_rotation.y = lerp_angle(
-                    self.body_controller.get_rotation().y as f64,
-                    atan2(-direction.x as f64, -direction.z as f64),
-                    TURN_SPEED * delta,
-                ) as f32;
-                self.body_controller.set_rotation(skin_rotation);
+        // if the player has any amount of movement, lerp the player model's rotation towards the current
+        // movement direction based checked its angle towards the X+ axis checked the XZ plane
+        if direction != Vector3::ZERO {
+            let new_pitch = -direction.x.atan2(-direction.z);
+            let mut skin_rotation = self.body_controller.get_rotation();
+            skin_rotation.y = lerp_angle(
+                self.body_controller.get_rotation().y as f64,
+                new_pitch as f64,
+                TURN_SPEED * delta,
+            ) as f32;
+            self.body_controller.set_rotation(skin_rotation);
 
-                self.physics_controller.controller_move(
-                    &mut self.physics_entity,
-                    delta,
-                    GodotPositionConverter::vector_network_from_gd(&direction),
-                );
-            }
-
-            if controls.is_jumping() {
-                self.physics_entity
-                    .apply_impulse(NetworkVector3::new(0.0, JUMP_IMPULSE, 0.0));
-            }
+            //self.physics_controller.controller_move(
+            //    &mut self.physics_entity,
+            //    delta,
+            //    GodotPositionConverter::vector_network_from_gd(&direction),
+            //);
         }
 
-        // Sync godot object position
-        let physics_pos = self.physics_entity.get_position();
-        // Controller position is lowered by half of the center of mass position
-        self.base_mut().set_position(Vector3::new(
-            physics_pos.x,
-            physics_pos.y - CONTROLLER_HEIGHT / 2.0,
-            physics_pos.z,
-        ));
+        if controls.is_jumping() {
+            self.physics_entity
+                .apply_impulse(NetworkVector3::new(0.0, JUMP_IMPULSE, 0.0));
+        }
     }
 }
 
@@ -190,7 +180,18 @@ impl INode3D for PlayerController {
         // Set lock if chunk is in loading
         self.physics_entity.set_enabled(chunk_loaded);
 
-        self.process_physics(delta);
+        if chunk_loaded {
+            self.apply_controls(delta);
+        }
+
+        // Sync godot object position
+        let physics_pos = self.physics_entity.get_position();
+        // Controller position is lowered by half of the center of mass position
+        self.base_mut().set_position(Vector3::new(
+            physics_pos.x,
+            physics_pos.y - CONTROLLER_HEIGHT / 2.0,
+            physics_pos.z,
+        ));
 
         if self.controls.bind().is_main_action() {
             let camera_controller = self.camera_controller.bind();

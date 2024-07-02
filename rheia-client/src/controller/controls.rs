@@ -5,12 +5,11 @@ use godot::engine::{Input, InputEvent, InputEventJoypadMotion, InputEventMouseMo
 use godot::prelude::Vector3;
 use godot::prelude::*;
 
-use crate::main_scene::FloatType;
-
 use super::enums::controller_actions::ControllerActions;
 
 const SENSITIVITY: f32 = 0.2;
 const JOYAXIS_SENSITIVITY: f32 = 150.0;
+const JOYAXIS_DEADZONE: f32 = 0.3;
 const MIN_PITCH: f32 = -90.0;
 const MAX_PITCH: f32 = 75.0;
 
@@ -22,26 +21,16 @@ pub(crate) struct Controls {
     // Rotation degrees
     cam_rot: Vector2,
 
+    movement: Vector3,
+
     // Joyaxis velocity
     joyaxis_right: Vector2,
+    joyaxis_left: Vector2,
 }
 
 impl Controls {
-    pub fn get_movement_vector(&self) -> Vector3 {
-        if Input::singleton().get_mouse_mode() != MouseMode::CAPTURED {
-            return Vector3::ZERO;
-        }
-
-        // Determine the movement direction based checked the input strengths of the four movement directions
-        let input = Input::singleton();
-        let dx = input.get_action_strength(ControllerActions::MoveRight.as_str().into())
-            - input.get_action_strength(ControllerActions::MoveLeft.as_str().into());
-        let dy = input.get_action_strength(ControllerActions::MoveForward.as_str().into())
-            - input.get_action_strength(ControllerActions::MoveBackwards.as_str().into());
-
-        // and set the movement direction vector to the normalized vector so the player can't unintentionally
-        // move faster when moving diagonally
-        return Vector3::new(dx, 0.0, -dy).normalized();
+    pub fn get_movement_vector(&self) -> &Vector3 {
+        return &self.movement;
     }
 
     pub fn get_camera_rotation(&self) -> &Vector2 {
@@ -59,6 +48,13 @@ impl Controls {
     }
 }
 
+fn deadzone_threshold(value: f32) -> f32 {
+    if value.abs() < JOYAXIS_DEADZONE {
+        return 0.0;
+    }
+    value
+}
+
 #[godot_api]
 impl INode for Controls {
     fn init(base: Base<Node>) -> Self {
@@ -66,6 +62,8 @@ impl INode for Controls {
             base,
             cam_rot: Vector2::ZERO,
             joyaxis_right: Vector2::ZERO,
+            movement: Default::default(),
+            joyaxis_left: Default::default(),
         }
     }
 
@@ -74,16 +72,45 @@ impl INode for Controls {
         self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
 
         self.cam_rot.y = self.cam_rot.y.min(MAX_PITCH).max(MIN_PITCH);
+
+        self.movement = Vector3::ZERO;
+        let input = Input::singleton();
+        if self.joyaxis_left == Vector2::ZERO {
+            if input.get_mouse_mode() == MouseMode::CAPTURED {
+                self.movement.x = input.get_action_strength(ControllerActions::MoveRight.as_str().into())
+                    - input.get_action_strength(ControllerActions::MoveLeft.as_str().into());
+                self.movement.z = input.get_action_strength(ControllerActions::MoveForward.as_str().into())
+                    - input.get_action_strength(ControllerActions::MoveBackwards.as_str().into());
+                self.movement.z *= -1.0;
+            }
+        } else {
+            self.movement = Vector3::new(self.joyaxis_left.x, 0.0, self.joyaxis_left.y)
+        }
+
+        // and set the movement direction vector to the normalized vector so the player can't unintentionally
+        // move faster when moving diagonally
+        println!("self.joyaxis_left: {:?}", self.joyaxis_left);
+        self.movement = self.movement.normalized();
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
+        self.movement = Vector3::ZERO;
 
         if let Ok(event) = event.clone().try_cast::<InputEventJoypadMotion>() {
+            // Right stick
             if event.get_axis() == JoyAxis::RIGHT_X {
-                self.joyaxis_right.x = event.get_axis_value();
+                self.joyaxis_right.x = deadzone_threshold(event.get_axis_value());
             }
             if event.get_axis() == JoyAxis::RIGHT_Y {
-                self.joyaxis_right.y = event.get_axis_value();
+                self.joyaxis_right.y = deadzone_threshold(event.get_axis_value());
+            }
+
+            // Left stick
+            if event.get_axis() == JoyAxis::LEFT_X {
+                self.joyaxis_left.x = deadzone_threshold(event.get_axis_value());
+            }
+            if event.get_axis() == JoyAxis::LEFT_Y {
+                self.joyaxis_left.y = deadzone_threshold(event.get_axis_value());
             }
         }
 

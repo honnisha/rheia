@@ -2,9 +2,7 @@ use godot::prelude::*;
 
 use crate::main_scene::FloatType;
 
-use super::controls::Controls;
-
-const DISTANCE: f32 = 5.0;
+use super::{controls::Controls, player_controller::CAMERA_DISTANCE};
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
@@ -54,7 +52,7 @@ impl INode3D for CameraController {
         self.gimbal_v.add_child(camera);
 
         let mut t = self.camera.get_transform();
-        t.origin.z = DISTANCE;
+        t.origin.z = CAMERA_DISTANCE;
         self.camera.set_transform(t);
     }
 
