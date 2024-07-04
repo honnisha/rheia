@@ -6,19 +6,27 @@ use rapier3d::parry::partitioning::IndexedData;
 use rapier3d::prelude::*;
 use std::sync::Arc;
 
-use crate::network::messages::Vector3 as NetworkVector3;
+use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
 use rapier3d::prelude::ColliderBuilder;
 
 use super::physics::{
     PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBodyEntity, PhysicsStaticEntity,
 };
 
-fn vec_network_to_na(from: &NetworkVector3) -> NaVector3<f32> {
-    NaVector3::new(from.x, from.y, from.z)
+pub trait IntoNaVector3<T> {
+    fn to_na(&self) -> NaVector3<T>;
 }
 
-fn vec_na_to_network(from: &NaVector3<f32>) -> NetworkVector3 {
-    NetworkVector3::new(from.x, from.y, from.z)
+impl IntoNaVector3<f32> for NetworkVector3 {
+    fn to_na(&self) -> NaVector3<f32> {
+        NaVector3::new(self.x, self.y, self.z)
+    }
+}
+
+impl IntoNetworkVector for NaVector3<f32> {
+    fn to_network(&self) -> NetworkVector3 {
+        NetworkVector3::new(self.x, self.y, self.z)
+    }
 }
 
 /// For bodies with physics
@@ -54,25 +62,25 @@ impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
 
     fn apply_impulse(&mut self, impulse: NetworkVector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
-        body.apply_impulse(vec_network_to_na(&impulse), true);
+        body.apply_impulse(impulse.to_na(), true);
     }
 
     fn get_position(&self) -> NetworkVector3 {
         let body = self.physics_container.get_rigid_body(&self.rigid_handle).unwrap();
-        vec_na_to_network(&body.translation())
+        body.translation().to_network()
     }
 
     fn set_position(&mut self, position: NetworkVector3) {
         let mut body = self.physics_container.get_rigid_body_mut(&self.rigid_handle).unwrap();
         // Reset velocity
         body.sleep();
-        body.set_translation(vec_network_to_na(&position), true);
+        body.set_translation(position.to_na(), true);
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
     fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
-        let direction = vec_network_to_na(&dir);
+        let direction = dir.to_na();
 
         let ray = Ray::new(origin, direction);
 
@@ -140,7 +148,7 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
             &entity.physics_container.query_pipeline.read(),
             collider.shape(),
             collider.position(),
-            vec_network_to_na(&impulse),
+            impulse.to_na(),
             filter,
             |_| {},
         );

@@ -26,6 +26,14 @@ impl Vector3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Vector3 { x, y, z }
     }
+
+    pub fn zero() -> Self {
+        Vector3 { x: 0.0, y: 0.0, z: 0.0 }
+    }
+}
+
+pub trait IntoNetworkVector {
+    fn to_network(&self) -> Vector3;
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
