@@ -1,6 +1,4 @@
 use flume::{Drain, Receiver, Sender};
-use log::error;
-use log::info;
 use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
 use renet::{
@@ -90,7 +88,7 @@ impl RenetClientNetwork {
         let decoded: ServerMessages = match bincode::deserialize(encoded) {
             Ok(d) => d,
             Err(e) => {
-                error!("Decode server heavy message error: {}", e);
+                log::error!(target: "renet", "Decode server heavy message error: {}", e);
                 return None;
             }
         };
@@ -191,7 +189,7 @@ impl RenetClientNetwork {
             }
             // thread::sleep(time::Duration::from_millis(10));
         });
-        info!("Network thread spawned");
+        log::info!(target: "renet", "Network thread spawned");
     }
 }
 
@@ -256,7 +254,7 @@ impl ClientNetwork for RenetClientNetwork {
         let mut transport = self.get_transport_mut();
         if transport.disconnect_reason().is_none() {
             transport.disconnect();
-            info!("{}", "Disconnected from the server");
+            log::info!(target: "renet", "{}", "Disconnected from the server");
         }
     }
 

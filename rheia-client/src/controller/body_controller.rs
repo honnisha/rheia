@@ -6,7 +6,6 @@ use godot::{
     prelude::*,
 };
 use lazy_static::lazy_static;
-use log::error;
 
 use crate::utils::glb::glb_import;
 
@@ -190,7 +189,7 @@ impl INode3D for BodyController {
         let scene = glb_import(b);
 
         if let Err(e) = self.replace(&scene, BodyPart::Chest) {
-            error!("Model \"{}\" error: {}", scene.get_name(), e);
+            log::error!(target: "controller", "Model \"{}\" error: {}", scene.get_name(), e);
         }
     }
 

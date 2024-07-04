@@ -18,7 +18,6 @@ use crate::network::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
     server::{ConnectionMessages, ServerNetwork},
 };
-use log::error;
 
 type ServerLock = Arc<RwLock<RenetServer>>;
 type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
@@ -98,7 +97,7 @@ impl ServerNetwork for RenetServerNetwork {
                 let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                     Ok(d) => d,
                     Err(e) => {
-                        error!("Decode client reliable message error: {}", e);
+                        log::error!(target: "renet", "Decode client reliable message error: {}", e);
                         continue;
                     }
                 };
@@ -111,7 +110,7 @@ impl ServerNetwork for RenetServerNetwork {
                 let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                     Ok(d) => d,
                     Err(e) => {
-                        error!("Decode client unreliable message error: {}", e);
+                        log::error!(target: "renet", "Decode client unreliable message error: {}", e);
                         continue;
                     }
                 };
