@@ -238,7 +238,7 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         let params = PxCookingParams::new(controller.physics.physics()).unwrap();
         let mesh = match create_triangle_mesh(controller.physics.physics_mut(), &params, &desc) {
             TriangleMeshCookingResult::Success(mut mesh) => {
-                PxTriangleMeshGeometry::new(&mut mesh, &unsafe { PxMeshScale_new() }, MeshGeometryFlags::empty())
+                PxTriangleMeshGeometry::new(&mut mesh, &unsafe { PxMeshScale_new() }, MeshGeometryFlags::TightBounds)
             }
             _ => {
                 panic!()
@@ -362,7 +362,7 @@ pub struct PhysxPhysicsController {
 impl PhysxPhysicsController {
     fn create() -> Self {
         let mut physics = PhysicsFoundation::<_, PxShape>::default();
-        let mut scene: Owner<PxScene> = physics
+        let scene: Owner<PxScene> = physics
             .create(SceneDescriptor {
                 gravity: PxVec3::new(0.0, -9.81, 0.0),
                 on_advance: Some(OnAdvance),

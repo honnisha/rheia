@@ -8,6 +8,7 @@ use renet::{
     Bytes, RenetClient,
 };
 use rhai::Instant;
+use std::thread;
 use std::{
     net::UdpSocket,
     sync::{
@@ -16,7 +17,6 @@ use std::{
     },
     time::{Duration, SystemTime},
 };
-use std::{thread, time};
 
 use crate::chunks::utils::unpack_network_sectioins;
 use crate::network::messages::ClientMessages;
@@ -263,5 +263,4 @@ impl ClientNetwork for RenetClientNetwork {
     fn get_network_info(&self) -> RwLockReadGuard<NetworkInfo> {
         self.network_info.read()
     }
-
 }

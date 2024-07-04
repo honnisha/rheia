@@ -2,7 +2,6 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::SectionsData;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
-use log::{error, info};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -84,14 +83,14 @@ impl WorldManager {
         self.base.add_child(world.clone().upcast());
         self.world = Some(world);
 
-        info!("World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
+        log::info!(target: "world", "World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
     }
 
     pub fn destroy_world(&mut self) {
         let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
         self.base.remove_child(self.world.as_mut().unwrap().clone().upcast());
         self.world = None;
-        info!("World \"{}\" destroyed;", slug);
+        log::info!(target: "world", "World \"{}\" destroyed;", slug);
     }
 
     /// Load chunk column by the network
@@ -99,14 +98,15 @@ impl WorldManager {
         let world = match self.world.as_mut() {
             Some(w) => w,
             None => {
-                error!("load_chunk tried to run without a world");
+                log::error!(target: "world", "load_chunk tried to run without a world");
                 return;
             }
         };
 
         let mut world = world.bind_mut();
         if world_slug != *world.get_slug() {
-            error!(
+            log::error!(
+                target: "world",
                 "Tried to load chunk {} for non existed world {}",
                 chunk_position, world_slug
             );
@@ -119,14 +119,14 @@ impl WorldManager {
         let world = match self.world.as_mut() {
             Some(w) => w,
             None => {
-                error!("unload_chunk tried to run without a world");
+                log::error!(target: "world", "unload_chunk tried to run without a world");
                 return;
             }
         };
 
         let mut world = world.bind_mut();
         if world_slug != *world.get_slug() {
-            error!("Tried to unload chunks for non existed world {}", world_slug);
+            log::error!(target: "world", "Tried to unload chunks for non existed world {}", world_slug);
             return;
         }
         world.unload_chunk(chunks_positions);
