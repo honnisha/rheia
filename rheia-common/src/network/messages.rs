@@ -9,7 +9,6 @@ use crate::{
     VERTICAL_SECTIONS,
 };
 
-
 /// Network 3D vector
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Vector3 {
@@ -32,7 +31,7 @@ impl Vector3 {
     }
 }
 
-pub trait IntoNetworkVector {
+pub(crate) trait IntoNetworkVector {
     fn to_network(&self) -> Vector3;
 }
 

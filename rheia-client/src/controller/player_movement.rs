@@ -1,14 +1,8 @@
-use common::{
-    chunks::{
-        block_position::{BlockPosition, BlockPositionTrait},
-        chunk_position::ChunkPosition,
-    },
-    network::messages::ClientMessages,
-};
+use common::network::messages::ClientMessages;
 use godot::{prelude::Vector3, register::GodotClass};
 use std::fmt::{self, Display, Formatter};
 
-use crate::{main_scene::FloatType, utils::position::GodotPositionConverter};
+use crate::{main_scene::FloatType, utils::position::IntoNetworkVector};
 
 /// Used to transmit motion data
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
@@ -37,7 +31,7 @@ impl PlayerMovement {
 
     pub fn into_network(&self) -> ClientMessages {
         ClientMessages::PlayerMove {
-            position: GodotPositionConverter::vector_network_from_gd(&self.position),
+            position: self.position.to_network(),
             yaw: self.yaw,
             pitch: self.pitch,
         }

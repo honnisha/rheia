@@ -13,7 +13,7 @@ use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::{
     main_scene::{PhysicsColliderBuilderType, PhysicsContainerType, PhysicsStaticEntityType},
-    utils::position::GodotPositionConverter,
+    utils::position::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
     world::godot_world::get_default_material,
 };
 
@@ -69,7 +69,7 @@ impl ChunkSection {
     }
 
     pub fn get_section_position(&self) -> Vector3 {
-        let mut pos = GodotPositionConverter::get_gd_from_chunk_position(&self.chunk_position);
+        let mut pos = self.chunk_position.to_godot();
         pos.y = GodotPositionConverter::get_chunk_y_local(self.y);
         pos
     }
@@ -91,10 +91,7 @@ impl ChunkSection {
             // This function causes a thread lock
             let pos = self.get_section_position().clone();
             if let Some(c) = self.new_colider.as_mut() {
-                c.update_collider(
-                    &mut self.physics_entity,
-                    &GodotPositionConverter::vector_network_from_gd(&pos),
-                )
+                c.update_collider(&mut self.physics_entity, &pos.to_network())
             } else {
                 self.physics_entity.remove_collider();
             }

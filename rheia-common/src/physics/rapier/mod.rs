@@ -107,27 +107,13 @@ pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
 }
 
-impl RapierPhysicsCharacterController {
-    pub fn create() -> Self {
-        let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Relative(0.1);
-        character_controller.autostep = Some(CharacterAutostep {
-            max_height: CharacterLength::Relative(0.5),
-            min_width: CharacterLength::Relative(0.5),
-            include_dynamic_bodies: true,
-        });
-
-        Self { character_controller }
-    }
-}
-
 impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
     fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Relative(0.1);
+        character_controller.offset = CharacterLength::Absolute(0.0);
         character_controller.autostep = Some(CharacterAutostep {
-            max_height: CharacterLength::Relative(0.5),
-            min_width: CharacterLength::Relative(0.5),
+            max_height: CharacterLength::Absolute(0.5),
+            min_width: CharacterLength::Absolute(0.5),
             include_dynamic_bodies: false,
         });
         Self { character_controller }

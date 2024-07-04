@@ -22,11 +22,26 @@ impl CameraController {
         }
     }
 
+    /// Horisontal degrees
+    pub fn get_yaw(&self) -> f32 {
+        self.base().get_rotation_degrees().y
+    }
+
+    /// Vertical degrees
+    pub fn get_pitch(&self) -> f32 {
+        self.base().get_rotation_degrees().x
+    }
+
     pub fn get_camera(&self) -> &Gd<Camera3D> {
         &self.camera
     }
 
-    pub fn rotate(&mut self, yaw: FloatType, pitch: FloatType) {}
+    pub fn rotate(&mut self, pitch: FloatType, yaw: FloatType) {
+        let mut r = self.base().get_rotation_degrees();
+        r.x = pitch % 360.0;
+        r.y = yaw % 360.0;
+        self.base_mut().set_rotation_degrees(r);
+    }
 }
 
 #[godot_api]
@@ -46,9 +61,6 @@ impl INode3D for CameraController {
             controls.get_camera_rotation().clone()
         };
 
-        let mut r = self.base().get_rotation_degrees();
-        r.x = cam_rot.y;
-        r.y = cam_rot.x;
-        self.base_mut().set_rotation_degrees(r);
+        self.rotate(cam_rot.y, cam_rot.x);
     }
 }

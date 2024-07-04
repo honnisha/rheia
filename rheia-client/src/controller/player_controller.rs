@@ -1,4 +1,4 @@
-use crate::utils::position::GodotPositionConverter;
+use crate::utils::position::IntoNetworkVector;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
@@ -13,10 +13,10 @@ use super::camera_controller::CameraController;
 use super::controls::Controls;
 use super::player_movement::PlayerMovement;
 
-pub const TURN_SPEED: f64 = 6.0;
+pub const TURN_SPEED: f64 = 4.0;
 
-const SPEED: f32 = 0.2;
-const ACCELERATION: f32 = 10.0;
+const SPEED: f32 = 0.1;
+const ACCELERATION: f64 = 10.0;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
 
@@ -71,17 +71,17 @@ impl PlayerController {
 
     // Get position of the character
     pub fn get_position(&self) -> Vector3 {
-        self.body_controller.get_position()
+        self.base().get_position()
     }
 
-    /// Horizontal angle of character look
+    /// Horizontal degrees of character look
     pub fn get_yaw(&self) -> f32 {
-        self.body_controller.get_rotation().x
+        self.body_controller.get_rotation_degrees().y
     }
 
-    /// Vertical angle of character look
+    /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
-        self.body_controller.get_rotation().y
+        self.camera_controller.bind().get_pitch()
     }
 
     pub fn set_position(&mut self, position: Vector3) {
@@ -90,8 +90,7 @@ impl PlayerController {
         // The center of the physical collider at his center
         // So it shifts to half the height
         let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
-        self.physics_entity
-            .set_position(GodotPositionConverter::vector_network_from_gd(&physics_pos));
+        self.physics_entity.set_position(physics_pos.to_network());
     }
 
     pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
@@ -102,38 +101,32 @@ impl PlayerController {
     }
 
     fn apply_controls(&mut self, delta: f64) {
-        let controls = self.controls.bind();
-        let cam_rot = controls.get_camera_rotation();
 
+        let controls = self.controls.bind();
         let mut direction = *controls.get_movement_vector();
 
-        // make the player move towards where the camera is facing by lerping the current movement rotation
-        // towards the camera's horizontal rotation and rotating the raw movement direction with that angle
-        self.move_rot = lerpf(self.move_rot as f64, deg_to_rad(cam_rot.x as f64), (4.0 * delta) as f64) as f32;
-        direction = direction.rotated(Vector3::UP, self.move_rot as f32);
+        // Get camera vertical rotation
+        let camera_yaw = self.camera_controller.bind().get_yaw();
 
-        self.horizontal_velocity = Vector3::from_variant(&lerp(
-            self.horizontal_velocity.to_variant(),
-            (direction * SPEED).to_variant(),
-            (ACCELERATION as f64 * delta).to_variant(),
-        ));
+        // Rotate movement direction according to the camera
+        direction = direction.rotated(Vector3::UP, deg_to_rad(camera_yaw as f64) as f32);
 
-        // if the player has any amount of movement, lerp the player model's rotation towards the current
-        // movement direction based checked its angle towards the X+ axis checked the XZ plane
         if direction != Vector3::ZERO {
-            let new_pitch = -direction.x.atan2(-direction.z);
+
+            let mut new_yaw = -direction.x.atan2(-direction.z) % 360.0;
+            new_yaw = lerp_angle(self.body_controller.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
+
+            // Update skil rotation for visual display
             let mut skin_rotation = self.body_controller.get_rotation();
-            skin_rotation.y = lerp_angle(
-                self.body_controller.get_rotation().y as f64,
-                new_pitch as f64,
-                TURN_SPEED * delta,
-            ) as f32;
+            skin_rotation.y = new_yaw;
             self.body_controller.set_rotation(skin_rotation);
+
+            let mut force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
 
             self.physics_controller.controller_move(
                 &mut self.physics_entity,
                 delta,
-                GodotPositionConverter::vector_network_from_gd(&self.horizontal_velocity),
+                force.to_network(),
             );
         }
 
@@ -205,11 +198,10 @@ impl INode3D for PlayerController {
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
 
-            if let Some((collider_handle, hit_point)) = self.physics_entity.raycast(
-                GodotPositionConverter::vector_network_from_gd(&dir),
-                max_toi,
-                GodotPositionConverter::vector_network_from_gd(&from),
-            ) {
+            if let Some((collider_handle, hit_point)) =
+                self.physics_entity
+                    .raycast(dir.to_network(), max_toi, from.to_network())
+            {
                 log::debug!(target: "player", "Collider {:?} hit at point {}", collider_handle, hit_point);
             }
         }

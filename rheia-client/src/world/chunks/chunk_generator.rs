@@ -3,7 +3,7 @@ use super::{
     godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
-    main_scene::PhysicsContainerType, utils::position::GodotPositionConverter, world::world_manager::TextureMapperType,
+    main_scene::PhysicsContainerType, utils::position::IntoGodotVector, world::world_manager::TextureMapperType,
 };
 use common::{chunks::chunk_position::ChunkPosition, physics::physics::PhysicsContainer, VERTICAL_SECTIONS};
 use flume::Sender;
@@ -87,8 +87,7 @@ pub(crate) fn spawn_chunk(
 
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-        let chunk_pos_vector = GodotPositionConverter::get_gd_from_chunk_position(&chunk_position);
-        c.base_mut().set_global_position(chunk_pos_vector);
+        c.base_mut().set_global_position(chunk_position.to_godot());
 
         for section in c.sections.iter_mut() {
             section.bind_mut().sync();
