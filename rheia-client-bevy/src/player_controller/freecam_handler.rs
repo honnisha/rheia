@@ -124,7 +124,7 @@ pub(crate) fn freecam_camera_handler(
 pub fn spawn_camera(mut commands: Commands) {
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(-1.0, 1.0, 1.0).looking_at(Vec3::new(-1.0, 1.0, 0.0), Vec3::Y),
+            transform: Transform::from_xyz(-1.0, 50.0, 1.0).looking_at(Vec3::new(-1.0, 1.0, 0.0), Vec3::Y),
             ..default()
         },
         FreecamCameraController::default(),

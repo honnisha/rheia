@@ -92,8 +92,8 @@ impl World {
         self.chunks_container.bind_mut().load_chunk(chunk_position, sections);
     }
 
-    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
-        self.chunks_container.bind_mut().unload_chunk(chunks_positions);
+    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
+        self.chunks_container.bind_mut().unload_chunk(chunk_position);
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {

@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy::{color::palettes::css::SILVER, core_pipeline::experimental::taa::TemporalAntiAliasPlugin, prelude::*, window::PresentMode};
+use bevy::{core_pipeline::experimental::taa::TemporalAntiAliasPlugin, prelude::*, window::PresentMode};
 use network::client::NetworkPlugin;
 use player_controller::controller::PlayerControllerPlugin;
 use world::worlds_manager::WorldsManagerPlugin;
@@ -37,14 +37,7 @@ fn main() {
     app.run();
 }
 
-fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
-    // ground plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Plane3d::default().mesh().size(10.0, 10.0).subdivisions(10)),
-        material: materials.add(Color::from(SILVER)),
-        ..default()
-    });
-
+fn setup(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,

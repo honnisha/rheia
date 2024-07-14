@@ -97,7 +97,9 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     log::error!(target: "network", "Tried to unload chunks for non existed world {}", world_slug);
                     continue;
                 }
-                world.bind_mut().unload_chunk(chunks);
+                for chunk_position in chunks.iter() {
+                    world.bind_mut().unload_chunk(*chunk_position);
+                }
             }
             _ => panic!("unsupported message"),
         }

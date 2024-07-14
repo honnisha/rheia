@@ -26,8 +26,16 @@ pub fn on_chunk_loaded(
 ) {
     for event in chunk_loaded_event.drain() {
         match worlds_manager.get_world_mut() {
-            Some(w) => {
-                w.load_chunk(event.chunk_position, event.sections);
+            Some(world) => {
+                if event.world_slug != *world.get_slug() {
+                    log::error!(
+                        target: "network",
+                        "Tried to load chunk {} for non existed world {}",
+                        event.chunk_position, event.world_slug
+                    );
+                    continue;
+                }
+                world.load_chunk(event.chunk_position, event.sections);
             }
             None => {
                 error!("unload_chunk tried to run without a world");

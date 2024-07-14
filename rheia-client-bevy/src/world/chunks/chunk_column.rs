@@ -1,8 +1,8 @@
 use arrayvec::ArrayVec;
-use bevy::prelude::{PbrBundle, Transform};
-use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
+use bevy::prelude::Transform;
 use common::chunks::utils::SectionsData;
 use common::VERTICAL_SECTIONS;
+use common::{chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
 use parking_lot::RwLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},

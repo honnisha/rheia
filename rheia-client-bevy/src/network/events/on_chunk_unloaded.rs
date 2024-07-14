@@ -26,9 +26,13 @@ pub fn on_chunk_unloaded(
 ) {
     for event in chunk_unloaded_event.drain() {
         match worlds_manager.get_world_mut() {
-            Some(w) => {
+            Some(world) => {
+                if event.world_slug != *world.get_slug() {
+                    log::error!(target: "network", "Tried to unload chunks for non existed world {}", event.world_slug);
+                    continue;
+                }
                 for chunk_position in event.chunks_positions.iter() {
-                    w.unload_chunk(&mut commands, chunk_position);
+                    world.unload_chunk(&mut commands, chunk_position);
                 }
             }
             None => {

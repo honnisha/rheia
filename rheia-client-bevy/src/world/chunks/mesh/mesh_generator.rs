@@ -103,7 +103,7 @@ pub fn generate_chunk_geometry(
         }
     }
 
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::empty());
+    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, VertexAttributeValues::Float32x3(positions));
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, VertexAttributeValues::Float32x3(normals));
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, tex_coords);

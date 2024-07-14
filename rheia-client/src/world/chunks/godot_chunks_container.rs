@@ -88,18 +88,16 @@ impl ChunksContainer {
         self.chunks.insert(chunk_position.clone(), Rc::new(RefCell::new(chunk)));
     }
 
-    pub fn unload_chunk(&mut self, chunks_positions: Vec<ChunkPosition>) {
-        for chunk_position in chunks_positions {
-            let mut unloaded = false;
-            if let Some(chunk) = self.chunks.remove(&chunk_position) {
-                if let Some(c) = chunk.borrow_mut().get_chunk_column_mut().as_mut() {
-                    c.bind_mut().base_mut().queue_free();
-                }
-                unloaded = true;
+    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
+        let mut unloaded = false;
+        if let Some(chunk) = self.chunks.remove(&chunk_position) {
+            if let Some(c) = chunk.borrow_mut().get_chunk_column_mut().as_mut() {
+                c.bind_mut().base_mut().queue_free();
             }
-            if !unloaded {
-                error!("Unload chunk not found: {}", chunk_position);
-            }
+            unloaded = true;
+        }
+        if !unloaded {
+            error!("Unload chunk not found: {}", chunk_position);
         }
     }
 
@@ -150,7 +148,7 @@ impl ChunksContainer {
     fn spawn_loaded_chunks(&mut self) {
         let now = std::time::Instant::now();
         let mut count = 0;
-        let mut base =  self.base_mut().clone();
+        let mut base = self.base_mut().clone();
         for (chunk_position, chunk) in self.chunks.iter() {
             if count >= LIMIT_CHUNK_SPAWN_PER_FRAME && LIMIT_CHUNK_SPAWN_PER_FRAME != -1_i32 {
                 continue;

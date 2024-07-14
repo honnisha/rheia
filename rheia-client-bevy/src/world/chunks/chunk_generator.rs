@@ -63,20 +63,18 @@ pub fn chunk_generator(
 
             let mesh = generate_chunk_geometry(&bordered_chunk_data);
 
-            let entity = if mesh.count_vertices() == 0 {
-                commands.spawn(PbrBundle {
-                    transform: c.get_transform(y as u8),
-                    material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-                    ..default()
-                })
-            } else {
-                commands.spawn(PbrBundle {
-                    mesh: meshes.add(mesh),
-                    transform: c.get_transform(y as u8),
-                    material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
-                    ..default()
-                })
+            let mut pbr = PbrBundle {
+                transform: c.get_transform(y as u8),
+                material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
+                visibility: Visibility::Hidden,
+                ..default()
             };
+            if mesh.count_vertices() != 0 {
+                pbr.mesh = meshes.add(mesh);
+                pbr.visibility = Visibility::Visible;
+            }
+
+            let entity = commands.spawn(pbr);
             let section = ChunkSection::new(entity.id());
             c.insert_section(section);
         }

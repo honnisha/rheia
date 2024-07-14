@@ -95,11 +95,10 @@ impl OrientedBlockFace {
 
     #[inline]
     pub fn quad_mesh_positions(&self, quad: &UnorientedQuad, voxel_size: f32) -> [Vector3; 4] {
-        self.quad_corners(quad)
-            .map(|c| {
-                let v3 = voxel_size * c.as_vec3();
-                Vector3::new(v3.x as FloatType, v3.y as FloatType, v3.z as FloatType)
-            })
+        self.quad_corners(quad).map(|c| {
+            let v3 = voxel_size * c.as_vec3();
+            Vector3::new(v3.x as FloatType, v3.y as FloatType, v3.z as FloatType)
+        })
     }
 
     #[inline]
@@ -143,12 +142,7 @@ impl OrientedBlockFace {
     ///      -------->
     ///        +U
     #[inline]
-    pub fn tex_coords(
-        &self,
-        u_flip_face: Axis,
-        flip_v: bool,
-        quad: &UnorientedQuad,
-    ) -> [Vector2; 4] {
+    pub fn tex_coords(&self, u_flip_face: Axis, flip_v: bool, quad: &UnorientedQuad) -> [Vector2; 4] {
         let face_normal_axis = self.permutation.axes()[0];
         let flip_u = if self.n_sign < 0 {
             u_flip_face != face_normal_axis
