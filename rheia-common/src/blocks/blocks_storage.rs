@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::utils::block_mesh::greedy::MergeVoxel;
+
 use super::{block_type_info::BlockTypeInfo, voxel_visibility::VoxelVisibility};
 
 #[derive(Debug, Clone, Copy, Eq, EnumIter, Serialize, Deserialize)]
@@ -38,5 +40,18 @@ impl PartialEq for BlockType {
 impl BlockType {
     pub fn to_iter() -> BlockTypeIter {
         BlockType::iter()
+    }
+}
+
+impl MergeVoxel for BlockType {
+    type MergeValue = Self;
+    type MergeValueFacingNeighbour = Self;
+
+    fn merge_value(&self) -> Self::MergeValue {
+        *self
+    }
+
+    fn merge_value_facing_neighbour(&self) -> Self::MergeValueFacingNeighbour {
+        *self
     }
 }

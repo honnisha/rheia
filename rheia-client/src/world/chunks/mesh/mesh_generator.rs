@@ -3,10 +3,11 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
-use common::utils::block_mesh::{
-    buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
-};
 use common::{blocks::blocks_storage::BlockType, physics::physics::PhysicsColliderBuilder};
+use common::{
+    utils::block_mesh::{buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
+    CHUNK_SIZE,
+};
 use godot::{
     classes::mesh::PrimitiveType,
     engine::{mesh::ArrayType, ArrayMesh},
@@ -46,7 +47,7 @@ pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
         chunk_data, //&b_chunk,
         &ChunkBordersShape {},
         [0; 3],
-        [17; 3],
+        [CHUNK_SIZE as u32; 3],
         &RIGHT_HANDED_Y_UP_CONFIG.faces,
         &mut buffer,
     );

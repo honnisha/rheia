@@ -8,7 +8,11 @@ use bevy::{
 };
 use common::{
     blocks::blocks_storage::BlockType,
-    utils::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
+    utils::block_mesh::{
+        greedy::{greedy_quads, GreedyQuadsBuffer},
+        visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
+    },
+    CHUNK_SIZE,
 };
 use ndshape::ConstShape;
 
@@ -37,6 +41,19 @@ pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
         &ChunkBordersShape {},
         [0; 3],
         [17; 3],
+        &RIGHT_HANDED_Y_UP_CONFIG.faces,
+        &mut buffer,
+    );
+    buffer
+}
+
+pub fn generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> GreedyQuadsBuffer {
+    let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
+    greedy_quads(
+        chunk_data, //&b_chunk,
+        &ChunkBordersShape {},
+        [0; 3],
+        [CHUNK_SIZE as u32 + 1; 3],
         &RIGHT_HANDED_Y_UP_CONFIG.faces,
         &mut buffer,
     );
