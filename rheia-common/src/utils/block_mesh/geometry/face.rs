@@ -1,6 +1,6 @@
-use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
-
 use ilattice::glam::{IVec3, UVec3};
+
+use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
 
 /// Metadata that's used to aid in the geometric calculations for one of the 6 possible cube faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -19,7 +19,6 @@ pub struct OrientedBlockFace {
     pub(crate) v: UVec3,
 }
 
-#[allow(dead_code)]
 impl OrientedBlockFace {
     pub const fn new(n_sign: i32, permutation: AxisPermutation) -> Self {
         let [n_axis, u_axis, v_axis] = permutation.axes();
@@ -75,8 +74,9 @@ impl OrientedBlockFace {
     /// left, but when (0,0) is at the top left, V must be flipped.
     #[inline]
     pub fn quad_corners(&self, quad: &UnorientedQuad) -> [UVec3; 4] {
-        let w_vec = self.v * quad.width; // orig: u
-        let h_vec = self.u * quad.height; // orig: v
+        // Godot need to switch those
+        let w_vec = self.u * quad.width;
+        let h_vec = self.v * quad.height;
 
         let minu_minv = if self.n_sign > 0 {
             UVec3::from(quad.minimum) + self.n
@@ -126,14 +126,6 @@ impl OrientedBlockFace {
     ///
     /// If you need to use a texture atlas, you must calculate your own
     /// coordinates from the `Quad`.
-    ///         2 ----> 3
-    ///           ^
-    ///     ^       \
-    ///     |         \
-    ///  +V |   0 ----> 1
-    ///     |
-    ///      -------->
-    ///        +U
     #[inline]
     pub fn tex_coords(&self, u_flip_face: Axis, flip_v: bool, quad: &UnorientedQuad) -> [[f32; 2]; 4] {
         let face_normal_axis = self.permutation.axes()[0];
