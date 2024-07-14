@@ -66,14 +66,14 @@ pub fn chunk_generator(
             let entity = if mesh.count_vertices() == 0 {
                 commands.spawn(PbrBundle {
                     transform: c.get_transform(y as u8),
-                    material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+                    material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
                     ..default()
                 })
             } else {
                 commands.spawn(PbrBundle {
-                    mesh: meshes.add(mesh.into()),
+                    mesh: meshes.add(mesh),
                     transform: c.get_transform(y as u8),
-                    material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+                    material: materials.add(Color::srgb(0.3, 0.5, 0.3)),
                     ..default()
                 })
             };

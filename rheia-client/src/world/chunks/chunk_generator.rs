@@ -3,7 +3,7 @@ use super::{
     godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
-    main_scene::PhysicsContainerType, utils::position::IntoGodotVector, world::world_manager::TextureMapperType,
+    main_scene::PhysicsContainerType, utils::bridge::IntoGodotVector, world::world_manager::TextureMapperType,
 };
 use common::{chunks::chunk_position::ChunkPosition, physics::physics::PhysicsContainer, VERTICAL_SECTIONS};
 use flume::Sender;

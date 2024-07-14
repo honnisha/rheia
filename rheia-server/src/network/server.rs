@@ -76,7 +76,7 @@ impl NetworkContainer {
 
 impl NetworkPlugin {
     pub fn build(app: &mut App) {
-        let server_settings = app.world.get_resource::<ServerSettings>().unwrap();
+        let server_settings = app.world().get_resource::<ServerSettings>().unwrap();
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
         log::info!(target: "network", "Starting server on {}", ip_port);

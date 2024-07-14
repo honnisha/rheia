@@ -1,17 +1,20 @@
 use std::f32::consts::PI;
 
-use bevy::{
-    core_pipeline::experimental::taa::TemporalAntiAliasPlugin,
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*, window::PresentMode,
-};
+use bevy::{color::palettes::css::SILVER, core_pipeline::experimental::taa::TemporalAntiAliasPlugin, prelude::*, window::PresentMode};
 use network::client::NetworkPlugin;
 use player_controller::controller::PlayerControllerPlugin;
 use world::worlds_manager::WorldsManagerPlugin;
 
 pub mod network;
 pub mod player_controller;
+pub mod utils;
 pub mod world;
+
+// Network Renet
+pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
+
+// Network RakNet
+// pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
 
 fn main() {
     let mut app = App::new();
@@ -27,19 +30,21 @@ fn main() {
         NetworkPlugin::default(),
         PlayerControllerPlugin::default(),
         TemporalAntiAliasPlugin,
-        FrameTimeDiagnosticsPlugin,
-        LogDiagnosticsPlugin::default(),
+        // FrameTimeDiagnosticsPlugin,
+        // LogDiagnosticsPlugin::default(),
     ));
     app.add_systems(Startup, setup);
     app.run();
 }
 
-fn setup(mut commands: Commands) {
-    // camera
-    //commands.spawn(Camera3dBundle {
-    //    transform: Transform::from_xyz(0.0, 60.0, 60.0).looking_at(Vec3::ZERO, Vec3::Y),
-    //    ..default()
-    //});
+fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<StandardMaterial>>) {
+    // ground plane
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Plane3d::default().mesh().size(10.0, 10.0).subdivisions(10)),
+        material: materials.add(Color::from(SILVER)),
+        ..default()
+    });
+
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,

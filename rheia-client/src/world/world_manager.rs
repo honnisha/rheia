@@ -1,5 +1,3 @@
-use common::chunks::chunk_position::ChunkPosition;
-use common::chunks::utils::SectionsData;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
 use parking_lot::RwLock;
@@ -91,44 +89,5 @@ impl WorldManager {
         self.base.remove_child(self.world.as_mut().unwrap().clone().upcast());
         self.world = None;
         log::info!(target: "world", "World \"{}\" destroyed;", slug);
-    }
-
-    /// Load chunk column by the network
-    pub fn load_chunk(&mut self, world_slug: String, chunk_position: ChunkPosition, sections: SectionsData) {
-        let world = match self.world.as_mut() {
-            Some(w) => w,
-            None => {
-                log::error!(target: "world", "load_chunk tried to run without a world");
-                return;
-            }
-        };
-
-        let mut world = world.bind_mut();
-        if world_slug != *world.get_slug() {
-            log::error!(
-                target: "world",
-                "Tried to load chunk {} for non existed world {}",
-                chunk_position, world_slug
-            );
-            return;
-        }
-        world.load_chunk(chunk_position, sections);
-    }
-
-    pub fn unload_chunk(&mut self, world_slug: String, chunks_positions: Vec<ChunkPosition>) {
-        let world = match self.world.as_mut() {
-            Some(w) => w,
-            None => {
-                log::error!(target: "world", "unload_chunk tried to run without a world");
-                return;
-            }
-        };
-
-        let mut world = world.bind_mut();
-        if world_slug != *world.get_slug() {
-            log::error!(target: "world", "Tried to unload chunks for non existed world {}", world_slug);
-            return;
-        }
-        world.unload_chunk(chunks_positions);
     }
 }

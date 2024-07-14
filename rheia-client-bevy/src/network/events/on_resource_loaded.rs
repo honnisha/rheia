@@ -15,5 +15,5 @@ impl ResourceLoadedEvent {
 }
 
 pub fn on_resource_loaded(mut resource_loaded_event: EventReader<ResourceLoadedEvent>) {
-    for event in resource_loaded_event.iter() {}
+    for event in resource_loaded_event.read() {}
 }

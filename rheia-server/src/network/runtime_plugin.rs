@@ -1,11 +1,8 @@
-use std::sync::{Arc, RwLock};
-
-use bevy::{
-    app::AppExit,
-    prelude::{App, EventWriter, Plugin},
-};
+use bevy::prelude::{App, EventWriter, Plugin};
+use bevy_app::AppExit;
 use bevy_app::{First, Startup};
 use lazy_static::lazy_static;
+use std::sync::{Arc, RwLock};
 
 lazy_static! {
     static ref SERVER_STATE: Arc<RwLock<ServerState>> = Arc::new(RwLock::new(ServerState::STARTED));
@@ -60,8 +57,8 @@ fn activate_runtime() {
     RuntimePlugin::activate();
 }
 
-fn update_runtime(mut exit: EventWriter<AppExit>) {
+fn update_runtime(mut app_exit_events: EventWriter<AppExit>) {
     if RuntimePlugin::is_stopped() {
-        exit.send(AppExit)
+        app_exit_events.send(AppExit::Success);
     }
 }

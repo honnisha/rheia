@@ -1,8 +1,7 @@
 use bevy::{
     prelude::*,
     render::{
-        mesh::{Indices, VertexAttributeValues},
-        render_resource::PrimitiveTopology,
+        mesh::{Indices, VertexAttributeValues}, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology
     },
 };
 use common::blocks::blocks_storage::BlockType;
@@ -104,11 +103,11 @@ pub fn generate_chunk_geometry(
         }
     }
 
-    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::empty());
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, VertexAttributeValues::Float32x3(positions));
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, VertexAttributeValues::Float32x3(normals));
     render_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, tex_coords);
-    render_mesh.set_indices(Some(Indices::U32(indices.clone())));
+    render_mesh.insert_indices(Indices::U32(indices.clone()));
 
     render_mesh
 }

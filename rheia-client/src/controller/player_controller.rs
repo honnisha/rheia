@@ -1,4 +1,4 @@
-use crate::utils::position::IntoNetworkVector;
+use crate::utils::bridge::IntoNetworkVector;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
@@ -121,7 +121,7 @@ impl PlayerController {
             skin_rotation.y = new_yaw;
             self.body_controller.set_rotation(skin_rotation);
 
-            let mut force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
+            let force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
 
             self.physics_controller.controller_move(
                 &mut self.physics_entity,

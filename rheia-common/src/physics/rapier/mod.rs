@@ -110,7 +110,7 @@ pub struct RapierPhysicsCharacterController {
 impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
     fn create() -> Self {
         let mut character_controller = KinematicCharacterController::default();
-        character_controller.offset = CharacterLength::Absolute(0.0);
+        character_controller.offset = CharacterLength::Absolute(0.01);
         character_controller.autostep = Some(CharacterAutostep {
             max_height: CharacterLength::Absolute(0.5),
             min_width: CharacterLength::Absolute(0.5),
@@ -284,7 +284,7 @@ impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> f
     }
 
     fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> RapierPhysicsRigidBodyEntity {
-        let mut rigid_body = RigidBodyBuilder::dynamic().build();
+        let mut rigid_body = RigidBodyBuilder::kinematic_position_based().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
 
         let radius = radius;

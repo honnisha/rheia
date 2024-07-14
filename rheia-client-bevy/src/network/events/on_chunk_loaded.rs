@@ -5,13 +5,15 @@ use log::error;
 
 #[derive(Event)]
 pub struct ChunkLoadedEvent {
+    world_slug: String,
     chunk_position: ChunkPosition,
     sections: SectionsData,
 }
 
 impl ChunkLoadedEvent {
-    pub fn new(chunk_position: ChunkPosition, sections: SectionsData) -> Self {
+    pub fn new(world_slug: String, chunk_position: ChunkPosition, sections: SectionsData) -> Self {
         Self {
+            world_slug,
             chunk_position,
             sections,
         }

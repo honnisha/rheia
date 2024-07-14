@@ -4,7 +4,7 @@ use crate::controller::enums::controller_actions::ControllerActions;
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
-use crate::utils::position::IntoGodotVector;
+use crate::utils::bridge::IntoGodotVector;
 use crate::world::world_manager::WorldManager;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::client::ClientNetwork;
@@ -105,7 +105,8 @@ impl INode for Main {
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
-        let network = match NetworkContainer::new("127.0.0.1:19132".to_string()) {
+        let ip_port = "127.0.0.1:19132".to_string();
+        let network = match NetworkContainer::new(ip_port) {
             Ok(c) => c,
             Err(e) => {
                 log::error!(target: "main", "Network connection error: {}", e);
@@ -177,13 +178,40 @@ impl INode for Main {
                     sections,
                 } => {
                     let world_manager = self.get_world_manager_mut();
-                    world_manager.load_chunk(world_slug, chunk_position, sections);
+                    let world = match world_manager.get_world_mut() {
+                        Some(w) => w,
+                        None => {
+                            log::error!(target: "network", "load_chunk tried to run without a world");
+                            return;
+                        }
+                    };
+                    if world_slug != *world.bind().get_slug() {
+                        log::error!(
+                            target: "network",
+                            "Tried to load chunk {} for non existed world {}",
+                            chunk_position, world_slug
+                        );
+                        return;
+                    }
+                    world.bind_mut().load_chunk(chunk_position, sections);
                     chunks.push(chunk_position);
                 }
                 ServerMessages::UnloadChunks { chunks, world_slug } => {
-                    self.get_world_manager_mut().unload_chunk(world_slug, chunks);
+                    let world_manager = self.get_world_manager_mut();
+                    let world = match world_manager.get_world_mut() {
+                        Some(w) => w,
+                        None => {
+                            log::error!(target: "network", "load_chunk tried to run without a world");
+                            return;
+                        }
+                    };
+                    if world_slug != *world.bind().get_slug() {
+                        log::error!(target: "network", "Tried to unload chunks for non existed world {}", world_slug);
+                        return;
+                    }
+                    world.bind_mut().unload_chunk(chunks);
                 }
-                _ => panic!("unsupported chunks message"),
+                _ => panic!("unsupported message"),
             }
         }
 

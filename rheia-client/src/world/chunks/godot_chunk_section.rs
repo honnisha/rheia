@@ -13,7 +13,7 @@ use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::{
     main_scene::{PhysicsColliderBuilderType, PhysicsContainerType, PhysicsStaticEntityType},
-    utils::position::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
+    utils::bridge::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
     world::godot_world::get_default_material,
 };
 

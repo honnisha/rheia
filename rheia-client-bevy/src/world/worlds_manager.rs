@@ -47,11 +47,13 @@ impl WorldsManager {
     }
 
     pub fn load_world(&mut self, slug: String) {
-        let world = WorldManager::new(slug);
+        let world = WorldManager::new(slug.clone());
+        log::info!(target: "world", "World \"{}\" loaded", slug);
         self.world = Some(world);
     }
 
     pub fn unload_world(&mut self) {
+        log::info!(target: "world", "World \"{}\" unloaded", self.get_world_slug().unwrap_or(&"-".to_string()));
         self.world = None;
     }
 }

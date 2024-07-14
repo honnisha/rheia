@@ -3,26 +3,21 @@ use bevy::prelude::*;
 use bevy_app::App;
 use bevy_ecs::system::Res;
 use common::{
-    chunks::utils::unpack_network_sectioins,
-    network::{channels::ServerChannel, connection_config, login::Login, messages::ServerMessages, PROTOCOL_ID},
+    chunks::chunk_position::ChunkPosition,
+    network::{
+        client::ClientNetwork,
+        messages::{ClientMessages, NetworkMessageType, ServerMessages},
+    },
 };
-use log::info;
-use renet::{
-    transport::{ClientAuthentication, NetcodeClientTransport},
-    RenetClient,
-};
-use std::{
-    net::UdpSocket,
-    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
-use std::{sync::Arc, time::SystemTime};
+use parking_lot::RwLock;
+
+use std::sync::Arc;
+
+use crate::{utils::bridge::IntoBevyVector, NetworkClientType};
 
 use super::events::{
-    netcode_error::{netcode_error_handler, NetcodeErrorEvent},
-    on_chunk_loaded::{on_chunk_loaded, ChunkLoadedEvent},
-    on_chunk_unloaded::{on_chunk_unloaded, ChunkUnloadedEvent},
-    on_player_teleport::{on_player_teleport, PlayerTeleportEvent},
-    on_resource_loaded::{on_resource_loaded, ResourceLoadedEvent},
+    self, netcode_error::NetcodeErrorEvent, on_chunk_loaded::ChunkLoadedEvent, on_chunk_unloaded::ChunkUnloadedEvent,
+    on_player_teleport::PlayerTeleportEvent, on_resource_loaded::ResourceLoadedEvent,
 };
 
 #[derive(Default)]
@@ -30,141 +25,117 @@ pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
+        app.add_event::<NetcodeErrorEvent>();
         app.add_systems(
             Update,
-            handle_events_system.run_if(resource_exists::<NetworkContainer>()),
+            events::netcode_error::netcode_error_handler.after(handle_events_system),
         );
 
-        app.add_event::<NetcodeErrorEvent>();
-        app.add_systems(Update, netcode_error_handler.after(handle_events_system));
-
         app.add_event::<ResourceLoadedEvent>();
-        app.add_systems(Update, on_resource_loaded.after(handle_events_system));
+        app.add_systems(
+            Update,
+            events::on_resource_loaded::on_resource_loaded.after(handle_events_system),
+        );
 
         app.add_event::<PlayerTeleportEvent>();
-        app.add_systems(Update, on_player_teleport.after(handle_events_system));
+        app.add_systems(
+            Update,
+            events::on_player_teleport::on_player_teleport.after(handle_events_system),
+        );
 
         app.add_event::<ChunkLoadedEvent>();
-        app.add_systems(Update, on_chunk_loaded.after(on_player_teleport));
+        app.add_systems(
+            Update,
+            events::on_chunk_loaded::on_chunk_loaded.after(events::on_player_teleport::on_player_teleport),
+        );
 
         app.add_event::<ChunkUnloadedEvent>();
-        app.add_systems(Update, on_chunk_unloaded.after(on_player_teleport));
+        app.add_systems(
+            Update,
+            events::on_chunk_unloaded::on_chunk_unloaded.after(events::on_player_teleport::on_player_teleport),
+        );
 
+        app.add_systems(Update, handle_events_system.run_if(resource_exists::<NetworkContainer>));
         app.add_systems(Startup, connect_server);
     }
 }
 
-pub type ServerLock = Arc<RwLock<RenetClient>>;
-pub type TransferLock = Arc<RwLock<NetcodeClientTransport>>;
+pub type NetworkLockType = Arc<RwLock<NetworkClientType>>;
 
 #[derive(Resource)]
 pub struct NetworkContainer {
-    client: ServerLock,
-    transport: TransferLock,
+    client_network: Arc<RwLock<NetworkClientType>>,
 }
 
 impl NetworkContainer {
-    pub fn new(client: RenetClient, transport: NetcodeClientTransport) -> Self {
-        Self {
-            client: Arc::new(RwLock::new(client)),
-            transport: Arc::new(RwLock::new(transport)),
-        }
+    pub fn new(ip_port: String) -> Result<Self, String> {
+        log::info!(target: "network", "Connecting to the server at {}", ip_port);
+        let network = match NetworkClientType::new(ip_port) {
+            Ok(n) => n,
+            Err(e) => return Err(e),
+        };
+        Ok(Self {
+            client_network: Arc::new(RwLock::new(network)),
+        })
+    }
+
+    pub fn get_network_lock(&self) -> Arc<RwLock<NetworkClientType>> {
+        self.client_network.clone()
     }
 
     pub fn disconnect(&self) {
-        let mut transport = self.get_transport_mut();
-        if transport.is_connected() {
-            transport.disconnect();
-            info!("Disconnected from the server");
+        let network = self.client_network.read();
+
+        if network.is_connected() {
+            log::info!(target: "network", "Disconnected from the server");
+            network.disconnect();
         }
-    }
-
-    pub fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
-        self.client.as_ref().write().expect("poisoned")
-    }
-
-    pub fn get_transport(&self) -> RwLockReadGuard<NetcodeClientTransport> {
-        self.transport.as_ref().read().expect("poisoned")
-    }
-
-    pub fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
-        self.transport.as_ref().write().expect("poisoned")
-    }
-}
-
-impl NetworkPlugin {
-    fn create_client(ip_port: String, login: String) -> Result<NetworkContainer, String> {
-        let client = RenetClient::new(connection_config());
-
-        // Setup transport layer
-        let server_addr = ip_port.clone().parse().unwrap();
-        let socket = match UdpSocket::bind("127.0.0.1:0") {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(format!("IP {} error: {}", ip_port, e));
-            }
-        };
-        let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-        let client_id = current_time.as_millis() as u64;
-        let authentication = ClientAuthentication::Unsecure {
-            server_addr: server_addr,
-            client_id,
-            user_data: Some(Login(login).to_netcode_user_data()),
-            protocol_id: PROTOCOL_ID,
-        };
-
-        let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
-
-        Ok(NetworkContainer::new(client, transport))
     }
 }
 
 fn connect_server(mut commands: Commands) {
-    let ip_port = "127.0.0.1:14191".to_string();
-    let login = "Test_cl".to_string();
-    info!("Connecting to the server {}", ip_port);
-    let network_container = match NetworkPlugin::create_client(ip_port, login) {
-        Ok(n) => n,
+    let ip_port = "127.0.0.1:19132".to_string();
+
+    let network_container = match NetworkContainer::new(ip_port) {
+        Ok(c) => c,
         Err(e) => {
+            log::error!(target: "network", "Network connection error: {}", e);
             panic!("Connection error: {}", e);
         }
     };
+
     commands.insert_resource(network_container);
-    info!("Connection to the server was successful");
+    log::info!(target: "network", "Connection to the server was successful");
 }
 
 fn handle_events_system(
     network_container: Res<NetworkContainer>,
-    time: Res<Time>,
     mut netcode_error_event: EventWriter<NetcodeErrorEvent>,
     mut resource_loaded_event: EventWriter<ResourceLoadedEvent>,
     mut player_teleport_event: EventWriter<PlayerTeleportEvent>,
     mut chunk_loaded_event: EventWriter<ChunkLoadedEvent>,
     mut chunk_unloaded_event: EventWriter<ChunkUnloadedEvent>,
 ) {
-    let mut client = network_container.get_client_mut();
-    client.update(time.delta());
-    if client.is_disconnected() {
+    let lock = network_container.get_network_lock();
+    let network = lock.read();
+
+    // Recieve errors from network thread
+    for error in network.iter_errors() {
+        netcode_error_event.send(NetcodeErrorEvent::new(error));
         return;
     }
 
-    let mut transport = network_container.get_transport_mut();
-    if let Err(e) = transport.update(time.delta(), &mut client) {
-        netcode_error_event.send(NetcodeErrorEvent::new(e));
-        return;
-    }
-
-    while let Some(server_message) = client.receive_message(ServerChannel::Reliable) {
-        let decoded: ServerMessages = match bincode::deserialize(&server_message) {
-            Ok(d) => d,
-            Err(e) => {
-                error!("Decode server message error: {}", e);
-                continue;
-            }
-        };
+    let mut chunks: Vec<ChunkPosition> = Default::default();
+    for decoded in network.iter_server_messages() {
         match decoded {
+            ServerMessages::AllowConnection => {
+                let connection_info = ClientMessages::ConnectionInfo {
+                    login: "Test_cl".to_string(),
+                };
+                network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
+            }
             ServerMessages::ConsoleOutput { message } => {
-                info!("{}", message);
+                log::info!(target: "network", "{}", message);
             }
             ServerMessages::Resource { slug, scripts } => {
                 resource_loaded_event.send(ResourceLoadedEvent::new(slug, scripts));
@@ -177,7 +148,7 @@ fn handle_events_system(
             } => {
                 player_teleport_event.send(PlayerTeleportEvent::new(
                     world_slug,
-                    Transform::from_xyz(location[0], location[1], location[2]),
+                    location.to_transform(),
                     yaw,
                     pitch,
                 ));
@@ -185,21 +156,21 @@ fn handle_events_system(
             ServerMessages::ChunkSectionInfo {
                 world_slug,
                 chunk_position,
-                mut sections,
+                sections,
             } => {
-                chunk_loaded_event.send(ChunkLoadedEvent::new(
-                    chunk_position,
-                    unpack_network_sectioins(&mut sections),
-                ));
+                chunk_loaded_event.send(ChunkLoadedEvent::new(world_slug, chunk_position, sections));
+                chunks.push(chunk_position);
             }
             ServerMessages::UnloadChunks { world_slug, chunks } => {
-                chunk_unloaded_event.send(ChunkUnloadedEvent::new(chunks));
+                chunk_unloaded_event.send(ChunkUnloadedEvent::new(world_slug, chunks));
             }
+            _ => panic!("unsupported message"),
         }
     }
-
-    if let Err(e) = transport.send_packets(&mut client) {
-        netcode_error_event.send(NetcodeErrorEvent::new(e));
-        return;
+    if chunks.len() > 0 {
+        let input = ClientMessages::ChunkRecieved {
+            chunk_positions: chunks,
+        };
+        network.send_message(&input, NetworkMessageType::ReliableOrdered);
     }
 }

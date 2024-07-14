@@ -1,4 +1,4 @@
-use bevy::prelude::{Event, Events, ResMut, Commands};
+use bevy::prelude::{Commands, Event, Events, ResMut};
 use common::chunks::chunk_position::ChunkPosition;
 use log::error;
 
@@ -6,12 +6,16 @@ use crate::world::worlds_manager::WorldsManager;
 
 #[derive(Event)]
 pub struct ChunkUnloadedEvent {
+    world_slug: String,
     chunks_positions: Vec<ChunkPosition>,
 }
 
 impl ChunkUnloadedEvent {
-    pub fn new(chunks_positions: Vec<ChunkPosition>) -> Self {
-        Self { chunks_positions }
+    pub fn new(world_slug: String, chunks_positions: Vec<ChunkPosition>) -> Self {
+        Self {
+            world_slug,
+            chunks_positions,
+        }
     }
 }
 

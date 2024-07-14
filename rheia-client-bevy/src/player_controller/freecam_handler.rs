@@ -1,10 +1,10 @@
 use std::f32::consts::PI;
 
 use bevy::{
-    input::mouse::MouseMotion,
+    input::{mouse::MouseMotion, ButtonInput},
     prelude::{
-        default, Camera, Camera3dBundle, Commands, Component, EulerRot, EventReader, Input, KeyCode, Quat, Query,
-        Transform, Vec2, Vec3, With,
+        default, Camera, Camera3dBundle, Commands, Component, EulerRot, EventReader, KeyCode, Quat, Query, Transform,
+        Vec2, Vec3, With,
     },
     time::Time,
 };
@@ -34,12 +34,12 @@ impl Default for FreecamCameraController {
         Self {
             enabled: true,
             sensitivity: 0.5,
-            key_forward: KeyCode::W,
-            key_back: KeyCode::S,
-            key_left: KeyCode::A,
-            key_right: KeyCode::D,
-            key_up: KeyCode::E,
-            key_down: KeyCode::Q,
+            key_forward: KeyCode::KeyW,
+            key_back: KeyCode::KeyS,
+            key_left: KeyCode::KeyA,
+            key_right: KeyCode::KeyD,
+            key_up: KeyCode::KeyE,
+            key_down: KeyCode::KeyQ,
             key_run: KeyCode::ShiftLeft,
             walk_speed: 10.0,
             run_speed: 30.0,
@@ -54,14 +54,14 @@ impl Default for FreecamCameraController {
 pub(crate) fn freecam_camera_handler(
     time: Res<Time>,
     mut mouse_events: EventReader<MouseMotion>,
-    key_input: Res<Input<KeyCode>>,
+    key_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Transform, &mut FreecamCameraController), With<Camera>>,
 ) {
     let dt = time.delta_seconds();
 
     // Handle mouse input
     let mut mouse_delta = Vec2::ZERO;
-    for mouse_event in mouse_events.iter() {
+    for mouse_event in mouse_events.read() {
         mouse_delta += mouse_event.delta;
     }
 
@@ -122,9 +122,6 @@ pub(crate) fn freecam_camera_handler(
 
 /// Spawn a camera like this
 pub fn spawn_camera(mut commands: Commands) {
-    let translation = Vec3::new(0.0, 60.0, 0.0);
-    let radius = translation.length();
-
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(-1.0, 1.0, 1.0).looking_at(Vec3::new(-1.0, 1.0, 0.0), Vec3::Y),

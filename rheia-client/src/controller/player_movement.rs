@@ -2,7 +2,7 @@ use common::network::messages::ClientMessages;
 use godot::{prelude::Vector3, register::GodotClass};
 use std::fmt::{self, Display, Formatter};
 
-use crate::{main_scene::FloatType, utils::position::IntoNetworkVector};
+use crate::{main_scene::FloatType, utils::bridge::IntoNetworkVector};
 
 /// Used to transmit motion data
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]

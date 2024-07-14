@@ -27,7 +27,7 @@ pub fn on_player_teleport(
     mut player_teleport_event: EventReader<PlayerTeleportEvent>,
     mut worlds_manager: ResMut<WorldsManager>,
 ) {
-    for event in player_teleport_event.iter() {
+    for event in player_teleport_event.read() {
         match worlds_manager.get_world_slug() {
             Some(slug) => {
                 // Teleport to new world
