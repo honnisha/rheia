@@ -1,6 +1,6 @@
-use ilattice::glam::{IVec3, UVec3};
+use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
 
-use super::{SignedAxis, AxisPermutation, UnorientedQuad, Axis};
+use ilattice::glam::{IVec3, UVec3, Vec2, Vec3};
 
 /// Metadata that's used to aid in the geometric calculations for one of the 6 possible cube faces.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -19,6 +19,7 @@ pub struct OrientedBlockFace {
     pub(crate) v: UVec3,
 }
 
+#[allow(dead_code)]
 impl OrientedBlockFace {
     pub const fn new(n_sign: i32, permutation: AxisPermutation) -> Self {
         let [n_axis, u_axis, v_axis] = permutation.axes();
@@ -74,8 +75,8 @@ impl OrientedBlockFace {
     /// left, but when (0,0) is at the top left, V must be flipped.
     #[inline]
     pub fn quad_corners(&self, quad: &UnorientedQuad) -> [UVec3; 4] {
-        let w_vec = self.u * quad.width;
-        let h_vec = self.v * quad.height;
+        let w_vec = self.v * quad.width; // orig: u
+        let h_vec = self.u * quad.height; // orig: v
 
         let minu_minv = if self.n_sign > 0 {
             UVec3::from(quad.minimum) + self.n
@@ -90,14 +91,17 @@ impl OrientedBlockFace {
     }
 
     #[inline]
-    pub fn quad_mesh_positions(&self, quad: &UnorientedQuad, voxel_size: f32) -> [[f32; 3]; 4] {
-        self.quad_corners(quad)
-            .map(|c| (voxel_size * c.as_vec3()).to_array())
+    pub fn quad_mesh_positions(&self, quad: &UnorientedQuad, voxel_size: f32) -> [Vec3; 4] {
+        self.quad_corners(quad).map(|c| {
+            let v3 = voxel_size * c.as_vec3();
+            Vec3::new(v3.x, v3.y, v3.z)
+        })
     }
 
     #[inline]
-    pub fn quad_mesh_normals(&self) -> [[f32; 3]; 4] {
-        [self.signed_normal().as_vec3().to_array(); 4]
+    pub fn quad_mesh_normals(&self) -> [Vec3; 4] {
+        let v3 = self.signed_normal().as_vec3();
+        [Vec3::new(v3.x, v3.y, v3.z); 4]
     }
 
     /// Returns the 6 vertex indices for the quad in order to make two triangles
@@ -107,7 +111,7 @@ impl OrientedBlockFace {
     /// Front faces will be wound counterclockwise, and back faces clockwise, as
     /// per convention.
     #[inline]
-    pub fn quad_mesh_indices(&self, start: u32) -> [u32; 6] {
+    pub fn quad_mesh_indices(&self, start: i32) -> [i32; 6] {
         quad_indices(start, self.n_sign * self.permutation.sign() > 0)
     }
 
@@ -126,13 +130,16 @@ impl OrientedBlockFace {
     ///
     /// If you need to use a texture atlas, you must calculate your own
     /// coordinates from the `Quad`.
+    ///         2 ----> 3
+    ///           ^
+    ///     ^       \
+    ///     |         \
+    ///  +V |   0 ----> 1
+    ///     |
+    ///      -------->
+    ///        +U
     #[inline]
-    pub fn tex_coords(
-        &self,
-        u_flip_face: Axis,
-        flip_v: bool,
-        quad: &UnorientedQuad,
-    ) -> [[f32; 2]; 4] {
+    pub fn tex_coords(&self, u_flip_face: Axis, flip_v: bool, quad: &UnorientedQuad) -> [Vec2; 4] {
         let face_normal_axis = self.permutation.axes()[0];
         let flip_u = if self.n_sign < 0 {
             u_flip_face != face_normal_axis
@@ -140,30 +147,31 @@ impl OrientedBlockFace {
             u_flip_face == face_normal_axis
         };
 
+        let w = quad.width as f32;
         match (flip_u, flip_v) {
             (false, false) => [
-                [0.0, 0.0],
-                [quad.width as f32, 0.0],
-                [0.0, quad.height as f32],
-                [quad.width as f32, quad.height as f32],
+                Vec2::new(w, w),
+                Vec2::new(w, 0.0),
+                Vec2::new(0.0, w),
+                Vec2::new(0.0, 0.0),
             ],
             (true, false) => [
-                [quad.width as f32, 0.0],
-                [0.0, 0.0],
-                [quad.width as f32, quad.height as f32],
-                [0.0, quad.height as f32],
+                Vec2::new(w, w),
+                Vec2::new(w, 0.0),
+                Vec2::new(0.0, w),
+                Vec2::new(0.0, 0.0),
             ],
             (false, true) => [
-                [0.0, quad.height as f32],
-                [quad.width as f32, quad.height as f32],
-                [0.0, 0.0],
-                [quad.width as f32, 0.0],
+                Vec2::new(0.0, w),
+                Vec2::new(w, w),
+                Vec2::new(0.0, 0.0),
+                Vec2::new(w, 0.0),
             ],
             (true, true) => [
-                [quad.width as f32, quad.height as f32],
-                [0.0, quad.height as f32],
-                [quad.width as f32, 0.0],
-                [0.0, 0.0],
+                Vec2::new(w, w),
+                Vec2::new(0.0, w),
+                Vec2::new(w, 0.0),
+                Vec2::new(0.0, 0.0),
             ],
         }
     }
@@ -172,7 +180,7 @@ impl OrientedBlockFace {
 /// Returns the vertex indices for a single quad (two triangles). The triangles
 /// may have either clockwise or counter-clockwise winding. `start` is the first
 /// index.
-fn quad_indices(start: u32, counter_clockwise: bool) -> [u32; 6] {
+fn quad_indices(start: i32, counter_clockwise: bool) -> [i32; 6] {
     if counter_clockwise {
         [start, start + 1, start + 2, start + 1, start + 3, start + 2]
     } else {

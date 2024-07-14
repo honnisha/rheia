@@ -4,13 +4,13 @@ use godot::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
         Engine, Image, ImageTexture, StandardMaterial3D, Texture2D,
     },
-    prelude::{try_load, Gd, PackedByteArray, StringName, ToGodot}, obj::NewGd,
+    obj::NewGd,
+    prelude::{try_load, Gd, PackedByteArray, StringName, ToGodot},
 };
 use image::{imageops, ImageBuffer, ImageFormat, RgbaImage};
 use log::error;
 use log::trace;
 use std::io::Cursor;
-use strum::IntoEnumIterator;
 
 use super::texture_mapper::TextureMapper;
 
@@ -57,7 +57,7 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     let size = 16 * 32;
     let mut img: RgbaImage = ImageBuffer::new(size, size);
 
-    for block_type in BlockType::iter() {
+    for block_type in BlockType::to_iter() {
         let block_type_data = match block_type.get_block_type_info() {
             Some(d) => d,
             None => continue,

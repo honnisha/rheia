@@ -8,8 +8,9 @@ use common::{
 use ndshape::ConstShape;
 
 use super::{
+    chunk::ColumnDataType,
     godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
-    near_chunk_data::NearChunksData, chunk::ColumnDataType,
+    near_chunk_data::NearChunksData,
 };
 
 pub fn format_chunk_data_with_boundaries(

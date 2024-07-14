@@ -124,17 +124,19 @@ impl INode for Main {
 
         let network_info = handle_network_events(self);
 
-        self.debug_info.bind_mut().update_debug(&self.world_manager, network_info);
+        self.debug_info
+            .bind_mut()
+            .update_debug(&self.world_manager, network_info);
 
         let input = Input::singleton();
-        if input.is_action_just_pressed(ControllerActions::ToggleConsole.as_str().into()) {
+        if input.is_action_just_pressed(ControllerActions::ToggleConsole.to_string().into()) {
             self.console.bind_mut().toggle(!Console::is_active());
 
             if Console::is_active() {
                 self.debug_info.bind_mut().toggle(false);
             }
         }
-        if input.is_action_just_pressed(ControllerActions::ToggleDebug.as_str().into()) {
+        if input.is_action_just_pressed(ControllerActions::ToggleDebug.to_string().into()) {
             self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
 
             if DebugInfo::is_active() {

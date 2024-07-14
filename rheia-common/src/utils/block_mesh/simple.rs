@@ -1,7 +1,6 @@
-use super::{
-    bounds::assert_in_bounds, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad,
-};
-use common::blocks::voxel_visibility::{Voxel, IdentityVoxel, VoxelVisibility};
+use crate::blocks::voxel_visibility::{IdentityVoxel, Voxel, VoxelVisibility};
+
+use super::{bounds::assert_in_bounds, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad};
 use ilattice::glam::UVec3;
 use ilattice::prelude::Extent;
 use ndshape::Shape;
@@ -20,14 +19,7 @@ pub fn visible_block_faces<T, S>(
     T: Voxel,
     S: Shape<3, Coord = u32>,
 {
-    visible_block_faces_with_voxel_view::<_, IdentityVoxel<T>, _>(
-        voxels,
-        voxels_shape,
-        min,
-        max,
-        faces,
-        output,
-    )
+    visible_block_faces_with_voxel_view::<_, IdentityVoxel<T>, _>(voxels, voxels_shape, min, max, faces, output)
 }
 
 /// Same as [`visible_block_faces`](visible_block_faces),
@@ -51,11 +43,9 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
     let max = UVec3::from(max).as_ivec3();
     let extent = Extent::from_min_and_max(min, max);
     let interior = extent.padded(-1); // Avoid accessing out of bounds with a 3x3x3 kernel.
-    let interior =
-        Extent::from_min_and_shape(interior.minimum.as_uvec3(), interior.shape.as_uvec3());
+    let interior = Extent::from_min_and_shape(interior.minimum.as_uvec3(), interior.shape.as_uvec3());
 
-    let kernel_strides =
-        faces.map(|face| voxels_shape.linearize(face.signed_normal().as_uvec3().to_array()));
+    let kernel_strides = faces.map(|face| voxels_shape.linearize(face.signed_normal().as_uvec3().to_array()));
 
     for p in interior.iter3() {
         let p_array = p.to_array();
@@ -84,6 +74,65 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
                     block_type: *p_voxel.get_type(),
                 });
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{blocks::blocks_storage::BlockType, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+
+    use super::*;
+    use ndshape::{ConstShape, ConstShape3u32};
+
+    #[test]
+    #[should_panic]
+    fn panics_with_max_out_of_bounds_access() {
+        let samples = [EMPTY; SampleShape::SIZE as usize];
+        let mut buffer = UnitQuadBuffer::new();
+        visible_block_faces(
+            &samples,
+            &SampleShape {},
+            [0; 3],
+            [34, 33, 33],
+            &RIGHT_HANDED_Y_UP_CONFIG.faces,
+            &mut buffer,
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_with_min_out_of_bounds_access() {
+        let samples = [EMPTY; SampleShape::SIZE as usize];
+        let mut buffer = UnitQuadBuffer::new();
+        visible_block_faces(
+            &samples,
+            &SampleShape {},
+            [0, 34, 0],
+            [33; 3],
+            &RIGHT_HANDED_Y_UP_CONFIG.faces,
+            &mut buffer,
+        );
+    }
+
+    type SampleShape = ConstShape3u32<34, 34, 34>;
+
+    /// Basic voxel type with one byte of texture layers
+    #[derive(Default, Clone, Copy, Eq, PartialEq)]
+    struct BoolVoxel(bool);
+
+    const EMPTY: BoolVoxel = BoolVoxel(false);
+
+    impl Voxel for BoolVoxel {
+        fn get_visibility(&self) -> VoxelVisibility {
+            if *self == EMPTY {
+                VoxelVisibility::Empty
+            } else {
+                VoxelVisibility::Opaque
+            }
+        }
+        fn get_type(&self) -> &BlockType {
+            &BlockType::Air
         }
     }
 }

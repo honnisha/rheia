@@ -18,9 +18,9 @@ where
         .check_positive_shape()
         .unwrap_or_else(|| panic!("Invalid shape={shape:?}"));
     let query_extent = Extent::from_min_and_max(UVec3::from(min), UVec3::from(max));
-    query_extent.check_positive_shape().unwrap_or_else(|| {
-        panic!("Invalid extent min={min:?} max={max:?}; has non-positive shape")
-    });
+    query_extent
+        .check_positive_shape()
+        .unwrap_or_else(|| panic!("Invalid extent min={min:?} max={max:?}; has non-positive shape"));
     assert!(
         query_extent.is_subset_of(&local_extent),
         "min={min:?} max={max:?} would access out of bounds"

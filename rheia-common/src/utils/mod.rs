@@ -1,3 +1,5 @@
+pub mod block_mesh;
+
 use crate::CHUNK_SIZE;
 
 /// https://github.com/feather-rs/feather

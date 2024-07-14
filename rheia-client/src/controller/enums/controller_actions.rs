@@ -1,4 +1,3 @@
-
 pub enum ControllerActions {
     ActionMain,
 
@@ -12,9 +11,9 @@ pub enum ControllerActions {
     Jump,
 }
 
-impl ControllerActions {
-    pub fn as_str(&self) -> &'static str {
-        match self {
+impl ToString for ControllerActions {
+    fn to_string(&self) -> String {
+        let s = match self {
             Self::ActionMain => "action_main",
 
             Self::MoveRight => "move_right",
@@ -25,6 +24,7 @@ impl ControllerActions {
             Self::ToggleDebug => "toggle_debug",
             Self::ToggleConsole => "toggle_console",
             Self::Jump => "jump",
-        }
+        };
+        s.to_string()
     }
 }

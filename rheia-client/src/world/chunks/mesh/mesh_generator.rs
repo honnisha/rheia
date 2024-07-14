@@ -3,13 +3,19 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
+use common::utils::block_mesh::{
+    buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
+};
 use common::{blocks::blocks_storage::BlockType, physics::physics::PhysicsColliderBuilder};
-use godot::{engine::ArrayMesh, prelude::Variant};
 use godot::{
-    engine::*,
+    classes::mesh::PrimitiveType,
+    engine::{mesh::ArrayType, ArrayMesh},
+    prelude::{Variant, Vector2, Vector3},
+};
+use godot::{
+    obj::EngineEnum,
     prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
 };
-use godot::{obj::EngineEnum, prelude::Vector2};
 use godot::{
     obj::NewGd,
     prelude::{Array, Gd},
@@ -17,8 +23,6 @@ use godot::{
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
-
-use super::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG};
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -66,7 +70,7 @@ pub fn generate_chunk_geometry(
     chunk_data: &ChunkDataBordered,
 ) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
-    arrays.resize(mesh::ArrayType::MAX.ord() as usize, &Variant::nil());
+    arrays.resize(ArrayType::MAX.ord() as usize, &Variant::nil());
 
     let buffer = generate_buffer(chunk_data);
 
@@ -100,13 +104,18 @@ pub fn generate_chunk_geometry(
             collider_builder.push_indexes([i[0] as u32, i[1] as u32, i[2] as u32]);
             collider_builder.push_indexes([i[3] as u32, i[4] as u32, i[5] as u32]);
 
-            let v = face.quad_mesh_positions(&quad.into(), 1.0);
+            let voxel_size = 1.0;
+            let v = face.quad_corners(&quad.into()).map(|c| {
+                let v3 = voxel_size * c.as_vec3();
+                Vector3::new(v3.x, v3.y, v3.z)
+            });
             verts.extend(v);
             for _v in v.iter() {
                 collider_builder.push_verts(_v.x, _v.y, _v.z);
             }
 
-            normals.extend(face.quad_mesh_normals());
+            let v3 = face.signed_normal().as_vec3();
+            normals.extend([Vector3::new(v3.x, v3.y, v3.z); 4]);
 
             let unoriented_quad = UnorientedQuad::from(quad);
 
@@ -126,7 +135,7 @@ pub fn generate_chunk_geometry(
                     steep * ((offset % 32) as i32) as FloatType,
                     steep * ((offset / 32) as f32).floor() as FloatType,
                 );
-                uvs.push(*i * uv_scale + ui_offset)
+                uvs.push(Vector2::new(i.x, i.y) * uv_scale + ui_offset)
             }
         }
     }
@@ -139,14 +148,14 @@ pub fn generate_chunk_geometry(
     };
 
     let len = indices.len();
-    arrays.set(mesh::ArrayType::INDEX.ord() as usize, Variant::from(indices));
-    arrays.set(mesh::ArrayType::VERTEX.ord() as usize, Variant::from(verts));
-    arrays.set(mesh::ArrayType::NORMAL.ord() as usize, Variant::from(normals));
-    arrays.set(mesh::ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
+    arrays.set(ArrayType::INDEX.ord() as usize, Variant::from(indices));
+    arrays.set(ArrayType::VERTEX.ord() as usize, Variant::from(verts));
+    arrays.set(ArrayType::NORMAL.ord() as usize, Variant::from(normals));
+    arrays.set(ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
 
     let mut mesh_ist = ArrayMesh::new_gd();
     if len > 0 {
-        mesh_ist.add_surface_from_arrays(mesh::PrimitiveType::TRIANGLES, arrays);
+        mesh_ist.add_surface_from_arrays(PrimitiveType::TRIANGLES, arrays);
     }
 
     Geometry { mesh_ist, collider }

@@ -1,15 +1,18 @@
 use bevy::{
     prelude::*,
     render::{
-        mesh::{Indices, VertexAttributeValues}, render_asset::RenderAssetUsages, render_resource::PrimitiveTopology
+        mesh::{Indices, VertexAttributeValues},
+        render_asset::RenderAssetUsages,
+        render_resource::PrimitiveTopology,
     },
 };
-use common::blocks::blocks_storage::BlockType;
+use common::{
+    blocks::blocks_storage::BlockType,
+    utils::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
+};
 use ndshape::ConstShape;
 
 use crate::world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered};
-
-use super::block_mesh::{visible_block_faces, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG};
 
 #[allow(dead_code)]
 pub fn get_test_sphere() -> ChunkDataBordered {
@@ -72,9 +75,18 @@ pub fn generate_chunk_geometry(
             //    }
             //};
 
-            indices.extend_from_slice(&face.quad_mesh_indices(positions.len() as u32));
-            positions.extend_from_slice(&face.quad_mesh_positions(&quad.into(), 1.0));
-            normals.extend_from_slice(&face.quad_mesh_normals());
+            indices.extend_from_slice(&face.quad_mesh_indices(positions.len() as i32));
+
+            let voxel_size = 1.0;
+            let v = face.quad_corners(&quad.into()).map(|c| {
+                let v3 = voxel_size * c.as_vec3();
+                bevy::prelude::Vec3::new(v3.x, v3.y, v3.z)
+            });
+            positions.extend_from_slice(&v);
+
+            let v3 = face.signed_normal().as_vec3();
+            normals.extend_from_slice(&[bevy::prelude::Vec3::new(v3.x, v3.y, v3.z); 4]);
+
             let unoriented_quad = UnorientedQuad::from(quad);
             tex_coords.extend_from_slice(&face.tex_coords(
                 RIGHT_HANDED_Y_UP_CONFIG.u_flip_face,

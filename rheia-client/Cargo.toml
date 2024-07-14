@@ -31,6 +31,8 @@ parking_lot = "0.12.1"
 strum = "0.25.0"
 strum_macros = "0.25.3"
 
+ndshape = "0.3.0"
+
 # Miltithread heavy tasks
 rayon = "1.8.1"
 
@@ -46,11 +48,6 @@ send_wrapper = "0.6.0"
 
 # Scripts
 rhai = { version = "1.16.3", features = ["internals", "serde"] }
-
-# https://github.com/bonsairobo/block-mesh-rs/blob/main/Cargo.toml
-ilattice = "0.4.0"
-ndshape = "0.3.0"
-ndcopy = "0.3.0"
 
 # Noise
 bracket-lib = "0.8.7"

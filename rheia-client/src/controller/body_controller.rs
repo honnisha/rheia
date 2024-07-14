@@ -122,11 +122,11 @@ impl BodyController {
         let mut animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
 
         let mut animation = animation_player
-            .get_animation(StringName::from(GenericAnimations::Idle.as_str()))
+            .get_animation(StringName::from(GenericAnimations::Idle.to_string()))
             .unwrap();
         animation.set_loop_mode(LoopMode::LINEAR);
 
-        animation_player.call_deferred(StringName::from("play"), &[GenericAnimations::Walk.as_str().to_variant()]);
+        animation_player.call_deferred(StringName::from("play"), &[GenericAnimations::Walk.to_string().to_variant()]);
 
         Self { base, generic }
     }

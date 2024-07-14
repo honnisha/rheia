@@ -4,6 +4,7 @@ use godot::engine::input::MouseMode;
 use godot::engine::{Input, InputEvent, InputEventJoypadMotion, InputEventMouseMotion};
 use godot::prelude::Vector3;
 use godot::prelude::*;
+use std::string::ToString;
 
 use super::enums::controller_actions::ControllerActions;
 
@@ -39,12 +40,12 @@ impl Controls {
 
     pub fn is_jumping(&self) -> bool {
         let input = Input::singleton();
-        input.is_action_just_pressed(ControllerActions::Jump.as_str().into())
+        input.is_action_just_pressed(ControllerActions::Jump.to_string().into())
     }
 
     pub fn is_main_action(&self) -> bool {
         let input = Input::singleton();
-        input.is_action_just_pressed(ControllerActions::ActionMain.as_str().into())
+        input.is_action_just_pressed(ControllerActions::ActionMain.to_string().into())
     }
 }
 
@@ -77,10 +78,10 @@ impl INode for Controls {
         let input = Input::singleton();
         if self.joyaxis_left == Vector2::ZERO {
             if input.get_mouse_mode() == MouseMode::CAPTURED {
-                self.movement.x = input.get_action_strength(ControllerActions::MoveRight.as_str().into())
-                    - input.get_action_strength(ControllerActions::MoveLeft.as_str().into());
-                self.movement.z = input.get_action_strength(ControllerActions::MoveForward.as_str().into())
-                    - input.get_action_strength(ControllerActions::MoveBackwards.as_str().into());
+                self.movement.x = input.get_action_strength(ControllerActions::MoveRight.to_string().into())
+                    - input.get_action_strength(ControllerActions::MoveLeft.to_string().into());
+                self.movement.z = input.get_action_strength(ControllerActions::MoveForward.to_string().into())
+                    - input.get_action_strength(ControllerActions::MoveBackwards.to_string().into());
                 self.movement.z *= -1.0;
             }
         } else {

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use super::{block_type_info::BlockTypeInfo, voxel_visibility::VoxelVisibility};
@@ -31,5 +32,11 @@ pub fn get_block_type_info(block_type: &BlockType) -> Option<&'static BlockTypeI
 impl PartialEq for BlockType {
     fn eq(&self, other: &BlockType) -> bool {
         *self as u8 == *other as u8
+    }
+}
+
+impl BlockType {
+    pub fn to_iter() -> BlockTypeIter {
+        BlockType::iter()
     }
 }
