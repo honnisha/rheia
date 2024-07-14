@@ -5,7 +5,7 @@ use std::sync::{
 
 use common::{
     chunks::block_position::{BlockPosition, BlockPositionTrait},
-    network::client::ClientNetwork,
+    network::client::{ClientNetwork, NetworkInfo},
 };
 use godot::{
     engine::{Engine, HBoxContainer, IMarginContainer, MarginContainer, RichTextLabel, VBoxContainer},
@@ -74,7 +74,7 @@ impl DebugInfo {
         self.base_mut().set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, world_manager: &WorldManager, network: RwLockReadGuard<NetworkClientType>) {
+    pub fn update_debug(&mut self, world_manager: &WorldManager, network_info: NetworkInfo) {
         if !DebugInfo::is_active() {
             return;
         }
@@ -128,7 +128,6 @@ impl DebugInfo {
         };
         DebugInfo::change_text(&self.world_row, world_text);
 
-        let network_info = network.get_network_info();
         let network_text = format!(
             debug_network_string!(),
             !network_info.is_disconnected,

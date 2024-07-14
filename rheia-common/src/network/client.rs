@@ -3,7 +3,7 @@ use parking_lot::RwLockReadGuard;
 
 use super::messages::{ServerMessages, ClientMessages, NetworkMessageType};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct NetworkInfo {
     pub is_disconnected: bool,
     pub bytes_received_per_second: f64,
