@@ -3,7 +3,14 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
-use common::{blocks::blocks_storage::BlockType, physics::physics::PhysicsColliderBuilder};
+use common::{
+    blocks::blocks_storage::BlockType,
+    physics::physics::PhysicsColliderBuilder,
+    utils::block_mesh::{
+        greedy::{greedy_quads, GreedyQuadsBuffer},
+        QuadBuffer,
+    },
+};
 use common::{
     utils::block_mesh::{buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
     CHUNK_SIZE,
@@ -26,12 +33,12 @@ use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
 
 #[allow(dead_code)]
-pub fn get_test_sphere() -> ChunkDataBordered {
+pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {
     let mut b_chunk = [BlockType::Air; ChunkBordersShape::SIZE as usize];
 
     for i in 0u32..(ChunkBordersShape::SIZE as u32) {
         let [x, y, z] = ChunkBordersShape::delinearize(i);
-        b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < 7.0 {
+        b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < radius {
             true => BlockType::Stone,
             _ => BlockType::Air,
         };
@@ -40,21 +47,32 @@ pub fn get_test_sphere() -> ChunkDataBordered {
 }
 
 pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
-    //let b_chunk = get_test_sphere();
+    //let b_chunk = get_test_sphere(7.0);
 
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
         chunk_data, //&b_chunk,
         &ChunkBordersShape {},
         [0; 3],
-        [CHUNK_SIZE as u32; 3],
+        [CHUNK_SIZE as u32 + 1; 3],
         &RIGHT_HANDED_Y_UP_CONFIG.faces,
         &mut buffer,
     );
     buffer
 }
 
-pub trait GeometryTrait: Send + Sync {}
+pub fn generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
+    let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
+    greedy_quads(
+        chunk_data, //&b_chunk,
+        &ChunkBordersShape {},
+        [0; 3],
+        [CHUNK_SIZE as u32 + 1; 3],
+        &RIGHT_HANDED_Y_UP_CONFIG.faces,
+        &mut buffer,
+    );
+    buffer.quads
+}
 
 pub struct Geometry {
     pub mesh_ist: Gd<ArrayMesh>,
@@ -92,6 +110,21 @@ pub fn generate_chunk_geometry(
         // face is OrientedBlockFace
         // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
+            let i = face.quad_mesh_indices(verts.len() as i32);
+            indices.extend(i);
+            collider_builder.push_indexes([i[0] as u32, i[1] as u32, i[2] as u32]);
+            collider_builder.push_indexes([i[3] as u32, i[4] as u32, i[5] as u32]);
+
+            let voxel_size = 1.0;
+            let v = face.quad_corners(&quad.into(), true).map(|c| {
+                collider_builder.push_verts(c.x as f32, c.y as f32, c.z as f32);
+                Vector3::new(c.x as f32, c.y as f32, c.z as f32) * voxel_size
+            });
+            verts.extend(v);
+
+            let n = face.signed_normal();
+            normals.extend([Vector3::new(n.x as f32, n.y as f32, n.z as f32); 4]);
+
             let block_type_info = match quad.block_type.get_block_type_info() {
                 Some(e) => e,
                 _ => {
@@ -99,28 +132,8 @@ pub fn generate_chunk_geometry(
                     panic!();
                 }
             };
-
-            let i = face.quad_mesh_indices(verts.len() as i32);
-            indices.extend(i);
-            collider_builder.push_indexes([i[0] as u32, i[1] as u32, i[2] as u32]);
-            collider_builder.push_indexes([i[3] as u32, i[4] as u32, i[5] as u32]);
-
-            let voxel_size = 1.0;
-            let v = face.quad_corners(&quad.into()).map(|c| {
-                let v3 = voxel_size * c.as_vec3();
-                Vector3::new(v3.x, v3.y, v3.z)
-            });
-            verts.extend(v);
-            for _v in v.iter() {
-                collider_builder.push_verts(_v.x, _v.y, _v.z);
-            }
-
-            let v3 = face.signed_normal().as_vec3();
-            normals.extend([Vector3::new(v3.x, v3.y, v3.z); 4]);
-
             let unoriented_quad = UnorientedQuad::from(quad);
-
-            for i in &face.tex_coords(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, false, &unoriented_quad) {
+            for i in &face.tex_coords_godot(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, false, &unoriented_quad) {
                 let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
                     //let offset = match block_type.get_uv_offset(side_index as i8) {
                     Some(o) => o,

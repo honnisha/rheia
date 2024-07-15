@@ -1,5 +1,3 @@
-use std::{ops::Add, process::Output};
-
 use ilattice::glam::{IVec3, UVec3};
 
 use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
@@ -75,10 +73,16 @@ impl OrientedBlockFace {
     /// Note that this is natural when UV coordinates have (0,0) at the bottom
     /// left, but when (0,0) is at the top left, V must be flipped.
     #[inline]
-    pub fn quad_corners(&self, quad: &UnorientedQuad) -> [UVec3; 4] {
+    pub fn quad_corners(&self, quad: &UnorientedQuad, invert: bool) -> [UVec3; 4] {
         // Godot need to switch those
-        let w_vec = self.u * quad.width;
-        let h_vec = self.v * quad.height;
+        let w_vec = match invert {
+            true => self.v,
+            false => self.u,
+        } * quad.width;
+        let h_vec = match invert {
+            true => self.u,
+            false => self.v,
+        } * quad.height;
 
         let minu_minv = if self.n_sign > 0 {
             UVec3::from(quad.minimum) + self.n
@@ -94,7 +98,8 @@ impl OrientedBlockFace {
 
     #[inline]
     pub fn quad_mesh_positions(&self, quad: &UnorientedQuad, voxel_size: f32) -> [[f32; 3]; 4] {
-        self.quad_corners(quad).map(|c| (voxel_size * c.as_vec3()).to_array())
+        self.quad_corners(quad, false)
+            .map(|c| (voxel_size * c.as_vec3()).to_array())
     }
 
     #[inline]
@@ -160,6 +165,44 @@ impl OrientedBlockFace {
                 [quad.width as f32, quad.height as f32],
                 [0.0, quad.height as f32],
                 [quad.width as f32, 0.0],
+                [0.0, 0.0],
+            ],
+        }
+    }
+
+    #[inline]
+    pub fn tex_coords_godot(&self, u_flip_face: Axis, flip_v: bool, quad: &UnorientedQuad) -> [[f32; 2]; 4] {
+        let face_normal_axis = self.permutation.axes()[0];
+        let flip_u = if self.n_sign < 0 {
+            u_flip_face != face_normal_axis
+        } else {
+            u_flip_face == face_normal_axis
+        };
+
+        let w = quad.width as f32;
+        match (flip_u, flip_v) {
+            (false, false) => [
+                [w, w],
+                [w, 0.0],
+                [0.0, w],
+                [0.0, 0.0],
+            ],
+            (true, false) => [
+                [w, w],
+                [w, 0.0],
+                [0.0, w],
+                [0.0, 0.0],
+            ],
+            (false, true) => [
+                [0.0, w],
+                [w, w],
+                [0.0, 0.0],
+                [w, 0.0],
+            ],
+            (true, true) => [
+                [w, w],
+                [0.0, w],
+                [w, 0.0],
                 [0.0, 0.0],
             ],
         }

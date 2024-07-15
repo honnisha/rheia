@@ -23,7 +23,6 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
-const LIMIT_CHUNK_SPAWN_PER_FRAME: i32 = 1;
 pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
@@ -150,9 +149,6 @@ impl ChunksContainer {
         let mut count = 0;
         let mut base = self.base_mut().clone();
         for (chunk_position, chunk) in self.chunks.iter() {
-            if count >= LIMIT_CHUNK_SPAWN_PER_FRAME && LIMIT_CHUNK_SPAWN_PER_FRAME != -1_i32 {
-                continue;
-            }
 
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
