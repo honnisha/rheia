@@ -136,7 +136,7 @@ pub fn generate_chunk_geometry(
                     steep * ((offset % 32) as i32) as FloatType,
                     steep * ((offset / 32) as f32).floor() as FloatType,
                 );
-                uvs.push(Vector2::new(i.x, i.y) * uv_scale + ui_offset)
+                uvs.push(Vector2::new(i[0], i[1]) * uv_scale + ui_offset)
             }
         }
     }

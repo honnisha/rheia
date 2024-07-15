@@ -1,3 +1,5 @@
+use std::{ops::Add, process::Output};
+
 use ilattice::glam::{IVec3, UVec3};
 
 use super::{Axis, AxisPermutation, SignedAxis, UnorientedQuad};
@@ -107,7 +109,7 @@ impl OrientedBlockFace {
     /// Front faces will be wound counterclockwise, and back faces clockwise, as
     /// per convention.
     #[inline]
-    pub fn quad_mesh_indices(&self, start: u32) -> [u32; 6] {
+    pub fn quad_mesh_indices<T: Copy + num::Integer + num::FromPrimitive>(&self, start: T) -> [T; 6] {
         quad_indices(start, self.n_sign * self.permutation.sign() > 0)
     }
 
@@ -167,10 +169,24 @@ impl OrientedBlockFace {
 /// Returns the vertex indices for a single quad (two triangles). The triangles
 /// may have either clockwise or counter-clockwise winding. `start` is the first
 /// index.
-fn quad_indices(start: u32, counter_clockwise: bool) -> [u32; 6] {
+fn quad_indices<T: Copy + num::Integer + num::FromPrimitive>(start: T, counter_clockwise: bool) -> [T; 6] {
     if counter_clockwise {
-        [start, start + 1, start + 2, start + 1, start + 3, start + 2]
+        [
+            start,
+            start + T::from_i32(1).unwrap(),
+            start + T::from_i32(2).unwrap(),
+            start + T::from_i32(1).unwrap(),
+            start + T::from_i32(3).unwrap(),
+            start + T::from_i32(2).unwrap(),
+        ]
     } else {
-        [start, start + 2, start + 1, start + 1, start + 2, start + 3]
+        [
+            start,
+            start + T::from_i32(2).unwrap(),
+            start + T::from_i32(1).unwrap(),
+            start + T::from_i32(1).unwrap(),
+            start + T::from_i32(2).unwrap(),
+            start + T::from_i32(3).unwrap(),
+        ]
     }
 }
