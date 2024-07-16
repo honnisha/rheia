@@ -1,12 +1,12 @@
 use crate::utils::bridge::IntoNetworkVector;
+use crate::world::world_manager::WorldManager;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
-use godot::global::{deg_to_rad, lerp, lerp_angle, lerpf};
+use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
-use crate::world::godot_world::World;
 
 use super::body_controller::BodyController;
 use super::camera_controller::CameraController;
@@ -16,7 +16,6 @@ use super::player_movement::PlayerMovement;
 pub const TURN_SPEED: f64 = 4.0;
 
 const SPEED: f32 = 0.1;
-const ACCELERATION: f64 = 10.0;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
 
@@ -41,9 +40,6 @@ pub struct PlayerController {
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
-
-    pub move_rot: FloatType,
-    pub horizontal_velocity: Vector3,
 }
 
 impl PlayerController {
@@ -63,9 +59,6 @@ impl PlayerController {
 
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
             physics_controller: PhysicsCharacterControllerType::create(),
-
-            move_rot: Default::default(),
-            horizontal_velocity: Default::default(),
         }
     }
 
@@ -101,7 +94,6 @@ impl PlayerController {
     }
 
     fn apply_controls(&mut self, delta: f64) {
-
         let controls = self.controls.bind();
         let mut direction = *controls.get_movement_vector();
 
@@ -112,9 +104,12 @@ impl PlayerController {
         direction = direction.rotated(Vector3::UP, deg_to_rad(camera_yaw as f64) as f32);
 
         if direction != Vector3::ZERO {
-
             let mut new_yaw = -direction.x.atan2(-direction.z) % 360.0;
-            new_yaw = lerp_angle(self.body_controller.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
+            new_yaw = lerp_angle(
+                self.body_controller.get_rotation().y as f64,
+                new_yaw as f64,
+                TURN_SPEED * delta,
+            ) as f32;
 
             // Update skil rotation for visual display
             let mut skin_rotation = self.body_controller.get_rotation();
@@ -123,11 +118,8 @@ impl PlayerController {
 
             let force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
 
-            self.physics_controller.controller_move(
-                &mut self.physics_entity,
-                delta,
-                force.to_network(),
-            );
+            self.physics_controller
+                .controller_move(&mut self.physics_entity, delta, force.to_network());
         }
 
         if controls.is_jumping() {
@@ -162,7 +154,7 @@ impl INode3D for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
-        let world = self.base().get_parent().unwrap().cast::<World>();
+        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
         let chunk_loaded = match world.bind().get_chunk(&chunk_pos) {

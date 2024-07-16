@@ -3,18 +3,19 @@ use std::sync::{
     Arc,
 };
 
+use crate::world::worlds_manager::WorldsManager;
 use common::{
     chunks::block_position::{BlockPosition, BlockPositionTrait},
-    network::client::{ClientNetwork, NetworkInfo},
+    network::client::NetworkInfo,
 };
 use godot::{
-    engine::{Engine, HBoxContainer, IMarginContainer, MarginContainer, RichTextLabel, VBoxContainer},
+    engine::{
+        rendering_server::RenderingInfo, Engine, HBoxContainer, IMarginContainer, MarginContainer, RenderingServer,
+        RichTextLabel, VBoxContainer,
+    },
     prelude::*,
 };
 use lazy_static::lazy_static;
-use parking_lot::RwLockReadGuard;
-
-use crate::{main_scene::NetworkClientType, world::world_manager::WorldManager};
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -23,7 +24,11 @@ lazy_static! {
 macro_rules! debug_first_string {
     () => {
         "FPS: {:.0}
-Threads count: {}"
+Currently rendering:
+{} objects
+{:.1}K primitive indices
+{} draw calls
+{:.1} MB video mem used"
     };
 }
 macro_rules! debug_world_string {
@@ -74,19 +79,23 @@ impl DebugInfo {
         self.base_mut().set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, world_manager: &WorldManager, network_info: NetworkInfo) {
+    pub fn update_debug(&mut self, worlds_manager: &WorldsManager, network_info: NetworkInfo) {
         if !DebugInfo::is_active() {
             return;
         }
 
+        let mut rendering_server = RenderingServer::singleton();
         let first_text = format!(
             debug_first_string!(),
             Engine::singleton().get_frames_per_second(),
-            rayon::current_num_threads()
+            rendering_server.get_rendering_info(RenderingInfo::TOTAL_OBJECTS_IN_FRAME),
+            rendering_server.get_rendering_info(RenderingInfo::TOTAL_PRIMITIVES_IN_FRAME) as f32 * 0.001,
+            rendering_server.get_rendering_info(RenderingInfo::TOTAL_DRAW_CALLS_IN_FRAME),
+            rendering_server.get_rendering_info(RenderingInfo::VIDEO_MEM_USED) as f32 / (1024.0 * 1024.0),
         );
         DebugInfo::change_text(&self.first_row, first_text);
 
-        let world_text = match world_manager.get_world() {
+        let world_text = match worlds_manager.get_world() {
             Some(w) => {
                 let world = w.bind();
                 let player_controller = world.get_player_controller().bind();

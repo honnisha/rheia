@@ -2,20 +2,13 @@ use ahash::AHashMap;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
 use log::error;
-use parking_lot::RwLock;
 use std::rc::Rc;
-use std::sync::Arc;
 use std::{cell::RefCell, time::Duration};
 
-use crate::{
-    main_scene::PhysicsContainerType,
-    utils::textures::texture_mapper::TextureMapper,
-    world::{godot_world::get_default_material, world_manager::TextureMapperType},
-};
+use crate::{main_scene::PhysicsContainerType, world::worlds_manager::TextureMapperType};
 
 use super::{
     chunk::{Chunk, ColumnDataType},
@@ -27,7 +20,7 @@ pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 
 /// Container of all chunk sections
 #[derive(GodotClass)]
-#[class(base=Node)]
+#[class(no_init, base=Node)]
 pub struct ChunksContainer {
     pub(crate) base: Base<Node>,
     chunks: ChunksType,
@@ -149,7 +142,6 @@ impl ChunksContainer {
         let mut count = 0;
         let mut base = self.base_mut().clone();
         for (chunk_position, chunk) in self.chunks.iter() {
-
             let mut c = chunk.borrow_mut();
             if c.is_sended() && !c.is_loaded() {
                 for data in c.update_rx.clone().drain() {
@@ -174,16 +166,6 @@ impl ChunksContainer {
 
 #[godot_api]
 impl INode for ChunksContainer {
-    /// For default godot init; only World::create is using
-    fn init(base: Base<Node>) -> Self {
-        Self::create(
-            base,
-            Arc::new(RwLock::new(TextureMapper::new())),
-            get_default_material(),
-            PhysicsContainerType::create(),
-        )
-    }
-
     fn process(&mut self, _delta: f64) {
         self.send_chunks_to_load();
         self.spawn_loaded_chunks();

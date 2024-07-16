@@ -3,7 +3,7 @@ use std::borrow::BorrowMut;
 use common::{
     blocks::blocks_storage::BlockType,
     chunks::chunk_position::ChunkPosition,
-    physics::physics::{PhysicsColliderBuilder, PhysicsContainer, PhysicsStaticEntity},
+    physics::physics::{PhysicsColliderBuilder, PhysicsStaticEntity},
 };
 use godot::{
     engine::{Material, MeshInstance3D},
@@ -12,9 +12,8 @@ use godot::{
 use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::{
-    main_scene::{PhysicsColliderBuilderType, PhysicsContainerType, PhysicsStaticEntityType},
+    main_scene::{PhysicsColliderBuilderType, PhysicsStaticEntityType},
     utils::bridge::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
-    world::godot_world::get_default_material,
 };
 
 use super::mesh::mesh_generator::Geometry;
@@ -28,7 +27,7 @@ pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 /// One chunk section
 /// Contains mesh and data of the chunk section blocks
 #[derive(GodotClass)]
-#[class(base=Node3D)]
+#[class(no_init, base=Node3D)]
 pub struct ChunkSection {
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
@@ -36,7 +35,7 @@ pub struct ChunkSection {
     chunk_position: ChunkPosition,
     y: u8,
 
-    need_sync: bool,
+    pub need_sync: bool,
     new_colider: Option<PhysicsColliderBuilderType>,
 }
 
@@ -51,6 +50,9 @@ impl ChunkSection {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GString::from("ChunkMesh"));
         mesh.set_material_overlay(material.clone());
+
+        // Disable while its empty
+        mesh.set_process(false);
 
         Self {
             base,
@@ -77,6 +79,12 @@ impl ChunkSection {
     /// Updates the mesh from a separate thread
     pub fn send_to_update_mesh(&mut self, geometry: Geometry) {
         let mesh = self.mesh.borrow_mut();
+
+        let c = geometry.mesh_ist.get_surface_count();
+
+        // Set active onlt for sections that conatains vertices
+        mesh.set_process(c > 0);
+
         mesh.set_mesh(geometry.mesh_ist.upcast());
 
         self.need_sync = true;
@@ -84,36 +92,22 @@ impl ChunkSection {
     }
 
     /// Causes an update in the main thread after the entire chunk has been loaded
-    pub fn sync(&mut self) {
-        if self.need_sync {
-            self.need_sync = false;
+    pub fn chunk_section_sync(&mut self) {
+        self.need_sync = false;
 
+        let pos = self.get_section_position().clone();
+        if let Some(c) = self.new_colider.as_mut() {
             // This function causes a thread lock
-            let pos = self.get_section_position().clone();
-            if let Some(c) = self.new_colider.as_mut() {
-                c.update_collider(&mut self.physics_entity, &pos.to_network())
-            } else {
-                self.physics_entity.remove_collider();
-            }
-            self.new_colider = None;
+            c.update_collider(&mut self.physics_entity, &pos.to_network())
+        } else {
+            self.physics_entity.remove_collider();
         }
+        self.new_colider = None;
     }
 }
 
 #[godot_api]
 impl INode3D for ChunkSection {
-    /// For default godot init; only Self::create is using
-    fn init(base: Base<Node3D>) -> Self {
-        let physics = PhysicsContainerType::create();
-        Self::create(
-            base,
-            get_default_material(),
-            0,
-            physics.create_static(),
-            ChunkPosition::new(0, 0),
-        )
-    }
-
     fn ready(&mut self) {
         let mesh = self.mesh.clone().upcast();
         self.base_mut().add_child(mesh);

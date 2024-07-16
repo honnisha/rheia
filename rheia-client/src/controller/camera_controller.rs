@@ -17,7 +17,6 @@ impl CameraController {
         Self {
             base,
             camera: Camera3D::new_alloc(),
-
             controls,
         }
     }

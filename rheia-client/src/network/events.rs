@@ -57,7 +57,7 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 yaw,
                 pitch,
             } => {
-                main.get_world_manager_mut()
+                main.get_worlds_manager_mut()
                     .teleport_player(world_slug, location.to_godot(), yaw, pitch);
             }
             ServerMessages::ChunkSectionInfo {
@@ -65,8 +65,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 chunk_position,
                 sections,
             } => {
-                let world_manager = main.get_world_manager_mut();
-                let world = match world_manager.get_world_mut() {
+                let worlds_manager = main.get_worlds_manager_mut();
+                let world = match worlds_manager.get_world_mut() {
                     Some(w) => w,
                     None => {
                         log::error!(target: "network", "load_chunk tried to run without a world");
@@ -85,8 +85,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 chunks.push(chunk_position);
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {
-                let world_manager = main.get_world_manager_mut();
-                let world = match world_manager.get_world_mut() {
+                let worlds_manager = main.get_worlds_manager_mut();
+                let world = match worlds_manager.get_world_mut() {
                     Some(w) => w,
                     None => {
                         log::error!(target: "network", "load_chunk tried to run without a world");

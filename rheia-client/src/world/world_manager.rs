@@ -1,93 +1,139 @@
-use godot::prelude::*;
-use godot::{engine::Material, prelude::Gd};
-use parking_lot::RwLock;
-use std::sync::Arc;
+use super::{
+    chunks::{chunk::Chunk, chunks_container::ChunksContainer},
+    worlds_manager::TextureMapperType,
+};
+use crate::{
+    controller::{player_controller::PlayerController, player_movement::PlayerMovement},
+    main_scene::{Main, PhysicsContainerType},
+};
+use common::{
+    blocks::block_info::BlockInfo,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    network::messages::NetworkMessageType,
+    physics::physics::PhysicsContainer,
+};
+use godot::{engine::Material, prelude::*};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use crate::main_scene::FloatType;
-use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
-
-use super::godot_world::World;
-
-pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
-
+/// Godot world
+/// Contains all things inside world
+///
+/// ChunksContainer
+/// ║
+/// ╚ChunkColumn
+///  ║
+///  ╚ChunkSection
+#[derive(GodotClass)]
+#[class(no_init, base=Node)]
 pub struct WorldManager {
-    base: Gd<Node>,
-    world: Option<Gd<World>>,
+    pub(crate) base: Base<Node>,
+    slug: String,
+    chunks_container: Gd<ChunksContainer>,
 
-    texture_mapper: TextureMapperType,
-    material: Gd<Material>,
+    physics_container: PhysicsContainerType,
+    player_controller: Gd<PlayerController>,
 }
 
 impl WorldManager {
-    pub fn create(base: Gd<Node>) -> Self {
-        let mut texture_mapper = TextureMapper::new();
-        let texture = build_blocks_material(&mut texture_mapper);
+    pub fn _modify_block(&mut self, pos: &BlockPosition, block_info: BlockInfo) {
+        self.chunks_container.bind_mut().modify_block(pos, block_info);
+    }
+}
+
+impl WorldManager {
+    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+        let mut physics_container = PhysicsContainerType::create();
+        let mut chunks_container = Gd::<ChunksContainer>::from_init_fn(|base| {
+            ChunksContainer::create(
+                base,
+                texture_mapper.clone(),
+                material.clone(),
+                physics_container.clone(),
+            )
+        });
+        let container_name = GString::from("ChunksContainer");
+        chunks_container.bind_mut().base_mut().set_name(container_name.clone());
+        let player_controller =
+            Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));
+
         Self {
             base,
-            world: None,
+            slug: slug,
+            chunks_container,
 
-            material: texture.duplicate().unwrap().cast::<Material>(),
-            texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+            physics_container,
+            player_controller,
         }
     }
 
-    pub fn get_world(&self) -> Option<&Gd<World>> {
-        match self.world.as_ref() {
-            Some(w) => Some(&w),
-            None => None,
+    pub fn get_slug(&self) -> &String {
+        &self.slug
+    }
+
+    pub fn get_chunks_count(&self) -> usize {
+        self.chunks_container.bind().get_chunks_count()
+    }
+
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Rc<RefCell<Chunk>>> {
+        if let Some(chunk) = self.chunks_container.bind().get_chunk(chunk_position) {
+            return Some(chunk.clone());
         }
+        return None;
     }
 
-    pub fn get_world_mut(&mut self) -> Option<&mut Gd<World>> {
-        match self.world.as_mut() {
-            Some(w) => Some(w),
-            None => None,
+    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+        self.chunks_container.bind_mut().load_chunk(chunk_position, sections);
+    }
+
+    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
+        self.chunks_container.bind_mut().unload_chunk(chunk_position);
+    }
+
+    pub fn get_player_controller(&self) -> &Gd<PlayerController> {
+        &self.player_controller
+    }
+
+    pub fn get_player_controller_mut(&mut self) -> &mut Gd<PlayerController> {
+        &mut self.player_controller
+    }
+}
+
+#[godot_api]
+impl WorldManager {
+    #[func]
+    fn handler_player_move(&mut self, movement: Gd<PlayerMovement>) {
+        let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
+        let main = main.bind();
+        main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
+    }
+}
+
+#[godot_api]
+impl INode for WorldManager {
+    fn ready(&mut self) {
+        let chunks_container = self.chunks_container.clone().upcast();
+        self.base_mut().add_child(chunks_container);
+
+        // Bind world player move signal
+        let obj = self.base().to_godot().clone();
+        self.player_controller.bind_mut().base_mut().connect(
+            "on_player_move".into(),
+            Callable::from_object_method(&obj, "handler_player_move"),
+        );
+
+        let player_controller = self.player_controller.clone().upcast();
+        self.base_mut().add_child(player_controller);
+    }
+
+    fn process(&mut self, delta: f64) {
+        let now = std::time::Instant::now();
+
+        self.physics_container.step(delta as f32);
+
+        let elapsed = now.elapsed();
+        if elapsed > std::time::Duration::from_millis(30) {
+            log::debug!(target: "world", "World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
-    }
-
-    /// Raise exception if there is no world
-    fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        let mut world = self.world.as_mut().unwrap().bind_mut();
-        let mut player_controller = world.get_player_controller_mut().bind_mut();
-
-        player_controller.set_position(position);
-        player_controller.set_rotation(yaw, pitch);
-    }
-
-    /// Player can teleport in new world, between worlds or in exsting world
-    /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, yaw: FloatType, pitch: FloatType) {
-        if self.world.is_some() {
-            if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
-                // Player moving to another world; old one must be destroyed
-                self.destroy_world();
-                self.create_world(world_slug);
-            }
-        } else {
-            self.create_world(world_slug);
-        }
-
-        self.teleport_player_controller(position, yaw, pitch)
-    }
-
-    pub fn create_world(&mut self, world_slug: String) {
-        let mut world = Gd::<World>::from_init_fn(|base| {
-            World::create(base, world_slug, self.texture_mapper.clone(), self.material.clone())
-        });
-
-        let world_name = GString::from("World");
-        world.bind_mut().base_mut().set_name(world_name.clone());
-
-        self.base.add_child(world.clone().upcast());
-        self.world = Some(world);
-
-        log::info!(target: "world", "World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
-    }
-
-    pub fn destroy_world(&mut self) {
-        let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
-        self.base.remove_child(self.world.as_mut().unwrap().clone().upcast());
-        self.world = None;
-        log::info!(target: "world", "World \"{}\" destroyed;", slug);
     }
 }

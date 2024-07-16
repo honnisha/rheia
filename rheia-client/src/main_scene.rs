@@ -5,7 +5,7 @@ use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
-use crate::world::world_manager::WorldManager;
+use crate::world::worlds_manager::WorldsManager;
 use common::network::client::ClientNetwork;
 use common::network::messages::{ClientMessages, NetworkMessageType};
 use godot::engine::input::MouseMode;
@@ -43,7 +43,7 @@ pub struct Main {
     network: Option<NetworkContainer>,
 
     resource_manager: ResourceManager,
-    world_manager: WorldManager,
+    worlds_manager: WorldsManager,
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
 }
@@ -63,12 +63,8 @@ impl Main {
         &mut self.resource_manager
     }
 
-    pub fn _get_world_manager(&self) -> &WorldManager {
-        &self.world_manager
-    }
-
-    pub fn get_world_manager_mut(&mut self) -> &mut WorldManager {
-        &mut self.world_manager
+    pub fn get_worlds_manager_mut(&mut self) -> &mut WorldsManager {
+        &mut self.worlds_manager
     }
 
     pub fn close() {
@@ -79,12 +75,12 @@ impl Main {
 #[godot_api]
 impl INode for Main {
     fn init(base: Base<Node>) -> Self {
-        let world_manager = WorldManager::create(base.to_gd().clone());
+        let worlds_manager = WorldsManager::create(base.to_gd().clone());
         Main {
             base,
             network: None,
             resource_manager: ResourceManager::new(),
-            world_manager: world_manager,
+            worlds_manager: worlds_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
         }
@@ -126,7 +122,7 @@ impl INode for Main {
 
         self.debug_info
             .bind_mut()
-            .update_debug(&self.world_manager, network_info);
+            .update_debug(&self.worlds_manager, network_info);
 
         let input = Input::singleton();
         if input.is_action_just_pressed(ControllerActions::ToggleConsole.to_string().into()) {

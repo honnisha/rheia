@@ -1,3 +1,3 @@
+pub mod worlds_manager;
 pub mod world_manager;
-pub mod godot_world;
 pub mod chunks;

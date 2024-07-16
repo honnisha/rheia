@@ -1,9 +1,9 @@
 use super::{
-    chunk::ColumnDataType, chunk_data_formatter::format_chunk_data_with_boundaries, godot_chunk_column::ChunkColumn,
-    godot_chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
+    chunk::ColumnDataType, chunk_data_formatter::format_chunk_data_with_boundaries, chunk_column::ChunkColumn,
+    chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use crate::{
-    main_scene::PhysicsContainerType, utils::bridge::IntoGodotVector, world::world_manager::TextureMapperType,
+    main_scene::PhysicsContainerType, utils::bridge::IntoGodotVector, world::worlds_manager::TextureMapperType,
 };
 use common::{chunks::chunk_position::ChunkPosition, physics::physics::PhysicsContainer, VERTICAL_SECTIONS};
 use flume::Sender;
@@ -90,7 +90,9 @@ pub(crate) fn spawn_chunk(
         c.base_mut().set_global_position(chunk_position.to_godot());
 
         for section in c.sections.iter_mut() {
-            section.bind_mut().sync();
+            if section.bind().need_sync {
+                section.bind_mut().chunk_section_sync();
+            }
         }
     }
 

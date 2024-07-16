@@ -1,7 +1,7 @@
 use crate::{
     main_scene::{FloatType, PhysicsColliderBuilderType},
     utils::textures::texture_mapper::TextureMapper,
-    world::chunks::godot_chunk_section::{ChunkBordersShape, ChunkDataBordered},
+    world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
 use common::{
     blocks::blocks_storage::BlockType,

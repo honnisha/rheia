@@ -4,7 +4,7 @@ use common::chunks::utils::SectionsData;
 use godot::prelude::Gd;
 use parking_lot::RwLock;
 
-use super::{chunk_generator::ChunksGenerationType, godot_chunk_column::ChunkColumn};
+use super::{chunk_generator::ChunksGenerationType, chunk_column::ChunkColumn};
 
 pub type ColumnDataType = Arc<RwLock<SectionsData>>;
 use flume::{Receiver, Sender};
