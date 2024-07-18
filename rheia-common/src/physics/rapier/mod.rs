@@ -1,5 +1,5 @@
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use rapier3d::control::{CharacterAutostep, CharacterLength, KinematicCharacterController};
+use rapier3d::control::{CharacterAutostep, CharacterCollision, CharacterLength, KinematicCharacterController};
 use rapier3d::na::Point3;
 use rapier3d::na::Vector3 as NaVector3;
 use rapier3d::parry::partitioning::IndexedData;
@@ -105,10 +105,11 @@ impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
 
 pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
+    custom_mass: Option<f32>,
 }
 
 impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
-    fn create() -> Self {
+    fn create(custom_mass: Option<f32>) -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Absolute(0.01);
         character_controller.autostep = Some(CharacterAutostep {
@@ -116,10 +117,13 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
             min_width: CharacterLength::Absolute(0.5),
             include_dynamic_bodies: false,
         });
-        Self { character_controller }
+        Self {
+            character_controller,
+            custom_mass,
+        }
     }
 
-    fn controller_move(&mut self, entity: &mut RapierPhysicsRigidBodyEntity, delta: f64, impulse: NetworkVector3) {
+    fn move_shape(&mut self, entity: &mut RapierPhysicsRigidBodyEntity, delta: f64, impulse: NetworkVector3) {
         let collider = entity
             .physics_container
             .get_collider(&entity.collider_handle)
@@ -138,6 +142,21 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
             filter,
             |_| {},
         );
+
+//        let _collisions: Vec<CharacterCollision> = vec![];
+//        if let Some(character_mass) = self.custom_mass {
+//            self.character_controller.solve_character_collision_impulses(
+//                delta as f32,
+//                &mut entity.physics_container.rigid_body_set.write(),
+//                &entity.physics_container.collider_set.read(),
+//                &entity.physics_container.query_pipeline.read(),
+//                collider.shape(),
+//                character_mass,
+//                _collisions.iter(),
+//                filter,
+//            );
+//        };
+
         let mut body = entity
             .physics_container
             .get_rigid_body_mut(&entity.rigid_handle)

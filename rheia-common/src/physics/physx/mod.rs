@@ -118,11 +118,11 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
 
 pub struct PhysxPhysicsCharacterController {}
 impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCharacterController {
-    fn create() -> Self {
+    fn create(_custom_mass: Option<f32>) -> Self {
         Self {}
     }
 
-    fn controller_move(&mut self, _entity: &mut PhysxPhysicsRigidBodyEntity, _delta: f64, _impulse: NetworkVector3) {
+    fn move_shape(&mut self, _entity: &mut PhysxPhysicsRigidBodyEntity, _delta: f64, _impulse: NetworkVector3) {
         // https://github.com/rlidwka/bevy_mod_physx/blob/ef9e56023fb7500c7e5d1f2b66057a16a3caf8d7/examples/kinematic.rs
     }
 }

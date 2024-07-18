@@ -9,8 +9,8 @@ pub trait PhysicsRigidBodyEntity {
 }
 
 pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
-    fn create() -> Self;
-    fn controller_move(&mut self, entity: &mut T, delta: f64, impulse: Vector3);
+    fn create(custom_mass: Option<f32>) -> Self;
+    fn move_shape(&mut self, entity: &mut T, delta: f64, impulse: Vector3);
 }
 
 /// For stationary bodies

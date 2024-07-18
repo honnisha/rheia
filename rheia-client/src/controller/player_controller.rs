@@ -58,7 +58,7 @@ impl PlayerController {
             cache_movement: None,
 
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
-            physics_controller: PhysicsCharacterControllerType::create(),
+            physics_controller: PhysicsCharacterControllerType::create(Some(5.0)),
         }
     }
 
@@ -119,7 +119,7 @@ impl PlayerController {
             let force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
 
             self.physics_controller
-                .controller_move(&mut self.physics_entity, delta, force.to_network());
+                .move_shape(&mut self.physics_entity, delta, force.to_network());
         }
 
         if controls.is_jumping() {
