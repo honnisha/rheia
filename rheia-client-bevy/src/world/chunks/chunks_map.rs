@@ -1,7 +1,7 @@
 use std::{collections::hash_map::Iter, sync::Arc};
 
 use ahash::AHashMap;
-use common::chunks::chunk_position::ChunkPosition;
+use common::chunks::{chunk_position::ChunkPosition, utils::SectionsData};
 use parking_lot::RwLock;
 
 use super::chunk_column::ChunkColumn;
@@ -11,6 +11,7 @@ type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
 
 #[derive(Default)]
 pub struct ChunkMap {
+    // Hash map with chunk columns
     chunks: ChunksType,
 }
 
@@ -22,8 +23,9 @@ impl ChunkMap {
         }
     }
 
-    pub fn insert(&mut self, chunk_position: ChunkPosition, column: ChunkColumn) {
-        self.chunks.insert(chunk_position, Arc::new(RwLock::new(column)));
+    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+        let chunk_column = ChunkColumn::create(chunk_position.clone(), sections);
+        self.chunks.insert(chunk_position, Arc::new(RwLock::new(chunk_column)));
     }
 
     pub fn iter(&self) -> Iter<ChunkPosition, ChunkLock> {

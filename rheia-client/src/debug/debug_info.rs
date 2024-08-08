@@ -118,7 +118,7 @@ impl DebugInfo {
 
                 let chunk_info = match world.get_chunk(&chunk_pos) {
                     Some(c) => {
-                        let c = c.borrow();
+                        let c = c.bind();
                         format!("sended:{} loaded:{}", c.is_sended(), c.is_loaded())
                     }
                     None => "-".to_string(),

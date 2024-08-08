@@ -1,13 +1,13 @@
 use common::chunks::chunk_position::ChunkPosition;
 
-use super::{chunk::ColumnDataType, chunks_map::ChunksType};
+use super::{chunk_column::ColumnDataLockType, chunks_map::ChunksType};
 
 /// Tool for storing near chunks
 pub struct NearChunksData {
-    pub forward: Option<ColumnDataType>,
-    pub behind: Option<ColumnDataType>,
-    pub left: Option<ColumnDataType>,
-    pub right: Option<ColumnDataType>,
+    pub forward: Option<ColumnDataLockType>,
+    pub behind: Option<ColumnDataLockType>,
+    pub left: Option<ColumnDataLockType>,
+    pub right: Option<ColumnDataLockType>,
 }
 
 impl NearChunksData {
@@ -24,9 +24,9 @@ impl NearChunksData {
         self.forward.is_some() && self.behind.is_some() && self.left.is_some() && self.right.is_some()
     }
 
-    fn get_data(chunks: &ChunksType, pos: &ChunkPosition) -> Option<ColumnDataType> {
+    fn get_data(chunks: &ChunksType, pos: &ChunkPosition) -> Option<ColumnDataLockType> {
         match chunks.get(pos) {
-            Some(c) => Some(c.borrow().get_chunk_data().clone()),
+            Some(c) => Some(c.bind().get_chunk_data().clone()),
             None => None,
         }
     }

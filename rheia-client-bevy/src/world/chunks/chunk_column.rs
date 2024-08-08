@@ -15,7 +15,6 @@ pub type ColumnDataLockType = Arc<RwLock<SectionsData>>;
 
 pub struct ChunkColumn {
     chunk_position: ChunkPosition,
-    world_slug: String,
     data: ColumnDataLockType,
     sended: Arc<AtomicBool>,
 
@@ -23,10 +22,9 @@ pub struct ChunkColumn {
 }
 
 impl ChunkColumn {
-    pub fn new(chunk_position: ChunkPosition, world_slug: String, data: SectionsData) -> Self {
+    pub fn create(chunk_position: ChunkPosition, data: SectionsData) -> Self {
         Self {
             chunk_position,
-            world_slug: world_slug,
             data: Arc::new(RwLock::new(data)),
             sended: Arc::new(AtomicBool::new(false)),
             sections: Default::default(),
@@ -39,10 +37,6 @@ impl ChunkColumn {
             (y * CHUNK_SIZE) as f32,
             self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
         )
-    }
-
-    pub fn get_world_slug(&self) -> &String {
-        &self.world_slug
     }
 
     pub fn get_data(&self) -> &ColumnDataLockType {

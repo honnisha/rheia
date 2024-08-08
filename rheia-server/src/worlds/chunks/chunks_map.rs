@@ -20,7 +20,10 @@ pub type MapChunksType = AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>;
 /// and responsible for load/unload chunks
 #[derive(Default)]
 pub struct ChunkMap {
+
+    // Hash map with chunk columns
     chunks: MapChunksType,
+
     chunks_load_state: ChunksLoadState,
 }
 

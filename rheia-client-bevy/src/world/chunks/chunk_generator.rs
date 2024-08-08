@@ -1,7 +1,10 @@
+use std::borrow::Borrow;
+
 use crate::world::worlds_manager::WorldsManager;
 
 use super::chunk_data_formatter::format_chunk_data_with_boundaries;
 use super::chunk_section::ChunkSection;
+use super::chunks_map::ChunkMap;
 use super::mesh::mesh_generator::generate_chunk_geometry;
 use super::near_chunk_data::NearChunksData;
 use bevy::prelude::*;
@@ -12,17 +15,41 @@ use log::error;
 
 #[derive(Event)]
 pub struct GenerateChunkEvent {
-    world_slug: String,
     chunk_position: ChunkPosition,
     near_chunks_data: NearChunksData,
 }
 
 impl GenerateChunkEvent {
-    pub fn new(world_slug: String, chunk_position: ChunkPosition, near_chunks_data: NearChunksData) -> Self {
+    pub fn new(chunk_position: ChunkPosition, near_chunks_data: NearChunksData) -> Self {
         Self {
-            world_slug,
             chunk_position,
             near_chunks_data,
+        }
+    }
+}
+
+pub fn send_chunks_to_load(
+    mut worlds_manager: ResMut<WorldsManager>,
+    mut chunk_generate_event: EventWriter<GenerateChunkEvent>,
+) {
+    if let Some(world) = worlds_manager.get_world_mut() {
+        let chunks_map: &ChunkMap = world.get_chunks_map().borrow();
+        for (chunk_position, chunk_lock) in chunks_map.iter() {
+            let c = chunk_lock.read();
+            if c.is_sended() {
+                continue;
+            }
+
+            let near_chunks_data = NearChunksData::new(&world.get_chunks_map().borrow(), &chunk_position);
+
+            // Load only if all chunks around are loaded
+            if !near_chunks_data.is_full() {
+                continue;
+            }
+
+            c.set_sended();
+            let e = GenerateChunkEvent::new(chunk_position.clone(), near_chunks_data);
+            chunk_generate_event.send(e);
         }
     }
 }
@@ -41,10 +68,6 @@ pub fn chunk_generator(
                 continue;
             }
         };
-        if *world.get_slug() != event.world_slug {
-            error!("Chunk generator recieve wrong world chunk");
-            continue;
-        }
         let chunk = match world.get_chunks_map().get_chunk(&event.chunk_position) {
             Some(c) => c,
             None => {

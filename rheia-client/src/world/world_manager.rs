@@ -1,20 +1,14 @@
-use super::{
-    chunks::{chunk::Chunk, chunks_map::ChunkMap},
-    worlds_manager::TextureMapperType,
-};
+use super::{chunks::{chunk_column::ChunkColumn, chunks_map::ChunkMap}, worlds_manager::TextureMapperType};
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
     main_scene::{Main, PhysicsContainerType},
 };
 use common::{
-    blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    chunks::{chunk_position::ChunkPosition, utils::SectionsData},
     network::messages::NetworkMessageType,
     physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
-use std::cell::RefCell;
-use std::rc::Rc;
 
 /// Godot world
 /// Contains all things inside world
@@ -35,11 +29,7 @@ pub struct WorldManager {
     player_controller: Gd<PlayerController>,
 }
 
-impl WorldManager {
-    pub fn _modify_block(&mut self, pos: &BlockPosition, block_info: BlockInfo) {
-        self.chunks_container.bind_mut().modify_block(pos, block_info);
-    }
-}
+impl WorldManager {}
 
 impl WorldManager {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
@@ -75,7 +65,7 @@ impl WorldManager {
         self.chunks_container.bind().get_chunks_count()
     }
 
-    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Rc<RefCell<Chunk>>> {
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Gd<ChunkColumn>> {
         if let Some(chunk) = self.chunks_container.bind().get_chunk(chunk_position) {
             return Some(chunk.clone());
         }

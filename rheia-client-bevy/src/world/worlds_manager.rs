@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy_app::App;
 
 use super::{
-    chunks::chunk_generator::{chunk_generator, GenerateChunkEvent},
-    world_manager::{chunks_loader_system, WorldManager},
+    chunks::chunk_generator::{chunk_generator, send_chunks_to_load, GenerateChunkEvent},
+    world_manager::WorldManager,
 };
 
 #[derive(Default)]
@@ -11,7 +11,7 @@ pub struct WorldsManagerPlugin;
 
 impl Plugin for WorldsManagerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, chunks_loader_system);
+        app.add_systems(Update, send_chunks_to_load);
         app.insert_resource(WorldsManager::default());
 
         app.add_event::<GenerateChunkEvent>();

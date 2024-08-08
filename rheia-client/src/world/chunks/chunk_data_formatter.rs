@@ -8,14 +8,14 @@ use common::{
 use ndshape::ConstShape;
 
 use super::{
-    chunk::ColumnDataType,
+    chunk_column::ColumnDataLockType,
     chunk_section::{ChunkBordersShape, ChunkDataBordered},
     near_chunk_data::NearChunksData,
 };
 
 pub fn format_chunk_data_with_boundaries(
     chunks_near: Option<&NearChunksData>,
-    chunk_data: &ColumnDataType,
+    chunk_data: &ColumnDataLockType,
     y: usize,
 ) -> ChunkDataBordered {
     // Fill with solid block by default
@@ -94,7 +94,7 @@ type BondaryType<'a> = ArrayVec<(i8, i32, Option<Box<ChunkDataType>>), 6>;
 
 fn get_boundaries_chunks<'a>(
     chunks_near: &'a NearChunksData,
-    chunk_data: &'a ColumnDataType,
+    chunk_data: &'a ColumnDataLockType,
     y: usize,
 ) -> BondaryType<'a> {
     let mut result: BondaryType = Default::default();
@@ -143,7 +143,7 @@ fn get_boundaries_chunks<'a>(
     result
 }
 
-fn get_section<'a>(column: &'a Option<ColumnDataType>, y: usize) -> Option<Box<ChunkDataType>> {
+fn get_section<'a>(column: &'a Option<ColumnDataLockType>, y: usize) -> Option<Box<ChunkDataType>> {
     match column {
         Some(c) => match c.read().get(y) {
             Some(r) => Some(r.clone()),

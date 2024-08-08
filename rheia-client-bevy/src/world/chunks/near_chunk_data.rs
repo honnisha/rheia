@@ -11,12 +11,12 @@ pub struct NearChunksData {
 }
 
 impl NearChunksData {
-    pub fn new(chunks_map: &ChunkMap, pos: &ChunkPosition) -> Self {
+    pub fn new(chunks: &ChunkMap, pos: &ChunkPosition) -> Self {
         Self {
-            forward: NearChunksData::get_data(chunks_map, &ChunkPosition::new(pos.x - 1, pos.z)),
-            behind: NearChunksData::get_data(chunks_map, &ChunkPosition::new(pos.x + 1, pos.z)),
-            left: NearChunksData::get_data(chunks_map, &ChunkPosition::new(pos.x, pos.z - 1)),
-            right: NearChunksData::get_data(chunks_map, &ChunkPosition::new(pos.x, pos.z + 1)),
+            forward: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x - 1, pos.z)),
+            behind: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x + 1, pos.z)),
+            left: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z - 1)),
+            right: NearChunksData::get_data(chunks, &ChunkPosition::new(pos.x, pos.z + 1)),
         }
     }
 
@@ -24,8 +24,8 @@ impl NearChunksData {
         self.forward.is_some() && self.behind.is_some() && self.left.is_some() && self.right.is_some()
     }
 
-    fn get_data(chunks_map: &ChunkMap, pos: &ChunkPosition) -> Option<ColumnDataLockType> {
-        match chunks_map.get_chunk(pos) {
+    fn get_data(chunks: &ChunkMap, pos: &ChunkPosition) -> Option<ColumnDataLockType> {
+        match chunks.get_chunk(pos) {
             Some(c) => Some(c.read().get_data().clone()),
             None => None,
         }
