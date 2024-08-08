@@ -13,8 +13,7 @@ use super::camera_controller::CameraController;
 use super::controls::Controls;
 use super::player_movement::PlayerMovement;
 
-pub const TURN_SPEED: f64 = 4.0;
-
+const TURN_SPEED: f64 = 4.0;
 const SPEED: f32 = 0.1;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
@@ -24,6 +23,9 @@ const CONTROLLER_HEIGHT: f32 = 1.8;
 const CONTROLLER_RADIUS: f32 = 0.4;
 const CONTROLLER_MASS: f32 = 1.0;
 const JUMP_IMPULSE: f32 = 5.0;
+
+const CHARACTER_GRAVITY: f32 = -9.81;
+const GRAVITY_ACCELERATION: f64 = 0.1;
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
@@ -40,6 +42,7 @@ pub struct PlayerController {
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
+    gravity: f32,
 }
 
 impl PlayerController {
@@ -58,7 +61,8 @@ impl PlayerController {
             cache_movement: None,
 
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
-            physics_controller: PhysicsCharacterControllerType::create(Some(5.0)),
+            physics_controller: PhysicsCharacterControllerType::create(Some(1.0)),
+            gravity: 0.0,
         }
     }
 
@@ -94,6 +98,8 @@ impl PlayerController {
     }
 
     fn apply_controls(&mut self, delta: f64) {
+        let mut movement = Vector3::ZERO;
+
         let controls = self.controls.bind();
         let mut direction = *controls.get_movement_vector();
 
@@ -116,16 +122,27 @@ impl PlayerController {
             skin_rotation.y = new_yaw;
             self.body_controller.set_rotation(skin_rotation);
 
-            let force = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
-
-            self.physics_controller
-                .move_shape(&mut self.physics_entity, delta, force.to_network());
+            movement = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
         }
 
-        if controls.is_jumping() {
-            self.physics_entity
-                .apply_impulse(NetworkVector3::new(0.0, JUMP_IMPULSE, 0.0));
+        if !self.physics_controller.is_grounded() {
+            let custom_mass = self.physics_controller.get_custom_mass().unwrap_or(1.0);
+            self.gravity = lerp_angle(
+                self.gravity as f64,
+                (CHARACTER_GRAVITY * delta as f32 * custom_mass) as f64,
+                GRAVITY_ACCELERATION,
+            ) as f32;
+            movement.y += self.gravity;
+        } else {
+            self.gravity = 0.0;
         }
+
+        if controls.is_jumping() && self.physics_controller.is_grounded() {
+            movement.y += JUMP_IMPULSE;
+        }
+
+        self.physics_controller
+            .move_shape(&mut self.physics_entity, delta, movement.to_network());
     }
 }
 

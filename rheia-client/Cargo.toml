@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 common = { path = "../rheia-common" }
 
-godot = { version = "0.1", features = ["experimental-threads"] }
+godot = { version = "0.1.3", features = ["experimental-threads"] }
 
 rand = "0.8"
 lazy_static = "1.4.0"

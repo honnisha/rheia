@@ -116,14 +116,27 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
     }
 }
 
-pub struct PhysxPhysicsCharacterController {}
+pub struct PhysxPhysicsCharacterController {
+    custom_mass: Option<f32>
+}
+
 impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCharacterController {
-    fn create(_custom_mass: Option<f32>) -> Self {
-        Self {}
+    fn create(custom_mass: Option<f32>) -> Self {
+        Self {
+            custom_mass,
+        }
     }
 
     fn move_shape(&mut self, _entity: &mut PhysxPhysicsRigidBodyEntity, _delta: f64, _impulse: NetworkVector3) {
         // https://github.com/rlidwka/bevy_mod_physx/blob/ef9e56023fb7500c7e5d1f2b66057a16a3caf8d7/examples/kinematic.rs
+    }
+
+    fn is_grounded(&mut self) -> bool {
+        false
+    }
+
+    fn get_custom_mass(&mut self) -> &Option<f32> {
+        &self.custom_mass
     }
 }
 

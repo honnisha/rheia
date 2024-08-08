@@ -72,7 +72,7 @@ impl INode for Controls {
         self.cam_rot.x += self.joyaxis_right.x * delta as f32 * JOYAXIS_SENSITIVITY;
         self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
 
-        self.cam_rot.y = self.cam_rot.y.min(MAX_PITCH).max(MIN_PITCH);
+        self.cam_rot.y = self.cam_rot.y.clamp(MIN_PITCH, MAX_PITCH);
 
         //self.movement = Vector3::ZERO;
         let input = Input::singleton();

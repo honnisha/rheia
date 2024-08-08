@@ -106,6 +106,7 @@ impl PhysicsRigidBodyEntity for RapierPhysicsRigidBodyEntity {
 pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
     custom_mass: Option<f32>,
+    grounded: bool,
 }
 
 impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsCharacterController {
@@ -120,6 +121,7 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
         Self {
             character_controller,
             custom_mass,
+            grounded: false,
         }
     }
 
@@ -142,20 +144,21 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
             filter,
             |_| {},
         );
+        self.grounded = corrected_movement.grounded;
 
-//        let _collisions: Vec<CharacterCollision> = vec![];
-//        if let Some(character_mass) = self.custom_mass {
-//            self.character_controller.solve_character_collision_impulses(
-//                delta as f32,
-//                &mut entity.physics_container.rigid_body_set.write(),
-//                &entity.physics_container.collider_set.read(),
-//                &entity.physics_container.query_pipeline.read(),
-//                collider.shape(),
-//                character_mass,
-//                _collisions.iter(),
-//                filter,
-//            );
-//        };
+        let _collisions: Vec<CharacterCollision> = vec![];
+        if let Some(character_mass) = self.custom_mass {
+            self.character_controller.solve_character_collision_impulses(
+                delta as f32,
+                &mut entity.physics_container.rigid_body_set.write(),
+                &entity.physics_container.collider_set.read(),
+                &entity.physics_container.query_pipeline.read(),
+                collider.shape(),
+                character_mass,
+                _collisions.iter(),
+                filter,
+            );
+        };
 
         let mut body = entity
             .physics_container
@@ -163,6 +166,14 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
             .unwrap();
         let translation = body.translation().clone();
         body.set_translation(translation + corrected_movement.translation, true);
+    }
+
+    fn is_grounded(&mut self) -> bool {
+        self.grounded
+    }
+
+    fn get_custom_mass(&mut self) -> &Option<f32> {
+        &self.custom_mass
     }
 }
 

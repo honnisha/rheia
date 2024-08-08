@@ -11,6 +11,8 @@ pub trait PhysicsRigidBodyEntity {
 pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
     fn create(custom_mass: Option<f32>) -> Self;
     fn move_shape(&mut self, entity: &mut T, delta: f64, impulse: Vector3);
+    fn is_grounded(&mut self) -> bool;
+    fn get_custom_mass(&mut self) -> &Option<f32>;
 }
 
 /// For stationary bodies
