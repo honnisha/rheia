@@ -1,5 +1,5 @@
 use super::{
-    chunks::{chunk::Chunk, chunks_container::ChunksContainer},
+    chunks::{chunk::Chunk, chunks_map::ChunkMap},
     worlds_manager::TextureMapperType,
 };
 use crate::{
@@ -19,7 +19,7 @@ use std::rc::Rc;
 /// Godot world
 /// Contains all things inside world
 ///
-/// ChunksContainer
+/// ChunkMap
 /// ║
 /// ╚ChunkColumn
 ///  ║
@@ -29,7 +29,7 @@ use std::rc::Rc;
 pub struct WorldManager {
     pub(crate) base: Base<Node>,
     slug: String,
-    chunks_container: Gd<ChunksContainer>,
+    chunks_container: Gd<ChunkMap>,
 
     physics_container: PhysicsContainerType,
     player_controller: Gd<PlayerController>,
@@ -44,15 +44,15 @@ impl WorldManager {
 impl WorldManager {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         let mut physics_container = PhysicsContainerType::create();
-        let mut chunks_container = Gd::<ChunksContainer>::from_init_fn(|base| {
-            ChunksContainer::create(
+        let mut chunks_container = Gd::<ChunkMap>::from_init_fn(|base| {
+            ChunkMap::create(
                 base,
                 texture_mapper.clone(),
                 material.clone(),
                 physics_container.clone(),
             )
         });
-        let container_name = GString::from("ChunksContainer");
+        let container_name = GString::from("ChunkMap");
         chunks_container.bind_mut().base_mut().set_name(container_name.clone());
         let player_controller =
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));

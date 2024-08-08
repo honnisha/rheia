@@ -21,7 +21,7 @@ pub type ChunksType = AHashMap<ChunkPosition, Rc<RefCell<Chunk>>>;
 /// Container of all chunk sections
 #[derive(GodotClass)]
 #[class(no_init, base=Node)]
-pub struct ChunksContainer {
+pub struct ChunkMap {
     pub(crate) base: Base<Node>,
     chunks: ChunksType,
     texture_mapper: TextureMapperType,
@@ -29,7 +29,7 @@ pub struct ChunksContainer {
     physics_container: PhysicsContainerType,
 }
 
-impl ChunksContainer {
+impl ChunkMap {
     pub fn create(
         base: Base<Node>,
         texture_mapper: TextureMapperType,
@@ -130,7 +130,7 @@ impl ChunksContainer {
         if elapsed > Duration::from_millis(10) {
             log::debug!(
                 target: "chunks",
-                "ChunksContainer.SEND_chunks_to_load process: {:.2?} count:{}",
+                "ChunkMap.SEND_chunks_to_load process: {:.2?} count:{}",
                 elapsed, count
             );
         }
@@ -157,7 +157,7 @@ impl ChunksContainer {
         if elapsed > Duration::from_millis(5) {
             log::debug!(
                 target: "chunks",
-                "ChunksContainer.SPAWN_loaded_chunks process: {:.2?} count:{}",
+                "ChunkMap.SPAWN_loaded_chunks process: {:.2?} count:{}",
                 elapsed, count
             );
         }
@@ -165,7 +165,7 @@ impl ChunksContainer {
 }
 
 #[godot_api]
-impl INode for ChunksContainer {
+impl INode for ChunkMap {
     fn process(&mut self, _delta: f64) {
         self.send_chunks_to_load();
         self.spawn_loaded_chunks();

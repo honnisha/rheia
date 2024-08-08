@@ -1,6 +1,6 @@
 use common::chunks::chunk_position::ChunkPosition;
 
-use super::{chunk::ColumnDataType, chunks_container::ChunksType};
+use super::{chunk::ColumnDataType, chunks_map::ChunksType};
 
 /// Tool for storing near chunks
 pub struct NearChunksData {
