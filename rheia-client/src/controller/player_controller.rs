@@ -1,7 +1,6 @@
 use crate::utils::bridge::IntoNetworkVector;
 use crate::world::world_manager::WorldManager;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
-use common::network::messages::Vector3 as NetworkVector3;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
@@ -13,19 +12,18 @@ use super::camera_controller::CameraController;
 use super::controls::Controls;
 use super::player_movement::PlayerMovement;
 
-const TURN_SPEED: f64 = 4.0;
-const SPEED: f32 = 0.1;
+const TURN_SPEED: f64 = 6.0;
+const MOVEMENT_SPEED: f32 = 4.0;
+const GROUND_TIMER: f32 = 0.5;
+
+const CHARACTER_GRAVITY: f32 = -10.0;
+const JUMP_SPEED: f32 = 10.0;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
 
 const CONTROLLER_HEIGHT: f32 = 1.8;
-
 const CONTROLLER_RADIUS: f32 = 0.4;
-const CONTROLLER_MASS: f32 = 1.0;
-const JUMP_IMPULSE: f32 = 5.0;
-
-const CHARACTER_GRAVITY: f32 = -9.81;
-const GRAVITY_ACCELERATION: f64 = 0.1;
+const CONTROLLER_MASS: f32 = 3.0;
 
 #[derive(GodotClass)]
 #[class(base=Node3D)]
@@ -42,7 +40,9 @@ pub struct PlayerController {
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
-    gravity: f32,
+
+    vertical_movement: f32,
+    grounded_timer: f32,
 }
 
 impl PlayerController {
@@ -61,8 +61,9 @@ impl PlayerController {
             cache_movement: None,
 
             physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
-            physics_controller: PhysicsCharacterControllerType::create(Some(1.0)),
-            gravity: 0.0,
+            physics_controller: PhysicsCharacterControllerType::create(Some(CONTROLLER_MASS)),
+            vertical_movement: 0.0,
+            grounded_timer: 0.0,
         }
     }
 
@@ -117,29 +118,34 @@ impl PlayerController {
                 TURN_SPEED * delta,
             ) as f32;
 
-            // Update skil rotation for visual display
+            // Update skin rotation for visual display
             let mut skin_rotation = self.body_controller.get_rotation();
             skin_rotation.y = new_yaw;
             self.body_controller.set_rotation(skin_rotation);
 
-            movement = self.body_controller.get_transform().basis.col_c() * -1.0 * SPEED;
+            movement = self.body_controller.get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }
 
-        if !self.physics_controller.is_grounded() {
-            let custom_mass = self.physics_controller.get_custom_mass().unwrap_or(1.0);
-            self.gravity = lerp_angle(
-                self.gravity as f64,
-                (CHARACTER_GRAVITY * delta as f32 * custom_mass) as f64,
-                GRAVITY_ACCELERATION,
-            ) as f32;
-            movement.y += self.gravity;
-        } else {
-            self.gravity = 0.0;
+        // Check physics ground check
+        if self.physics_controller.is_grounded() {
+            self.grounded_timer = GROUND_TIMER;
+            self.vertical_movement = 0.0;
         }
 
-        if controls.is_jumping() && self.physics_controller.is_grounded() {
-            movement.y += JUMP_IMPULSE;
+        // If we are grounded we can jump
+        if self.grounded_timer > 0.0 {
+            self.grounded_timer -= delta as f32;
+            // If we jump we clear the grounded tolerance
+            if controls.is_jumping() {
+                self.vertical_movement = JUMP_SPEED;
+                self.grounded_timer = 0.0;
+            }
         }
+
+        movement.y = self.vertical_movement;
+        let custom_mass = self.physics_controller.get_custom_mass().unwrap_or(1.0);
+        self.vertical_movement += CHARACTER_GRAVITY * delta as f32 * custom_mass;
+        movement *= delta as f32;
 
         self.physics_controller
             .move_shape(&mut self.physics_entity, delta, movement.to_network());
