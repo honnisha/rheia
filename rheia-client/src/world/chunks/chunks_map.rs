@@ -2,21 +2,22 @@ use ahash::AHashMap;
 use common::chunks::{chunk_position::ChunkPosition, utils::SectionsData};
 use godot::{engine::Material, prelude::*};
 use log::error;
+use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
-use crate::{
-    main_scene::PhysicsContainerType, utils::bridge::IntoGodotVector, world::worlds_manager::TextureMapperType,
-};
+use crate::{main_scene::PhysicsContainerType, world::worlds_manager::TextureMapperType};
 
 use super::{
-    chunk_column::{ChunkColumn, ColumnDataLockType},
+    chunk_column::{ChunkBase, ChunkColumn, ColumnDataLockType},
     chunk_generator::generate_chunk,
     near_chunk_data::NearChunksData,
 };
 use flume::{unbounded, Receiver, Sender};
 
-pub type ChunksType = AHashMap<ChunkPosition, Gd<ChunkColumn>>;
+pub type ChunkLock = Arc<RwLock<ChunkColumn>>;
+pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
 
 /// Container of all chunk sections
 #[derive(GodotClass)]
@@ -32,7 +33,10 @@ pub struct ChunkMap {
     physics_container: PhysicsContainerType,
 
     sended_chunks: Rc<RefCell<Vec<ChunkPosition>>>,
-    loaded_chunks: (Sender<ChunkPosition>, Receiver<ChunkPosition>),
+    loaded_chunks: (
+        Sender<(ChunkPosition, InstanceId)>,
+        Receiver<(ChunkPosition, InstanceId)>,
+    ),
 }
 
 impl ChunkMap {
@@ -57,7 +61,7 @@ impl ChunkMap {
         self.chunks.len()
     }
 
-    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Gd<ChunkColumn>> {
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<ChunkLock> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.clone()),
             None => None,
@@ -66,7 +70,7 @@ impl ChunkMap {
 
     pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataLockType> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.bind().get_chunk_data().clone()),
+            Some(c) => Some(c.read().get_chunk_data().clone()),
             None => None,
         }
     }
@@ -80,15 +84,16 @@ impl ChunkMap {
             return;
         }
 
-        let chunk_column = Gd::<ChunkColumn>::from_init_fn(|base| ChunkColumn::create(base, chunk_position, sections));
-        self.chunks.insert(chunk_position.clone(), chunk_column);
+        let chunk_column = ChunkColumn::create(chunk_position, sections);
+        self.chunks
+            .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
         self.sended_chunks.borrow_mut().push(chunk_position);
     }
 
     pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
         let mut unloaded = false;
-        if let Some(mut chunk_column) = self.chunks.remove(&chunk_position) {
-            chunk_column.bind_mut().base_mut().queue_free();
+        if let Some(chunk_column) = self.chunks.remove(&chunk_position) {
+            chunk_column.write().free();
             unloaded = true;
         }
         if !unloaded {
@@ -108,16 +113,15 @@ impl ChunkMap {
 
             let chunk_column = self.get_chunk(&chunk_position).unwrap();
             generate_chunk(
-                chunk_column.instance_id(),
+                chunk_column.read().get_chunk_data().clone(),
                 near_chunks_data,
-                self.get_chunk_column_data(chunk_position).unwrap(),
                 self.texture_mapper.clone(),
                 self.material.instance_id(),
                 chunk_position.clone(),
                 self.physics_container.clone(),
                 self.loaded_chunks.0.clone(),
             );
-            chunk_column.bind().set_sended();
+            chunk_column.read().set_sended();
             return false;
         });
     }
@@ -125,23 +129,13 @@ impl ChunkMap {
     /// Retrieving loaded chunks to add them to the root node
     fn spawn_loaded_chunks(&mut self) {
         let mut base = self.base_mut().clone();
-        for chunk_position in self.loaded_chunks.1.drain() {
-            let mut chunk_column = self.get_chunk(&chunk_position).unwrap();
+        for (chunk_position, instance_id) in self.loaded_chunks.1.drain() {
+            let l = self.get_chunk(&chunk_position).unwrap();
+            let mut chunk_column = l.write();
 
-            base.add_child(chunk_column.clone().upcast());
-
-            let mut c = chunk_column.bind_mut();
-
-            // It must be updated in main thread because of
-            // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-            c.base_mut().set_global_position(chunk_position.to_godot());
-
-            for section in c.sections.iter_mut() {
-                if section.bind().need_sync {
-                    section.bind_mut().chunk_section_sync();
-                }
-            }
-            c.set_loaded();
+            let chunk_base = Gd::<ChunkBase>::from_instance_id(instance_id);
+            base.add_child(chunk_base.clone().upcast());
+            chunk_column.spawn_loaded_chunk(chunk_base);
         }
     }
 }

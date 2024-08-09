@@ -181,7 +181,7 @@ impl INode3D for PlayerController {
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
         let chunk_loaded = match world.bind().get_chunk(&chunk_pos) {
-            Some(c) => c.bind().is_loaded(),
+            Some(c) => c.read().is_loaded(),
             None => false,
         };
 

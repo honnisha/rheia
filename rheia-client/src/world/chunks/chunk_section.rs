@@ -48,7 +48,7 @@ impl ChunkSection {
         chunk_position: ChunkPosition,
     ) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
-        mesh.set_name(GString::from("ChunkMesh"));
+        mesh.set_name(GString::from(format!("ChunkMesh {}", y)));
         mesh.set_material_overlay(material.clone());
 
         // Disable while its empty

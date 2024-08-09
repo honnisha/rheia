@@ -1,4 +1,7 @@
-use super::{chunks::{chunk_column::ChunkColumn, chunks_map::ChunkMap}, worlds_manager::TextureMapperType};
+use super::{
+    chunks::chunks_map::{ChunkLock, ChunkMap},
+    worlds_manager::TextureMapperType,
+};
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
     main_scene::{Main, PhysicsContainerType},
@@ -23,7 +26,7 @@ use godot::{engine::Material, prelude::*};
 pub struct WorldManager {
     pub(crate) base: Base<Node>,
     slug: String,
-    chunks_container: Gd<ChunkMap>,
+    chunk_map: Gd<ChunkMap>,
 
     physics_container: PhysicsContainerType,
     player_controller: Gd<PlayerController>,
@@ -34,7 +37,7 @@ impl WorldManager {}
 impl WorldManager {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         let mut physics_container = PhysicsContainerType::create();
-        let mut chunks_container = Gd::<ChunkMap>::from_init_fn(|base| {
+        let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| {
             ChunkMap::create(
                 base,
                 texture_mapper.clone(),
@@ -43,14 +46,14 @@ impl WorldManager {
             )
         });
         let container_name = GString::from("ChunkMap");
-        chunks_container.bind_mut().base_mut().set_name(container_name.clone());
+        chunk_map.bind_mut().base_mut().set_name(container_name.clone());
         let player_controller =
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));
 
         Self {
             base,
             slug: slug,
-            chunks_container,
+            chunk_map,
 
             physics_container,
             player_controller,
@@ -62,22 +65,22 @@ impl WorldManager {
     }
 
     pub fn get_chunks_count(&self) -> usize {
-        self.chunks_container.bind().get_chunks_count()
+        self.chunk_map.bind().get_chunks_count()
     }
 
-    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<Gd<ChunkColumn>> {
-        if let Some(chunk) = self.chunks_container.bind().get_chunk(chunk_position) {
+    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<ChunkLock> {
+        if let Some(chunk) = self.chunk_map.bind().get_chunk(chunk_position) {
             return Some(chunk.clone());
         }
         return None;
     }
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
-        self.chunks_container.bind_mut().load_chunk(chunk_position, sections);
+        self.chunk_map.bind_mut().load_chunk(chunk_position, sections);
     }
 
     pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
-        self.chunks_container.bind_mut().unload_chunk(chunk_position);
+        self.chunk_map.bind_mut().unload_chunk(chunk_position);
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
@@ -102,8 +105,8 @@ impl WorldManager {
 #[godot_api]
 impl INode for WorldManager {
     fn ready(&mut self) {
-        let chunks_container = self.chunks_container.clone().upcast();
-        self.base_mut().add_child(chunks_container);
+        let chunk_map = self.chunk_map.clone().upcast();
+        self.base_mut().add_child(chunk_map);
 
         // Bind world player move signal
         let obj = self.base().to_godot().clone();
