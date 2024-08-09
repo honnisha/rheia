@@ -25,6 +25,10 @@ impl Display for PlayerMovement {
 }
 
 impl PlayerMovement {
+    pub fn get_position(&self) -> &Vector3 {
+        &self.position
+    }
+
     pub fn create(position: Vector3, yaw: FloatType, pitch: FloatType) -> Self {
         Self { position, yaw, pitch }
     }

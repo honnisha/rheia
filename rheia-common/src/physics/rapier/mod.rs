@@ -113,6 +113,7 @@ impl PhysicsCharacterController<RapierPhysicsRigidBodyEntity> for RapierPhysicsC
     fn create(custom_mass: Option<f32>) -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Absolute(0.01);
+        character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.1));
         character_controller.autostep = Some(CharacterAutostep {
             max_height: CharacterLength::Absolute(0.5),
             min_width: CharacterLength::Absolute(0.5),
@@ -194,6 +195,16 @@ impl RapierPhysicsStaticEntity {
 }
 
 impl PhysicsStaticEntity for RapierPhysicsStaticEntity {
+    fn set_enabled(&mut self, active: bool) {
+        let Some(h) = self.collider_handle else { return };
+
+        let mut collider = self
+            .physics_container
+            .get_collider_mut(&h)
+            .expect("physics entity dosesn't have collider_handle");
+        collider.set_enabled(active);
+    }
+
     fn remove_collider(&mut self) {
         if let Some(c) = self.collider_handle {
             self.physics_container.collider_set.write().remove(

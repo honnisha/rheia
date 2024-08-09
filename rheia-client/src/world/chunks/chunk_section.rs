@@ -104,6 +104,9 @@ impl ChunkSection {
         }
         self.new_colider = None;
     }
+
+    pub fn set_active(&mut self, state: bool) {
+    }
 }
 
 #[godot_api]

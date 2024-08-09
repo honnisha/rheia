@@ -138,6 +138,12 @@ impl ChunkMap {
             chunk_column.spawn_loaded_chunk(chunk_base);
         }
     }
+
+    pub fn change_active_chunk(&mut self, active_chunk_position: &ChunkPosition) {
+        for (chunk_position, chunk_lock) in self.chunks.iter_mut() {
+            chunk_lock.write().set_active(chunk_position == active_chunk_position);
+        }
+    }
 }
 
 #[godot_api]

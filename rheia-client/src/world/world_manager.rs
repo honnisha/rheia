@@ -5,6 +5,7 @@ use super::{
 use crate::{
     controller::{player_controller::PlayerController, player_movement::PlayerMovement},
     main_scene::{Main, PhysicsContainerType},
+    utils::bridge::IntoChunkPositionVector,
 };
 use common::{
     chunks::{chunk_position::ChunkPosition, utils::SectionsData},
@@ -95,10 +96,16 @@ impl WorldManager {
 #[godot_api]
 impl WorldManager {
     #[func]
-    fn handler_player_move(&mut self, movement: Gd<PlayerMovement>) {
+    fn handler_player_move(&mut self, movement: Gd<PlayerMovement>, new_chunk: bool) {
         let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
         let main = main.bind();
         main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
+
+        if new_chunk {
+            self.chunk_map
+                .bind_mut()
+                .change_active_chunk(&movement.bind().get_position().to_chunk_position());
+        }
     }
 }
 

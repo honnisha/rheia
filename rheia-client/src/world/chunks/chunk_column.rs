@@ -98,4 +98,13 @@ impl ChunkColumn {
         }
         self.set_loaded();
     }
+
+    /// Deactivates chunks that are far away from the player
+    pub fn set_active(&mut self, state: bool) {
+        if let Some(base) = self.base.as_mut() {
+            for section in base.bind_mut().sections.as_mut() {
+                section.bind_mut().set_active(state);
+            }
+        }
+    }
 }

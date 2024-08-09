@@ -164,6 +164,10 @@ impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
             self.actor.detach_shape(&mut self.shape.take().unwrap());
         }
     }
+
+    fn set_enabled(&mut self, active: bool) {
+        todo!()
+    }
 }
 
 pub struct PhysxPhysicsColliderBuilder {

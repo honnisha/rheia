@@ -17,6 +17,7 @@ pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
 
 /// For stationary bodies
 pub trait PhysicsStaticEntity {
+    fn set_enabled(&mut self, active: bool);
     fn remove_collider(&mut self);
 }
 

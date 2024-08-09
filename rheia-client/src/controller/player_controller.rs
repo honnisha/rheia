@@ -1,4 +1,4 @@
-use crate::utils::bridge::IntoNetworkVector;
+use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
 use crate::world::world_manager::WorldManager;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
@@ -227,8 +227,18 @@ impl INode3D for PlayerController {
         });
 
         if self.cache_movement.is_none() || *new_movement.bind() != *self.cache_movement.as_ref().unwrap().bind() {
-            self.base_mut()
-                .emit_signal("on_player_move".into(), &[new_movement.to_variant()]);
+            let new_chunk = if let Some(old) = self.cache_movement.as_ref() {
+                let c1 = old.bind().get_position().to_chunk_position();
+                let c2 = new_movement.bind().get_position().to_chunk_position();
+                c1 != c2
+            } else {
+                false
+            };
+
+            self.base_mut().emit_signal(
+                "on_player_move".into(),
+                &[new_movement.to_variant(), new_chunk.to_variant()],
+            );
             self.cache_movement = Some(new_movement);
         }
     }

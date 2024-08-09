@@ -1,8 +1,19 @@
-use common::{chunks::chunk_position::ChunkPosition, network::messages::Vector3 as NetworkVector3, CHUNK_SIZE};
+use common::{
+    chunks::chunk_position::ChunkPosition, network::messages::Vector3 as NetworkVector3, utils::fix_chunk_loc_pos,
+    CHUNK_SIZE,
+};
 use godot::prelude::Vector3 as GDVector3;
 
 pub trait IntoGodotVector {
     fn to_godot(&self) -> GDVector3;
+}
+
+pub trait IntoNetworkVector {
+    fn to_network(&self) -> NetworkVector3;
+}
+
+pub trait IntoChunkPositionVector {
+    fn to_chunk_position(&self) -> ChunkPosition;
 }
 
 impl IntoGodotVector for NetworkVector3 {
@@ -22,13 +33,15 @@ impl IntoGodotVector for ChunkPosition {
     }
 }
 
-pub trait IntoNetworkVector {
-    fn to_network(&self) -> NetworkVector3;
-}
-
 impl IntoNetworkVector for GDVector3 {
     fn to_network(&self) -> NetworkVector3 {
         NetworkVector3::new(self.x, self.y, self.z)
+    }
+}
+
+impl IntoChunkPositionVector for GDVector3 {
+    fn to_chunk_position(&self) -> ChunkPosition {
+        ChunkPosition::new(fix_chunk_loc_pos(self.x as i64), fix_chunk_loc_pos(self.z as i64))
     }
 }
 
