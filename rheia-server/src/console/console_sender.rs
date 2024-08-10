@@ -1,4 +1,3 @@
-use log::info;
 use std::{fmt::{self, Display}, any::Any};
 
 pub trait ConsoleSender {
@@ -20,7 +19,7 @@ pub struct Console;
 
 impl ConsoleSender for Console {
     fn send_console_message(&self, message: String) {
-        info!("{}", message)
+        log::info!(target: "console" ,"{}", message)
     }
 }
 impl ConsoleSenderType for Console {

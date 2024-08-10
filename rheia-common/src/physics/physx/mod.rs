@@ -165,8 +165,8 @@ impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
         }
     }
 
-    fn set_enabled(&mut self, active: bool) {
-        todo!()
+    fn set_enabled(&mut self, _active: bool) {
+        todo!();
     }
 }
 
