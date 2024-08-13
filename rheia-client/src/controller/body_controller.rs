@@ -113,22 +113,50 @@ pub struct BodyController {
     pub(crate) base: Base<Node3D>,
 
     generic: Gd<Node3D>,
+    animation_player: Gd<AnimationPlayer>,
 }
 
 impl BodyController {
     pub fn create(base: Base<Node3D>) -> Self {
         let generic = load::<PackedScene>(GENERIC_MODEL).instantiate_as::<Node3D>();
 
-        let mut animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
+        let animation_player = generic.get_node_as::<AnimationPlayer>("AnimationPlayer");
+        // let mut animation = animation_player
+        //     .get_animation(StringName::from(GenericAnimations::Idle.to_string()))
+        //     .unwrap();
+        // animation.set_loop_mode(LoopMode::LINEAR);
+        Self {
+            base,
+            generic,
+            animation_player,
+        }
+    }
 
-        let mut animation = animation_player
-            .get_animation(StringName::from(GenericAnimations::Idle.to_string()))
-            .unwrap();
-        animation.set_loop_mode(LoopMode::LINEAR);
+    fn play_animation(&mut self, animation: GenericAnimations) {
+        self.animation_player.call_deferred(StringName::from("play"), &[animation.to_string().to_variant()]);
+    }
 
-        animation_player.call_deferred(StringName::from("play"), &[GenericAnimations::Walk.to_string().to_variant()]);
+    pub fn get_current_animation(&self) -> String {
+        self.animation_player.get_current_animation().to_string()
+    }
 
-        Self { base, generic }
+    pub fn handle_movement(&mut self, movement: Vector3) {
+        let falling = movement.y < -0.01;
+
+        if falling {
+            self.play_animation(GenericAnimations::Fall);
+        }
+        // Moving horizontally
+        else if movement.x.abs() > 0.01 || movement.z.abs() > 0.01 {
+            self.play_animation(GenericAnimations::Walk);
+        }
+        else {
+            self.play_animation(GenericAnimations::Idle);
+        }
+    }
+
+    pub fn trigger_animation(&mut self, animation: GenericAnimations) {
+        self.play_animation(animation);
     }
 
     fn replace(&mut self, source: &Node3D, part: BodyPart) -> Result<(), String> {

@@ -35,6 +35,7 @@ macro_rules! debug_world_string {
     () => {
         "World: {}
 Controller position: {}
+Character state: {}
 Chunks loaded: {}
 Chunk position: {}
 Chunk info: {}"
@@ -128,6 +129,7 @@ impl DebugInfo {
                     debug_world_string!(),
                     world.get_slug(),
                     controller_positioin,
+                    player_controller.get_body_controller().bind().get_current_animation(),
                     world.get_chunks_count(),
                     chunk_pos,
                     chunk_info,

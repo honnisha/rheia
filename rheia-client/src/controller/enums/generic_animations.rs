@@ -14,7 +14,7 @@ impl ToString for GenericAnimations {
             GenericAnimations::Run => "run",
             GenericAnimations::Walk => "walk",
             GenericAnimations::Jump => "jump",
-            GenericAnimations::Fall => "jump",
+            GenericAnimations::Fall => "fall",
         };
         s.to_string()
     }

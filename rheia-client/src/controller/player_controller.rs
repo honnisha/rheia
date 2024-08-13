@@ -10,6 +10,7 @@ use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContai
 use super::body_controller::BodyController;
 use super::camera_controller::CameraController;
 use super::controls::Controls;
+use super::enums::generic_animations::GenericAnimations;
 use super::player_movement::PlayerMovement;
 
 const TURN_SPEED: f64 = 6.0;
@@ -65,6 +66,10 @@ impl PlayerController {
             vertical_movement: 0.0,
             grounded_timer: 0.0,
         }
+    }
+
+    pub fn get_body_controller(&self) -> &Gd<BodyController> {
+        &self.body_controller
     }
 
     // Get position of the character
@@ -137,6 +142,7 @@ impl PlayerController {
             self.grounded_timer -= delta as f32;
             // If we jump we clear the grounded tolerance
             if controls.is_jumping() {
+                self.body_controller.bind_mut().trigger_animation(GenericAnimations::Jump);
                 self.vertical_movement = JUMP_SPEED;
                 self.grounded_timer = 0.0;
             }
@@ -234,6 +240,13 @@ impl INode3D for PlayerController {
             } else {
                 false
             };
+
+            let movement = if let Some(old) = self.cache_movement.as_ref() {
+                *new_movement.bind().get_position() - *old.bind().get_position()
+            } else {
+                Vector3::ZERO
+            };
+            self.body_controller.bind_mut().handle_movement(movement);
 
             self.base_mut().emit_signal(
                 "on_player_move".into(),

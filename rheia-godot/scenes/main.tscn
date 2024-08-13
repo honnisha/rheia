@@ -1,6 +1,5 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=2 format=3 uid="uid://c5l1r11gi0tet"]
 
-[ext_resource type="PackedScene" uid="uid://dextox2gcvb51" path="res://assets/models/generic/animation_tree.tscn" id="2_cpb3r"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 
 [node name="Main" type="Main"]
@@ -12,5 +11,3 @@ clouds_height = 0.4
 clouds_size = 0.52
 clouds_quality = 100
 wind_strength = 0.05
-
-[node name="AnimationTree" parent="." instance=ExtResource("2_cpb3r")]
