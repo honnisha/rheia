@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3 uid="uid://cdlnsede2m2vs"]
+
+[ext_resource type="PackedScene" uid="uid://mlknua6v1d1n" path="res://assets/models/generic/generic.glb" id="1_6sp6p"]
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_80l8o"]
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_6w55s"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_6pi1h"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_mto85"]
+states/idle/node = SubResource("AnimationNodeBlendSpace2D_80l8o")
+states/idle/position = Vector2(394, 69)
+states/jump/node = SubResource("AnimationNodeBlendSpace2D_6w55s")
+states/jump/position = Vector2(468, 215)
+transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition_6pi1h")]
+
+[node name="blockbench_export" instance=ExtResource("1_6sp6p")]
+
+[node name="b_leg_left_hip" parent="Node2/root/b_torso_lower" index="1"]
+transform = Transform3D(0.984808, 0.157379, -0.0733869, -0.173648, 0.892539, -0.416198, 0, 0.422618, 0.906308, -0.101562, -0.0484375, 0.009375)
+
+[node name="b_leg_right_hip" parent="Node2/root/b_torso_lower" index="2"]
+transform = Transform3D(0.984808, -0.150384, -0.0868241, 0.173648, 0.852868, 0.492404, 7.45058e-09, -0.5, 0.866025, 0.101562, -0.0484375, 0.009375)
+
+[node name="b_hand_left_shoulder" parent="Node2/root/b_torso_lower/b_torso_middle/b_torso_upper" index="1"]
+transform = Transform3D(0.906308, 0.422618, 0, -0.422618, 0.906308, 0, 0, 0, 1, -0.20625, 0.207813, 0)
+
+[node name="b_hand_right_shoulder" parent="Node2/root/b_torso_lower/b_torso_middle/b_torso_upper" index="2"]
+transform = Transform3D(0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 0, 0, 1, 0.20625, 0.207813, 0)
+
+[node name="AnimationTree" type="AnimationTree" parent="." index="2"]
+tree_root = SubResource("AnimationNodeStateMachine_mto85")
+advance_expression_base_node = NodePath("../AnimationPlayer")
+parameters/idle/blend_position = Vector2(0, 0)
+parameters/jump/blend_position = Vector2(0, 0)

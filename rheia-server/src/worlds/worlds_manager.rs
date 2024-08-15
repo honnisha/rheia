@@ -10,7 +10,7 @@ use super::world_manager::WorldManager;
 
 type WorldsType = HashMap<String, Arc<RwLock<WorldManager>>>;
 
-/// Contains and manages all worlds of the server
+/// Contains and managers of all worlds of the server
 #[derive(Resource)]
 pub struct WorldsManager {
     worlds: WorldsType,

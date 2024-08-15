@@ -56,6 +56,7 @@ pub enum ServerMessages {
         slug: String,
         scripts: HashMap<String, String>,
     },
+    // Used to teleport the player's client controller.
     Teleport {
         world_slug: String,
         location: Vector3,
@@ -76,6 +77,18 @@ pub enum ServerMessages {
         world_slug: String,
         chunks: Vec<ChunkPosition>,
     },
+    StartStreamingEntity {
+        id: i32,
+        world_slug: String,
+        location: Vector3,
+        yaw: f32,
+        pitch: f32,
+    },
+    StopStreamingEntity {
+        id: i32,
+        world_slug: String,
+    },
+    EntityMove { id: i32, position: Vector3, yaw: f32, pitch: f32 },
 }
 
 pub enum NetworkMessageType {

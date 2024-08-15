@@ -1,10 +1,7 @@
 use std::{fs::File, io::Read};
 
 use ahash::HashMap;
-use godot::{
-    engine::{animation::LoopMode, AnimationPlayer},
-    prelude::*,
-};
+use godot::{engine::AnimationPlayer, prelude::*};
 use lazy_static::lazy_static;
 
 use crate::utils::glb::glb_import;
@@ -133,7 +130,8 @@ impl BodyController {
     }
 
     fn play_animation(&mut self, animation: GenericAnimations) {
-        self.animation_player.call_deferred(StringName::from("play"), &[animation.to_string().to_variant()]);
+        self.animation_player
+            .call_deferred(StringName::from("play"), &[animation.to_string().to_variant()]);
     }
 
     pub fn get_current_animation(&self) -> String {
@@ -149,8 +147,7 @@ impl BodyController {
         // Moving horizontally
         else if movement.x.abs() > 0.01 || movement.z.abs() > 0.01 {
             self.play_animation(GenericAnimations::Walk);
-        }
-        else {
+        } else {
             self.play_animation(GenericAnimations::Idle);
         }
     }

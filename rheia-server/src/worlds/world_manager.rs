@@ -17,7 +17,7 @@ use super::world_generator::WorldGenerator;
 
 pub struct WorldManager {
     slug: String,
-    world: World,
+    ecs: World,
     chunks_map: ChunkMap,
     world_generator: Arc<RwLock<WorldGenerator>>,
 }
@@ -26,18 +26,18 @@ impl WorldManager {
     pub fn new(slug: String, seed: u64) -> Self {
         WorldManager {
             slug: slug,
-            world: World::new(),
+            ecs: World::new(),
             chunks_map: ChunkMap::new(),
             world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
         }
     }
 
     pub fn get_ecs(&self) -> &World {
-        &self.world
+        &self.ecs
     }
 
     pub fn get_ecs_mut(&mut self) -> &mut World {
-        &mut self.world
+        &mut self.ecs
     }
 
     pub fn get_chunks_map(&self) -> &ChunkMap {
@@ -71,7 +71,7 @@ impl WorldManager {
     }
 
     /// Returns boolean if player changed his chunk
-    /// and his despawned chunks if so
+    /// and his despawned chunks
     pub fn player_move(
         &mut self,
         world_entity: &WorldEntity,
@@ -80,7 +80,7 @@ impl WorldManager {
     ) -> (bool, Vec<ChunkPosition>) {
         let mut abandoned_chunks: Vec<ChunkPosition> = Default::default();
 
-        let mut player_entity = self.world.entity_mut(world_entity.get_entity());
+        let mut player_entity = self.ecs.entity_mut(world_entity.get_entity());
         let mut old_position = player_entity.get_mut::<Position>().unwrap();
 
         let old_chunk = old_position.get_chunk_position();
