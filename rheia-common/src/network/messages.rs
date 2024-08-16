@@ -77,18 +77,20 @@ pub enum ServerMessages {
         world_slug: String,
         chunks: Vec<ChunkPosition>,
     },
+    // In case the entity gets in the player's line of sight
     StartStreamingEntity {
-        id: i32,
+        id: u32,
         world_slug: String,
         location: Vector3,
         yaw: f32,
         pitch: f32,
     },
+    // In case the entity escapes from the visible chunk or is deleted
     StopStreamingEntity {
-        id: i32,
+        id: u32,
         world_slug: String,
     },
-    EntityMove { id: i32, position: Vector3, yaw: f32, pitch: f32 },
+    EntityMove { id: u32, position: Vector3, yaw: f32, pitch: f32 },
 }
 
 pub enum NetworkMessageType {

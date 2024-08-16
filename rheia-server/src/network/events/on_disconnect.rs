@@ -36,8 +36,7 @@ pub fn on_disconnect(
                 );
             }
 
-            // Check if player was in the world
-            // despawn if so
+            // Check if player was in the world, despawn if so
             let world_entity = client.get_world_entity();
             match world_entity {
                 Some(c) => {

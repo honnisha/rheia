@@ -14,21 +14,19 @@ use common::network::server::{ConnectionMessages, ServerNetwork};
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 
+use super::events::{
+    on_connection::{on_connection, PlayerConnectionEvent},
+    on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
+    on_disconnect::{on_disconnect, PlayerDisconnectEvent},
+    on_player_move::{on_player_move, PlayerMoveEvent},
+};
 use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::NetworkServerType;
 use crate::{
-    client_resources::resources_manager::ResourceManager,
-    console::commands_executer::CommandsHandler,
-    events::{
-        on_connection::{on_connection, PlayerConnectionEvent},
-        on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
-        on_disconnect::{on_disconnect, PlayerDisconnectEvent},
-        on_player_move::{on_player_move, PlayerMoveEvent},
-    },
-    ServerSettings,
+    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, ServerSettings,
 };
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);

@@ -25,7 +25,6 @@ mod args;
 mod client_resources;
 mod console;
 mod entities;
-mod events;
 mod logger;
 mod network;
 mod worlds;

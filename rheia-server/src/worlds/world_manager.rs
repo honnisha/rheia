@@ -70,8 +70,9 @@ impl WorldManager {
         WorldEntity::new(self.slug.clone(), entity)
     }
 
-    /// Returns boolean if player changed his chunk
-    /// and his despawned chunks
+    /// Records the player's movement and updates his position in ECS.
+    ///
+    /// Returns boolean if player changed his chunk and his despawned chunks
     pub fn player_move(
         &mut self,
         world_entity: &WorldEntity,

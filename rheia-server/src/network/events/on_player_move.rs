@@ -37,7 +37,7 @@ pub fn on_player_move(
             None => {
                 log::error!(
                     target: "network",
-                    "Client ip:{} tries to send move packets but he not in the world!",
+                    "Client ip:{} tries to send move packets but he is not in the world!",
                     client
                 );
                 continue;
