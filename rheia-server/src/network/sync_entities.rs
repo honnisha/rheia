@@ -25,14 +25,12 @@ pub fn sync_entity_move(_entity: Entity) {}
 
 #[derive(Event)]
 pub struct PlayerSpawnEvent {
-    world_entity: WorldEntity
+    world_entity: WorldEntity,
 }
 
 impl PlayerSpawnEvent {
     pub fn new(world_entity: WorldEntity) -> Self {
-        Self {
-            world_entity,
-        }
+        Self { world_entity }
     }
 }
 
@@ -50,8 +48,19 @@ pub fn sync_player_spawn(
     clients: Res<ClientsContainer>,
     mut connection_events: EventReader<PlayerSpawnEvent>,
 ) {
+    #[cfg(feature = "trace")]
+    let _span = bevy_utils::tracing::info_span!("sync_player_spawn").entered();
+
     for event in connection_events.read() {
-        log::info!("sync_player_spawn: {}", event.world_entity.get_entity());
+
+        let world_manager = worlds_manager
+            .get_world_manager(&event.world_entity.get_world_slug())
+            .unwrap();
+
+        for chunk in world_manager
+            .get_chunks_map()
+            .get_watching_chunks(&event.world_entity.get_entity())
+        {}
 
         sync_entity_spawn(event.world_entity.get_entity());
     }

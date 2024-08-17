@@ -131,6 +131,9 @@ fn receive_message_system(
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
 ) {
+    #[cfg(feature = "trace")]
+    let _span = bevy_utils::tracing::info_span!("receive_message_system").entered();
+
     // Sleep if the tick rate is less than the minimum tick rate
     if time.delta() < MIN_TICK_TIME {
         thread::sleep(MIN_TICK_TIME - time.delta());

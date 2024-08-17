@@ -66,9 +66,14 @@ impl ChunkMap {
         }
     }
 
+    /// Get all chunks watching by the player
+    pub fn get_watching_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
+        self.chunks_load_state.get_watching_chunks(entity)
+    }
+
     /// Get Entities of all players watching the chunk
-    pub fn take_chunks_entities(&self, chunk_position: &ChunkPosition) -> Option<&Vec<Entity>> {
-        self.chunks_load_state.take_chunks_entities(&chunk_position)
+    pub fn get_chunk_watchers(&self, chunk_position: &ChunkPosition) -> Option<&Vec<Entity>> {
+        self.chunks_load_state.get_chunk_watchers(&chunk_position)
     }
 
     /// Create player in the world
@@ -101,7 +106,7 @@ impl ChunkMap {
             panic!("update_chunks_render from and to must be different chunks positions");
         }
 
-        let mut old_chunks = self.chunks_load_state.take_entity_chunks(&entity).unwrap().clone();
+        let mut old_chunks = self.chunks_load_state.get_watching_chunks(&entity).unwrap().clone();
 
         // Add new tickets
         let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
@@ -198,7 +203,7 @@ mod tests {
         // Spawn
         let pos = ChunkPosition::new(0, 0);
         chunk_map.start_chunks_render(entity, &pos, chunks_distance);
-        let chunks = chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap();
+        let chunks = chunk_map.chunks_load_state.get_watching_chunks(&entity).unwrap();
         assert_eq!(chunks.len(), 5);
         assert_eq!(chunks.contains(&ChunkPosition::new(0, 0)), true);
         assert_eq!(chunks.contains(&ChunkPosition::new(0, 1)), true);
@@ -210,7 +215,7 @@ mod tests {
         // Move
         let new_pos = ChunkPosition::new(1, 0);
         let abandoned_chunks = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
-        let chunks = chunk_map.chunks_load_state.take_entity_chunks(&entity).unwrap();
+        let chunks = chunk_map.chunks_load_state.get_watching_chunks(&entity).unwrap();
         assert_eq!(chunks.len(), 5);
         assert_eq!(chunks.contains(&ChunkPosition::new(1, 0)), true);
         assert_eq!(chunks.contains(&ChunkPosition::new(1, 1)), true);
@@ -226,7 +231,7 @@ mod tests {
 
         // despawn
         chunk_map.stop_chunks_render(entity);
-        assert_eq!(chunk_map.chunks_load_state.take_entity_chunks(&entity).is_none(), true);
+        assert_eq!(chunk_map.chunks_load_state.get_watching_chunks(&entity).is_none(), true);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&new_pos), 0);
     }
 

@@ -13,7 +13,8 @@ pub fn send_chunks(
     network_container: Res<NetworkContainer>,
     clients: Res<ClientsContainer>,
 ) {
-    let now = std::time::Instant::now();
+    #[cfg(feature = "trace")]
+    let _span = bevy_utils::tracing::info_span!("send_chunks").entered();
 
     // Iterate all worlds
     for (_world_slug, world_lock) in worlds_manager.get_worlds() {
@@ -32,7 +33,7 @@ pub fn send_chunks(
             }
 
             // Get all entites that watch this chunk
-            let watch_entities = match chunks_map.take_chunks_entities(&chunk_position) {
+            let watch_entities = match chunks_map.get_chunk_watchers(&chunk_position) {
                 Some(v) => v,
                 None => {
                     panic!("chunk_loaded_event_reader chunk {} not found", chunk_position);
@@ -69,10 +70,5 @@ pub fn send_chunks(
                 client.send_loaded_chunk(&chunk_position, message.clone());
             }
         }
-    }
-
-    let elapsed = now.elapsed();
-    if elapsed > std::time::Duration::from_millis(100) {
-        log::info!(target: "chunks", "send_chunks: {:.2?}", elapsed);
     }
 }

@@ -43,7 +43,7 @@ impl ChunksLoadState {
     }
 
     /// Returns all entities that wathing the chunk
-    pub fn take_chunks_entities(&self, chunk: &ChunkPosition) -> Option<&Vec<Entity>> {
+    pub fn get_chunk_watchers(&self, chunk: &ChunkPosition) -> Option<&Vec<Entity>> {
         match self.by_chunk.get(chunk) {
             Some(v) => Some(&v),
             None => None,
@@ -51,7 +51,7 @@ impl ChunksLoadState {
     }
 
     /// Returns all chunks that player watching
-    pub fn take_entity_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
+    pub fn get_watching_chunks(&self, entity: &Entity) -> Option<&Vec<ChunkPosition>> {
         match self.by_entity.get(entity) {
             Some(v) => Some(&v),
             None => None,

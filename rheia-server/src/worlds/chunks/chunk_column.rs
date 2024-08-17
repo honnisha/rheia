@@ -90,6 +90,9 @@ pub(crate) fn load_chunk(
     loaded_chunks: flume::Sender<ChunkPosition>,
 ) {
     rayon::spawn(move || {
+        #[cfg(feature = "trace")]
+        let _span = bevy_utils::tracing::info_span!("load_chunk").entered();
+
         let mut chunk_column = chunk_column.write();
 
         for y in 0..VERTICAL_SECTIONS {
