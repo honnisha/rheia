@@ -1,6 +1,7 @@
 use crate::worlds::world_generator::WorldGenerator;
 use crate::CHUNKS_ZIP_PALLETE;
 use arrayvec::ArrayVec;
+use bevy::prelude::Entity;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::PacketChunkSectionData;
 use common::network::messages::{ChunkDataType, ServerMessages};

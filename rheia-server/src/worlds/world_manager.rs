@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use bevy_ecs::world::World;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::messages::ServerMessages;
@@ -13,11 +12,12 @@ use crate::CHUNKS_DISTANCE;
 use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
 
+use super::ecs::Ecs;
 use super::world_generator::WorldGenerator;
 
 pub struct WorldManager {
     slug: String,
-    ecs: World,
+    ecs: Ecs,
     chunks_map: ChunkMap,
     world_generator: Arc<RwLock<WorldGenerator>>,
 }
@@ -26,17 +26,17 @@ impl WorldManager {
     pub fn new(slug: String, seed: u64) -> Self {
         WorldManager {
             slug: slug,
-            ecs: World::new(),
+            ecs: Ecs::new(),
             chunks_map: ChunkMap::new(),
             world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
         }
     }
 
-    pub fn get_ecs(&self) -> &World {
+    pub fn get_ecs(&self) -> &Ecs {
         &self.ecs
     }
 
-    pub fn get_ecs_mut(&mut self) -> &mut World {
+    pub fn get_ecs_mut(&mut self) -> &mut Ecs {
         &mut self.ecs
     }
 
@@ -57,12 +57,9 @@ impl WorldManager {
     }
 
     pub fn spawn_player(&mut self, client_id: &u64, position: Position, rotation: Rotation) -> WorldEntity {
-        let ecs = (position, rotation, NetworkComponent::new(client_id.clone()));
+        let bundle = (position.clone(), rotation, NetworkComponent::new(client_id.clone()));
 
-        let entity = {
-            let world = self.get_ecs_mut();
-            world.spawn(ecs).id()
-        };
+        let entity = self.get_ecs_mut().spawn(bundle, position.get_chunk_position());
 
         self.get_chunks_map_mut()
             .start_chunks_render(entity, &position.get_chunk_position(), CHUNKS_DISTANCE);
@@ -104,7 +101,14 @@ impl WorldManager {
 
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {
         self.get_chunks_map_mut().stop_chunks_render(world_entity.get_entity());
-        self.get_ecs_mut().despawn(world_entity.get_entity());
+
+        let mut player_entity = self.ecs.entity_mut(world_entity.get_entity());
+        let chunk_position = match player_entity.get_mut::<Position>() {
+            Some(p) => Some(p.get_chunk_position()),
+            None => None,
+        };
+
+        self.get_ecs_mut().despawn(world_entity.get_entity(), chunk_position);
     }
 
     /// Proxy for sending update_chunks
