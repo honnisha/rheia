@@ -1,9 +1,11 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::{Res, ResMut};
+use common::chunks::block_position::BlockPositionTrait;
 
 use crate::entities::entity::Rotation;
 use crate::network::clients_container::ClientsContainer;
+use crate::network::sync_entities::sync_player_move;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
 #[derive(Event)]
@@ -47,12 +49,26 @@ pub fn on_player_move(
         let mut world_manager = worlds_manager
             .get_world_manager_mut(&world_entity.get_world_slug())
             .unwrap();
+
+        if !world_manager
+            .get_chunks_map()
+            .is_chunk_loaded(&event.position.get_chunk_position())
+        {
+            log::warn!(
+                target: "network",
+                "Client ip:{} tries to move inside loading chunk {}",
+                client, event.position.get_chunk_position()
+            );
+            continue;
+        }
+
         let (chunk_changed, abandoned_chunks) =
             world_manager.player_move(&world_entity, event.position, event.rotation);
 
+        sync_player_move(world_entity.clone());
+
         if chunk_changed {
-            let world_slug = world_entity.get_world_slug().clone();
-            client.send_unload_chunks(&world_slug, abandoned_chunks);
+            client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks);
         }
     }
 }

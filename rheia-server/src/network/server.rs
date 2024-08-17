@@ -24,6 +24,7 @@ use crate::entities::entity::{Position, Rotation};
 use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
+use crate::network::sync_entities::{sync_player_spawn, PlayerSpawnEvent};
 use crate::NetworkServerType;
 use crate::{
     client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, ServerSettings,
@@ -102,6 +103,9 @@ impl NetworkPlugin {
 
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
+
+        app.add_event::<PlayerSpawnEvent>();
+        app.add_systems(Update, sync_player_spawn);
     }
 
     pub(crate) fn send_console_output(client: &ClientNetwork, message: String) {

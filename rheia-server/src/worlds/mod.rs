@@ -1,6 +1,7 @@
 use bevy_app::{App, Plugin, Update};
 use bracket_lib::random::RandomNumberGenerator;
 use log::info;
+use on_chunk_loaded::on_chunk_loaded;
 
 use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
 
@@ -11,6 +12,7 @@ use self::{
 
 pub mod chunks;
 pub mod commands;
+pub mod on_chunk_loaded;
 pub mod world_generator;
 pub mod world_manager;
 pub mod worlds_manager;
@@ -48,5 +50,6 @@ impl Plugin for WorldsHandlerPlugin {
         app.insert_resource(wm);
 
         app.add_systems(Update, update_world_chunks);
+        app.add_systems(Update, on_chunk_loaded);
     }
 }

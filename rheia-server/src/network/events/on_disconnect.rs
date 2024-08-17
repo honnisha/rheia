@@ -4,7 +4,7 @@ use bevy_ecs::{
     system::{Res, ResMut},
 };
 
-use crate::{network::clients_container::ClientsContainer, worlds::worlds_manager::WorldsManager};
+use crate::{network::{clients_container::ClientsContainer, sync_entities::sync_entity_despawn}, worlds::worlds_manager::WorldsManager};
 
 #[derive(Event)]
 pub struct PlayerDisconnectEvent {
@@ -42,6 +42,7 @@ pub fn on_disconnect(
                 Some(c) => {
                     let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
                     world_manager.despawn_player(&c);
+                    sync_entity_despawn(c.get_entity());
                 }
                 None => return,
             };

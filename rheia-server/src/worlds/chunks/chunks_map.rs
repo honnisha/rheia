@@ -18,20 +18,30 @@ pub type MapChunksType = AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>;
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks
 /// and responsible for load/unload chunks
-#[derive(Default)]
 pub struct ChunkMap {
 
     // Hash map with chunk columns
     chunks: MapChunksType,
 
     chunks_load_state: ChunksLoadState,
+
+    // A channel for tracking successfully uploaded chunks.
+    loaded_chunks: (flume::Sender<ChunkPosition>, flume::Receiver<ChunkPosition>),
 }
 
 pub type ChunkSectionType<'a> = RwLockReadGuard<'a, ChunkColumn>;
 
 impl ChunkMap {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            chunks: Default::default(),
+            chunks_load_state: Default::default(),
+            loaded_chunks: flume::unbounded(),
+        }
+    }
+
+    pub fn drain_loaded_chunks(&self) -> flume::Drain<ChunkPosition> {
+        self.loaded_chunks.1.drain()
     }
 
     pub fn count(&self) -> usize {
@@ -42,6 +52,13 @@ impl ChunkMap {
         &self.chunks
     }
 
+    pub fn is_chunk_loaded(&self, chunk_position: &ChunkPosition) -> bool {
+        match self.chunks.get(&chunk_position) {
+            Some(l) => l.read().is_loaded(),
+            None => false,
+        }
+    }
+
     pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.read()),
@@ -49,6 +66,7 @@ impl ChunkMap {
         }
     }
 
+    /// Get Entities of all players watching the chunk
     pub fn take_chunks_entities(&self, chunk_position: &ChunkPosition) -> Option<&Vec<Entity>> {
         self.chunks_load_state.take_chunks_entities(&chunk_position)
     }
@@ -152,7 +170,7 @@ impl ChunkMap {
                 let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk_pos.clone(), world_slug.clone())));
 
                 trace!(target: "chunks", "Send chunk {} to load", chunk_pos);
-                load_chunk(world_generator.clone(), chunk_column.clone());
+                load_chunk(world_generator.clone(), chunk_column.clone(), self.loaded_chunks.0.clone());
                 self.chunks.insert(chunk_pos.clone(), chunk_column);
             }
         }
@@ -173,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_tickets_spawn_despawn() {
-        let mut chunk_map = ChunkMap::default();
+        let mut chunk_map = ChunkMap::new();
         let entity = Entity::from_raw(0);
         let chunks_distance = 2_u16;
 
@@ -214,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_update_chunks() {
-        let mut chunk_map = ChunkMap::default();
+        let mut chunk_map = ChunkMap::new();
         let world_generator = Arc::new(RwLock::new(WorldGenerator::default()));
         let world_slug = "default".to_string();
         let entity = Entity::from_raw(0);

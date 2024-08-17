@@ -1,5 +1,5 @@
-use crate::CHUNKS_ZIP_PALLETE;
 use crate::worlds::world_generator::WorldGenerator;
+use crate::CHUNKS_ZIP_PALLETE;
 use arrayvec::ArrayVec;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::PacketChunkSectionData;
@@ -70,8 +70,7 @@ impl ChunkColumn {
                 sections: data.into_inner().unwrap(),
                 chunk_position: self.chunk_position.clone(),
             };
-        }
-        else {
+        } else {
             let mut data: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS> = Default::default();
             for section in self.sections.iter() {
                 data.push(section.clone());
@@ -85,7 +84,11 @@ impl ChunkColumn {
     }
 }
 
-pub(crate) fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, chunk_column: Arc<RwLock<ChunkColumn>>) {
+pub(crate) fn load_chunk(
+    world_generator: Arc<RwLock<WorldGenerator>>,
+    chunk_column: Arc<RwLock<ChunkColumn>>,
+    loaded_chunks: flume::Sender<ChunkPosition>,
+) {
     rayon::spawn(move || {
         let mut chunk_column = chunk_column.write();
 
@@ -97,5 +100,6 @@ pub(crate) fn load_chunk(world_generator: Arc<RwLock<WorldGenerator>>, chunk_col
             chunk_column.sections.push(Box::new(chunk_section));
         }
         chunk_column.loaded = true;
+        loaded_chunks.send(chunk_column.chunk_position.clone()).unwrap();
     })
 }
