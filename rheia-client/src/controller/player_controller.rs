@@ -1,6 +1,7 @@
 use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
 use crate::world::world_manager::WorldManager;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
+use common::network::messages::Rotation;
 use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
@@ -142,7 +143,9 @@ impl PlayerController {
             self.grounded_timer -= delta as f32;
             // If we jump we clear the grounded tolerance
             if controls.is_jumping() {
-                self.body_controller.bind_mut().trigger_animation(GenericAnimations::Jump);
+                self.body_controller
+                    .bind_mut()
+                    .trigger_animation(GenericAnimations::Jump);
                 self.vertical_movement = JUMP_SPEED;
                 self.grounded_timer = 0.0;
             }
@@ -229,7 +232,7 @@ impl INode3D for PlayerController {
 
         // Handle player movement
         let new_movement = Gd::<PlayerMovement>::from_init_fn(|_base| {
-            PlayerMovement::create(self.get_position(), self.get_yaw(), self.get_pitch())
+            PlayerMovement::create(self.get_position(), Rotation::new(self.get_yaw(), self.get_pitch()))
         });
 
         if self.cache_movement.is_none() || *new_movement.bind() != *self.cache_movement.as_ref().unwrap().bind() {

@@ -35,14 +35,22 @@ pub(crate) trait IntoNetworkVector {
     fn to_network(&self) -> Vector3;
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
 pub struct Rotation {
+    // vertical angle
     pub yaw: f32,
+
+    // horizontal angle
     pub pitch: f32,
 }
 impl Display for Rotation {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         write!(f, "yaw:{} pitch:{}", self.yaw, self.pitch)
+    }
+}
+impl PartialEq for Rotation {
+    fn eq(&self, other: &Rotation) -> bool {
+        self.yaw == other.yaw && self.pitch == other.pitch
     }
 }
 
@@ -56,15 +64,11 @@ impl Rotation {
     }
 }
 
-pub(crate) trait IntoNetworkRotation {
-    fn to_network(&self) -> Rotation;
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ClientMessages {
     ConnectionInfo { login: String },
     ConsoleInput { command: String },
-    PlayerMove { position: Vector3, yaw: f32, pitch: f32 },
+    PlayerMove { position: Vector3, rotation: Rotation },
     ChunkRecieved { chunk_positions: Vec<ChunkPosition> },
 }
 

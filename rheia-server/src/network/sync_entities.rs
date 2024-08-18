@@ -131,11 +131,13 @@ pub fn sync_player_move(
         let network = ecs.entity(world_entity.get_entity()).get::<NetworkComponent>().unwrap();
         let client = clients.get(&network.get_client_id());
 
+        let mut ids: Vec<u32> = Default::default();
         for chunk in abandoned_chunks {
-            let mut ids: Vec<u32> = Default::default();
             for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
                 ids.push(entity.id().index());
             }
+        }
+        if ids.len() > 0 {
             let msg = ServerMessages::StopStreamingEntities {
                 world_slug: world_entity.get_world_slug().clone(),
                 ids: Default::default(),
@@ -145,6 +147,10 @@ pub fn sync_player_move(
 
         for chunk in new_chunks {
             for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
+
+                if entity.id() == world_entity.get_entity() {
+                    continue;
+                }
                 send_start_streaming_entity(&client, entity, world_manager.get_slug().clone());
             }
         }
