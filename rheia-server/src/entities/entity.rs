@@ -4,6 +4,7 @@ use common::{
     utils::fix_chunk_loc_pos,
 };
 use common::network::messages::Vector3 as NetworkVector3;
+use common::network::messages::Rotation as NetworkRotation;
 
 pub type PositionFloatType = f32;
 
@@ -57,6 +58,10 @@ impl Rotation {
 
     pub fn get_pitch(&self) -> &PositionFloatType {
         &self.pitch
+    }
+
+    pub fn to_network(&self) -> NetworkRotation {
+        NetworkRotation::new(self.yaw, self.pitch)
     }
 }
 

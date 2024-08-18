@@ -9,7 +9,7 @@ use crate::{
 };
 use common::{
     chunks::{chunk_position::ChunkPosition, utils::SectionsData},
-    network::messages::NetworkMessageType,
+    network::messages::{NetworkMessageType, Rotation},
     physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
@@ -90,6 +90,18 @@ impl WorldManager {
 
     pub fn get_player_controller_mut(&mut self) -> &mut Gd<PlayerController> {
         &mut self.player_controller
+    }
+
+    pub fn start_streaming_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
+        log::info!("start_streaming_entity id:{} position:{} rotation:{}", id, position, rotation);
+    }
+
+    pub fn move_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
+        log::info!("move_entity id:{} position:{} rotation:{}", id, position, rotation);
+    }
+
+    pub fn stop_streaming_entities(&mut self, ids: Vec<u32>) {
+        log::info!("stop_streaming_entities ids:{:?}", ids);
     }
 }
 

@@ -75,8 +75,8 @@ impl WorldManager {
         world_entity: &WorldEntity,
         position: Position,
         rotation: Rotation,
-    ) -> (bool, Vec<ChunkPosition>) {
-        let mut abandoned_chunks: Vec<ChunkPosition> = Default::default();
+    ) -> Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)> {
+        let mut changed_chunks: Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)> = None;
 
         let mut player_entity = self.ecs.entity_mut(world_entity.get_entity());
         let mut old_position = player_entity.get_mut::<Position>().unwrap();
@@ -85,18 +85,22 @@ impl WorldManager {
         let new_chunk = position.get_chunk_position();
         let chunk_changed = old_chunk != new_chunk;
         if chunk_changed {
-            abandoned_chunks = self.chunks_map.update_chunks_render(
+            let chunks = self.chunks_map.update_chunks_render(
                 world_entity.get_entity(),
                 &old_chunk,
                 &new_chunk,
                 CHUNKS_DISTANCE,
             );
+            changed_chunks = Some(chunks);
         }
         *old_position = position;
         let mut old_rotation = player_entity.get_mut::<Rotation>().unwrap();
         *old_rotation = rotation;
 
-        (chunk_changed, abandoned_chunks)
+        if chunk_changed {
+            self.ecs.entity_moved_chunk(&world_entity.get_entity(), &old_chunk, &new_chunk);
+        }
+        changed_chunks
     }
 
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {

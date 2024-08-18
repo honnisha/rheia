@@ -41,8 +41,7 @@ pub fn send_chunks(
             };
             'entity_loop: for entity in watch_entities {
                 let ecs = world.get_ecs();
-                let player_entity = ecs.entity(*entity).get::<NetworkComponent>().unwrap();
-                let network = player_entity;
+                let network = ecs.entity(*entity).get::<NetworkComponent>().unwrap();
 
                 let connected = network_container.is_connected(network.get_client_id());
                 if !connected {

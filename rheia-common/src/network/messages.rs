@@ -23,16 +23,41 @@ impl Display for Vector3 {
 }
 impl Vector3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Vector3 { x, y, z }
+        Self { x, y, z }
     }
 
     pub fn zero() -> Self {
-        Vector3 { x: 0.0, y: 0.0, z: 0.0 }
+        Self { x: 0.0, y: 0.0, z: 0.0 }
     }
 }
 
 pub(crate) trait IntoNetworkVector {
     fn to_network(&self) -> Vector3;
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Rotation {
+    pub yaw: f32,
+    pub pitch: f32,
+}
+impl Display for Rotation {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+        write!(f, "yaw:{} pitch:{}", self.yaw, self.pitch)
+    }
+}
+
+impl Rotation {
+    pub fn new(yaw: f32, pitch: f32) -> Self {
+        Self { yaw, pitch }
+    }
+
+    pub fn zero() -> Self {
+        Self { yaw: 0.0, pitch: 0.0 }
+    }
+}
+
+pub(crate) trait IntoNetworkRotation {
+    fn to_network(&self) -> Rotation;
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -59,9 +84,8 @@ pub enum ServerMessages {
     // Used to teleport the player's client controller.
     Teleport {
         world_slug: String,
-        location: Vector3,
-        yaw: f32,
-        pitch: f32,
+        position: Vector3,
+        rotation: Rotation,
     },
     ChunkSectionEncodedInfo {
         world_slug: String,
@@ -79,18 +103,22 @@ pub enum ServerMessages {
     },
     // In case the entity gets in the player's line of sight
     StartStreamingEntity {
-        id: u32,
         world_slug: String,
-        location: Vector3,
-        yaw: f32,
-        pitch: f32,
+        id: u32,
+        position: Vector3,
+        rotation: Rotation,
     },
     // In case the entity escapes from the visible chunk or is deleted
-    StopStreamingEntity {
-        id: u32,
+    StopStreamingEntities {
         world_slug: String,
+        ids: Vec<u32>,
     },
-    EntityMove { id: u32, position: Vector3, yaw: f32, pitch: f32 },
+    EntityMove {
+        world_slug: String,
+        id: u32,
+        position: Vector3,
+        rotation: Rotation,
+    },
 }
 
 pub enum NetworkMessageType {

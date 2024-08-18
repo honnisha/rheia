@@ -1,3 +1,4 @@
+use bevy::prelude::Mut;
 use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 
@@ -6,6 +7,8 @@ use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
+use crate::network::clients_container::ClientsContainer;
+use crate::network::events::on_player_move::move_player;
 
 use super::worlds_manager::WorldsManager;
 
@@ -56,7 +59,7 @@ pub(crate) fn command_world(
                     Err(_) => {
                         let mut rng = RandomNumberGenerator::new();
                         rng.next_u64()
-                    },
+                    }
                 };
                 match worlds_manager.create_world(slug.clone(), seed) {
                     Ok(_) => {
@@ -87,39 +90,46 @@ pub(crate) fn command_teleport(
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
 ) -> Result<(), CommandError> {
-    let worlds_manager = world.resource_mut::<WorldsManager>();
 
-    let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
-        Some(c) => c,
-        None => {
-            sender.send_console_message("This command is allowed to be used only for players".to_string());
-            return Ok(());
-        }
-    };
     let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
     let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
     let z = args.get_arg::<f32>(&"z".to_owned())?.clone();
 
-    let position = Position::new(x, y, z);
-    let rotation = Rotation::new(0.0, 0.0);
+    world.resource_scope(|world, worlds_manager: Mut<WorldsManager>| {
+        let clients = world.resource::<ClientsContainer>();
 
-    let world_entity = client.get_world_entity();
-    match world_entity {
-        Some(world_entity) => {
-            let mut world_manager = worlds_manager
-                .get_world_manager_mut(&world_entity.get_world_slug())
-                .unwrap();
-            let (chunk_changed, abandoned_chunks) =
-                world_manager.player_move(&world_entity, position.clone(), rotation.clone());
-
-            if chunk_changed {
-                let world_slug = world_entity.get_world_slug().clone();
-                client.send_unload_chunks(&world_slug, abandoned_chunks);
+        let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
+            Some(c) => c,
+            None => {
+                sender.send_console_message("This command is allowed to be used only for players".to_string());
+                return;
             }
-        }
-        None => todo!(),
-    }
+        };
 
-    client.network_send_teleport(&position, &rotation);
+        let position = Position::new(x, y, z);
+        let rotation = Rotation::new(0.0, 0.0);
+
+        let Some(world_entity) = client.get_world_entity() else {
+            sender.send_console_message(format!(
+                "Player \"{}\" is not in the world",
+                client.get_client_info().unwrap().get_login()
+            ));
+            return;
+        };
+
+        let mut world_manager = worlds_manager
+            .get_world_manager_mut(&world_entity.get_world_slug())
+            .unwrap();
+
+        move_player(
+            &mut *world_manager,
+            &clients,
+            &client,
+            &world_entity,
+            position,
+            rotation,
+        );
+        return;
+    });
     return Ok(());
 }

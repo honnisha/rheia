@@ -1,9 +1,9 @@
+use common::network::messages::Rotation;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::main_scene::FloatType;
 use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
 
 use super::world_manager::WorldManager;
@@ -46,17 +46,17 @@ impl WorldsManager {
     }
 
     /// Raise exception if there is no world
-    fn teleport_player_controller(&mut self, position: Vector3, yaw: FloatType, pitch: FloatType) {
+    fn teleport_player_controller(&mut self, position: Vector3, rotation: Rotation) {
         let mut world = self.world.as_mut().unwrap().bind_mut();
         let mut player_controller = world.get_player_controller_mut().bind_mut();
 
         player_controller.set_position(position);
-        player_controller.set_rotation(yaw, pitch);
+        player_controller.set_rotation(rotation.yaw, rotation.pitch);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, yaw: FloatType, pitch: FloatType) {
+    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, rotation: Rotation) {
         if self.world.is_some() {
             if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
                 // Player moving to another world; old one must be destroyed
@@ -67,7 +67,7 @@ impl WorldsManager {
             self.create_world(world_slug);
         }
 
-        self.teleport_player_controller(position, yaw, pitch)
+        self.teleport_player_controller(position, rotation)
     }
 
     pub fn create_world(&mut self, world_slug: String) {

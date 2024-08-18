@@ -90,6 +90,24 @@ impl ChunkMap {
         }
     }
 
+    /// Gets the vector of old and new chunks when transitioning between chunks
+    pub fn _get_chunks_transition(from: &ChunkPosition, to: &ChunkPosition, chunks_distance: u16) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
+        let iter = ManhattanIterator::new(from.x as i32, from.z as i32, chunks_distance as i32);
+        let mut old: Vec<ChunkPosition> = iter.map(|pos| ChunkPosition::new(pos.0 as i64, pos.1 as i64) ).collect();
+
+        let mut new: Vec<ChunkPosition> = Default::default();
+        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
+        for (x, z) in iter {
+            let chunk = ChunkPosition::new(x as i64, z as i64);
+            if !old.contains(&chunk) {
+                new.push(chunk);
+            }
+        }
+
+        old.retain(|&chunk| !new.contains(&chunk));
+        (old, new)
+    }
+
     /// Trigered when player is move between chunks
     /// for updating chunks vision
     /// to unload unused chunks
@@ -101,39 +119,41 @@ impl ChunkMap {
         from: &ChunkPosition,
         to: &ChunkPosition,
         chunks_distance: u16,
-    ) -> Vec<ChunkPosition> {
+    ) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
         if from == to {
             panic!("update_chunks_render from and to must be different chunks positions");
         }
 
-        let mut old_chunks = self.chunks_load_state.get_watching_chunks(&entity).unwrap().clone();
+        let mut old = self.chunks_load_state.get_watching_chunks(&entity).unwrap().clone();
+        let mut new: Vec<ChunkPosition> = Default::default();
 
         // Add new tickets
         let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
         for (x, z) in iter {
-            let chunk_pos = ChunkPosition::new(x as i64, z as i64);
+            let chunk = ChunkPosition::new(x as i64, z as i64);
 
             // If its new chunk
-            if !old_chunks.contains(&chunk_pos) {
+            if !old.contains(&chunk) {
                 // Start keeping this chunk
-                self.chunks_load_state.insert_ticket(chunk_pos, entity.clone());
+                self.chunks_load_state.insert_ticket(chunk, entity.clone());
+                new.push(chunk.clone());
 
                 // Update despawn timer
-                if let Some(chunk_column) = self.chunks.get_mut(&chunk_pos) {
+                if let Some(chunk_column) = self.chunks.get_mut(&chunk) {
                     chunk_column.read().set_despawn_timer(Duration::ZERO);
                 }
             } else {
                 // Remove chunk outside of side of view
-                vec_remove_item(&mut old_chunks, &chunk_pos);
+                vec_remove_item(&mut old, &chunk);
             }
         }
 
-        for chunk in old_chunks.iter() {
+        for chunk in old.iter() {
             // Stop keeping this chunk
             self.chunks_load_state.remove_ticket(&chunk, &entity);
         }
 
-        return old_chunks;
+        (old, new)
     }
 
     /// Player stop watch the world (despawn or move to another world)
@@ -150,33 +170,33 @@ impl ChunkMap {
     ) {
         // Update chunks despawn timer
         // Increase ONLY of noone looking at the chunk
-        for (&chunk_pos, chunk_column) in self.chunks.iter_mut() {
-            if self.chunks_load_state.num_tickets(&chunk_pos) == 0 {
+        for (&chunk, chunk_column) in self.chunks.iter_mut() {
+            if self.chunks_load_state.num_tickets(&chunk) == 0 {
                 chunk_column.read().increase_despawn_timer(delta);
             }
         }
 
         // Despawn chunks waiting for despawn
-        self.chunks.retain(|&chunk_pos, chunk_column| {
+        self.chunks.retain(|&chunk, chunk_column| {
             let for_despawn = chunk_column.read().is_for_despawn(CHUNKS_DESPAWN_TIMER);
             if for_despawn {
-                trace!(target: "chunks", "Chunk {} despawned", chunk_pos);
+                trace!(target: "chunks", "Chunk {} despawned", chunk);
             }
             !for_despawn
         });
 
         // Send to load new chunks
-        for (chunk_pos, players) in self.chunks_load_state.by_chunk.iter() {
+        for (chunk, players) in self.chunks_load_state.by_chunk.iter() {
             if players.len() == 0 {
                 continue;
             }
 
-            if !self.chunks.contains_key(&chunk_pos) {
-                let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk_pos.clone(), world_slug.clone())));
+            if !self.chunks.contains_key(&chunk) {
+                let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk.clone(), world_slug.clone())));
 
-                trace!(target: "chunks", "Send chunk {} to load", chunk_pos);
+                trace!(target: "chunks", "Send chunk {} to load", chunk);
                 load_chunk(world_generator.clone(), chunk_column.clone(), self.loaded_chunks.0.clone());
-                self.chunks.insert(chunk_pos.clone(), chunk_column);
+                self.chunks.insert(chunk.clone(), chunk_column);
             }
         }
     }
@@ -214,7 +234,7 @@ mod tests {
 
         // Move
         let new_pos = ChunkPosition::new(1, 0);
-        let abandoned_chunks = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
+        let (abandoned_chunks, _new_chunks) = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
         let chunks = chunk_map.chunks_load_state.get_watching_chunks(&entity).unwrap();
         assert_eq!(chunks.len(), 5);
         assert_eq!(chunks.contains(&ChunkPosition::new(1, 0)), true);

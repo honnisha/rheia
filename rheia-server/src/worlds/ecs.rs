@@ -1,5 +1,3 @@
-use std::default;
-
 use ahash::AHashMap;
 use bevy::prelude::{Bundle, Component, Entity, EntityRef, EntityWorldMut, QueryState, World};
 use bevy_ecs::{change_detection::Mut, query::QueryData};
@@ -31,6 +29,11 @@ impl Ecs {
         if let Some(vec) = self.chunks_entities.get_mut(chunk) {
             vec_remove_item(vec, entity);
         }
+    }
+
+    pub fn entity_moved_chunk(&mut self, entity: &Entity, old_chunk: &ChunkPosition, new_chunk: &ChunkPosition) {
+        self.remove_entity_from_chunk(old_chunk, entity);
+        self.insert_entity_inside_chunk(*new_chunk, *entity);
     }
 
     pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {

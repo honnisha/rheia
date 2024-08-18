@@ -4,10 +4,28 @@ use common::{
     chunks::chunk_position::ChunkPosition,
     network::messages::{ClientMessages, ServerMessages},
 };
+use godot::obj::Gd;
 
 use crate::console::console_handler::Console;
 use crate::main_scene::Main;
 use crate::utils::bridge::IntoGodotVector;
+use crate::world::world_manager::WorldManager;
+
+fn get_world_mut(main: &mut Main, world_slug: String) -> Option<&mut Gd<WorldManager>> {
+    let worlds_manager = main.get_worlds_manager_mut();
+    let world = match worlds_manager.get_world_mut() {
+        Some(w) => w,
+        None => {
+            log::error!(target: "network", "Network message for non existed world");
+            return None;
+        }
+    };
+    if world_slug != *world.bind().get_slug() {
+        log::error!(target: "network", "Network message for non wrong world {} != {}", world_slug, world.bind().get_slug());
+        return None;
+    }
+    Some(world)
+}
 
 pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
     let lock = main.get_network_lock();
@@ -53,52 +71,47 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             }
             ServerMessages::Teleport {
                 world_slug,
-                location,
-                yaw,
-                pitch,
+                position,
+                rotation,
             } => {
                 main.get_worlds_manager_mut()
-                    .teleport_player(world_slug, location.to_godot(), yaw, pitch);
+                    .teleport_player(world_slug, position.to_godot(), rotation);
             }
             ServerMessages::ChunkSectionInfo {
                 world_slug,
                 chunk_position,
                 sections,
             } => {
-                let worlds_manager = main.get_worlds_manager_mut();
-                let world = match worlds_manager.get_world_mut() {
-                    Some(w) => w,
-                    None => {
-                        log::error!(target: "network", "load_chunk tried to run without a world");
-                        continue;
-                    }
-                };
-                if world_slug != *world.bind().get_slug() {
-                    log::error!(
-                        target: "network",
-                        "Tried to load chunk {} for non existed world {}",
-                        chunk_position, world_slug
-                    );
-                    continue;
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    world.bind_mut().load_chunk(chunk_position, sections);
+                    chunks.push(chunk_position);
                 }
-                world.bind_mut().load_chunk(chunk_position, sections);
-                chunks.push(chunk_position);
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {
-                let worlds_manager = main.get_worlds_manager_mut();
-                let world = match worlds_manager.get_world_mut() {
-                    Some(w) => w,
-                    None => {
-                        log::error!(target: "network", "load_chunk tried to run without a world");
-                        continue;
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    for chunk_position in chunks.iter() {
+                        world.bind_mut().unload_chunk(*chunk_position);
                     }
-                };
-                if world_slug != *world.bind().get_slug() {
-                    log::error!(target: "network", "Tried to unload chunks for non existed world {}", world_slug);
-                    continue;
                 }
-                for chunk_position in chunks.iter() {
-                    world.bind_mut().unload_chunk(*chunk_position);
+            }
+            ServerMessages::StartStreamingEntity {
+                id,
+                world_slug,
+                position,
+                rotation,
+            } => {
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    world.bind_mut().start_streaming_entity(id, position.to_godot(), rotation);
+                }
+            }
+            ServerMessages::EntityMove { world_slug, id, position, rotation } => {
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    world.bind_mut().move_entity(id, position.to_godot(), rotation);
+                }
+            }
+            ServerMessages::StopStreamingEntities { world_slug, ids } => {
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    world.bind_mut().stop_streaming_entities(ids);
                 }
             }
             _ => panic!("unsupported message"),

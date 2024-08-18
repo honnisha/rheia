@@ -130,9 +130,8 @@ impl ClientNetwork {
         let world_entity = lock.as_ref().unwrap();
         let input = ServerMessages::Teleport {
             world_slug: world_entity.get_world_slug().clone(),
-            location: position.to_network(),
-            yaw: rotation.get_yaw().clone(),
-            pitch: rotation.get_pitch().clone(),
+            position: position.to_network(),
+            rotation: rotation.to_network(),
         };
         self.send_message(NetworkMessageType::ReliableOrdered, input);
     }

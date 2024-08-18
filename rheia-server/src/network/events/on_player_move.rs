@@ -4,8 +4,10 @@ use bevy_ecs::system::{Res, ResMut};
 use common::chunks::block_position::BlockPositionTrait;
 
 use crate::entities::entity::Rotation;
+use crate::network::client_network::{ClientNetwork, WorldEntity};
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_entities::sync_player_move;
+use crate::worlds::world_manager::WorldManager;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
 #[derive(Event)]
@@ -61,14 +63,31 @@ pub fn on_player_move(
             );
             continue;
         }
-
-        let (chunk_changed, abandoned_chunks) =
-            world_manager.player_move(&world_entity, event.position, event.rotation);
-
-        sync_player_move(world_entity.clone());
-
-        if chunk_changed {
-            client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks);
-        }
+        move_player(
+            &mut *world_manager,
+            &*clients,
+            &client,
+            world_entity,
+            event.position,
+            event.rotation,
+        );
     }
+}
+
+/// Move player inside the world
+pub fn move_player(
+    world_manager: &mut WorldManager,
+    clients: &ClientsContainer,
+    client: &ClientNetwork,
+    world_entity: &WorldEntity,
+    position: Position,
+    rotation: Rotation,
+) {
+    let chunks_changed = world_manager.player_move(&world_entity, position, rotation);
+
+    if let Some((abandoned_chunks, _new_chunks)) = chunks_changed.as_ref() {
+        client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks.clone());
+    }
+
+    sync_player_move(world_manager, world_entity.clone(), clients, &chunks_changed);
 }
