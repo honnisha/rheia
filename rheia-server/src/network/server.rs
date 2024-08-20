@@ -20,7 +20,7 @@ use super::events::{
     on_disconnect::{on_disconnect, PlayerDisconnectEvent},
     on_player_move::{on_player_move, PlayerMoveEvent},
 };
-use crate::entities::entity::{Position, Rotation};
+use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
 use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
@@ -152,15 +152,11 @@ fn receive_message_system(
                 CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
             ClientMessages::ChunkRecieved { chunk_positions } => {
-                let client = clients.get(&client_id);
+                let client = clients.get(&client_id).unwrap().read();
                 client.mark_chunks_as_recieved(chunk_positions);
             }
-            ClientMessages::PlayerMove { position, yaw, pitch } => {
-                let movement = PlayerMoveEvent::new(
-                    client_id.clone(),
-                    Position::from_network(position),
-                    Rotation::new(pitch, yaw),
-                );
+            ClientMessages::PlayerMove { position, rotation } => {
+                let movement = PlayerMoveEvent::new(client_id.clone(), position.to_server(), rotation.to_server());
                 player_move_events.send(movement);
             }
             ClientMessages::ConnectionInfo { login } => {
@@ -175,7 +171,7 @@ fn receive_message_system(
 fn console_client_command_event(world: &mut World) {
     world.resource_scope(|world, mut clients: Mut<ClientsContainer>| {
         for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
-            let client = clients.get(&client_id);
+            let client = clients.get(&client_id).unwrap().read();
             CommandsHandler::execute_command(world, Box::new(client.clone()), &command);
         }
     });

@@ -30,17 +30,19 @@ pub fn on_connection_info(
     mut player_spawn_events: EventWriter<PlayerSpawnEvent>,
 ) {
     for event in connection_info_events.read() {
-        let mut client = clients.get_mut(&event.client_id);
-        client.set_client_info(ClientInfo::new(event.login.clone()));
+        let client = clients.get(&event.client_id).unwrap();
+        let mut network = client.write();
+
+        network.set_client_info(ClientInfo::new(event.login.clone()));
 
         log::info!(
             target: "network",
             "Connected ip:{} login:{} id:{}",
-            client.get_client_ip(),
-            client.get_client_info().unwrap().get_login(),
-            client.get_client_id()
+            network.get_client_ip(),
+            network.get_client_info().unwrap().get_login(),
+            network.get_client_id()
         );
-        NetworkPlugin::send_resources(&client, &resources_manager);
+        NetworkPlugin::send_resources(&network, &resources_manager);
 
         let default_world = "default".to_string();
         if worlds_manager.has_world_with_slug(&default_world) {
@@ -48,10 +50,10 @@ pub fn on_connection_info(
             let rotation = Rotation::new(0.0, 0.0);
 
             let mut world_manager = worlds_manager.get_world_manager_mut(&default_world).unwrap();
-            let world_entity = world_manager.spawn_player(client.get_client_id(), position, rotation);
-            client.set_world_entity(Some(world_entity.clone()));
+            let world_entity = world_manager.spawn_player(client.clone(), event.client_id, position, rotation);
+            network.set_world_entity(Some(world_entity.clone()));
 
-            client.network_send_teleport(&position, &rotation);
+            network.network_send_teleport(&position, &rotation);
 
             if world_manager
                 .get_chunks_map()

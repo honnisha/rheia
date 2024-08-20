@@ -6,6 +6,8 @@ use common::{
 use common::network::messages::Vector3 as NetworkVector3;
 use common::network::messages::Rotation as NetworkRotation;
 
+use crate::network::clients_container::ClientCell;
+
 pub type PositionFloatType = f32;
 
 #[derive(Component, Clone, Copy, Default)]
@@ -26,10 +28,6 @@ impl Position {
         Self { x, y, z }
     }
 
-    pub fn from_network(position: NetworkVector3) -> Self {
-        Self::new(position.x, position.y, position.z)
-    }
-
     pub fn to_network(&self) -> NetworkVector3 {
         NetworkVector3::new(self.x, self.y, self.z)
     }
@@ -38,6 +36,16 @@ impl Position {
 impl BlockPositionTrait for Position {
     fn get_chunk_position(&self) -> ChunkPosition {
         ChunkPosition::new(fix_chunk_loc_pos(self.x as i64), fix_chunk_loc_pos(self.z as i64))
+    }
+}
+
+pub trait IntoServerPosition {
+    fn to_server(&self) -> Position;
+}
+
+impl IntoServerPosition for NetworkVector3 {
+    fn to_server(&self) -> Position {
+        Position::new(self.x, self.y, self.z)
     }
 }
 
@@ -65,17 +73,32 @@ impl Rotation {
     }
 }
 
+pub trait IntoServerRotation {
+    fn to_server(&self) -> Rotation;
+}
+
+impl IntoServerRotation for NetworkRotation {
+    fn to_server(&self) -> Rotation {
+        Rotation::new(self.yaw, self.pitch)
+    }
+}
+
 #[derive(Component)]
 pub struct NetworkComponent {
     client_id: u64,
+    client: ClientCell,
 }
 
 impl NetworkComponent {
-    pub fn new(client_id: u64) -> Self {
-        Self { client_id }
+    pub fn new(client: ClientCell, client_id: u64) -> Self {
+        Self { client, client_id }
     }
 
     pub fn get_client_id(&self) -> &u64 {
         &self.client_id
+    }
+
+    pub fn get_client(&self) -> &ClientCell {
+        &self.client
     }
 }

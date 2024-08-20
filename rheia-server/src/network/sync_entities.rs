@@ -1,7 +1,7 @@
 use bevy::prelude::{Entity, EntityRef, Event, EventReader};
 use bevy_ecs::system::Res;
 use common::{
-    chunks::chunk_position::ChunkPosition,
+    chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
     network::messages::{NetworkMessageType, ServerMessages},
 };
 
@@ -10,10 +10,7 @@ use crate::{
     worlds::{world_manager::WorldManager, worlds_manager::WorldsManager},
 };
 
-use super::{
-    client_network::WorldEntity,
-    clients_container::{ClientRef, ClientsContainer},
-};
+use super::{client_network::WorldEntity, clients_container::ClientRef};
 
 fn send_start_streaming_entity(client: &ClientRef, entity: EntityRef, world_slug: String) {
     let position = entity.get::<Position>().unwrap();
@@ -31,7 +28,18 @@ fn send_start_streaming_entity(client: &ClientRef, entity: EntityRef, world_slug
 /// Отправка всем наблюдателям чанка StartStreamingEntity
 ///
 /// Обязательно проверять, чтобы информация о игроке не отправилась ему же самому!
-pub fn sync_entity_spawn(_entity: Entity) {}
+pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
+    let ecs = world_manager.get_ecs();
+    let entity_ref = ecs.entity(entity);
+    let position = entity_ref.get::<Position>().unwrap();
+
+    if let Some(entities) = world_manager
+        .get_chunks_map()
+        .get_chunk_watchers(&position.get_chunk_position())
+    {
+        for _e in entities {}
+    }
+}
 
 /// Отправка всем наблюдателям чанка StopStreamingEntity
 pub fn sync_entity_despawn(_entity: Entity) {}
@@ -44,7 +52,7 @@ pub fn sync_entity_despawn(_entity: Entity) {}
 ///   • тем игрокам кто наблюдает и старый чанк и новый - отправлять EntityMove
 ///   • перешел из видимого чанка в невидимый - отправлять StopStreamingEntity
 ///   • перешел из невидимого чанка в видимый - отправлять StartStreamingEntity
-pub fn sync_entity_move(_entity: Entity, _chunks_changed: &Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)>,) {}
+pub fn sync_entity_move(_entity: Entity, _chunks_changed: &Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)>) {}
 
 #[derive(Event)]
 pub struct PlayerSpawnEvent {
@@ -65,11 +73,7 @@ impl PlayerSpawnEvent {
 /// Выполняет:
 /// - Отправка игроку всех объектов в радиусе видимости из прогруженных чанков
 /// - Вызыов синхронихации объекта игрока через `sync_entity_spawn`
-pub fn sync_player_spawn(
-    worlds_manager: Res<WorldsManager>,
-    clients: Res<ClientsContainer>,
-    mut connection_events: EventReader<PlayerSpawnEvent>,
-) {
+pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_events: EventReader<PlayerSpawnEvent>) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("sync_player_spawn").entered();
 
@@ -79,11 +83,9 @@ pub fn sync_player_spawn(
             .unwrap();
 
         let ecs = world_manager.get_ecs();
-        let network = ecs
-            .entity(event.world_entity.get_entity())
-            .get::<NetworkComponent>()
-            .unwrap();
-        let client = clients.get(&network.get_client_id());
+        let entity_ref = ecs.entity(event.world_entity.get_entity());
+        let network = entity_ref.get::<NetworkComponent>().unwrap();
+        let client = network.get_client().read();
 
         // Sends all existing entities from the player's line of sight
         if let Some(player_chunks) = world_manager
@@ -106,7 +108,7 @@ pub fn sync_player_spawn(
             }
         }
 
-        sync_entity_spawn(event.world_entity.get_entity());
+        sync_entity_spawn(&*world_manager, event.world_entity.get_entity());
     }
 }
 
@@ -119,8 +121,7 @@ pub fn sync_player_spawn(
 ///   • и StartStreamingEntity для новых
 pub fn sync_player_move(
     world_manager: &WorldManager,
-    world_entity: WorldEntity,
-    clients: &ClientsContainer,
+    world_entity: &WorldEntity,
     chunks_changed: &Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)>,
 ) {
     #[cfg(feature = "trace")]
@@ -129,7 +130,7 @@ pub fn sync_player_move(
     if let Some((abandoned_chunks, new_chunks)) = chunks_changed {
         let ecs = world_manager.get_ecs();
         let network = ecs.entity(world_entity.get_entity()).get::<NetworkComponent>().unwrap();
-        let client = clients.get(&network.get_client_id());
+        let client = network.get_client().read();
 
         let mut ids: Vec<u32> = Default::default();
         for chunk in abandoned_chunks {
@@ -147,7 +148,6 @@ pub fn sync_player_move(
 
         for chunk in new_chunks {
             for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
-
                 if entity.id() == world_entity.get_entity() {
                     continue;
                 }

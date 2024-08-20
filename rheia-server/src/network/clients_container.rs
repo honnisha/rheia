@@ -8,7 +8,7 @@ use super::client_network::ClientNetwork;
 
 pub type ClientCell = Arc<RwLock<ClientNetwork>>;
 pub type ClientRef<'a> = RwLockReadGuard<'a, ClientNetwork>;
-pub type ClientMut<'a> = RwLockWriteGuard<'a, ClientNetwork>;
+pub type _ClientMut<'a> = RwLockWriteGuard<'a, ClientNetwork>;
 
 #[derive(Resource)]
 pub struct ClientsContainer {
@@ -39,14 +39,7 @@ impl ClientsContainer {
         self.players.remove(client_id);
     }
 
-    pub fn get(&self, key: &u64) -> ClientRef {
-        self.players.get(key).unwrap().read()
-    }
-
-    pub fn get_mut<'a>(&self, key: &u64) -> ClientMut {
-        match self.players.get(key) {
-            Some(e) => e.write(),
-            None => panic!("no player with client_id: {}", key),
-        }
+    pub fn get(&self, key: &u64) -> Option<&ClientCell> {
+        self.players.get(key)
     }
 }

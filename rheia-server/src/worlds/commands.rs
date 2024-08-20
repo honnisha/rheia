@@ -1,4 +1,3 @@
-use bevy::prelude::Mut;
 use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 
@@ -7,7 +6,6 @@ use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientNetwork;
-use crate::network::clients_container::ClientsContainer;
 use crate::network::events::on_player_move::move_player;
 
 use super::worlds_manager::WorldsManager;
@@ -90,46 +88,35 @@ pub(crate) fn command_teleport(
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
 ) -> Result<(), CommandError> {
-
     let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
     let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
     let z = args.get_arg::<f32>(&"z".to_owned())?.clone();
 
-    world.resource_scope(|world, worlds_manager: Mut<WorldsManager>| {
-        let clients = world.resource::<ClientsContainer>();
+    let worlds_manager = world.resource::<WorldsManager>();
 
-        let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
-            Some(c) => c,
-            None => {
-                sender.send_console_message("This command is allowed to be used only for players".to_string());
-                return;
-            }
-        };
+    let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
+        Some(c) => c,
+        None => {
+            sender.send_console_message("This command is allowed to be used only for players".to_string());
+            return Ok(());
+        }
+    };
 
-        let position = Position::new(x, y, z);
-        let rotation = Rotation::new(0.0, 0.0);
+    let position = Position::new(x, y, z);
+    let rotation = Rotation::new(0.0, 0.0);
 
-        let Some(world_entity) = client.get_world_entity() else {
-            sender.send_console_message(format!(
-                "Player \"{}\" is not in the world",
-                client.get_client_info().unwrap().get_login()
-            ));
-            return;
-        };
+    let Some(world_entity) = client.get_world_entity() else {
+        sender.send_console_message(format!(
+            "Player \"{}\" is not in the world",
+            client.get_client_info().unwrap().get_login()
+        ));
+        return Ok(());
+    };
 
-        let mut world_manager = worlds_manager
-            .get_world_manager_mut(&world_entity.get_world_slug())
-            .unwrap();
+    let mut world_manager = worlds_manager
+        .get_world_manager_mut(&world_entity.get_world_slug())
+        .unwrap();
 
-        move_player(
-            &mut *world_manager,
-            &clients,
-            &client,
-            &world_entity,
-            position,
-            rotation,
-        );
-        return;
-    });
+    move_player(&mut *world_manager, &world_entity, position, rotation);
     return Ok(());
 }

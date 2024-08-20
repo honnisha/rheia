@@ -3,16 +3,9 @@ use ahash::HashMap;
 use bevy_ecs::system::Res;
 use common::chunks::chunk_position::ChunkPosition;
 
-use super::{
-    clients_container::{ClientRef, ClientsContainer},
-    server::NetworkContainer,
-};
+use super::{clients_container::ClientRef, server::NetworkContainer};
 
-pub fn send_chunks(
-    worlds_manager: Res<WorldsManager>,
-    network_container: Res<NetworkContainer>,
-    clients: Res<ClientsContainer>,
-) {
+pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<NetworkContainer>) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("send_chunks").entered();
 
@@ -41,14 +34,15 @@ pub fn send_chunks(
             };
             'entity_loop: for entity in watch_entities {
                 let ecs = world.get_ecs();
-                let network = ecs.entity(*entity).get::<NetworkComponent>().unwrap();
+                let entity_ref = ecs.entity(*entity);
+                let network = entity_ref.get::<NetworkComponent>().unwrap();
+                let client = network.get_client().read();
 
                 let connected = network_container.is_connected(network.get_client_id());
                 if !connected {
                     continue 'entity_loop;
                 }
 
-                let client = clients.get(&network.get_client_id());
                 if client.is_queue_limit() {
                     continue 'entity_loop;
                 }

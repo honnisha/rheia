@@ -25,7 +25,7 @@ pub fn on_disconnect(
 ) {
     for event in disconnection_events.read() {
         {
-            let client = clients.get(&event.client_id);
+            let client = clients.get(&event.client_id).unwrap().read();
             if let Some(i) = client.get_client_info() {
                 log::info!(
                     target: "network",

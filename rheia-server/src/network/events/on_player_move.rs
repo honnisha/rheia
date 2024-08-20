@@ -3,8 +3,8 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::{Res, ResMut};
 use common::chunks::block_position::BlockPositionTrait;
 
-use crate::entities::entity::Rotation;
-use crate::network::client_network::{ClientNetwork, WorldEntity};
+use crate::entities::entity::{NetworkComponent, Rotation};
+use crate::network::client_network::WorldEntity;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_entities::sync_player_move;
 use crate::worlds::world_manager::WorldManager;
@@ -33,7 +33,7 @@ pub fn on_player_move(
     worlds_manager: ResMut<WorldsManager>,
 ) {
     for event in player_move_events.read() {
-        let client = clients.get(&event.client_id);
+        let client = clients.get(&event.client_id).unwrap().read();
 
         let world_entity = client.get_world_entity();
         let world_entity = match world_entity.as_ref() {
@@ -63,22 +63,13 @@ pub fn on_player_move(
             );
             continue;
         }
-        move_player(
-            &mut *world_manager,
-            &*clients,
-            &client,
-            world_entity,
-            event.position,
-            event.rotation,
-        );
+        move_player(&mut *world_manager, world_entity, event.position, event.rotation);
     }
 }
 
 /// Move player inside the world
 pub fn move_player(
     world_manager: &mut WorldManager,
-    clients: &ClientsContainer,
-    client: &ClientNetwork,
     world_entity: &WorldEntity,
     position: Position,
     rotation: Rotation,
@@ -86,8 +77,13 @@ pub fn move_player(
     let chunks_changed = world_manager.player_move(&world_entity, position, rotation);
 
     if let Some((abandoned_chunks, _new_chunks)) = chunks_changed.as_ref() {
+        let ecs = world_manager.get_ecs();
+        let entity_ref = ecs.entity(world_entity.get_entity());
+
+        let network = entity_ref.get::<NetworkComponent>().unwrap();
+        let client = network.get_client().read();
         client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks.clone());
     }
 
-    sync_player_move(world_manager, world_entity.clone(), clients, &chunks_changed);
+    sync_player_move(world_manager, world_entity, &chunks_changed);
 }
