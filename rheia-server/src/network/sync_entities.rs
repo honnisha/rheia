@@ -68,6 +68,17 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
     let position = entity_ref.get::<Position>().unwrap();
     let rotation = entity_ref.get::<Rotation>().unwrap();
 
+    let move_msg = ServerMessages::EntityMove {
+        world_slug: world_manager.get_slug().clone(),
+        id: entity.index(),
+        position: position.to_network(),
+        rotation: rotation.to_network(),
+    };
+    let stop_msg = ServerMessages::StopStreamingEntities {
+        world_slug: world_manager.get_slug().clone(),
+        ids: vec![entity.index()],
+    };
+
     match chunks_changed {
         None => {
             if let Some(entities) = world_manager
@@ -75,21 +86,61 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                 .get_chunk_watchers(&position.get_chunk_position())
             {
                 for watcher_entity in entities {
+                    if *watcher_entity == entity {
+                        continue;
+                    }
+
                     let watcher_entity_ref = ecs.entity(*watcher_entity);
                     let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
                     let watcher_client = watcher_network.get_client();
-
-                    let msg = ServerMessages::EntityMove {
-                        world_slug: world_manager.get_slug().clone(),
-                        id: entity.index(),
-                        position: position.to_network(),
-                        rotation: rotation.to_network(),
-                    };
-                    watcher_client.send_message(NetworkMessageType::Unreliable, msg);
+                    watcher_client.send_message(NetworkMessageType::Unreliable, move_msg.clone());
                 }
             }
         }
         Some(change) => {
+            let mut old_watchers: &Vec<Entity> = &Default::default();
+            if let Some(w) = world_manager.get_chunks_map().get_chunk_watchers(&change.old_chunk) {
+                old_watchers = w;
+            }
+
+            let mut new_watchers: &Vec<Entity> = &Default::default();
+            if let Some(w) = world_manager.get_chunks_map().get_chunk_watchers(&change.new_chunk) {
+                new_watchers = w;
+            }
+
+            for old_watcher in old_watchers {
+                if *old_watcher == entity {
+                    continue;
+                }
+
+                let watcher_entity_ref = ecs.entity(*old_watcher);
+                let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
+                let watcher_client = watcher_network.get_client();
+
+                // If watcher can see old and new chunk
+                if new_watchers.contains(&old_watcher) {
+                    watcher_client.send_message(NetworkMessageType::Unreliable, move_msg.clone());
+                }
+                // Player no longer can see entity
+                else {
+                    watcher_client.send_message(NetworkMessageType::ReliableOrdered, stop_msg.clone());
+                }
+            }
+
+            for new_watcher in new_watchers {
+                if *new_watcher == entity {
+                    continue;
+                }
+
+                // New entity in range
+                if old_watchers.contains(&new_watcher) {
+                    let watcher_entity_ref = ecs.entity(*new_watcher);
+                    let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
+                    let watcher_client = watcher_network.get_client();
+
+                    send_start_streaming_entity(&*watcher_client, entity_ref, world_manager.get_slug().clone());
+                }
+            }
         }
     }
 }

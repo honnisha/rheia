@@ -48,7 +48,7 @@ pub fn on_connection_info(
             let rotation = Rotation::new(0.0, 0.0);
 
             let mut world_manager = worlds_manager.get_world_manager_mut(&default_world).unwrap();
-            let world_entity = world_manager.spawn_player(event.client.clone(), position, rotation);
+            let world_entity = world_manager.spawn_player(event.client.clone(), client.get_client_id(), position, rotation);
             client.set_world_entity(Some(world_entity.clone()));
 
             client.network_send_teleport(&position, &rotation);

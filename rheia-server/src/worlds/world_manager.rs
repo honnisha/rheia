@@ -64,8 +64,7 @@ impl WorldManager {
         self.get_chunks_map().count()
     }
 
-    pub fn spawn_player(&mut self, client: ClientCell, position: Position, rotation: Rotation) -> WorldEntity {
-        let client_id = client.read().get_client_id().clone();
+    pub fn spawn_player(&mut self, client: ClientCell, client_id: u64, position: Position, rotation: Rotation) -> WorldEntity {
         let bundle = (position.clone(), rotation, NetworkComponent::new(client, client_id));
 
         let entity = self.get_ecs_mut().spawn(bundle, position.get_chunk_position());
