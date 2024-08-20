@@ -91,7 +91,11 @@ impl ClientNetwork {
         }
     }
 
-    pub fn allow_connection(&self) {
+    pub fn get_client_id(&self) -> u64 {
+        self.client_id
+    }
+
+    pub fn send_allow_connection(&self) {
         self.send_message(NetworkMessageType::ReliableOrdered, ServerMessages::AllowConnection {});
     }
 
@@ -104,10 +108,6 @@ impl ClientNetwork {
 
     pub fn set_client_info(&mut self, info: ClientInfo) {
         self.client_info = Some(info);
-    }
-
-    pub fn get_client_id(&self) -> &u64 {
-        &self.client_id
     }
 
     pub fn get_client_ip(&self) -> &String {

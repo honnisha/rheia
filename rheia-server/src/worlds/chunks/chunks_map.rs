@@ -7,7 +7,7 @@ use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
-    worlds::{chunks::chunk_column::load_chunk, world_generator::WorldGenerator},
+    worlds::{chunks::chunk_column::load_chunk, world_generator::WorldGenerator, world_manager::ChunkChanged},
     CHUNKS_DESPAWN_TIMER,
 };
 
@@ -19,7 +19,6 @@ pub type MapChunksType = AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>;
 /// This container manages vision of the chunks
 /// and responsible for load/unload chunks
 pub struct ChunkMap {
-
     // Hash map with chunk columns
     chunks: MapChunksType,
 
@@ -90,23 +89,29 @@ impl ChunkMap {
         }
     }
 
-    /// Gets the vector of old and new chunks when transitioning between chunks
-    pub fn _get_chunks_transition(from: &ChunkPosition, to: &ChunkPosition, chunks_distance: u16) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
-        let iter = ManhattanIterator::new(from.x as i32, from.z as i32, chunks_distance as i32);
-        let mut old: Vec<ChunkPosition> = iter.map(|pos| ChunkPosition::new(pos.0 as i64, pos.1 as i64) ).collect();
+    /*
+        /// Gets the vector of old and new chunks when transitioning between chunks
+        pub fn get_chunks_transition(
+            from: &ChunkPosition,
+            to: &ChunkPosition,
+            chunks_distance: u16,
+        ) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
+            let iter = ManhattanIterator::new(from.x as i32, from.z as i32, chunks_distance as i32);
+            let mut old: Vec<ChunkPosition> = iter.map(|pos| ChunkPosition::new(pos.0 as i64, pos.1 as i64)).collect();
 
-        let mut new: Vec<ChunkPosition> = Default::default();
-        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
-        for (x, z) in iter {
-            let chunk = ChunkPosition::new(x as i64, z as i64);
-            if !old.contains(&chunk) {
-                new.push(chunk);
+            let mut new: Vec<ChunkPosition> = Default::default();
+            let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
+            for (x, z) in iter {
+                let chunk = ChunkPosition::new(x as i64, z as i64);
+                if !old.contains(&chunk) {
+                    new.push(chunk);
+                }
             }
-        }
 
-        old.retain(|&chunk| !new.contains(&chunk));
-        (old, new)
-    }
+            old.retain(|&chunk| !new.contains(&chunk));
+            (old, new)
+        }
+    */
 
     /// Trigered when player is move between chunks
     /// for updating chunks vision
@@ -119,7 +124,7 @@ impl ChunkMap {
         from: &ChunkPosition,
         to: &ChunkPosition,
         chunks_distance: u16,
-    ) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
+    ) -> ChunkChanged {
         if from == to {
             panic!("update_chunks_render from and to must be different chunks positions");
         }
@@ -153,7 +158,12 @@ impl ChunkMap {
             self.chunks_load_state.remove_ticket(&chunk, &entity);
         }
 
-        (old, new)
+        ChunkChanged {
+            old_chunk: from.clone(),
+            new_chunk: to.clone(),
+            abandoned_chunks: old,
+            new_chunks: new,
+        }
     }
 
     /// Player stop watch the world (despawn or move to another world)
@@ -195,7 +205,11 @@ impl ChunkMap {
                 let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk.clone(), world_slug.clone())));
 
                 trace!(target: "chunks", "Send chunk {} to load", chunk);
-                load_chunk(world_generator.clone(), chunk_column.clone(), self.loaded_chunks.0.clone());
+                load_chunk(
+                    world_generator.clone(),
+                    chunk_column.clone(),
+                    self.loaded_chunks.0.clone(),
+                );
                 self.chunks.insert(chunk.clone(), chunk_column);
             }
         }
@@ -234,7 +248,7 @@ mod tests {
 
         // Move
         let new_pos = ChunkPosition::new(1, 0);
-        let (abandoned_chunks, _new_chunks) = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
+        let change = chunk_map.update_chunks_render(entity, &pos, &new_pos, chunks_distance);
         let chunks = chunk_map.chunks_load_state.get_watching_chunks(&entity).unwrap();
         assert_eq!(chunks.len(), 5);
         assert_eq!(chunks.contains(&ChunkPosition::new(1, 0)), true);
@@ -244,10 +258,10 @@ mod tests {
         assert_eq!(chunks.contains(&ChunkPosition::new(0, 0)), true);
         assert_eq!(chunk_map.chunks_load_state.num_tickets(&new_pos), 1);
 
-        assert_eq!(abandoned_chunks.len(), 3);
-        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(-1, 0)), true);
-        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(0, 1)), true);
-        assert_eq!(abandoned_chunks.contains(&ChunkPosition::new(0, -1)), true);
+        assert_eq!(change.abandoned_chunks.len(), 3);
+        assert_eq!(change.abandoned_chunks.contains(&ChunkPosition::new(-1, 0)), true);
+        assert_eq!(change.abandoned_chunks.contains(&ChunkPosition::new(0, 1)), true);
+        assert_eq!(change.abandoned_chunks.contains(&ChunkPosition::new(0, -1)), true);
 
         // despawn
         chunk_map.stop_chunks_render(entity);

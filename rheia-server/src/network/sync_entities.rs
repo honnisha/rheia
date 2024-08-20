@@ -1,23 +1,23 @@
 use bevy::prelude::{Entity, EntityRef, Event, EventReader};
 use bevy_ecs::system::Res;
 use common::{
-    chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
+    chunks::block_position::BlockPositionTrait,
     network::messages::{NetworkMessageType, ServerMessages},
 };
 
 use crate::{
     entities::entity::{NetworkComponent, Position, Rotation},
-    worlds::{world_manager::WorldManager, worlds_manager::WorldsManager},
+    worlds::{
+        world_manager::{ChunkChanged, WorldManager},
+        worlds_manager::WorldsManager,
+    },
 };
 
-use super::client_network::WorldEntity;
+use super::client_network::{ClientNetwork, WorldEntity};
 
-fn send_start_streaming_entity(entity_ref: EntityRef, world_slug: String) {
+fn send_start_streaming_entity(target_client: &ClientNetwork, entity_ref: EntityRef, world_slug: String) {
     let position = entity_ref.get::<Position>().unwrap();
     let rotation = entity_ref.get::<Rotation>().unwrap();
-
-    let network = entity_ref.get::<NetworkComponent>().unwrap();
-    let client = network.get_client();
 
     let msg = ServerMessages::StartStreamingEntity {
         id: entity_ref.id().index(),
@@ -25,7 +25,7 @@ fn send_start_streaming_entity(entity_ref: EntityRef, world_slug: String) {
         position: position.to_network(),
         rotation: rotation.to_network(),
     };
-    client.send_message(NetworkMessageType::ReliableOrdered, msg);
+    target_client.send_message(NetworkMessageType::ReliableOrdered, msg);
 }
 
 /// Отправка всем наблюдателям чанка StartStreamingEntity
@@ -40,12 +40,19 @@ pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
         .get_chunks_map()
         .get_chunk_watchers(&position.get_chunk_position())
     {
-        for _e in entities {}
+        for watcher_entity in entities {
+            if *watcher_entity == entity {
+                continue;
+            }
+
+            let watcher_entity_ref = ecs.entity(*watcher_entity);
+            let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
+            let watcher_client = watcher_network.get_client();
+
+            send_start_streaming_entity(&*watcher_client, entity_ref, world_manager.get_slug().clone());
+        }
     }
 }
-
-/// Отправка всем наблюдателям чанка StopStreamingEntity
-pub fn sync_entity_despawn(_entity: Entity) {}
 
 /// Обязательно проверять, чтобы информация о игроке не отправилась ему же самому!
 ///
@@ -55,7 +62,40 @@ pub fn sync_entity_despawn(_entity: Entity) {}
 ///   • тем игрокам кто наблюдает и старый чанк и новый - отправлять EntityMove
 ///   • перешел из видимого чанка в невидимый - отправлять StopStreamingEntity
 ///   • перешел из невидимого чанка в видимый - отправлять StartStreamingEntity
-pub fn sync_entity_move(_entity: Entity, _chunks_changed: &Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)>) {}
+pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_changed: &Option<ChunkChanged>) {
+    let ecs = world_manager.get_ecs();
+    let entity_ref = ecs.entity(entity);
+    let position = entity_ref.get::<Position>().unwrap();
+    let rotation = entity_ref.get::<Rotation>().unwrap();
+
+    match chunks_changed {
+        None => {
+            if let Some(entities) = world_manager
+                .get_chunks_map()
+                .get_chunk_watchers(&position.get_chunk_position())
+            {
+                for watcher_entity in entities {
+                    let watcher_entity_ref = ecs.entity(*watcher_entity);
+                    let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
+                    let watcher_client = watcher_network.get_client();
+
+                    let msg = ServerMessages::EntityMove {
+                        world_slug: world_manager.get_slug().clone(),
+                        id: entity.index(),
+                        position: position.to_network(),
+                        rotation: rotation.to_network(),
+                    };
+                    watcher_client.send_message(NetworkMessageType::Unreliable, msg);
+                }
+            }
+        }
+        Some(change) => {
+        }
+    }
+}
+
+/// Отправка всем наблюдателям чанка StopStreamingEntity
+pub fn sync_entity_despawn(_entity: Entity) {}
 
 #[derive(Event)]
 pub struct PlayerSpawnEvent {
@@ -106,7 +146,7 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
                         continue;
                     }
 
-                    send_start_streaming_entity(entity_ref, world_manager.get_slug().clone());
+                    send_start_streaming_entity(&*client, entity_ref, world_manager.get_slug().clone());
                 }
             }
         }
@@ -125,21 +165,22 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
 pub fn sync_player_move(
     world_manager: &WorldManager,
     world_entity: &WorldEntity,
-    chunks_changed: &Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)>,
+    chunks_changed: &Option<ChunkChanged>,
 ) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("sync_player_move").entered();
 
-    if let Some((abandoned_chunks, new_chunks)) = chunks_changed {
+    if let Some(change) = chunks_changed {
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.entity(world_entity.get_entity());
         let network = entity_ref.get::<NetworkComponent>().unwrap();
         let client = network.get_client();
 
+        // Stop streaming entities from unseen chunks
         let mut ids: Vec<u32> = Default::default();
-        for chunk in abandoned_chunks {
-            for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
-                ids.push(entity.id().index());
+        for chunk in change.abandoned_chunks.iter() {
+            for entity_ref in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
+                ids.push(entity_ref.id().index());
             }
         }
         if ids.len() > 0 {
@@ -150,15 +191,16 @@ pub fn sync_player_move(
             client.send_message(NetworkMessageType::ReliableOrdered, msg);
         }
 
-        for chunk in new_chunks {
+        // Start streaming entities from new chunks
+        for chunk in change.new_chunks.iter() {
             for entity_ref in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
                 if entity_ref.id() == world_entity.get_entity() {
                     continue;
                 }
-                send_start_streaming_entity(entity_ref, world_manager.get_slug().clone());
+                send_start_streaming_entity(&*client, entity_ref, world_manager.get_slug().clone());
             }
         }
     }
 
-    sync_entity_move(world_entity.get_entity(), chunks_changed);
+    sync_entity_move(world_manager, world_entity.get_entity(), chunks_changed);
 }

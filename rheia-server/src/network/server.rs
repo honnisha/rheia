@@ -147,20 +147,20 @@ fn receive_message_system(
     }
 
     for (client_id, decoded) in network.iter_client_messages() {
+        let client = clients.get(&client_id).unwrap();
         match decoded {
             ClientMessages::ConsoleInput { command } => {
                 CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
             ClientMessages::ChunkRecieved { chunk_positions } => {
-                let client = clients.get(&client_id).unwrap().read();
-                client.mark_chunks_as_recieved(chunk_positions);
+                client.read().mark_chunks_as_recieved(chunk_positions);
             }
             ClientMessages::PlayerMove { position, rotation } => {
-                let movement = PlayerMoveEvent::new(client_id.clone(), position.to_server(), rotation.to_server());
+                let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
                 player_move_events.send(movement);
             }
             ClientMessages::ConnectionInfo { login } => {
-                let info = PlayerConnectionInfoEvent::new(client_id, login);
+                let info = PlayerConnectionInfoEvent::new(client.clone(), login);
                 connection_info_events.send(info);
             }
         }
@@ -190,10 +190,12 @@ fn handle_events_system(
         match connection {
             ConnectionMessages::Connect { client_id, ip } => {
                 clients.add(client_id.clone(), ip.clone());
-                connection_events.send(PlayerConnectionEvent::new(client_id));
+                let client = clients.get(&client_id).unwrap();
+                connection_events.send(PlayerConnectionEvent::new(client.clone()));
             }
             ConnectionMessages::Disconnect { client_id, reason } => {
-                disconnection_events.send(PlayerDisconnectEvent::new(client_id, reason));
+                let client = clients.get(&client_id).unwrap();
+                disconnection_events.send(PlayerDisconnectEvent::new(client.clone(), reason));
             }
         }
     }

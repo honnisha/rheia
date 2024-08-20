@@ -16,6 +16,13 @@ use crate::worlds::chunks::chunks_map::ChunkMap;
 use super::ecs::Ecs;
 use super::world_generator::WorldGenerator;
 
+pub struct ChunkChanged {
+    pub old_chunk: ChunkPosition,
+    pub new_chunk: ChunkPosition,
+    pub abandoned_chunks: Vec<ChunkPosition>,
+    pub new_chunks: Vec<ChunkPosition>,
+}
+
 pub struct WorldManager {
     slug: String,
     ecs: Ecs,
@@ -57,7 +64,8 @@ impl WorldManager {
         self.get_chunks_map().count()
     }
 
-    pub fn spawn_player(&mut self, client: ClientCell, client_id: u64, position: Position, rotation: Rotation) -> WorldEntity {
+    pub fn spawn_player(&mut self, client: ClientCell, position: Position, rotation: Rotation) -> WorldEntity {
+        let client_id = client.read().get_client_id().clone();
         let bundle = (position.clone(), rotation, NetworkComponent::new(client, client_id));
 
         let entity = self.get_ecs_mut().spawn(bundle, position.get_chunk_position());
@@ -76,8 +84,8 @@ impl WorldManager {
         world_entity: &WorldEntity,
         position: Position,
         rotation: Rotation,
-    ) -> Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)> {
-        let mut changed_chunks: Option<(Vec<ChunkPosition>, Vec<ChunkPosition>)> = None;
+    ) -> Option<ChunkChanged> {
+        let mut changed_chunks: Option<ChunkChanged> = None;
 
         let mut player_entity = self.ecs.entity_mut(world_entity.get_entity());
         let mut old_position = player_entity.get_mut::<Position>().unwrap();

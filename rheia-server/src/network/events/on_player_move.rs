@@ -1,39 +1,35 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
-use bevy_ecs::system::{Res, ResMut};
+use bevy_ecs::system::ResMut;
 use common::chunks::block_position::BlockPositionTrait;
 
 use crate::entities::entity::{NetworkComponent, Rotation};
 use crate::network::client_network::WorldEntity;
-use crate::network::clients_container::ClientsContainer;
+use crate::network::clients_container::ClientCell;
 use crate::network::sync_entities::sync_player_move;
 use crate::worlds::world_manager::WorldManager;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
 #[derive(Event)]
 pub struct PlayerMoveEvent {
-    client_id: u64,
+    client: ClientCell,
     position: Position,
     rotation: Rotation,
 }
 
 impl PlayerMoveEvent {
-    pub fn new(client_id: u64, position: Position, rotation: Rotation) -> Self {
+    pub fn new(client: ClientCell, position: Position, rotation: Rotation) -> Self {
         Self {
-            client_id,
+            client,
             position,
             rotation,
         }
     }
 }
 
-pub fn on_player_move(
-    mut player_move_events: EventReader<PlayerMoveEvent>,
-    clients: Res<ClientsContainer>,
-    worlds_manager: ResMut<WorldsManager>,
-) {
+pub fn on_player_move(mut player_move_events: EventReader<PlayerMoveEvent>, worlds_manager: ResMut<WorldsManager>) {
     for event in player_move_events.read() {
-        let client = clients.get(&event.client_id).unwrap().read();
+        let client = event.client.read();
 
         let world_entity = client.get_world_entity();
         let world_entity = match world_entity.as_ref() {
@@ -76,13 +72,13 @@ pub fn move_player(
 ) {
     let chunks_changed = world_manager.player_move(&world_entity, position, rotation);
 
-    if let Some((abandoned_chunks, _new_chunks)) = chunks_changed.as_ref() {
+    if let Some(change) = chunks_changed.as_ref() {
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.entity(world_entity.get_entity());
 
         let network = entity_ref.get::<NetworkComponent>().unwrap();
         let client = network.get_client();
-        client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks.clone());
+        client.send_unload_chunks(world_entity.get_world_slug(), change.abandoned_chunks.clone());
     }
 
     sync_player_move(world_manager, world_entity, &chunks_changed);
