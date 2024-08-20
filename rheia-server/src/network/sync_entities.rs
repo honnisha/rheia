@@ -10,14 +10,17 @@ use crate::{
     worlds::{world_manager::WorldManager, worlds_manager::WorldsManager},
 };
 
-use super::{client_network::WorldEntity, clients_container::ClientRef};
+use super::client_network::WorldEntity;
 
-fn send_start_streaming_entity(client: &ClientRef, entity: EntityRef, world_slug: String) {
-    let position = entity.get::<Position>().unwrap();
-    let rotation = entity.get::<Rotation>().unwrap();
+fn send_start_streaming_entity(entity_ref: EntityRef, world_slug: String) {
+    let position = entity_ref.get::<Position>().unwrap();
+    let rotation = entity_ref.get::<Rotation>().unwrap();
+
+    let network = entity_ref.get::<NetworkComponent>().unwrap();
+    let client = network.get_client();
 
     let msg = ServerMessages::StartStreamingEntity {
-        id: entity.id().index(),
+        id: entity_ref.id().index(),
         world_slug: world_slug,
         position: position.to_network(),
         rotation: rotation.to_network(),
@@ -85,7 +88,7 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.entity(event.world_entity.get_entity());
         let network = entity_ref.get::<NetworkComponent>().unwrap();
-        let client = network.get_client().read();
+        let client = network.get_client();
 
         // Sends all existing entities from the player's line of sight
         if let Some(player_chunks) = world_manager
@@ -97,13 +100,13 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
                     continue;
                 }
 
-                for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
+                for entity_ref in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
                     // Prevents from sending spawn itself to the player
-                    if entity.id() == event.world_entity.get_entity() {
+                    if entity_ref.id() == event.world_entity.get_entity() {
                         continue;
                     }
 
-                    send_start_streaming_entity(&client, entity, world_manager.get_slug().clone());
+                    send_start_streaming_entity(entity_ref, world_manager.get_slug().clone());
                 }
             }
         }
@@ -129,8 +132,9 @@ pub fn sync_player_move(
 
     if let Some((abandoned_chunks, new_chunks)) = chunks_changed {
         let ecs = world_manager.get_ecs();
-        let network = ecs.entity(world_entity.get_entity()).get::<NetworkComponent>().unwrap();
-        let client = network.get_client().read();
+        let entity_ref = ecs.entity(world_entity.get_entity());
+        let network = entity_ref.get::<NetworkComponent>().unwrap();
+        let client = network.get_client();
 
         let mut ids: Vec<u32> = Default::default();
         for chunk in abandoned_chunks {
@@ -147,11 +151,11 @@ pub fn sync_player_move(
         }
 
         for chunk in new_chunks {
-            for entity in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
-                if entity.id() == world_entity.get_entity() {
+            for entity_ref in world_manager.get_ecs().get_chunk_entities(&chunk).unwrap() {
+                if entity_ref.id() == world_entity.get_entity() {
                     continue;
                 }
-                send_start_streaming_entity(&client, entity, world_manager.get_slug().clone());
+                send_start_streaming_entity(entity_ref, world_manager.get_slug().clone());
             }
         }
     }

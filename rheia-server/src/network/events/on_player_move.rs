@@ -81,7 +81,7 @@ pub fn move_player(
         let entity_ref = ecs.entity(world_entity.get_entity());
 
         let network = entity_ref.get::<NetworkComponent>().unwrap();
-        let client = network.get_client().read();
+        let client = network.get_client();
         client.send_unload_chunks(world_entity.get_world_slug(), abandoned_chunks.clone());
     }
 

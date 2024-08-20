@@ -36,7 +36,7 @@ pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<Ne
                 let ecs = world.get_ecs();
                 let entity_ref = ecs.entity(*entity);
                 let network = entity_ref.get::<NetworkComponent>().unwrap();
-                let client = network.get_client().read();
+                let client = network.get_client();
 
                 let connected = network_container.is_connected(network.get_client_id());
                 if !connected {

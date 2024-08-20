@@ -1,12 +1,12 @@
 use bevy_ecs::prelude::Component;
+use common::network::messages::Rotation as NetworkRotation;
+use common::network::messages::Vector3 as NetworkVector3;
 use common::{
     chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
     utils::fix_chunk_loc_pos,
 };
-use common::network::messages::Vector3 as NetworkVector3;
-use common::network::messages::Rotation as NetworkRotation;
 
-use crate::network::clients_container::ClientCell;
+use crate::network::clients_container::{ClientCell, ClientRef};
 
 pub type PositionFloatType = f32;
 
@@ -98,7 +98,7 @@ impl NetworkComponent {
         &self.client_id
     }
 
-    pub fn get_client(&self) -> &ClientCell {
-        &self.client
+    pub fn get_client(&self) -> ClientRef {
+        self.client.read()
     }
 }
