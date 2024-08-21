@@ -133,7 +133,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                 }
 
                 // New entity in range
-                if old_watchers.contains(&new_watcher) {
+                if !old_watchers.contains(&new_watcher) {
                     let watcher_entity_ref = ecs.entity(*new_watcher);
                     let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
                     let watcher_client = watcher_network.get_client();
@@ -146,7 +146,8 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
 }
 
 /// Отправка всем наблюдателям чанка StopStreamingEntity
-pub fn sync_entity_despawn(_entity: Entity) {}
+pub fn sync_entity_despawn(_entity: Entity) {
+}
 
 #[derive(Event)]
 pub struct PlayerSpawnEvent {
