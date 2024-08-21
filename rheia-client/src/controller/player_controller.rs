@@ -1,3 +1,5 @@
+use crate::entities::entity::Entity;
+use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
 use crate::world::world_manager::WorldManager;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
@@ -8,11 +10,9 @@ use godot::prelude::*;
 
 use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 
-use super::body_controller::BodyController;
 use super::camera_controller::CameraController;
 use super::controls::Controls;
-use super::enums::generic_animations::GenericAnimations;
-use super::player_movement::PlayerMovement;
+use super::entity_movement::EntityMovement;
 
 const TURN_SPEED: f64 = 6.0;
 const MOVEMENT_SPEED: f32 = 4.0;
@@ -32,13 +32,12 @@ const CONTROLLER_MASS: f32 = 3.0;
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
 
-    // A full-length body; skin
-    body_controller: Gd<BodyController>,
+    entity: Gd<Entity>,
 
     camera_controller: Gd<CameraController>,
 
     controls: Gd<Controls>,
-    cache_movement: Option<Gd<PlayerMovement>>,
+    cache_movement: Option<Gd<EntityMovement>>,
 
     physics_entity: PhysicsRigidBodyEntityType,
     physics_controller: PhysicsCharacterControllerType,
@@ -56,7 +55,7 @@ impl PlayerController {
         Self {
             base,
 
-            body_controller: Gd::<BodyController>::from_init_fn(|base| BodyController::create(base)),
+            entity: Gd::<Entity>::from_init_fn(|base| Entity::create(base)),
             camera_controller,
 
             controls,
@@ -69,8 +68,8 @@ impl PlayerController {
         }
     }
 
-    pub fn get_body_controller(&self) -> &Gd<BodyController> {
-        &self.body_controller
+    pub fn get_current_animation(&self) -> String {
+        self.entity.bind().get_current_animation()
     }
 
     // Get position of the character
@@ -80,12 +79,12 @@ impl PlayerController {
 
     /// Horizontal degrees of character look
     pub fn get_yaw(&self) -> f32 {
-        self.body_controller.get_rotation_degrees().y
+        self.entity.bind().get_yaw()
     }
 
     /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
-        self.camera_controller.bind().get_pitch()
+        self.entity.bind().get_pitch()
     }
 
     pub fn set_position(&mut self, position: Vector3) {
@@ -101,7 +100,7 @@ impl PlayerController {
         self.camera_controller.bind_mut().rotate(yaw, pitch);
 
         // Rotate visible third_person body
-        self.body_controller.rotate_y(yaw);
+        self.entity.bind_mut().set_yaw(yaw);
     }
 
     fn apply_controls(&mut self, delta: f64) {
@@ -118,18 +117,14 @@ impl PlayerController {
 
         if direction != Vector3::ZERO {
             let mut new_yaw = -direction.x.atan2(-direction.z) % 360.0;
-            new_yaw = lerp_angle(
-                self.body_controller.get_rotation().y as f64,
-                new_yaw as f64,
-                TURN_SPEED * delta,
-            ) as f32;
+            new_yaw = lerp_angle(self.entity.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
 
             // Update skin rotation for visual display
-            let mut skin_rotation = self.body_controller.get_rotation();
+            let mut skin_rotation = self.entity.bind().get_rotation();
             skin_rotation.y = new_yaw;
-            self.body_controller.set_rotation(skin_rotation);
+            self.entity.bind_mut().set_rotation(skin_rotation);
 
-            movement = self.body_controller.get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
+            movement = self.entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }
 
         // Check physics ground check
@@ -143,9 +138,7 @@ impl PlayerController {
             self.grounded_timer -= delta as f32;
             // If we jump we clear the grounded tolerance
             if controls.is_jumping() {
-                self.body_controller
-                    .bind_mut()
-                    .trigger_animation(GenericAnimations::Jump);
+                self.entity.bind_mut().trigger_animation(GenericAnimations::Jump);
                 self.vertical_movement = JUMP_SPEED;
                 self.grounded_timer = 0.0;
             }
@@ -175,7 +168,7 @@ impl INode3D for PlayerController {
     }
 
     fn ready(&mut self) {
-        let controller = self.body_controller.clone().upcast();
+        let controller = self.entity.clone().upcast();
         self.base_mut().add_child(controller);
 
         let camera_controller = self.camera_controller.clone().upcast();
@@ -231,8 +224,8 @@ impl INode3D for PlayerController {
         }
 
         // Handle player movement
-        let new_movement = Gd::<PlayerMovement>::from_init_fn(|_base| {
-            PlayerMovement::create(self.get_position(), Rotation::new(self.get_yaw(), self.get_pitch()))
+        let new_movement = Gd::<EntityMovement>::from_init_fn(|_base| {
+            EntityMovement::create(self.get_position(), Rotation::new(self.get_yaw(), self.get_pitch()))
         });
 
         if self.cache_movement.is_none() || *new_movement.bind() != *self.cache_movement.as_ref().unwrap().bind() {
@@ -249,7 +242,7 @@ impl INode3D for PlayerController {
             } else {
                 Vector3::ZERO
             };
-            self.body_controller.bind_mut().handle_movement(movement);
+            self.entity.bind_mut().handle_movement(movement);
 
             self.base_mut().emit_signal(
                 "on_player_move".into(),

@@ -1,5 +1,3 @@
-
-
 trait CancellableEvent {
     fn get_cancel(&self) -> bool;
 }

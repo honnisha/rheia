@@ -105,15 +105,15 @@ fn get_parts(part: &BodyPart) -> &'static PartsType {
 }
 /// Responsible for controlling the full-length generic model
 #[derive(GodotClass)]
-#[class(base=Node3D)]
-pub struct BodyController {
+#[class(no_init, base=Node3D)]
+pub struct GenericSkin {
     pub(crate) base: Base<Node3D>,
 
     generic: Gd<Node3D>,
     animation_player: Gd<AnimationPlayer>,
 }
 
-impl BodyController {
+impl GenericSkin {
     pub fn create(base: Base<Node3D>) -> Self {
         let generic = load::<PackedScene>(GENERIC_MODEL).instantiate_as::<Node3D>();
 
@@ -197,11 +197,7 @@ impl BodyController {
 }
 
 #[godot_api]
-impl INode3D for BodyController {
-    fn init(base: Base<Node3D>) -> Self {
-        Self::create(base)
-    }
-
+impl INode3D for GenericSkin {
     fn ready(&mut self) {
         let generic = self.generic.clone().upcast();
         self.base_mut().add_child(generic);

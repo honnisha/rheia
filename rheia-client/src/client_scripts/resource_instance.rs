@@ -1,8 +1,6 @@
 use rhai::{serde::to_dynamic, Dynamic, Engine};
 
-use crate::events::EmptyEvent;
-
-use super::script_instance::ScriptInstance;
+use super::{events::EmptyEvent, script_instance::ScriptInstance};
 use std::collections::HashMap;
 
 pub struct ResourceInstance {
@@ -10,19 +8,16 @@ pub struct ResourceInstance {
 }
 
 impl ResourceInstance {
-
     pub fn try_init(rhai_engine: &mut Engine, slug: &String, scripts: HashMap<String, String>) -> Result<Self, String> {
-        let mut resource_instance = ResourceInstance {
-            scripts: Vec::new(),
-        };
+        let mut resource_instance = ResourceInstance { scripts: Vec::new() };
 
         for (source_file, code) in scripts {
             match ScriptInstance::try_to_load(rhai_engine, slug, source_file, code.clone()) {
                 Ok(i) => resource_instance.scripts.push(i),
                 Err(e) => {
                     println!("code: {}", code);
-                    return Err(format!("slug \"{}\" {}", slug, e).into())
-                },
+                    return Err(format!("slug \"{}\" {}", slug, e).into());
+                }
             }
         }
 

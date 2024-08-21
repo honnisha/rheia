@@ -3,9 +3,9 @@ use super::{
     worlds_manager::TextureMapperType,
 };
 use crate::{
-    controller::{player_controller::PlayerController, player_movement::PlayerMovement},
-    main_scene::{Main, PhysicsContainerType},
-    utils::bridge::IntoChunkPositionVector,
+    controller::{entity_movement::EntityMovement, player_controller::PlayerController},
+    entities::entities_manager::EntitiesManager,
+    main_scene::{Main, PhysicsContainerType}, utils::bridge::IntoChunkPositionVector,
 };
 use common::{
     chunks::{chunk_position::ChunkPosition, utils::SectionsData},
@@ -31,6 +31,8 @@ pub struct WorldManager {
 
     physics_container: PhysicsContainerType,
     player_controller: Gd<PlayerController>,
+
+    entities_manager: Gd<EntitiesManager>,
 }
 
 impl WorldManager {}
@@ -58,6 +60,8 @@ impl WorldManager {
 
             physics_container,
             player_controller,
+
+            entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
         }
     }
 
@@ -93,7 +97,12 @@ impl WorldManager {
     }
 
     pub fn start_streaming_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
-        log::info!("start_streaming_entity id:{} position:{} rotation:{}", id, position, rotation);
+        log::info!(
+            "start_streaming_entity id:{} position:{} rotation:{}",
+            id,
+            position,
+            rotation
+        );
     }
 
     pub fn move_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
@@ -108,7 +117,7 @@ impl WorldManager {
 #[godot_api]
 impl WorldManager {
     #[func]
-    fn handler_player_move(&mut self, movement: Gd<PlayerMovement>, new_chunk: bool) {
+    fn handler_player_move(&mut self, movement: Gd<EntityMovement>, new_chunk: bool) {
         let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
         let main = main.bind();
         main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
@@ -136,6 +145,9 @@ impl INode for WorldManager {
 
         let player_controller = self.player_controller.clone().upcast();
         self.base_mut().add_child(player_controller);
+
+        let entities_manager = self.entities_manager.clone().upcast();
+        self.base_mut().add_child(entities_manager);
     }
 
     fn process(&mut self, delta: f64) {
