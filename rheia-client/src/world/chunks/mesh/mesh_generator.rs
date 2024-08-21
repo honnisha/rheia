@@ -61,7 +61,7 @@ pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
     buffer
 }
 
-pub fn generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
+pub fn _generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
     let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
     greedy_quads(
         chunk_data, //&b_chunk,

@@ -8,7 +8,7 @@ use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, Phy
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
-use crate::main_scene::{FloatType, PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
+use crate::main_scene::{PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 
 use super::camera_controller::CameraController;
 use super::controls::Controls;
@@ -96,11 +96,11 @@ impl PlayerController {
         self.physics_entity.set_position(physics_pos.to_network());
     }
 
-    pub fn set_rotation(&mut self, yaw: FloatType, pitch: FloatType) {
-        self.camera_controller.bind_mut().rotate(yaw, pitch);
+    pub fn set_rotation(&mut self, rotation: Rotation) {
+        self.camera_controller.bind_mut().rotate(rotation);
 
         // Rotate visible third_person body
-        self.entity.bind_mut().set_yaw(yaw);
+        self.entity.bind_mut().rotate(rotation);
     }
 
     fn apply_controls(&mut self, delta: f64) {

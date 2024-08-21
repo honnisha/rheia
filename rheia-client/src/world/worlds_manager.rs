@@ -51,7 +51,7 @@ impl WorldsManager {
         let mut player_controller = world.get_player_controller_mut().bind_mut();
 
         player_controller.set_position(position);
-        player_controller.set_rotation(rotation.yaw, rotation.pitch);
+        player_controller.set_rotation(rotation);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world

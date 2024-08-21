@@ -1,6 +1,5 @@
+use common::network::messages::Rotation;
 use godot::prelude::*;
-
-use crate::main_scene::FloatType;
 
 use super::{controls::Controls, player_controller::CAMERA_DISTANCE};
 
@@ -35,10 +34,10 @@ impl CameraController {
         &self.camera
     }
 
-    pub fn rotate(&mut self, pitch: FloatType, yaw: FloatType) {
+    pub fn rotate(&mut self, rotation: Rotation) {
         let mut r = self.base().get_rotation_degrees();
-        r.x = pitch % 360.0;
-        r.y = yaw % 360.0;
+        r.x = rotation.yaw % 360.0;
+        r.y = rotation.pitch % 360.0;
         self.base_mut().set_rotation_degrees(r);
     }
 }
@@ -60,6 +59,6 @@ impl INode3D for CameraController {
             controls.get_camera_rotation().clone()
         };
 
-        self.rotate(cam_rot.y, cam_rot.x);
+        self.rotate(Rotation::new(cam_rot.y, cam_rot.x));
     }
 }

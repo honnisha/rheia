@@ -106,6 +106,7 @@ impl ChunkSection {
     }
 
     pub fn set_active(&mut self, state: bool) {
+        self.physics_entity.set_enabled(state);
     }
 }
 

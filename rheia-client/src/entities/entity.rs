@@ -1,3 +1,4 @@
+use common::network::messages::Rotation;
 use godot::prelude::*;
 
 use super::{enums::generic_animations::GenericAnimations, generic_skin::GenericSkin};
@@ -32,7 +33,12 @@ impl Entity {
         self.base().get_rotation_degrees().x
     }
 
-    pub fn set_yaw(&mut self, yaw: f32) {}
+    pub fn rotate(&mut self, rotation: Rotation) {
+        let mut r = self.base().get_rotation_degrees();
+        r.x = rotation.yaw % 360.0;
+        r.y = rotation.pitch % 360.0;
+        self.base_mut().set_rotation_degrees(r);
+    }
 
     pub fn get_rotation(&self) -> Vector3 {
         self.base().get_rotation()

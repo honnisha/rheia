@@ -101,17 +101,23 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 rotation,
             } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
-                    world.bind_mut().start_streaming_entity(id, position.to_godot(), rotation);
+                    let mut w = world.bind_mut();
+                    let mut entities_manager = w.get_entities_manager_mut();
+                    entities_manager.create_entity(id, position.to_godot(), rotation);
                 }
             }
             ServerMessages::EntityMove { world_slug, id, position, rotation } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
-                    world.bind_mut().move_entity(id, position.to_godot(), rotation);
+                    let mut w = world.bind_mut();
+                    let mut entities_manager = w.get_entities_manager_mut();
+                    entities_manager.move_entity(id, position.to_godot(), rotation);
                 }
             }
             ServerMessages::StopStreamingEntities { world_slug, ids } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
-                    world.bind_mut().stop_streaming_entities(ids);
+                    let mut w = world.bind_mut();
+                    let mut entities_manager = w.get_entities_manager_mut();
+                    entities_manager.despawn(ids);
                 }
             }
             _ => panic!("unsupported message"),
