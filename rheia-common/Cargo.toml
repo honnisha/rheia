@@ -40,6 +40,9 @@ ndcopy = "0.3.0"
 
 # Network
 renet = { version = "0.0.16", features = ["bevy"], optional = true }
+
+steamworks = { version = "0.11.0", optional = false }
+
 # "debug", "debug_all"
 rak-rs = { git = "https://github.com/NetrexMC/RakNet", branch = "master", optional = false, default-features = false, features = [ "async_tokio", "mcpe" ] }
 

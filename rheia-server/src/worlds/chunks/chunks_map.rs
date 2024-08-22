@@ -7,7 +7,7 @@ use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
-    worlds::{chunks::chunk_column::load_chunk, world_generator::WorldGenerator, world_manager::ChunkChanged},
+    worlds::{chunks::chunk_column::load_chunk, world_generator::default::WorldGenerator, world_manager::ChunkChanged},
     CHUNKS_DESPAWN_TIMER,
 };
 
@@ -224,7 +224,7 @@ mod tests {
     use parking_lot::RwLock;
     use std::time::Duration;
 
-    use crate::{worlds::world_generator::WorldGenerator, CHUNKS_DESPAWN_TIMER};
+    use crate::{worlds::world_generator::default::WorldGenerator, CHUNKS_DESPAWN_TIMER};
 
     use super::{ChunkMap, ChunkPosition};
 

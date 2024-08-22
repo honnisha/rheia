@@ -1,4 +1,4 @@
-use crate::worlds::world_generator::WorldGenerator;
+use crate::worlds::world_generator::default::WorldGenerator;
 use crate::CHUNKS_ZIP_PALLETE;
 use arrayvec::ArrayVec;
 use common::chunks::chunk_position::ChunkPosition;
@@ -14,7 +14,7 @@ pub struct ChunkColumn {
     chunk_position: ChunkPosition,
     world_slug: String,
 
-    sections: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>,
+    pub sections: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>,
     despawn_timer: Arc<RwLock<Duration>>,
     loaded: bool,
 }

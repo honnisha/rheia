@@ -14,7 +14,7 @@ use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
 
 use super::ecs::Ecs;
-use super::world_generator::WorldGenerator;
+use super::world_generator::default::WorldGenerator;
 
 pub struct ChunkChanged {
     pub old_chunk: ChunkPosition,
@@ -64,7 +64,13 @@ impl WorldManager {
         self.get_chunks_map().count()
     }
 
-    pub fn spawn_player(&mut self, client: ClientCell, client_id: u64, position: Position, rotation: Rotation) -> WorldEntity {
+    pub fn spawn_player(
+        &mut self,
+        client: ClientCell,
+        client_id: u64,
+        position: Position,
+        rotation: Rotation,
+    ) -> WorldEntity {
         let bundle = (position.clone(), rotation, NetworkComponent::new(client, client_id));
 
         let entity = self.get_ecs_mut().spawn(bundle, position.get_chunk_position());
@@ -106,7 +112,8 @@ impl WorldManager {
         *old_rotation = rotation;
 
         if chunk_changed {
-            self.ecs.entity_moved_chunk(&world_entity.get_entity(), &old_chunk, &new_chunk);
+            self.ecs
+                .entity_moved_chunk(&world_entity.get_entity(), &old_chunk, &new_chunk);
         }
         changed_chunks
     }
