@@ -52,7 +52,7 @@ pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<Ne
                 }
 
                 let clients_queue = queue.entry(chunk_position.clone()).or_insert(Default::default());
-                client.send_to_queue(&chunk_position);
+                client.send_chunk_to_queue(&chunk_position);
                 clients_queue.push(client);
             }
         }

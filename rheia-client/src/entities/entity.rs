@@ -1,5 +1,5 @@
 use common::network::messages::Rotation;
-use godot::prelude::*;
+use godot::{global::lerp, prelude::*};
 
 use super::{enums::generic_animations::GenericAnimations, generic_skin::GenericSkin};
 
@@ -9,6 +9,7 @@ pub struct Entity {
     pub base: Base<Node3D>,
 
     skin: Gd<GenericSkin>,
+    target_position: Option<Vector3>,
 }
 
 impl Entity {
@@ -16,6 +17,7 @@ impl Entity {
         Self {
             base,
             skin: Gd::<GenericSkin>::from_init_fn(|base| GenericSkin::create(base)),
+            target_position: Default::default(),
         }
     }
 
@@ -31,6 +33,10 @@ impl Entity {
     /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
         self.base().get_rotation_degrees().x
+    }
+
+    pub fn change_position(&mut self, position: Vector3) {
+        self.target_position = Some(position);
     }
 
     pub fn rotate(&mut self, rotation: Rotation) {
@@ -57,6 +63,7 @@ impl Entity {
     }
 
     pub fn handle_movement(&mut self, movement: Vector3) {
+        // let movement = position - e.get_position();
         self.skin.bind_mut().handle_movement(movement)
     }
 }
@@ -66,5 +73,28 @@ impl INode3D for Entity {
     fn ready(&mut self) {
         let skin = self.skin.clone().upcast();
         self.base_mut().add_child(skin);
+    }
+
+    fn process(&mut self, delta: f64) {
+        if let Some(target_position) = self.target_position {
+            let current_position = self.base().get_position();
+
+            if (current_position.distance_to(target_position) >= 10.0) {
+                self.base_mut().set_position(target_position);
+                self.target_position = None;
+            }
+
+            let l = lerp(
+                current_position.to_variant(),
+                target_position.to_variant(),
+                (10.0 * delta).to_variant(),
+            );
+            let new_position = Vector3::from_variant(&l);
+            self.base_mut().set_position(new_position);
+
+            if new_position == target_position {
+                self.target_position = None;
+            }
+        }
     }
 }

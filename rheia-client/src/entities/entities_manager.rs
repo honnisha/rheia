@@ -29,25 +29,24 @@ impl EntitiesManager {
         let mut entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base));
         self.base_mut().add_child(entity.clone().upcast());
 
-        entity.set_position(position);
-        entity.bind_mut().rotate(rotation);
+        self.entities.insert(id, entity.clone());
 
-        self.entities.insert(id, entity);
+        let mut e = entity.bind_mut();
+        e.change_position(position);
+        e.rotate(rotation);
+
         log::info!(target:"entities", "SPAWN id:{}", id);
     }
 
     pub fn move_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
-        let Some(e) = self.entities.get_mut(&id) else {
+        let Some(entity) = self.entities.get_mut(&id) else {
             log::error!(target:"entities", "Tried to move non existent entity id:{}", id);
             return;
         };
 
-        e.set_position(position);
-
-        let movement = position - e.get_position();
-        let mut gd = e.bind_mut();
-        gd.handle_movement(movement);
-        gd.rotate(rotation);
+        let mut e = entity.bind_mut();
+        e.change_position(position);
+        e.rotate(rotation);
     }
 
     pub fn despawn(&mut self, ids: Vec<u32>) {

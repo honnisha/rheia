@@ -146,7 +146,32 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
 }
 
 /// Отправка всем наблюдателям чанка StopStreamingEntity
-pub fn sync_entity_despawn(_entity: Entity) {
+pub fn sync_entity_despawn(world_manager: &WorldManager, entity: Entity) {
+    let ecs = world_manager.get_ecs();
+    let entity_ref = ecs.entity(entity);
+    let position = entity_ref.get::<Position>().unwrap();
+
+    let stop_msg = ServerMessages::StopStreamingEntities {
+        world_slug: world_manager.get_slug().clone(),
+        ids: vec![entity.index()],
+    };
+
+    if let Some(entities) = world_manager
+        .get_chunks_map()
+        .get_chunk_watchers(&position.get_chunk_position())
+    {
+        for watcher_entity in entities {
+            if *watcher_entity == entity {
+                continue;
+            }
+
+            let watcher_entity_ref = ecs.entity(*watcher_entity);
+            let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
+            let watcher_client = watcher_network.get_client();
+
+            watcher_client.send_message(NetworkMessageType::ReliableOrdered, stop_msg.clone());
+        }
+    }
 }
 
 #[derive(Event)]

@@ -146,7 +146,7 @@ impl ClientNetwork {
         self.send_chunk_queue.read().len() > SEND_CHUNK_QUEUE_LIMIT
     }
 
-    pub fn send_to_queue(&self, chunk_position: &ChunkPosition) {
+    pub fn send_chunk_to_queue(&self, chunk_position: &ChunkPosition) {
         self.send_chunk_queue.write().push(chunk_position.clone());
     }
 
