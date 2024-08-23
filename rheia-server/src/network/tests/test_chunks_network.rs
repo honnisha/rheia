@@ -16,7 +16,10 @@ fn test_chunk_sphere_size() {
         chunk_column.sections.push(Box::new(chunk_section));
     }
 
-    let data = chunk_column.build_network_format();
+    let data = chunk_column.build_network_format(true);
 
-    assert!(size_of_val(&data) < 100, "SIZE MESSAGE SIZE MESSAGESIZE MESSAGESIZE MESSAGESIZE MESSAGE");
+    let encoded = bincode::serialize(&data).unwrap();
+    let size = encoded.len();
+    let target = 386310;
+    assert!(size <= target, "Size of chunk message {} more than {} bytes", size, target);
 }

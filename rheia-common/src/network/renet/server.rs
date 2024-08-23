@@ -1,13 +1,13 @@
-use flume::{Drain, Receiver, Sender};
+use flume::{Receiver, Sender};
 use std::{
-    net::{UdpSocket, SocketAddr},
+    net::{SocketAddr, UdpSocket},
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, SystemTime},
 };
 
 use renet::{
     transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
-    RenetServer, ServerEvent, ClientId,
+    ClientId, RenetServer, ServerEvent,
 };
 
 use super::{
@@ -101,10 +101,7 @@ impl ServerNetwork for RenetServerNetwork {
                         continue;
                     }
                 };
-                self.channel_client_messages
-                    .0
-                    .send((client_id.raw(), decoded))
-                    .unwrap();
+                self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
             }
             while let Some(client_message) = server.receive_message(client_id, ClientChannel::Unreliable) {
                 let decoded: ClientMessages = match bincode::deserialize(&client_message) {
@@ -114,10 +111,7 @@ impl ServerNetwork for RenetServerNetwork {
                         continue;
                     }
                 };
-                self.channel_client_messages
-                    .0
-                    .send((client_id.raw(), decoded))
-                    .unwrap();
+                self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
             }
         }
 
@@ -146,15 +140,15 @@ impl ServerNetwork for RenetServerNetwork {
         return true;
     }
 
-    fn iter_client_messages(&self) -> Drain<(u64, ClientMessages)> {
+    fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)> {
         self.channel_client_messages.1.drain()
     }
 
-    fn iter_connections(&self) -> Drain<ConnectionMessages> {
+    fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages> {
         self.channel_connections.1.drain()
     }
 
-    fn iter_errors(&self) -> Drain<String> {
+    fn drain_errors(&self) -> impl Iterator<Item = String> {
         self.channel_errors.1.drain()
     }
 
@@ -164,7 +158,10 @@ impl ServerNetwork for RenetServerNetwork {
 
     fn send_message(&self, client_id: u64, message: &ServerMessages, message_type: NetworkMessageType) {
         let encoded = bincode::serialize(message).unwrap();
-        self.get_server_mut()
-            .send_message(ClientId::from_raw(client_id), RenetServerNetwork::map_type_channel(message_type), encoded);
+        self.get_server_mut().send_message(
+            ClientId::from_raw(client_id),
+            RenetServerNetwork::map_type_channel(message_type),
+            encoded,
+        );
     }
 }

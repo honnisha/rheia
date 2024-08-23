@@ -2,10 +2,15 @@ use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
 use serde::{Deserialize, Serialize};
+use strum_macros::Display;
 
 use crate::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::{PacketChunkSectionData, SectionsData}},
+    chunks::{
+        block_position::ChunkBlockPosition,
+        chunk_position::ChunkPosition,
+        utils::{PacketChunkSectionData, SectionsData},
+    },
     VERTICAL_SECTIONS,
 };
 
@@ -64,7 +69,7 @@ impl Rotation {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
     ConnectionInfo { login: String },
     ConsoleInput { command: String },
@@ -75,7 +80,7 @@ pub enum ClientMessages {
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
 pub type NetworkSectionsType = [PacketChunkSectionData; VERTICAL_SECTIONS];
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {
     AllowConnection,
     ConsoleOutput {

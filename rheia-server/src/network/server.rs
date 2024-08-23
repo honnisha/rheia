@@ -142,11 +142,11 @@ fn receive_message_system(
     let network = network_container.server_network.as_ref();
     network.step(time.delta());
 
-    for message in network.iter_errors() {
+    for message in network.drain_errors() {
         log::error!(target: "network", "Network error: {}", message);
     }
 
-    for (client_id, decoded) in network.iter_client_messages() {
+    for (client_id, decoded) in network.drain_client_messages() {
         let client = clients.get(&client_id).unwrap();
         match decoded {
             ClientMessages::ConsoleInput { command } => {
@@ -186,7 +186,7 @@ fn handle_events_system(
 ) {
     let network = network_container.server_network.as_ref();
 
-    for connection in network.iter_connections() {
+    for connection in network.drain_connections() {
         match connection {
             ConnectionMessages::Connect { client_id, ip } => {
                 clients.add(client_id.clone(), ip.clone());

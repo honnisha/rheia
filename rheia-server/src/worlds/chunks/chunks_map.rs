@@ -1,7 +1,6 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
-use log::trace;
 use parking_lot::{RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
@@ -190,7 +189,7 @@ impl ChunkMap {
         self.chunks.retain(|&chunk, chunk_column| {
             let for_despawn = chunk_column.read().is_for_despawn(CHUNKS_DESPAWN_TIMER);
             if for_despawn {
-                trace!(target: "chunks", "Chunk {} despawned", chunk);
+                log::trace!(target: "chunks", "Chunk {} despawned", chunk);
             }
             !for_despawn
         });
@@ -204,7 +203,7 @@ impl ChunkMap {
             if !self.chunks.contains_key(&chunk) {
                 let chunk_column = Arc::new(RwLock::new(ChunkColumn::new(chunk.clone(), world_slug.clone())));
 
-                trace!(target: "chunks", "Send chunk {} to load", chunk);
+                log::trace!(target: "chunks", "Send chunk {} to load", chunk);
                 load_chunk(
                     world_generator.clone(),
                     chunk_column.clone(),

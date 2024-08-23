@@ -17,6 +17,12 @@ pub struct PacketChunkSectionData {
     block_indexes: HashMap<ChunkBlockPosition, u32>,
 }
 
+impl std::fmt::Display for PacketChunkSectionData {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "pallete:{:?} block_indexes len:{}", self.pallete, self.block_indexes.len())
+    }
+}
+
 impl PacketChunkSectionData {
     pub fn new(chunk_data: &mut ChunkDataType) -> Self {
         let mut data: Self = Default::default();
@@ -26,6 +32,7 @@ impl PacketChunkSectionData {
             }
             data.store_block(pos, block_info)
         }
+        println!("PacketChunkSectionData {}", data);
         data
     }
 

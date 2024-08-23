@@ -1,5 +1,4 @@
 use crate::worlds::world_generator::default::WorldGenerator;
-use crate::CHUNKS_ZIP_PALLETE;
 use arrayvec::ArrayVec;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::PacketChunkSectionData;
@@ -59,8 +58,8 @@ impl ChunkColumn {
         *self.despawn_timer.write() += new_despawn;
     }
 
-    pub(crate) fn build_network_format(&self) -> ServerMessages {
-        if CHUNKS_ZIP_PALLETE {
+    pub(crate) fn build_network_format(&self, chunks_zip_pallete: bool) -> ServerMessages {
+        if chunks_zip_pallete {
             let mut data: ArrayVec<PacketChunkSectionData, VERTICAL_SECTIONS> = Default::default();
             for section in self.sections.iter() {
                 data.push(PacketChunkSectionData::new(&mut section.clone()));
@@ -89,6 +88,7 @@ pub(crate) fn load_chunk(
     chunk_column: Arc<RwLock<ChunkColumn>>,
     loaded_chunks: flume::Sender<ChunkPosition>,
 ) {
+    assert!(false, "test");
     rayon::spawn(move || {
         #[cfg(feature = "trace")]
         let _span = bevy_utils::tracing::info_span!("load_chunk").entered();

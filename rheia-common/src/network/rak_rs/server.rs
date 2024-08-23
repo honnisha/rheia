@@ -120,15 +120,15 @@ impl ServerNetwork for RakNetServerNetwork {
         true
     }
 
-    fn iter_client_messages(&self) -> Drain<(u64, ClientMessages)> {
+    fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)> {
         self.channel_client_messages.1.drain()
     }
 
-    fn iter_connections(&self) -> Drain<ConnectionMessages> {
+    fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages> {
         self.channel_connections.1.drain()
     }
 
-    fn iter_errors(&self) -> Drain<String> {
+    fn drain_errors(&self) -> impl Iterator<Item = String> {
         self.channel_errors.1.drain()
     }
 

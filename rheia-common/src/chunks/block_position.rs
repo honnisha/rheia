@@ -9,11 +9,17 @@ pub trait BlockPositionTrait {
 }
 
 /// Uses as block position inside chunk section CHUNK_SIZExCHUNK_SIZE
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct ChunkBlockPosition {
     x: u8,
     y: u8,
     z: u8,
+}
+
+impl std::fmt::Debug for ChunkBlockPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "{},{},{}", self.x, self.y, self.z)
+    }
 }
 
 impl ChunkBlockPosition {
