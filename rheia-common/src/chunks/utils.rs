@@ -32,7 +32,6 @@ impl PacketChunkSectionData {
             }
             data.store_block(pos, block_info)
         }
-        println!("PacketChunkSectionData {}", data);
         data
     }
 

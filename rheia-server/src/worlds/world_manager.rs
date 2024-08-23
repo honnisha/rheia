@@ -121,8 +121,8 @@ impl WorldManager {
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {
         self.get_chunks_map_mut().stop_chunks_render(world_entity.get_entity());
 
-        let mut player_entity = self.ecs.entity_mut(world_entity.get_entity());
-        let chunk_position = match player_entity.get_mut::<Position>() {
+        let player_entity = self.ecs.get_entity(world_entity.get_entity()).unwrap();
+        let chunk_position = match player_entity.get::<Position>() {
             Some(p) => Some(p.get_chunk_position()),
             None => None,
         };

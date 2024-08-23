@@ -1,5 +1,5 @@
 use ahash::AHashMap;
-use flume::{Drain, Receiver, Sender};
+use flume::{Receiver, Sender};
 use parking_lot::RwLock;
 use rak_rs::connection::Connection;
 use rak_rs::Listener;

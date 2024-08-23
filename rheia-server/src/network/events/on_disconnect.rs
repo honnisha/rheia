@@ -46,8 +46,8 @@ pub fn on_disconnect(
         match world_entity {
             Some(c) => {
                 let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
-                world_manager.despawn_player(&c);
                 sync_entity_despawn(&*world_manager, c.get_entity());
+                world_manager.despawn_player(&c);
             }
             None => return,
         };

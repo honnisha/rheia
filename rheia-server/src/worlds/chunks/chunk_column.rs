@@ -88,7 +88,6 @@ pub(crate) fn load_chunk(
     chunk_column: Arc<RwLock<ChunkColumn>>,
     loaded_chunks: flume::Sender<ChunkPosition>,
 ) {
-    assert!(false, "test");
     rayon::spawn(move || {
         #[cfg(feature = "trace")]
         let _span = bevy_utils::tracing::info_span!("load_chunk").entered();

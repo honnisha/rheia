@@ -10,10 +10,10 @@ use std::sync::Arc;
 use steamworks::*;
 
 pub struct SteamworksServer<Manager = ClientManager> {
-    single: SingleClient,
+    _single: SingleClient,
     listen_socket: ListenSocket<Manager>,
-    matchmaking: Matchmaking<Manager>,
-    friends: Friends<Manager>,
+    _matchmaking: Matchmaking<Manager>,
+    _friends: Friends<Manager>,
     connections: Arc<RwLock<AHashMap<u64, NetConnection<Manager>>>>,
 
     channel_client_messages: (
@@ -49,10 +49,10 @@ impl ServerNetwork for SteamworksServer {
             .create_listen_socket_p2p(0, options)
             .unwrap();
         Self {
-            single,
+            _single: single,
             listen_socket,
-            matchmaking: client.matchmaking(),
-            friends: client.friends(),
+            _matchmaking: client.matchmaking(),
+            _friends: client.friends(),
             connections: Arc::new(RwLock::new(AHashMap::new())),
             channel_client_messages: flume::unbounded(),
             channel_connections: flume::unbounded(),

@@ -74,7 +74,7 @@ pub fn move_player(
 
     if let Some(change) = chunks_changed.as_ref() {
         let ecs = world_manager.get_ecs();
-        let entity_ref = ecs.entity(world_entity.get_entity());
+        let entity_ref = ecs.get_entity(world_entity.get_entity()).unwrap();
 
         let network = entity_ref.get::<NetworkComponent>().unwrap();
         let client = network.get_client();

@@ -79,7 +79,7 @@ impl INode3D for Entity {
         if let Some(target_position) = self.target_position {
             let current_position = self.base().get_position();
 
-            if (current_position.distance_to(target_position) >= 10.0) {
+            if current_position.distance_to(target_position) >= 10.0 {
                 self.base_mut().set_position(target_position);
                 self.target_position = None;
             }

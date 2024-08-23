@@ -69,8 +69,8 @@ impl Ecs {
         self.ecs.get_mut(entity)
     }
 
-    pub fn entity(&self, entity: Entity) -> EntityRef {
-        self.ecs.entity(entity)
+    pub fn get_entity(&self, entity: Entity) -> Option<EntityRef> {
+        self.ecs.get_entity(entity)
     }
 
     pub fn query<D: QueryData>(&mut self) -> QueryState<D, ()> {

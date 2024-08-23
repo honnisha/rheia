@@ -7,4 +7,5 @@ pub mod renet;
 
 pub mod rak_rs;
 
+#[cfg(feature = "network-steamworks")]
 pub mod steamworks;

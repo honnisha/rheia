@@ -33,7 +33,7 @@ fn send_start_streaming_entity(target_client: &ClientNetwork, entity_ref: Entity
 /// Обязательно проверять, чтобы информация о игроке не отправилась ему же самому!
 pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
     let ecs = world_manager.get_ecs();
-    let entity_ref = ecs.entity(entity);
+    let entity_ref = ecs.get_entity(entity).unwrap();
     let position = entity_ref.get::<Position>().unwrap();
 
     if let Some(entities) = world_manager
@@ -45,7 +45,7 @@ pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
                 continue;
             }
 
-            let watcher_entity_ref = ecs.entity(*watcher_entity);
+            let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
             let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
             let watcher_client = watcher_network.get_client();
 
@@ -64,7 +64,7 @@ pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
 ///   • перешел из невидимого чанка в видимый - отправлять StartStreamingEntity
 pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_changed: &Option<ChunkChanged>) {
     let ecs = world_manager.get_ecs();
-    let entity_ref = ecs.entity(entity);
+    let entity_ref = ecs.get_entity(entity).unwrap();
     let position = entity_ref.get::<Position>().unwrap();
     let rotation = entity_ref.get::<Rotation>().unwrap();
 
@@ -90,7 +90,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                         continue;
                     }
 
-                    let watcher_entity_ref = ecs.entity(*watcher_entity);
+                    let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
                     let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
                     let watcher_client = watcher_network.get_client();
                     watcher_client.send_message(NetworkMessageType::Unreliable, move_msg.clone());
@@ -113,7 +113,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                     continue;
                 }
 
-                let watcher_entity_ref = ecs.entity(*old_watcher);
+                let watcher_entity_ref = ecs.get_entity(*old_watcher).unwrap();
                 let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
                 let watcher_client = watcher_network.get_client();
 
@@ -134,7 +134,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
 
                 // New entity in range
                 if !old_watchers.contains(&new_watcher) {
-                    let watcher_entity_ref = ecs.entity(*new_watcher);
+                    let watcher_entity_ref = ecs.get_entity(*new_watcher).unwrap();
                     let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
                     let watcher_client = watcher_network.get_client();
 
@@ -148,7 +148,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
 /// Отправка всем наблюдателям чанка StopStreamingEntity
 pub fn sync_entity_despawn(world_manager: &WorldManager, entity: Entity) {
     let ecs = world_manager.get_ecs();
-    let entity_ref = ecs.entity(entity);
+    let entity_ref = ecs.get_entity(entity).unwrap();
     let position = entity_ref.get::<Position>().unwrap();
 
     let stop_msg = ServerMessages::StopStreamingEntities {
@@ -165,7 +165,7 @@ pub fn sync_entity_despawn(world_manager: &WorldManager, entity: Entity) {
                 continue;
             }
 
-            let watcher_entity_ref = ecs.entity(*watcher_entity);
+            let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
             let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
             let watcher_client = watcher_network.get_client();
 
@@ -203,7 +203,7 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
             .unwrap();
 
         let ecs = world_manager.get_ecs();
-        let entity_ref = ecs.entity(event.world_entity.get_entity());
+        let entity_ref = ecs.get_entity(event.world_entity.get_entity()).unwrap();
         let network = entity_ref.get::<NetworkComponent>().unwrap();
         let client = network.get_client();
 
@@ -249,7 +249,7 @@ pub fn sync_player_move(
 
     if let Some(change) = chunks_changed {
         let ecs = world_manager.get_ecs();
-        let entity_ref = ecs.entity(world_entity.get_entity());
+        let entity_ref = ecs.get_entity(world_entity.get_entity()).unwrap();
         let network = entity_ref.get::<NetworkComponent>().unwrap();
         let client = network.get_client();
 
