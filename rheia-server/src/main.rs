@@ -37,7 +37,7 @@ pub type NetworkServerType = common::network::renet::server::RenetServerNetwork;
 // Network RakNet
 // pub type NetworkServerType = common::network::rak_rs::server::RakNetServerNetwork;
 
-pub const CHUNKS_DISTANCE: u16 = 8;
+pub const CHUNKS_DISTANCE: u16 = 12;
 pub const CHUNKS_DESPAWN_TIMER: Duration = Duration::from_secs(5);
 
 // Pack network chunk message with pallete

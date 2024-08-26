@@ -23,7 +23,7 @@ impl WorldGenerator {
         let mut noise = FastNoise::seeded(seed);
         noise.set_noise_type(NoiseType::PerlinFractal);
         noise.set_fractal_type(FractalType::FBM);
-        noise.set_fractal_octaves(5);
+        noise.set_fractal_octaves(1);
         noise.set_fractal_gain(0.6);
         noise.set_fractal_lacunarity(1.5);
         noise.set_frequency(2.0);
