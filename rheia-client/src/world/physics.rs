@@ -5,7 +5,7 @@ use common::{
     chunks::chunk_position::ChunkPosition,
     physics::{
         physics::{IPhysicsCollider, IPhysicsContainer},
-        PhysicsCollider, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBody,
+        PhysicsCollider, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBody, QueryFilter,
     },
 };
 use godot::prelude::*;
@@ -62,16 +62,24 @@ impl PhysicsProxy {
         }
     }
 
-    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3) -> Option<(PhysicsType, Vector3)> {
+    pub fn raycast(
+        &self,
+        dir: Vector3,
+        max_toi: f32,
+        from: Vector3,
+        filter: QueryFilter,
+    ) -> Option<(PhysicsType, Vector3)> {
         match self
             .physics_container
-            .raycast(dir.to_network(), max_toi, from.to_network())
+            .raycast(dir.to_network(), max_toi, from.to_network(), filter)
         {
             Some((collider_id, pos)) => {
                 let map = self.collider_type_map.read();
-                let collider_type = map
-                    .get(&collider_id)
-                    .expect("collider_id not found inside physics proxy; collider_type_map is not consistent");
+                let Some(collider_type) = map.get(&collider_id) else {
+                    panic!(
+                        "collider_id:{collider_id} not found inside physics proxy; collider_type_map is not consistent"
+                    )
+                };
                 Some((collider_type.clone(), pos.to_godot()))
             }
             None => None,

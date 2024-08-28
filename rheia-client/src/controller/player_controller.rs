@@ -5,8 +5,8 @@ use crate::world::physics::PhysicsProxy;
 use crate::world::world_manager::{RaycastResult, WorldManager};
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Rotation;
-use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody};
-use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody};
+use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody, IQueryFilter};
+use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody, QueryFilter};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
@@ -113,7 +113,7 @@ impl PlayerController {
         self.entity.bind_mut().rotate(rotation);
     }
 
-    fn apply_controls(&mut self, delta: f64) {
+    fn get_movement(&mut self, delta: f64) -> Vector3 {
         let mut movement = Vector3::ZERO;
 
         let controls = self.controls.bind();
@@ -159,8 +159,7 @@ impl PlayerController {
         self.vertical_movement += CHARACTER_GRAVITY * delta as f32 * custom_mass;
         movement *= delta as f32;
 
-        let translation = self.character_controller.move_shape(&self.collider, delta, movement.to_network());
-        self.rigid_body.set_position(translation);
+        movement
     }
 }
 
@@ -196,7 +195,16 @@ impl INode3D for PlayerController {
         self.rigid_body.set_enabled(chunk_loaded);
 
         if chunk_loaded {
-            self.apply_controls(delta);
+            let movement = self.get_movement(delta);
+
+            let mut filter = QueryFilter::default();
+            filter.exclude_rigid_body(&self.rigid_body);
+
+            let translation = self
+                .character_controller
+                .move_shape(&self.collider, filter, delta, movement.to_network());
+            self.rigid_body
+                .set_position(self.rigid_body.get_position() + translation);
         }
 
         // Sync godot object position
@@ -220,7 +228,10 @@ impl INode3D for PlayerController {
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
 
-            if let Some((result, position)) = world.bind().raycast(dir, max_toi, from) {
+            let mut filter = QueryFilter::default();
+            filter.exclude_rigid_body(&self.rigid_body);
+
+            if let Some((result, position)) = world.bind().raycast(dir, max_toi, from, filter) {
                 let msg = match result {
                     RaycastResult::Block(block_position) => format!("Block:{block_position:?}"),
                     RaycastResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),

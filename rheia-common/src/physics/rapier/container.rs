@@ -7,8 +7,7 @@ use std::sync::Arc;
 use crate::physics::physics::IPhysicsContainer;
 
 use super::{
-    bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder,
-    controller::RapierPhysicsController, rigid_body::RapierPhysicsRigidBody,
+    bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder, controller::RapierPhysicsController, query_filter::RapierQueryFilter, rigid_body::RapierPhysicsRigidBody
 };
 
 #[derive(Clone)]
@@ -67,7 +66,7 @@ impl Default for RapierPhysicsContainer {
     }
 }
 
-impl IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierPhysicsColliderBuilder>
+impl<'a> IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierPhysicsColliderBuilder, RapierQueryFilter<'a>>
     for RapierPhysicsContainer
 {
     fn step(&self, delta: f32) {
@@ -100,14 +99,13 @@ impl IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierPhys
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
+    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3, filter: RapierQueryFilter) -> Option<(usize, NetworkVector3)> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
         let direction = dir.to_na();
 
         let ray = Ray::new(origin, direction);
 
         let solid = true;
-        let filter = QueryFilter::default(); //.exclude_rigid_body(self.rigid_handle);
 
         let pipeline = self.query_pipeline.read();
         if let Some((handle, toi)) = pipeline.cast_ray(
@@ -116,7 +114,7 @@ impl IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierPhys
             &ray,
             max_toi,
             solid,
-            filter,
+            filter.filter,
         ) {
             let point = ray.point_at(toi);
             return Some((

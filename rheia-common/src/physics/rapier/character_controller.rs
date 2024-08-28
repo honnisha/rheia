@@ -1,10 +1,10 @@
 use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
 use crate::physics::physics::IPhysicsCharacterController;
 use rapier3d::control::{CharacterAutostep, CharacterCollision, CharacterLength, KinematicCharacterController};
-use rapier3d::prelude::*;
-
 use super::bridge::IntoNaVector3;
 use super::collider::RapierPhysicsCollider;
+use super::query_filter::RapierQueryFilter;
+use super::rigid_body::RapierPhysicsRigidBody;
 
 pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
@@ -12,7 +12,9 @@ pub struct RapierPhysicsCharacterController {
     grounded: bool,
 }
 
-impl IPhysicsCharacterController<RapierPhysicsCollider> for RapierPhysicsCharacterController {
+impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierQueryFilter<'a>>
+    for RapierPhysicsCharacterController
+{
     fn create(custom_mass: Option<f32>) -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Absolute(0.01);
@@ -29,13 +31,18 @@ impl IPhysicsCharacterController<RapierPhysicsCollider> for RapierPhysicsCharact
         }
     }
 
-    fn move_shape(&mut self, collider: &RapierPhysicsCollider, delta: f64, movement: NetworkVector3) -> NetworkVector3 {
+    fn move_shape(
+        &mut self,
+        collider: &RapierPhysicsCollider,
+        filter: RapierQueryFilter,
+        delta: f64,
+        movement: NetworkVector3,
+    ) -> NetworkVector3 {
         let physics_container = collider.physics_container.clone();
         let collider = physics_container
             .get_collider(&collider.collider_handle)
             .unwrap()
             .clone();
-        let filter = QueryFilter::default(); //.exclude_rigid_body(entity.rigid_handle);
 
         let corrected_movement = self.character_controller.move_shape(
             delta as f32,
@@ -45,7 +52,7 @@ impl IPhysicsCharacterController<RapierPhysicsCollider> for RapierPhysicsCharact
             collider.shape(),
             collider.position(),
             movement.to_na(),
-            filter,
+            filter.filter,
             |_| {},
         );
         self.grounded = corrected_movement.grounded;
@@ -60,7 +67,7 @@ impl IPhysicsCharacterController<RapierPhysicsCollider> for RapierPhysicsCharact
                 collider.shape(),
                 character_mass,
                 _collisions.iter(),
-                filter,
+                filter.filter,
             );
         };
 

@@ -11,7 +11,7 @@ use crate::{
 };
 use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    network::messages::NetworkMessageType,
+    network::messages::NetworkMessageType, physics::QueryFilter,
 };
 use godot::{engine::Material, prelude::*};
 
@@ -65,8 +65,8 @@ impl WorldManager {
         }
     }
 
-    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3) -> Option<(RaycastResult, Vector3)> {
-        let Some((collider_type, position)) = self.physics.raycast(dir, max_toi, from) else {
+    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3, filter: QueryFilter) -> Option<(RaycastResult, Vector3)> {
+        let Some((collider_type, position)) = self.physics.raycast(dir, max_toi, from, filter) else {
             return None;
         };
 

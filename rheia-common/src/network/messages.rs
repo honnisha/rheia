@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
+use std::ops::Add;
 
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
@@ -33,6 +34,18 @@ impl Vector3 {
 
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0, z: 0.0 }
+    }
+}
+
+impl Add for Vector3 {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
     }
 }
 

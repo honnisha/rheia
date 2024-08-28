@@ -18,6 +18,9 @@ pub type PhysicsCharacterController = rapier::character_controller::RapierPhysic
 #[cfg(feature = "physics-rapier")]
 pub type PhysicsContainer = rapier::container::RapierPhysicsContainer;
 
+#[cfg(feature = "physics-rapier")]
+pub type QueryFilter<'a> = rapier::query_filter::RapierQueryFilter<'a>;
+
 
 #[cfg(feature = "physics-physx")]
 pub mod physx;
