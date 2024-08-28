@@ -87,7 +87,7 @@ impl INode3D for Entity {
             let l = lerp(
                 current_position.to_variant(),
                 target_position.to_variant(),
-                (10.0 * delta).to_variant(),
+                (0.5).to_variant(),
             );
             let new_position = Vector3::from_variant(&l);
             self.base_mut().set_position(new_position);
