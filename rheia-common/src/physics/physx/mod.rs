@@ -168,6 +168,10 @@ impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
     fn set_enabled(&mut self, _active: bool) {
         todo!();
     }
+
+    fn get_index(&self) -> usize {
+        todo!()
+    }
 }
 
 pub struct PhysxPhysicsColliderBuilder {
@@ -266,12 +270,14 @@ pub struct PhysxPhysicsContainer {
     controller: Arc<RwLock<PhysxPhysicsController>>,
 }
 
-impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsContainer {
-    fn create() -> Self {
+impl Default for PhysxPhysicsContainer {
+    fn default() -> Self {
         let controller = Arc::new(RwLock::new(PhysxPhysicsController::create()));
         Self { controller }
     }
+}
 
+impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsContainer {
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
     }
@@ -372,7 +378,7 @@ mod tests {
             collider.push_verts(v.x(), v.y(), v.z());
         }
 
-        let container = PhysxPhysicsContainer::create();
+        let container = PhysxPhysicsContainer::default();
         let mut actor = container.create_static();
         collider.update_collider(&mut actor, &NetworkVector3::zero())
     }

@@ -1,19 +1,24 @@
 use super::{
     chunks::chunks_map::{ChunkLock, ChunkMap},
+    physics::{PhysicsProxy, PhysicsType},
     worlds_manager::TextureMapperType,
 };
 use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
-    entities::entities_manager::EntitiesManager,
-    main_scene::{Main, PhysicsContainerType},
+    entities::{entities_manager::EntitiesManager, entity::Entity},
+    main_scene::Main,
     utils::bridge::IntoChunkPositionVector,
 };
 use common::{
-    chunks::{chunk_position::ChunkPosition, utils::SectionsData},
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
     network::messages::NetworkMessageType,
-    physics::physics::PhysicsContainer,
 };
 use godot::{engine::Material, prelude::*};
+
+pub enum ColliderSearchResult {
+    Block(BlockPosition),
+    Entity(u32, Gd<Entity>),
+}
 
 /// Godot world
 /// Contains all things inside world
@@ -30,7 +35,7 @@ pub struct WorldManager {
     slug: String,
     chunk_map: Gd<ChunkMap>,
 
-    physics_container: PhysicsContainerType,
+    physics: PhysicsProxy,
     player_controller: Gd<PlayerController>,
 
     entities_manager: Gd<EntitiesManager>,
@@ -40,30 +45,42 @@ impl WorldManager {}
 
 impl WorldManager {
     pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
-        let mut physics_container = PhysicsContainerType::create();
-        let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| {
-            ChunkMap::create(
-                base,
-                texture_mapper.clone(),
-                material.clone(),
-                physics_container.clone(),
-            )
-        });
+        let mut physics = PhysicsProxy::default();
+        let mut chunk_map =
+            Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base, texture_mapper.clone(), material.clone()));
         let container_name = GString::from("ChunkMap");
         chunk_map.bind_mut().base_mut().set_name(container_name.clone());
         let player_controller =
-            Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics_container));
+            Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics));
 
         Self {
             base,
             slug: slug,
             chunk_map,
 
-            physics_container,
+            physics,
             player_controller,
 
             entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
         }
+    }
+
+    pub fn get_by_collider(&self, collider_id: usize) -> Option<ColliderSearchResult> {
+        let Some(collider_type) = self.physics.get_type_by_collider(collider_id) else {
+            return None;
+        };
+
+        let result = match collider_type {
+            PhysicsType::ChunkMeshCollider(_chunk_position) => ColliderSearchResult::Block(BlockPosition::new(0, 0, 0)),
+            PhysicsType::EntityCollider(entity_id) => {
+                let manager = self.entities_manager.bind();
+                let Some(entity) = manager.get(entity_id) else {
+                    panic!("Entity is not found for id \"{}\"", entity_id);
+                };
+                ColliderSearchResult::Entity(entity_id, entity.clone())
+            }
+        };
+        Some(result)
     }
 
     pub fn _get_entities_manager(&self) -> GdRef<EntitiesManager> {
@@ -145,7 +162,11 @@ impl INode for WorldManager {
     fn process(&mut self, delta: f64) {
         let now = std::time::Instant::now();
 
-        self.physics_container.step(delta as f32);
+        self.physics.step(delta as f32);
+
+        let mut map = self.chunk_map.bind_mut();
+        map.send_chunks_to_load(&self.physics);
+        map.spawn_loaded_chunks();
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(30) {

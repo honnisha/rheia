@@ -20,6 +20,10 @@ impl EntitiesManager {
         }
     }
 
+    pub fn get(&self, entity_id: u32) -> Option<&Gd<Entity>> {
+        self.entities.get(&entity_id)
+    }
+
     pub fn create_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
         if self.entities.contains_key(&id) {
             log::error!(target:"entities", "Tried to spawn existing entity id:{}", id);

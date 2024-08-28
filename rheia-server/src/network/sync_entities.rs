@@ -223,6 +223,9 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
                         continue;
                     }
 
+                    let _client = entity_ref.get::<NetworkComponent>().unwrap().get_client();
+                    panic!("first {} second {}", client.get_client_ip(), _client.get_client_ip());
+
                     send_start_streaming_entity(&*client, entity_ref, world_manager.get_slug().clone());
                 }
             }

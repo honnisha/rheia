@@ -216,6 +216,14 @@ impl PhysicsStaticEntity for RapierPhysicsStaticEntity {
         }
         self.collider_handle = None;
     }
+
+    fn get_index(&self) -> usize {
+        match self.collider_handle {
+            Some(h) => Some(h.index()),
+            None => ,
+        }
+    }
+
 }
 
 pub struct RapierPhysicsColliderBuilder {
@@ -308,8 +316,8 @@ impl RapierPhysicsContainer {
     }
 }
 
-impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsContainer {
-    fn create() -> Self {
+impl Default for RapierPhysicsContainer {
+    fn default() -> Self {
         let rapier_physics_container = Self {
             controller: Arc::new(RwLock::new(RapierPhysicsController::create())),
             rigid_body_set: Arc::new(RwLock::new(RigidBodySet::new())),
@@ -319,7 +327,9 @@ impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> f
         };
         rapier_physics_container
     }
+}
 
+impl PhysicsContainer<RapierPhysicsRigidBodyEntity, RapierPhysicsStaticEntity> for RapierPhysicsContainer {
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
     }

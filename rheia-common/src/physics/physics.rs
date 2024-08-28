@@ -19,6 +19,7 @@ pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
 pub trait PhysicsStaticEntity {
     fn set_enabled(&mut self, active: bool);
     fn remove_collider(&mut self);
+    fn get_index(&self) -> usize;
 }
 
 pub trait PhysicsColliderBuilder<T: PhysicsStaticEntity> {
@@ -30,8 +31,7 @@ pub trait PhysicsColliderBuilder<T: PhysicsStaticEntity> {
     fn compile(&mut self);
 }
 
-pub trait PhysicsContainer<T: PhysicsRigidBodyEntity, U: PhysicsStaticEntity>: Clone {
-    fn create() -> Self;
+pub trait PhysicsContainer<T: PhysicsRigidBodyEntity, U: PhysicsStaticEntity>: Clone + Default {
     fn step(&self, delta: f32);
     fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> T;
     fn create_static(&self) -> U;

@@ -1,10 +1,11 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
-use crate::world::world_manager::WorldManager;
+use crate::world::physics::PhysicsProxy;
+use crate::world::world_manager::{ColliderSearchResult, WorldManager};
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Rotation;
-use common::physics::physics::{PhysicsCharacterController, PhysicsContainer, PhysicsRigidBodyEntity};
+use common::physics::physics::{PhysicsCharacterController, PhysicsRigidBodyEntity};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
@@ -28,7 +29,7 @@ const CONTROLLER_RADIUS: f32 = 0.4;
 const CONTROLLER_MASS: f32 = 3.0;
 
 #[derive(GodotClass)]
-#[class(base=Node3D)]
+#[class(no_init, base=Node3D)]
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
 
@@ -47,7 +48,7 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node3D>, physics_container: &PhysicsContainerType) -> Self {
+    pub fn create(base: Base<Node3D>, physics: &PhysicsProxy) -> Self {
         let controls = Controls::new_alloc();
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
@@ -61,7 +62,7 @@ impl PlayerController {
             controls,
             cache_movement: None,
 
-            physics_entity: physics_container.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
+            physics_entity: physics.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
             physics_controller: PhysicsCharacterControllerType::create(Some(CONTROLLER_MASS)),
             vertical_movement: 0.0,
             grounded_timer: 0.0,
@@ -162,11 +163,6 @@ impl PlayerController {
 
 #[godot_api]
 impl INode3D for PlayerController {
-    fn init(base: Base<Node3D>) -> Self {
-        let physics = PhysicsContainerType::create();
-        Self::create(base, &physics)
-    }
-
     fn ready(&mut self) {
         let controller = self.entity.clone().upcast();
         self.base_mut().add_child(controller);
@@ -215,11 +211,18 @@ impl INode3D for PlayerController {
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
 
-            if let Some((collider_handle, hit_point)) =
+            if let Some((collider_id, hit_point)) =
                 self.physics_entity
                     .raycast(dir.to_network(), max_toi, from.to_network())
             {
-                log::debug!(target: "player", "Collider {:?} hit at point {}", collider_handle, hit_point);
+                let hit_name = match world.bind().get_by_collider(collider_id) {
+                    Some(search) => match search {
+                        ColliderSearchResult::Block(block_position) => format!("Block:{block_position:?}"),
+                        ColliderSearchResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),
+                    },
+                    None => "-".to_string()
+                };
+                log::debug!(target: "player", "Hit at point {hit_point}: {hit_name}");
             }
         }
 

@@ -29,7 +29,7 @@ impl ChunkBlockPosition {
 }
 
 /// Global block position
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct BlockPosition {
     x: i64,
     y: i64,
@@ -39,6 +39,12 @@ pub struct BlockPosition {
 impl BlockPosition {
     pub fn new(x: i64, y: i64, z: i64) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl std::fmt::Debug for BlockPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "{},{},{}", self.x, self.y, self.z)
     }
 }
 

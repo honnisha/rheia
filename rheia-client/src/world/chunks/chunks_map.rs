@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::{main_scene::PhysicsContainerType, world::worlds_manager::TextureMapperType};
+use crate::world::{physics::PhysicsProxy, worlds_manager::TextureMapperType};
 
 use super::{
     chunk_column::{ChunkBase, ChunkColumn, ColumnDataLockType},
@@ -30,7 +30,6 @@ pub struct ChunkMap {
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
-    physics_container: PhysicsContainerType,
 
     sended_chunks: Rc<RefCell<Vec<ChunkPosition>>>,
     loaded_chunks: (
@@ -40,18 +39,12 @@ pub struct ChunkMap {
 }
 
 impl ChunkMap {
-    pub fn create(
-        base: Base<Node>,
-        texture_mapper: TextureMapperType,
-        material: Gd<Material>,
-        physics_container: PhysicsContainerType,
-    ) -> Self {
+    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
         Self {
             base,
             chunks: Default::default(),
             texture_mapper,
             material,
-            physics_container,
             sended_chunks: Default::default(),
             loaded_chunks: unbounded(),
         }
@@ -102,7 +95,7 @@ impl ChunkMap {
     }
 
     /// Send new recieved chunks to load (render)
-    fn send_chunks_to_load(&mut self) {
+    pub fn send_chunks_to_load(&mut self, physics: &PhysicsProxy) {
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -118,7 +111,7 @@ impl ChunkMap {
                 self.texture_mapper.clone(),
                 self.material.instance_id(),
                 chunk_position.clone(),
-                self.physics_container.clone(),
+                physics.clone(),
                 self.loaded_chunks.0.clone(),
             );
             chunk_column.read().set_sended();
@@ -127,7 +120,7 @@ impl ChunkMap {
     }
 
     /// Retrieving loaded chunks to add them to the root node
-    fn spawn_loaded_chunks(&mut self) {
+    pub fn spawn_loaded_chunks(&mut self) {
         let mut base = self.base_mut().clone();
         for (chunk_position, instance_id) in self.loaded_chunks.1.drain() {
             let l = self.get_chunk(&chunk_position).unwrap();
@@ -143,13 +136,5 @@ impl ChunkMap {
         for (chunk_position, chunk_lock) in self.chunks.iter_mut() {
             chunk_lock.write().set_active(chunk_position == active_chunk_position);
         }
-    }
-}
-
-#[godot_api]
-impl INode for ChunkMap {
-    fn process(&mut self, _delta: f64) {
-        self.send_chunks_to_load();
-        self.spawn_loaded_chunks();
     }
 }
