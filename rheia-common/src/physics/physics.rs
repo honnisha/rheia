@@ -1,38 +1,36 @@
 use crate::network::messages::Vector3;
 
-pub trait PhysicsRigidBodyEntity {
+pub trait IPhysicsRigidBody: Clone {
     fn set_enabled(&mut self, active: bool);
-    fn apply_impulse(&mut self, impulse: Vector3);
     fn get_position(&self) -> Vector3;
     fn set_position(&mut self, position: Vector3);
-    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3) -> Option<(usize, Vector3)>;
 }
 
-pub trait PhysicsCharacterController<T: PhysicsRigidBodyEntity> {
+pub trait IPhysicsCollider: Clone {
+    fn set_position(&mut self, position: Vector3);
+    fn set_enabled(&mut self, active: bool);
+    fn get_index(&self) -> usize;
+    fn remove(&self);
+}
+
+pub trait IPhysicsCharacterController<C: IPhysicsCollider> {
     fn create(custom_mass: Option<f32>) -> Self;
-    fn move_shape(&mut self, entity: &mut T, delta: f64, impulse: Vector3);
+    fn move_shape(&mut self, collider: &C, delta: f64, impulse: Vector3) -> Vector3;
     fn is_grounded(&mut self) -> bool;
     fn get_custom_mass(&mut self) -> &Option<f32>;
 }
 
-/// For stationary bodies
-pub trait PhysicsStaticEntity {
-    fn set_enabled(&mut self, active: bool);
-    fn remove_collider(&mut self);
-    fn get_index(&self) -> usize;
+pub trait IPhysicsColliderBuilder {
+    fn cylinder(half_height: f32, radius: f32) -> Self;
+    fn trimesh(verts: Vec<Vector3>, indices: Vec<[u32; 3]>) -> Self;
 }
 
-pub trait PhysicsColliderBuilder<T: PhysicsStaticEntity> {
-    fn create() -> Self;
-    fn push_indexes(&mut self, index: [u32; 3]);
-    fn push_verts(&mut self, x: f32, y: f32, z: f32);
-    fn len(&self) -> usize;
-    fn update_collider(&mut self, static_entity: &mut T, position: &Vector3);
-    fn compile(&mut self);
-}
-
-pub trait PhysicsContainer<T: PhysicsRigidBodyEntity, U: PhysicsStaticEntity>: Clone + Default {
+pub trait IPhysicsContainer<T: IPhysicsRigidBody, C: IPhysicsCollider, B: IPhysicsColliderBuilder>: Clone + Default {
     fn step(&self, delta: f32);
-    fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> T;
-    fn create_static(&self) -> U;
+
+    fn create_rigid_body(&self) -> T;
+    fn spawn_collider(&self, collider_builder: B) -> C;
+    fn spawn_collider_with_rigid(&self, collider_builder: B, rigid_body: T) -> C;
+
+    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3) -> Option<(usize, Vector3)>;
 }

@@ -10,7 +10,7 @@ use std::sync::{
     Arc,
 };
 
-use crate::utils::bridge::IntoGodotVector;
+use crate::{utils::bridge::IntoGodotVector, world::physics::PhysicsProxy};
 
 use super::chunk_section::ChunkSection;
 
@@ -30,7 +30,7 @@ impl ChunkBase {
     pub fn create(base: Base<Node3D>) -> Self {
         Self {
             base,
-            sections: Default::default()
+            sections: Default::default(),
         }
     }
 }
@@ -83,7 +83,7 @@ impl ChunkColumn {
         self.loaded.store(true, Ordering::Relaxed);
     }
 
-    pub fn spawn_loaded_chunk(&mut self, mut chunk_base: Gd<ChunkBase>) {
+    pub fn spawn_loaded_chunk(&mut self, mut chunk_base: Gd<ChunkBase>, physics: &PhysicsProxy) {
         self.base = Some(chunk_base.clone());
         let mut c = chunk_base.bind_mut();
 
@@ -93,7 +93,7 @@ impl ChunkColumn {
 
         for section in c.sections.iter_mut() {
             if section.bind().need_sync {
-                section.bind_mut().chunk_section_sync();
+                section.bind_mut().chunk_section_sync(physics);
             }
         }
         self.set_loaded();

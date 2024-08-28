@@ -3,7 +3,7 @@ use std::borrow::BorrowMut;
 use common::{
     blocks::blocks_storage::BlockType,
     chunks::chunk_position::ChunkPosition,
-    physics::physics::{PhysicsColliderBuilder, PhysicsStaticEntity},
+    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder},
 };
 use godot::{
     engine::{Material, MeshInstance3D},
@@ -12,8 +12,8 @@ use godot::{
 use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::{
-    main_scene::{PhysicsColliderBuilderType, PhysicsStaticEntityType},
     utils::bridge::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
+    world::physics::{PhysicsProxy, PhysicsType},
 };
 
 use super::mesh::mesh_generator::Geometry;
@@ -31,22 +31,17 @@ pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
 pub struct ChunkSection {
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,
-    physics_entity: PhysicsStaticEntityType,
     chunk_position: ChunkPosition,
     y: u8,
 
     pub need_sync: bool,
-    new_colider: Option<PhysicsColliderBuilderType>,
+
+    collider: Option<PhysicsCollider>,
+    colider_builder: Option<PhysicsColliderBuilder>,
 }
 
 impl ChunkSection {
-    pub fn create(
-        base: Base<Node3D>,
-        material: Gd<Material>,
-        y: u8,
-        physics_entity: PhysicsStaticEntityType,
-        chunk_position: ChunkPosition,
-    ) -> Self {
+    pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8, chunk_position: ChunkPosition) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(GString::from(format!("ChunkMesh {}", y)));
         mesh.set_material_overlay(material.clone());
@@ -58,11 +53,11 @@ impl ChunkSection {
             base,
             mesh,
             chunk_position,
-            physics_entity,
             y,
 
             need_sync: false,
-            new_colider: None,
+            collider: None,
+            colider_builder: None,
         }
     }
 
@@ -88,25 +83,34 @@ impl ChunkSection {
         mesh.set_mesh(geometry.mesh_ist.upcast());
 
         self.need_sync = true;
-        self.new_colider = geometry.collider
+        self.colider_builder = geometry.collider_builder
     }
 
     /// Causes an update in the main thread after the entire chunk has been loaded
-    pub fn chunk_section_sync(&mut self) {
+    pub fn chunk_section_sync(&mut self, physics: &PhysicsProxy) {
         self.need_sync = false;
 
-        let pos = self.get_section_position().clone();
-        if let Some(c) = self.new_colider.as_mut() {
-            // This function causes a thread lock
-            c.update_collider(&mut self.physics_entity, &pos.to_network())
-        } else {
-            self.physics_entity.remove_collider();
+        // Remove old collider if exists
+        if let Some(collider) = self.collider.take() {
+            collider.remove();
         }
-        self.new_colider = None;
+
+        // Set new colider
+        if let Some(colider_builder) = self.colider_builder.take() {
+            let mut collider = physics.create_collider(
+                colider_builder,
+                PhysicsType::ChunkMeshCollider(self.chunk_position.clone()),
+            );
+            let pos = self.get_section_position().clone();
+            collider.set_position(pos.to_network());
+            self.collider = Some(collider);
+        }
     }
 
     pub fn set_active(&mut self, state: bool) {
-        self.physics_entity.set_enabled(state);
+        if let Some(c) = self.collider.as_mut() {
+            c.set_enabled(state);
+        }
     }
 }
 

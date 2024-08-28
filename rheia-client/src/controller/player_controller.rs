@@ -2,14 +2,13 @@ use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
 use crate::world::physics::PhysicsProxy;
-use crate::world::world_manager::{ColliderSearchResult, WorldManager};
+use crate::world::world_manager::{RaycastResult, WorldManager};
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::Rotation;
-use common::physics::physics::{PhysicsCharacterController, PhysicsRigidBodyEntity};
+use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody};
+use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
-
-use crate::main_scene::{PhysicsCharacterControllerType, PhysicsContainerType, PhysicsRigidBodyEntityType};
 
 use super::camera_controller::CameraController;
 use super::controls::Controls;
@@ -40,8 +39,10 @@ pub struct PlayerController {
     controls: Gd<Controls>,
     cache_movement: Option<Gd<EntityMovement>>,
 
-    physics_entity: PhysicsRigidBodyEntityType,
-    physics_controller: PhysicsCharacterControllerType,
+    // Physics
+    rigid_body: PhysicsRigidBody,
+    collider: PhysicsCollider,
+    character_controller: PhysicsCharacterController,
 
     vertical_movement: f32,
     grounded_timer: f32,
@@ -53,6 +54,12 @@ impl PlayerController {
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
         camera_controller.set_position(Vector3::new(0.0, CONTROLLER_HEIGHT * 0.75, 0.0));
+
+        let rigid_body = physics.create_rigid_body();
+
+        let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
+        let collider = physics.spawn_collider_with_rigid(collider_builder, rigid_body.clone());
+
         Self {
             base,
 
@@ -62,8 +69,10 @@ impl PlayerController {
             controls,
             cache_movement: None,
 
-            physics_entity: physics.create_rigid_body(CONTROLLER_HEIGHT, CONTROLLER_RADIUS, CONTROLLER_MASS),
-            physics_controller: PhysicsCharacterControllerType::create(Some(CONTROLLER_MASS)),
+            rigid_body,
+            character_controller: PhysicsCharacterController::create(Some(CONTROLLER_MASS)),
+            collider,
+
             vertical_movement: 0.0,
             grounded_timer: 0.0,
         }
@@ -94,7 +103,7 @@ impl PlayerController {
         // The center of the physical collider at his center
         // So it shifts to half the height
         let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
-        self.physics_entity.set_position(physics_pos.to_network());
+        self.rigid_body.set_position(physics_pos.to_network());
     }
 
     pub fn set_rotation(&mut self, rotation: Rotation) {
@@ -129,7 +138,7 @@ impl PlayerController {
         }
 
         // Check physics ground check
-        if self.physics_controller.is_grounded() {
+        if self.character_controller.is_grounded() {
             self.grounded_timer = GROUND_TIMER;
             self.vertical_movement = 0.0;
         }
@@ -146,12 +155,12 @@ impl PlayerController {
         }
 
         movement.y = self.vertical_movement;
-        let custom_mass = self.physics_controller.get_custom_mass().unwrap_or(1.0);
+        let custom_mass = self.character_controller.get_custom_mass().unwrap_or(1.0);
         self.vertical_movement += CHARACTER_GRAVITY * delta as f32 * custom_mass;
         movement *= delta as f32;
 
-        self.physics_controller
-            .move_shape(&mut self.physics_entity, delta, movement.to_network());
+        let translation = self.character_controller.move_shape(&self.collider, delta, movement.to_network());
+        self.rigid_body.set_position(translation);
     }
 }
 
@@ -184,14 +193,14 @@ impl INode3D for PlayerController {
         };
 
         // Set lock if chunk is in loading
-        self.physics_entity.set_enabled(chunk_loaded);
+        self.rigid_body.set_enabled(chunk_loaded);
 
         if chunk_loaded {
             self.apply_controls(delta);
         }
 
         // Sync godot object position
-        let physics_pos = self.physics_entity.get_position();
+        let physics_pos = self.rigid_body.get_position();
         // Controller position is lowered by half of the center of mass position
         self.base_mut().set_position(Vector3::new(
             physics_pos.x,
@@ -211,18 +220,12 @@ impl INode3D for PlayerController {
             let dir = to - from;
             let (dir, max_toi) = (dir.normalized(), dir.length());
 
-            if let Some((collider_id, hit_point)) =
-                self.physics_entity
-                    .raycast(dir.to_network(), max_toi, from.to_network())
-            {
-                let hit_name = match world.bind().get_by_collider(collider_id) {
-                    Some(search) => match search {
-                        ColliderSearchResult::Block(block_position) => format!("Block:{block_position:?}"),
-                        ColliderSearchResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),
-                    },
-                    None => "-".to_string()
+            if let Some((result, position)) = world.bind().raycast(dir, max_toi, from) {
+                let msg = match result {
+                    RaycastResult::Block(block_position) => format!("Block:{block_position:?}"),
+                    RaycastResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),
                 };
-                log::debug!(target: "player", "Hit at point {hit_point}: {hit_name}");
+                log::debug!(target: "player", "Hit at position {position}: {msg}");
             }
         }
 

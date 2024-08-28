@@ -1,11 +1,12 @@
 use crate::{
-    main_scene::{FloatType, PhysicsColliderBuilderType},
+    main_scene::FloatType,
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
+use common::network::messages::Vector3 as NetworkVector3;
 use common::{
     blocks::blocks_storage::BlockType,
-    physics::physics::PhysicsColliderBuilder,
+    physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder},
     utils::block_mesh::{
         greedy::{greedy_quads, GreedyQuadsBuffer},
         QuadBuffer,
@@ -76,7 +77,7 @@ pub fn _generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
 
 pub struct Geometry {
     pub mesh_ist: Gd<ArrayMesh>,
-    pub collider: Option<PhysicsColliderBuilderType>,
+    pub collider_builder: Option<PhysicsColliderBuilder>,
 }
 
 impl Geometry {}
@@ -93,8 +94,6 @@ pub fn generate_chunk_geometry(
 
     let buffer = generate_buffer(chunk_data);
 
-    let mut collider_builder = PhysicsColliderBuilderType::create();
-
     let mut indices = PackedInt32Array::new();
     let mut verts = PackedVector3Array::new();
     let mut normals = PackedVector3Array::new();
@@ -105,6 +104,9 @@ pub fn generate_chunk_geometry(
 
     let faces = RIGHT_HANDED_Y_UP_CONFIG.faces;
 
+    let mut collider_indices: Vec<[u32; 3]> = Default::default();
+    let mut collider_verts: Vec<NetworkVector3> = Default::default();
+
     for (side_index, (group, face)) in buffer.groups.into_iter().zip(faces.into_iter()).enumerate() {
         // visible_block_faces_with_voxel_view
         // face is OrientedBlockFace
@@ -112,12 +114,12 @@ pub fn generate_chunk_geometry(
         for quad in group.into_iter() {
             let i = face.quad_mesh_indices(verts.len() as i32);
             indices.extend(i);
-            collider_builder.push_indexes([i[0] as u32, i[1] as u32, i[2] as u32]);
-            collider_builder.push_indexes([i[3] as u32, i[4] as u32, i[5] as u32]);
+            collider_indices.push([i[0] as u32, i[1] as u32, i[2] as u32]);
+            collider_indices.push([i[3] as u32, i[4] as u32, i[5] as u32]);
 
             let voxel_size = 1.0;
             let v = face.quad_corners(&quad.into(), true).map(|c| {
-                collider_builder.push_verts(c.x as f32, c.y as f32, c.z as f32);
+                collider_verts.push(NetworkVector3::new(c.x as f32, c.y as f32, c.z as f32));
                 Vector3::new(c.x as f32, c.y as f32, c.z as f32) * voxel_size
             });
             verts.extend(v);
@@ -154,23 +156,23 @@ pub fn generate_chunk_geometry(
         }
     }
 
-    let collider: Option<PhysicsColliderBuilderType> = if collider_builder.len() == 0 {
-        None
-    } else {
-        collider_builder.compile();
-        Some(collider_builder)
-    };
-
     let len = indices.len();
     arrays.set(ArrayType::INDEX.ord() as usize, Variant::from(indices));
     arrays.set(ArrayType::VERTEX.ord() as usize, Variant::from(verts));
     arrays.set(ArrayType::NORMAL.ord() as usize, Variant::from(normals));
     arrays.set(ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
 
+    let mut collider_builder: Option<PhysicsColliderBuilder> = None;
+
     let mut mesh_ist = ArrayMesh::new_gd();
     if len > 0 {
         mesh_ist.add_surface_from_arrays(PrimitiveType::TRIANGLES, arrays);
+
+        collider_builder = Some(PhysicsColliderBuilder::trimesh(collider_verts, collider_indices));
     }
 
-    Geometry { mesh_ist, collider }
+    Geometry {
+        mesh_ist,
+        collider_builder,
+    }
 }

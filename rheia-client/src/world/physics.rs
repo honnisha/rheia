@@ -3,11 +3,15 @@ use std::sync::Arc;
 use ahash::AHashMap;
 use common::{
     chunks::chunk_position::ChunkPosition,
-    physics::physics::{PhysicsContainer, PhysicsStaticEntity},
+    physics::{
+        physics::{IPhysicsCollider, IPhysicsContainer},
+        PhysicsCollider, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBody,
+    },
 };
+use godot::prelude::*;
 use parking_lot::RwLock;
 
-use crate::main_scene::{PhysicsContainerType, PhysicsRigidBodyEntityType, PhysicsStaticEntityType};
+use crate::utils::bridge::{IntoGodotVector, IntoNetworkVector};
 
 #[derive(Clone)]
 pub enum PhysicsType {
@@ -17,7 +21,7 @@ pub enum PhysicsType {
 
 #[derive(Default, Clone)]
 pub struct PhysicsProxy {
-    physics_container: PhysicsContainerType,
+    physics_container: PhysicsContainer,
     collider_type_map: Arc<RwLock<AHashMap<usize, PhysicsType>>>,
 }
 
@@ -26,21 +30,50 @@ impl PhysicsProxy {
         self.physics_container.step(delta);
     }
 
-    pub fn create_static(&self, collider_type: PhysicsType) -> PhysicsStaticEntityType {
-        let collider = self.physics_container.create_static();
+    pub fn create_collider(
+        &self,
+        collider_builder: PhysicsColliderBuilder,
+        collider_type: PhysicsType,
+    ) -> PhysicsCollider {
+        let collider = self.physics_container.spawn_collider(collider_builder);
         self.collider_type_map
             .write()
-            .insert(collider.get_index().unwrap(), collider_type);
+            .insert(collider.get_index(), collider_type);
         collider
     }
 
-    pub fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> PhysicsRigidBodyEntityType {
-        self.physics_container.create_rigid_body(height, radius, mass)
+    pub fn create_rigid_body(&self) -> PhysicsRigidBody {
+        self.physics_container.create_rigid_body()
+    }
+
+    pub fn spawn_collider_with_rigid(
+        &self,
+        collider_builder: PhysicsColliderBuilder,
+        rigid_body: PhysicsRigidBody,
+    ) -> PhysicsCollider {
+        self.physics_container
+            .spawn_collider_with_rigid(collider_builder, rigid_body)
     }
 
     pub fn get_type_by_collider(&self, collider_id: usize) -> Option<PhysicsType> {
         match self.collider_type_map.read().get(&collider_id) {
             Some(c) => Some(c.clone()),
+            None => None,
+        }
+    }
+
+    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3) -> Option<(PhysicsType, Vector3)> {
+        match self
+            .physics_container
+            .raycast(dir.to_network(), max_toi, from.to_network())
+        {
+            Some((collider_id, pos)) => {
+                let map = self.collider_type_map.read();
+                let collider_type = map
+                    .get(&collider_id)
+                    .expect("collider_id not found inside physics proxy; collider_type_map is not consistent");
+                Some((collider_type.clone(), pos.to_godot()))
+            }
             None => None,
         }
     }

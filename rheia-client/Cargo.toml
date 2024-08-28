@@ -8,7 +8,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-common = { path = "../rheia-common" }
+common = { path = "../rheia-common", features = ["physics-rapier", "network-renet"] }
 
 godot = { version = "0.1.3", features = ["experimental-threads"] }
 

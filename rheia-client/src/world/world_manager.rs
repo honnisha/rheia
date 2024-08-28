@@ -15,7 +15,7 @@ use common::{
 };
 use godot::{engine::Material, prelude::*};
 
-pub enum ColliderSearchResult {
+pub enum RaycastResult {
     Block(BlockPosition),
     Entity(u32, Gd<Entity>),
 }
@@ -65,22 +65,22 @@ impl WorldManager {
         }
     }
 
-    pub fn get_by_collider(&self, collider_id: usize) -> Option<ColliderSearchResult> {
-        let Some(collider_type) = self.physics.get_type_by_collider(collider_id) else {
+    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3) -> Option<(RaycastResult, Vector3)> {
+        let Some((collider_type, position)) = self.physics.raycast(dir, max_toi, from) else {
             return None;
         };
 
         let result = match collider_type {
-            PhysicsType::ChunkMeshCollider(_chunk_position) => ColliderSearchResult::Block(BlockPosition::new(0, 0, 0)),
+            PhysicsType::ChunkMeshCollider(_chunk_position) => RaycastResult::Block(BlockPosition::new(0, 0, 0)),
             PhysicsType::EntityCollider(entity_id) => {
                 let manager = self.entities_manager.bind();
                 let Some(entity) = manager.get(entity_id) else {
                     panic!("Entity is not found for id \"{}\"", entity_id);
                 };
-                ColliderSearchResult::Entity(entity_id, entity.clone())
+                RaycastResult::Entity(entity_id, entity.clone())
             }
         };
-        Some(result)
+        Some((result, position))
     }
 
     pub fn _get_entities_manager(&self) -> GdRef<EntitiesManager> {
@@ -165,8 +165,8 @@ impl INode for WorldManager {
         self.physics.step(delta as f32);
 
         let mut map = self.chunk_map.bind_mut();
-        map.send_chunks_to_load(&self.physics);
-        map.spawn_loaded_chunks();
+        map.send_chunks_to_load();
+        map.spawn_loaded_chunks(&self.physics);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(30) {

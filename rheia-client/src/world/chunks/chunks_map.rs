@@ -95,7 +95,7 @@ impl ChunkMap {
     }
 
     /// Send new recieved chunks to load (render)
-    pub fn send_chunks_to_load(&mut self, physics: &PhysicsProxy) {
+    pub fn send_chunks_to_load(&mut self) {
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -111,7 +111,6 @@ impl ChunkMap {
                 self.texture_mapper.clone(),
                 self.material.instance_id(),
                 chunk_position.clone(),
-                physics.clone(),
                 self.loaded_chunks.0.clone(),
             );
             chunk_column.read().set_sended();
@@ -120,7 +119,7 @@ impl ChunkMap {
     }
 
     /// Retrieving loaded chunks to add them to the root node
-    pub fn spawn_loaded_chunks(&mut self) {
+    pub fn spawn_loaded_chunks(&mut self, physics: &PhysicsProxy) {
         let mut base = self.base_mut().clone();
         for (chunk_position, instance_id) in self.loaded_chunks.1.drain() {
             let l = self.get_chunk(&chunk_position).unwrap();
@@ -128,7 +127,7 @@ impl ChunkMap {
 
             let chunk_base = Gd::<ChunkBase>::from_instance_id(instance_id);
             base.add_child(chunk_base.clone().upcast());
-            chunk_column.spawn_loaded_chunk(chunk_base);
+            chunk_column.spawn_loaded_chunk(chunk_base, physics);
         }
     }
 

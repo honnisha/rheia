@@ -75,7 +75,7 @@ impl INode3D for Entity {
         self.base_mut().add_child(skin);
     }
 
-    fn process(&mut self, delta: f64) {
+    fn process(&mut self, _delta: f64) {
         if let Some(target_position) = self.target_position {
             let current_position = self.base().get_position();
 

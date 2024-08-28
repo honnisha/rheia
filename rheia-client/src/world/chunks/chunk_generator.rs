@@ -6,7 +6,6 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 use crate::world::{
-    physics::{PhysicsProxy, PhysicsType},
     worlds_manager::TextureMapperType,
 };
 use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
@@ -22,7 +21,6 @@ pub(crate) fn generate_chunk(
     texture_mapper: TextureMapperType,
     material_instance_id: InstanceId,
     chunk_position: ChunkPosition,
-    physics: PhysicsProxy,
     chunks_loaded: Sender<(ChunkPosition, InstanceId)>,
 ) {
     rayon::spawn(move || {
@@ -36,10 +34,8 @@ pub(crate) fn generate_chunk(
             c.base_mut().set_name(name);
 
             for y in 0..VERTICAL_SECTIONS {
-                let physics_entity = physics.create_static(PhysicsType::ChunkMeshCollider(chunk_position.clone()));
-
                 let mut section = Gd::<ChunkSection>::from_init_fn(|base| {
-                    ChunkSection::create(base, material.clone(), y as u8, physics_entity, chunk_position.clone())
+                    ChunkSection::create(base, material.clone(), y as u8, chunk_position.clone())
                 });
 
                 let name = GString::from(format!("Section {}", y));

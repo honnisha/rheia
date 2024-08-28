@@ -15,20 +15,6 @@ use godot::prelude::*;
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// Physics Physx
-// pub type PhysicsRigidBodyEntityType = common::physics::physx::PhysxPhysicsRigidBodyEntity;
-// pub type PhysicsStaticEntityType = common::physics::physx::PhysxPhysicsStaticEntity;
-// pub type PhysicsColliderBuilderType = common::physics::physx::PhysxPhysicsColliderBuilder;
-// pub type PhysicsCharacterControllerType = common::physics::physx::PhysxPhysicsCharacterController;
-// pub type PhysicsContainerType = common::physics::physx::PhysxPhysicsContainer;
-
-// Physics Rapier
-pub type PhysicsRigidBodyEntityType = common::physics::rapier::RapierPhysicsRigidBodyEntity;
-pub type PhysicsStaticEntityType = common::physics::rapier::RapierPhysicsStaticEntity;
-pub type PhysicsColliderBuilderType = common::physics::rapier::RapierPhysicsColliderBuilder;
-pub type PhysicsCharacterControllerType = common::physics::rapier::RapierPhysicsCharacterController;
-pub type PhysicsContainerType = common::physics::rapier::RapierPhysicsContainer;
-
 // Network Renet
 pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
 
