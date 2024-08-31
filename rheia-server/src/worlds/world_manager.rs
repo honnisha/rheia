@@ -1,9 +1,11 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use common::chunks::block_position::BlockPositionTrait;
+use common::blocks::block_info::BlockInfo;
+use common::chunks::block_position::{BlockPosition, BlockPositionTrait, ChunkBlockPosition};
 use common::chunks::chunk_position::ChunkPosition;
 use common::network::messages::ServerMessages;
+use common::VERTICAL_SECTIONS;
 use parking_lot::RwLock;
 
 use crate::entities::entity::{NetworkComponent, Position, Rotation};
@@ -147,5 +149,15 @@ impl WorldManager {
             }
             None => None,
         }
+    }
+
+    pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) -> bool {
+        let Some(mut chunk_column) = self.chunks_map.get_chunk_column_mut(&position.get_chunk_position()) else {
+            return false;
+        };
+
+        let (section, block_position) = position.get_block_position();
+        chunk_column.change_block(section, block_position, new_block_info);
+        return true
     }
 }

@@ -1,7 +1,7 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
-use parking_lot::{RwLock, RwLockReadGuard};
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
@@ -60,6 +60,13 @@ impl ChunkMap {
     pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.read()),
+            None => None,
+        }
+    }
+
+    pub fn get_chunk_column_mut(&self, chunk_position: &ChunkPosition) -> Option<RwLockWriteGuard<ChunkColumn>> {
+        match self.chunks.get(chunk_position) {
+            Some(c) => Some(c.write()),
             None => None,
         }
     }

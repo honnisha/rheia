@@ -1,5 +1,7 @@
 use crate::worlds::world_generator::default::WorldGenerator;
 use arrayvec::ArrayVec;
+use common::blocks::block_info::BlockInfo;
+use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::utils::PacketChunkSectionData;
 use common::network::messages::{ChunkDataType, ServerMessages};
@@ -44,6 +46,15 @@ impl ChunkColumn {
     /// If chunk load his data
     pub(crate) fn is_loaded(&self) -> bool {
         self.loaded
+    }
+
+    pub fn change_block(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: BlockInfo) {
+        if section > VERTICAL_SECTIONS as u32 {
+            panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
+        }
+        let s = self.sections.get_mut(section as usize).unwrap();
+        let cell = s.get_mut(&chunk_block).unwrap();
+        *cell = new_block_info;
     }
 
     pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {

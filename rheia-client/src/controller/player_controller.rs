@@ -6,7 +6,7 @@ use crate::world::world_manager::{RaycastResult, WorldManager};
 use common::blocks::block_info::BlockInfo;
 use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
-use common::network::messages::{NetworkMessageType, Rotation, WorldEdit};
+use common::network::messages::{ClientMessages, NetworkMessageType, Rotation};
 use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody, IQueryFilter};
 use common::physics::{
     PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody, QueryFilter,
@@ -236,7 +236,7 @@ impl INode3D for PlayerController {
             if let Some((result, position)) = world.bind().raycast(dir, max_toi, from, filter) {
                 let msg = match result {
                     RaycastResult::Block(block_position) => {
-                        let msg = WorldEdit::EditBlock {
+                        let msg = ClientMessages::EditBlockRequest {
                             position: block_position.clone(),
                             new_block_info: BlockInfo::new(BlockType::Stone),
                         };
@@ -244,7 +244,7 @@ impl INode3D for PlayerController {
                             .bind()
                             .get_main()
                             .bind()
-                            .network_send_message(msg, NetworkMessageType::ReliableOrdered);
+                            .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
                         format!("Block:{block_position:?}")
                     }
                     RaycastResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),

@@ -5,5 +5,7 @@ pub mod client_network;
 pub mod clients_container;
 pub mod chunks_sender;
 pub mod sync_entities;
+pub mod sync_world_change;
 
+#[cfg(test)]
 pub mod tests;

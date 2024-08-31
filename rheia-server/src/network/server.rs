@@ -19,6 +19,7 @@ use super::events::{
     on_connection::{on_connection, PlayerConnectionEvent},
     on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
     on_disconnect::{on_disconnect, PlayerDisconnectEvent},
+    on_edit_block::{on_edit_block, EditBlockEvent},
     on_player_move::{on_player_move, PlayerMoveEvent},
 };
 use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
@@ -101,6 +102,9 @@ impl NetworkPlugin {
         app.add_event::<PlayerMoveEvent>();
         app.add_systems(Update, on_player_move.after(handle_events_system));
 
+        app.add_event::<EditBlockEvent>();
+        app.add_systems(Update, on_edit_block.after(handle_events_system));
+
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
 
@@ -130,6 +134,7 @@ fn receive_message_system(
     clients: Res<ClientsContainer>,
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
+    mut edit_block_events: EventWriter<EditBlockEvent>,
 ) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("receive_message_system").entered();
@@ -163,9 +168,13 @@ fn receive_message_system(
                 let info = PlayerConnectionInfoEvent::new(client.clone(), login);
                 connection_info_events.send(info);
             }
-            ClientMessages::EditBlockRequest { position, new_block_info } => {
-                todo!()
-            },
+            ClientMessages::EditBlockRequest {
+                position,
+                new_block_info,
+            } => {
+                let edit = EditBlockEvent::new(client.clone(), position, new_block_info);
+                edit_block_events.send(edit);
+            }
         }
     }
 }
