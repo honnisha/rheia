@@ -10,12 +10,6 @@ pub mod player_controller;
 pub mod utils;
 pub mod world;
 
-// Network Renet
-pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
-
-// Network RakNet
-// pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
-
 fn main() {
     let mut app = App::new();
     app.add_plugins((

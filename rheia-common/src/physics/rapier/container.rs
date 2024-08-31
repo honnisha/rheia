@@ -7,7 +7,8 @@ use std::sync::Arc;
 use crate::physics::physics::IPhysicsContainer;
 
 use super::{
-    bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder, controller::RapierPhysicsController, query_filter::RapierQueryFilter, rigid_body::RapierPhysicsRigidBody
+    bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder,
+    controller::RapierPhysicsController, query_filter::RapierQueryFilter, rigid_body::RapierPhysicsRigidBody,
 };
 
 #[derive(Clone)]
@@ -66,18 +67,34 @@ impl Default for RapierPhysicsContainer {
     }
 }
 
-impl<'a> IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierPhysicsColliderBuilder, RapierQueryFilter<'a>>
-    for RapierPhysicsContainer
+impl<'a>
+    IPhysicsContainer<
+        RapierPhysicsRigidBody,
+        RapierPhysicsCollider,
+        RapierPhysicsColliderBuilder,
+        RapierQueryFilter<'a>,
+    > for RapierPhysicsContainer
 {
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
     }
 
-    fn create_rigid_body(&self) -> RapierPhysicsRigidBody {
+    fn spawn_rigid_body(
+        &self,
+        mut collider_builder: RapierPhysicsColliderBuilder,
+    ) -> (RapierPhysicsRigidBody, RapierPhysicsCollider) {
         let mut rigid_body = RigidBodyBuilder::kinematic_position_based().build();
         rigid_body.set_enabled_rotations(false, false, false, true);
         let rigid_handle = self.rigid_body_set.write().insert(rigid_body);
-        RapierPhysicsRigidBody::create(&self, rigid_handle)
+        let rigid = RapierPhysicsRigidBody::create(&self, rigid_handle);
+
+        let mut collider_set = self.collider_set.write();
+        let mut rigid_body_set = self.rigid_body_set.write();
+        let builder = std::mem::take(&mut collider_builder.builder);
+        let collider_handle = collider_set.insert_with_parent(builder, rigid_handle, &mut rigid_body_set);
+        let collider = RapierPhysicsCollider::create(&self, collider_handle);
+
+        (rigid, collider)
     }
 
     fn spawn_collider(&self, mut collider_builder: RapierPhysicsColliderBuilder) -> RapierPhysicsCollider {
@@ -86,20 +103,14 @@ impl<'a> IPhysicsContainer<RapierPhysicsRigidBody, RapierPhysicsCollider, Rapier
         RapierPhysicsCollider::create(&self, collider_handle)
     }
 
-    fn spawn_collider_with_rigid(
-        &self,
-        mut collider_builder: RapierPhysicsColliderBuilder,
-        rigid_body: RapierPhysicsRigidBody,
-    ) -> RapierPhysicsCollider {
-        let mut collider_set = self.collider_set.write();
-        let mut rigid_body_set = self.rigid_body_set.write();
-        let collider = std::mem::take(&mut collider_builder.builder);
-        let collider_handle = collider_set.insert_with_parent(collider, rigid_body.rigid_handle, &mut rigid_body_set);
-        RapierPhysicsCollider::create(&self, collider_handle)
-    }
-
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3, filter: RapierQueryFilter) -> Option<(usize, NetworkVector3)> {
+    fn raycast(
+        &self,
+        dir: NetworkVector3,
+        max_toi: f32,
+        origin: NetworkVector3,
+        filter: RapierQueryFilter,
+    ) -> Option<(usize, NetworkVector3)> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
         let direction = dir.to_na();
 

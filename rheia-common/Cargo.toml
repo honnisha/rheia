@@ -8,12 +8,13 @@ edition = "2021"
 [features]
 default = ["network-renet", "physics-rapier"]
 
-physics-rapier = ["rapier3d"]
-physics-physx = ["physx", "physx-sys"]
-
 network-renet = ["renet"]
 network-steamworks = ["steamworks"]
 network-rak-rs = ["rak-rs"]
+network-tokio = []
+
+physics-rapier = ["rapier3d"]
+physics-physx = ["physx", "physx-sys"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

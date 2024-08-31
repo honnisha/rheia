@@ -15,12 +15,6 @@ use godot::prelude::*;
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// Network Renet
-pub type NetworkClientType = common::network::renet::client::RenetClientNetwork;
-
-// Network RakNet
-// pub type NetworkClientType = common::network::rak_rs::client::RakNetClientNetwork;
-
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct Main {

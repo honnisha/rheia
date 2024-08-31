@@ -55,10 +55,8 @@ impl PlayerController {
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
         camera_controller.set_position(Vector3::new(0.0, CONTROLLER_HEIGHT * 0.75, 0.0));
 
-        let rigid_body = physics.create_rigid_body();
-
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
-        let collider = physics.spawn_collider_with_rigid(collider_builder, rigid_body.clone());
+        let (rigid_body, collider) = physics.spawn_rigid_body(collider_builder);
 
         Self {
             base,

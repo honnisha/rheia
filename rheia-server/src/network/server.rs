@@ -11,6 +11,7 @@ use bevy_ecs::{
 };
 use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use common::network::server::{ConnectionMessages, ServerNetwork};
+use common::network::NetworkServer;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 
@@ -25,7 +26,6 @@ use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_entities::{sync_player_spawn, PlayerSpawnEvent};
-use crate::NetworkServerType;
 use crate::{
     client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, ServerSettings,
 };
@@ -57,13 +57,13 @@ lazy_static! {
 
 #[derive(Resource)]
 pub struct NetworkContainer {
-    server_network: Box<NetworkServerType>,
+    server_network: Box<NetworkServer>,
 }
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Self {
         Self {
-            server_network: Box::new(NetworkServerType::new(ip_port)),
+            server_network: Box::new(NetworkServer::new(ip_port)),
         }
     }
 

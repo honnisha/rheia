@@ -42,17 +42,8 @@ impl PhysicsProxy {
         collider
     }
 
-    pub fn create_rigid_body(&self) -> PhysicsRigidBody {
-        self.physics_container.create_rigid_body()
-    }
-
-    pub fn spawn_collider_with_rigid(
-        &self,
-        collider_builder: PhysicsColliderBuilder,
-        rigid_body: PhysicsRigidBody,
-    ) -> PhysicsCollider {
-        self.physics_container
-            .spawn_collider_with_rigid(collider_builder, rigid_body)
+    pub fn spawn_rigid_body(&self, collider_builder: PhysicsColliderBuilder,) -> (PhysicsRigidBody, PhysicsCollider) {
+        self.physics_container.spawn_rigid_body(collider_builder)
     }
 
     pub fn get_type_by_collider(&self, collider_id: usize) -> Option<PhysicsType> {

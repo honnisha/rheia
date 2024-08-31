@@ -1,72 +1,57 @@
-mod types;
+pub mod bridge;
+pub mod types;
 
 use super::physics::{
-    PhysicsCharacterController, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBodyEntity, PhysicsStaticEntity,
+    IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IPhysicsContainer, IPhysicsRigidBody,
+    IQueryFilter,
 };
 use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
+use bridge::IntoPxVec3;
 use parking_lot::RwLock;
+use physx::cooking::PxTriangleMeshDesc;
 use physx::{cooking, foundation::DefaultAllocator, owner::Owner, prelude::*, traits::Class};
 use physx_sys::{
-    PxConvexFlags, PxHitFlags, PxMeshScale_new, PxPhysics_createShape_mut, PxQueryFilterData_new,
+    PxHitFlags, PxMeshScale_new, PxPhysics_createShape_mut, PxQueryFilterData, PxQueryFilterData_new,
     PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxShape_setLocalPose_mut,
 };
-use std::sync::Arc;
 use std::{ffi::c_void, mem::MaybeUninit, ptr::null_mut};
 use types::*;
 
 // https://github.com/EmbarkStudios/physx-rs
 
-pub trait IntoPxVec3 {
-    fn to_physx(&self) -> PxVec3;
-    fn to_physx_sys(&self) -> physx_sys::PxVec3;
+pub struct PhysxQueryFilter {
+    filter: PxQueryFilterData,
 }
 
-impl IntoPxVec3 for NetworkVector3 {
-    fn to_physx(&self) -> PxVec3 {
-        PxVec3::new(self.x, self.y, self.z)
-    }
-
-    fn to_physx_sys(&self) -> physx_sys::PxVec3 {
-        physx_sys::PxVec3 {
-            x: self.x,
-            y: self.y,
-            z: self.z,
+impl Default for PhysxQueryFilter {
+    fn default() -> Self {
+        Self {
+            filter: unsafe { PxQueryFilterData_new() },
         }
     }
 }
 
-impl IntoNetworkVector for PxVec3 {
-    fn to_network(&self) -> NetworkVector3 {
-        NetworkVector3::new(self.x(), self.y(), self.z())
+impl IQueryFilter<PhysxPhysicsRigidBody> for PhysxQueryFilter {
+    fn exclude_rigid_body(&mut self, _rigid_body: &PhysxPhysicsRigidBody) {
+        todo!()
     }
 }
 
-impl IntoNetworkVector for physx_sys::PxVec3 {
-    fn to_network(&self) -> NetworkVector3 {
-        NetworkVector3::new(self.x, self.y, self.z)
-    }
-}
-
-pub struct PhysxPhysicsRigidBodyEntity {
+#[derive(Clone)]
+pub struct PhysxPhysicsRigidBody {
     actor: Owner<PxRigidDynamic>,
     controller: Arc<RwLock<PhysxPhysicsController>>,
 }
 
-impl PhysxPhysicsRigidBodyEntity {
+impl PhysxPhysicsRigidBody {
     fn create(actor: Owner<PxRigidDynamic>, controller: Arc<RwLock<PhysxPhysicsController>>) -> Self {
         Self { actor, controller }
     }
 }
 
-impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
+impl IPhysicsRigidBody for PhysxPhysicsRigidBody {
     fn set_enabled(&mut self, active: bool) {
         self.actor.enable_gravity(active)
-    }
-
-    fn apply_impulse(&mut self, impulse: NetworkVector3) {
-        self.actor
-            .as_mut()
-            .add_force(&impulse.to_physx(), ForceMode::Impulse, true);
     }
 
     fn get_position(&self) -> NetworkVector3 {
@@ -77,58 +62,28 @@ impl PhysicsRigidBodyEntity for PhysxPhysicsRigidBodyEntity {
         self.actor
             .set_global_pose(&PxTransform::from_translation(&position.to_physx()), true);
     }
-
-    fn raycast(&self, dir: NetworkVector3, max_toi: f32, origin: NetworkVector3) -> Option<(usize, NetworkVector3)> {
-        let controller = self.controller.as_ref().read();
-
-        let mut raycast_hit = MaybeUninit::uninit();
-
-        let filter = unsafe { PxQueryFilterData_new() };
-        if !unsafe {
-            PxSceneQueryExt_raycastSingle(
-                controller.scene.as_ptr(),
-                &origin.to_physx_sys(),
-                &dir.to_physx_sys(),
-                max_toi,
-                PxHitFlags::Default,
-                raycast_hit.as_mut_ptr(),
-                &filter as *const _,
-                null_mut(),
-                null_mut(),
-            )
-        } {
-            return None;
-        }
-
-        // SAFETY: raycastSingle returned true, so we assume buffer is initialized
-        let raycast_hit = unsafe { raycast_hit.assume_init() };
-        Some((0_usize, raycast_hit.position.to_network()))
-
-        //Some(RaycastHit {
-        //    actor: unsafe { get_actor_entity_from_ptr(raycast_hit.actor) },
-        //    shape: unsafe { get_shape_entity_from_ptr(raycast_hit.shape) },
-        //    face_index: raycast_hit.faceIndex,
-        //    flags: raycast_hit.flags,
-        //    position: raycast_hit.position.to_bevy(),
-        //    normal: raycast_hit.normal.to_bevy(),
-        //    distance: raycast_hit.distance,
-        //})
-    }
 }
 
 pub struct PhysxPhysicsCharacterController {
-    custom_mass: Option<f32>
+    custom_mass: Option<f32>,
 }
 
-impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCharacterController {
+impl IPhysicsCharacterController<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxQueryFilter>
+    for PhysxPhysicsCharacterController
+{
     fn create(custom_mass: Option<f32>) -> Self {
-        Self {
-            custom_mass,
-        }
+        Self { custom_mass }
     }
 
-    fn move_shape(&mut self, _entity: &mut PhysxPhysicsRigidBodyEntity, _delta: f64, _impulse: NetworkVector3) {
+    fn move_shape(
+        &mut self,
+        _collider: &PhysxPhysicsCollider,
+        _filter: PhysxQueryFilter,
+        _delta: f64,
+        _impulse: NetworkVector3,
+    ) -> NetworkVector3 {
         // https://github.com/rlidwka/bevy_mod_physx/blob/ef9e56023fb7500c7e5d1f2b66057a16a3caf8d7/examples/kinematic.rs
+        todo!()
     }
 
     fn is_grounded(&mut self) -> bool {
@@ -140,15 +95,16 @@ impl PhysicsCharacterController<PhysxPhysicsRigidBodyEntity> for PhysxPhysicsCha
     }
 }
 
-pub struct PhysxPhysicsStaticEntity {
-    pub actor: Owner<PxRigidStatic>,
+#[derive(Clone)]
+pub struct PhysxPhysicsCollider {
+    actor: Owner<PxRigidStatic>,
     controller: Arc<RwLock<PhysxPhysicsController>>,
 
     // Attached shape
-    pub shape: Option<Owner<PxShape>>,
+    shape: Option<Owner<PxShape>>,
 }
 
-impl PhysxPhysicsStaticEntity {
+impl PhysxPhysicsCollider {
     fn create(actor: Owner<PxRigidStatic>, controller: Arc<RwLock<PhysxPhysicsController>>) -> Self {
         Self {
             actor,
@@ -158,13 +114,7 @@ impl PhysxPhysicsStaticEntity {
     }
 }
 
-impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
-    fn remove_collider(&mut self) {
-        if self.shape.is_some() {
-            self.actor.detach_shape(&mut self.shape.take().unwrap());
-        }
-    }
-
+impl IPhysicsCollider for PhysxPhysicsCollider {
     fn set_enabled(&mut self, _active: bool) {
         todo!();
     }
@@ -172,37 +122,38 @@ impl PhysicsStaticEntity for PhysxPhysicsStaticEntity {
     fn get_index(&self) -> usize {
         todo!()
     }
-}
 
-pub struct PhysxPhysicsColliderBuilder {
-    collider_verts: Vec<PxVec3>,
-    collider_indices: Vec<[u32; 3]>,
-}
+    fn set_position(&mut self, _position: NetworkVector3) {
+        todo!()
+    }
 
-impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBuilder {
-    fn create() -> Self {
-        Self {
-            collider_verts: Default::default(),
-            collider_indices: Default::default(),
+    fn remove(&self) {
+        if self.shape.is_some() {
+            self.actor.detach_shape(&mut self.shape.take().unwrap());
         }
     }
+}
 
-    fn push_indexes(&mut self, index: [u32; 3]) {
-        self.collider_indices.push(index);
+pub struct PhysxPhysicsColliderBuilder {}
+
+impl IPhysicsColliderBuilder for PhysxPhysicsColliderBuilder {
+    fn cylinder(half_height: f32, radius: f32) -> Self {
+        let geometry = PxCapsuleGeometry::new(radius, half_height);
     }
 
-    fn push_verts(&mut self, x: f32, y: f32, z: f32) {
-        self.collider_verts.push(PxVec3::new(x, y, z));
-    }
-
-    fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &NetworkVector3) {
+    fn trimesh(verts: Vec<NetworkVector3>, indices: Vec<[u32; 3]>) -> Self {
         let mut controller = static_entity.controller.write();
 
-        let mut desc = cooking::PxConvexMeshDesc::new();
-        desc.obj.points.count = self.collider_verts.len() as u32;
+        let verts = verts.into_iter().map(|v| PxVec3::new(v.x, v.y, v.z)).collect();
+
+        let mut desc = PxTriangleMeshDesc::new();
+        desc.obj.points.count = verts.len() as u32;
         desc.obj.points.stride = std::mem::size_of::<PxVec3>() as u32;
-        desc.obj.points.data = self.collider_verts.as_ptr() as *const c_void;
-        desc.obj.flags = PxConvexFlags::ComputeConvex;
+        desc.obj.points.data = verts.as_ptr() as *const c_void;
+
+        desc.obj.triangles.count = indices.len() as u32;
+        desc.obj.triangles.stride = std::mem::size_of::<[u32; 3]>() as u32;
+        desc.obj.triangles.data = indices.as_ptr() as *const c_void;
 
         let params = cooking::PxCookingParams::new(controller.physics.physics()).unwrap();
         let mesh = match cooking::create_convex_mesh(controller.physics.physics_mut(), &params, &desc) {
@@ -234,7 +185,9 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
             )
             .unwrap()
         };
+    }
 
+    fn update_collider(&mut self, static_entity: &mut PhysxPhysicsStaticEntity, position: &NetworkVector3) {
         unsafe {
             PxScene_addActor_mut(
                 controller.scene.as_mut_ptr(),
@@ -257,12 +210,6 @@ impl PhysicsColliderBuilder<PhysxPhysicsStaticEntity> for PhysxPhysicsColliderBu
         }
         static_entity.shape = Some(shape);
     }
-
-    fn len(&self) -> usize {
-        self.collider_indices.len()
-    }
-
-    fn compile(&mut self) {}
 }
 
 #[derive(Clone)]
@@ -277,14 +224,19 @@ impl Default for PhysxPhysicsContainer {
     }
 }
 
-impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for PhysxPhysicsContainer {
+impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQueryFilter>
+    for PhysxPhysicsContainer
+{
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
     }
 
-    fn create_rigid_body(&self, height: f32, radius: f32, mass: f32) -> PhysxPhysicsRigidBodyEntity {
+    fn spawn_rigid_body(
+        &self,
+        collider_builder: PhysxPhysicsColliderBuilder,
+    ) -> (PhysxPhysicsRigidBody, PhysxPhysicsCollider) {
         let mut controller = self.controller.as_ref().write();
-        let geometry = PxCapsuleGeometry::new(radius, height / 2.0);
+
         let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
 
         let mut actor = controller
@@ -314,17 +266,59 @@ impl PhysicsContainer<PhysxPhysicsRigidBodyEntity, PhysxPhysicsStaticEntity> for
         unsafe {
             PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), std::ptr::null());
         }
-        PhysxPhysicsRigidBodyEntity::create(actor, self.controller.clone())
+        PhysxPhysicsRigidBody::create(actor, self.controller.clone())
     }
 
-    fn create_static(&self) -> PhysxPhysicsStaticEntity {
+    fn spawn_collider(&self, collider_builder: PhysxPhysicsColliderBuilder) -> PhysxPhysicsCollider {
         let mut controller = self.controller.as_ref().write();
 
         let actor: Owner<PxRigidStatic> = controller
             .physics
             .create_static(PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)), ())
             .unwrap();
-        PhysxPhysicsStaticEntity::create(actor, self.controller.clone())
+        PhysxPhysicsCollider::create(actor, self.controller.clone())
+    }
+
+    fn raycast(
+        &self,
+        dir: NetworkVector3,
+        max_toi: f32,
+        origin: NetworkVector3,
+        filter: PhysxQueryFilter,
+    ) -> Option<(usize, NetworkVector3)> {
+        let controller = self.controller.as_ref().read();
+
+        let mut raycast_hit = MaybeUninit::uninit();
+
+        if !unsafe {
+            PxSceneQueryExt_raycastSingle(
+                controller.scene.as_ptr(),
+                &origin.to_physx_sys(),
+                &dir.to_physx_sys(),
+                max_toi,
+                PxHitFlags::Default,
+                raycast_hit.as_mut_ptr(),
+                &filter.filter as *const _,
+                null_mut(),
+                null_mut(),
+            )
+        } {
+            return None;
+        }
+
+        // SAFETY: raycastSingle returned true, so we assume buffer is initialized
+        let raycast_hit = unsafe { raycast_hit.assume_init() };
+        Some((0_usize, raycast_hit.position.to_network()))
+
+        //Some(RaycastHit {
+        //    actor: unsafe { get_actor_entity_from_ptr(raycast_hit.actor) },
+        //    shape: unsafe { get_shape_entity_from_ptr(raycast_hit.shape) },
+        //    face_index: raycast_hit.faceIndex,
+        //    flags: raycast_hit.flags,
+        //    position: raycast_hit.position.to_bevy(),
+        //    normal: raycast_hit.normal.to_bevy(),
+        //    distance: raycast_hit.distance,
+        //})
     }
 }
 
@@ -356,9 +350,7 @@ impl PhysxPhysicsController {
 
 #[cfg(test)]
 mod tests {
-    use physx::math::PxVec3;
-
-    use crate::physics::physics::{PhysicsColliderBuilder, PhysicsContainer};
+    use crate::physics::physics::{IPhysicsColliderBuilder, IPhysicsContainer};
 
     use super::{PhysxPhysicsColliderBuilder, PhysxPhysicsContainer};
     use crate::network::messages::Vector3 as NetworkVector3;
@@ -366,20 +358,17 @@ mod tests {
     #[test]
     fn test_collider() {
         let vertices = vec![
-            PxVec3::new(0., 1., 0.),
-            PxVec3::new(0., -1., 0.),
-            PxVec3::new(1., 0., 0.),
-            PxVec3::new(-1., 0., 0.),
-            PxVec3::new(0., 0., 1.),
-            PxVec3::new(0., 0., -1.),
+            NetworkVector3::new(0., 1., 0.),
+            NetworkVector3::new(0., -1., 0.),
+            NetworkVector3::new(1., 0., 0.),
+            NetworkVector3::new(-1., 0., 0.),
+            NetworkVector3::new(0., 0., 1.),
+            NetworkVector3::new(0., 0., -1.),
         ];
-        let mut collider = PhysxPhysicsColliderBuilder::create();
-        for v in vertices {
-            collider.push_verts(v.x(), v.y(), v.z());
-        }
+        let indices: Vec<[u32; 3]> = Default::default();
+        let collider = PhysxPhysicsColliderBuilder::trimesh(vertices, indices);
 
         let container = PhysxPhysicsContainer::default();
-        let mut actor = container.create_static();
-        collider.update_collider(&mut actor, &NetworkVector3::zero())
+        let _actor = container.spawn_collider(collider);
     }
 }

@@ -1,19 +1,17 @@
-use common::network::client::ClientNetwork;
+use common::network::{client::ClientNetwork, NetworkClient};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::main_scene::NetworkClientType;
-
-pub type NetworkLockType = Arc<RwLock<NetworkClientType>>;
+pub type NetworkLockType = Arc<RwLock<NetworkClient>>;
 
 pub struct NetworkContainer {
-    client_network: Arc<RwLock<NetworkClientType>>,
+    client_network: Arc<RwLock<NetworkClient>>,
 }
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
         log::info!(target: "network", "Connecting to the server at {}", ip_port);
-        let network = match NetworkClientType::new(ip_port) {
+        let network = match NetworkClient::new(ip_port) {
             Ok(n) => n,
             Err(e) => return Err(e),
         };
@@ -22,7 +20,7 @@ impl NetworkContainer {
         })
     }
 
-    pub fn get_network_lock(&self) -> Arc<RwLock<NetworkClientType>> {
+    pub fn get_network_lock(&self) -> Arc<RwLock<NetworkClient>> {
         self.client_network.clone()
     }
 

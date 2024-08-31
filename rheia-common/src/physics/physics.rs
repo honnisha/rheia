@@ -34,9 +34,8 @@ pub trait IPhysicsContainer<T: IPhysicsRigidBody, C: IPhysicsCollider, B: IPhysi
 {
     fn step(&self, delta: f32);
 
-    fn create_rigid_body(&self) -> T;
+    fn spawn_rigid_body(&self, collider_builder: B) -> (T, C);
     fn spawn_collider(&self, collider_builder: B) -> C;
-    fn spawn_collider_with_rigid(&self, collider_builder: B, rigid_body: T) -> C;
 
     fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3, filter: F) -> Option<(usize, Vector3)>;
 }

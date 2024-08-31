@@ -6,14 +6,14 @@ use common::{
     chunks::chunk_position::ChunkPosition,
     network::{
         client::ClientNetwork,
-        messages::{ClientMessages, NetworkMessageType, ServerMessages},
+        messages::{ClientMessages, NetworkMessageType, ServerMessages}, NetworkClient,
     },
 };
 use parking_lot::RwLock;
 
 use std::sync::Arc;
 
-use crate::{utils::bridge::IntoBevyVector, NetworkClientType};
+use crate::{utils::bridge::IntoBevyVector};
 
 use super::events::{
     self, netcode_error::NetcodeErrorEvent, on_chunk_loaded::ChunkLoadedEvent, on_chunk_unloaded::ChunkUnloadedEvent,
@@ -60,17 +60,17 @@ impl Plugin for NetworkPlugin {
     }
 }
 
-pub type NetworkLockType = Arc<RwLock<NetworkClientType>>;
+pub type NetworkLockType = Arc<RwLock<NetworkClient>>;
 
 #[derive(Resource)]
 pub struct NetworkContainer {
-    client_network: Arc<RwLock<NetworkClientType>>,
+    client_network: Arc<RwLock<NetworkClient>>,
 }
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
         log::info!(target: "network", "Connecting to the server at {}", ip_port);
-        let network = match NetworkClientType::new(ip_port) {
+        let network = match NetworkClient::new(ip_port) {
             Ok(n) => n,
             Err(e) => return Err(e),
         };
@@ -79,7 +79,7 @@ impl NetworkContainer {
         })
     }
 
-    pub fn get_network_lock(&self) -> Arc<RwLock<NetworkClientType>> {
+    pub fn get_network_lock(&self) -> Arc<RwLock<NetworkClient>> {
         self.client_network.clone()
     }
 
