@@ -7,7 +7,7 @@ use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::{entities_manager::EntitiesManager, entity::Entity},
     main_scene::Main,
-    utils::bridge::IntoChunkPositionVector,
+    utils::bridge::{IntoChunkPositionVector, IntoNetworkVector},
 };
 use common::{
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
@@ -71,7 +71,9 @@ impl WorldManager {
         };
 
         let result = match collider_type {
-            PhysicsType::ChunkMeshCollider(_chunk_position) => RaycastResult::Block(BlockPosition::new(0, 0, 0)),
+            PhysicsType::ChunkMeshCollider(_chunk_position) => {
+                RaycastResult::Block(BlockPosition::from_global(&position.to_network()))
+            },
             PhysicsType::EntityCollider(entity_id) => {
                 let manager = self.entities_manager.bind();
                 let Some(entity) = manager.get(entity_id) else {
@@ -121,15 +123,19 @@ impl WorldManager {
     pub fn get_player_controller_mut(&mut self) -> &mut Gd<PlayerController> {
         &mut self.player_controller
     }
+
+    pub fn get_main(&self) -> Gd<Main> {
+        let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
+        main.clone()
+    }
 }
 
 #[godot_api]
 impl WorldManager {
     #[func]
     fn handler_player_move(&mut self, movement: Gd<EntityMovement>, new_chunk: bool) {
-        let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
-        let main = main.bind();
-        main.network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
+        let main = self.get_main();
+        main.bind().network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
 
         if new_chunk {
             self.chunk_map

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
-
 use crate::utils::fix_chunk_loc_pos;
 
-use super::chunk_position::ChunkPosition;
+use super::{chunk_position::ChunkPosition, position::Vector3};
 
 pub trait BlockPositionTrait {
     fn get_chunk_position(&self) -> ChunkPosition;
@@ -39,6 +38,10 @@ pub struct BlockPosition {
 impl BlockPosition {
     pub fn new(x: i64, y: i64, z: i64) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn from_global(pos: &Vector3) -> Self {
+        Self { x: pos.x as i64, y: pos.y as i64, z: pos.z as i64 }
     }
 }
 

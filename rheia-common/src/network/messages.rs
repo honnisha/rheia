@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fmt::{self, Display, Formatter};
-use std::ops::Add;
 
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
@@ -8,79 +6,15 @@ use strum_macros::Display;
 use crate::{
     blocks::block_info::BlockInfo,
     chunks::{
-        block_position::ChunkBlockPosition,
+        block_position::{BlockPosition, ChunkBlockPosition},
         chunk_position::ChunkPosition,
         utils::{PacketChunkSectionData, SectionsData},
     },
     VERTICAL_SECTIONS,
 };
 
-/// Network 3D vector
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Vector3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-impl Display for Vector3 {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "x:{} y:{} z:{}", self.x, self.y, self.z)
-    }
-}
-impl Vector3 {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z }
-    }
-
-    pub fn zero() -> Self {
-        Self { x: 0.0, y: 0.0, z: 0.0 }
-    }
-}
-
-impl Add for Vector3 {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-        }
-    }
-}
-
-pub(crate) trait IntoNetworkVector {
-    fn to_network(&self) -> Vector3;
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
-pub struct Rotation {
-    // vertical angle
-    pub yaw: f32,
-
-    // horizontal angle
-    pub pitch: f32,
-}
-impl Display for Rotation {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "yaw:{} pitch:{}", self.yaw, self.pitch)
-    }
-}
-impl PartialEq for Rotation {
-    fn eq(&self, other: &Rotation) -> bool {
-        self.yaw == other.yaw && self.pitch == other.pitch
-    }
-}
-
-impl Rotation {
-    pub fn new(yaw: f32, pitch: f32) -> Self {
-        Self { yaw, pitch }
-    }
-
-    pub fn zero() -> Self {
-        Self { yaw: 0.0, pitch: 0.0 }
-    }
-}
+pub use crate::chunks::position::{IntoNetworkVector, Vector3};
+pub use crate::chunks::rotation::Rotation;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
@@ -88,6 +22,10 @@ pub enum ClientMessages {
     ConsoleInput { command: String },
     PlayerMove { position: Vector3, rotation: Rotation },
     ChunkRecieved { chunk_positions: Vec<ChunkPosition> },
+    EditBlockRequest {
+        position: BlockPosition,
+        new_block_info: BlockInfo,
+    },
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
@@ -140,6 +78,10 @@ pub enum ServerMessages {
         id: u32,
         position: Vector3,
         rotation: Rotation,
+    },
+    EditBlock {
+        position: BlockPosition,
+        new_block_info: BlockInfo,
     },
 }
 

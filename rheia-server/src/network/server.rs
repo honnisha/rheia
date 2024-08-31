@@ -163,6 +163,9 @@ fn receive_message_system(
                 let info = PlayerConnectionInfoEvent::new(client.clone(), login);
                 connection_info_events.send(info);
             }
+            ClientMessages::EditBlockRequest { position, new_block_info } => {
+                todo!()
+            },
         }
     }
 }

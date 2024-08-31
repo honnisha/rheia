@@ -3,10 +3,14 @@ use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
 use crate::world::physics::PhysicsProxy;
 use crate::world::world_manager::{RaycastResult, WorldManager};
+use common::blocks::block_info::BlockInfo;
+use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
-use common::network::messages::Rotation;
+use common::network::messages::{NetworkMessageType, Rotation, WorldEdit};
 use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody, IQueryFilter};
-use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody, QueryFilter};
+use common::physics::{
+    PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody, QueryFilter,
+};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
@@ -198,9 +202,9 @@ impl INode3D for PlayerController {
             let mut filter = QueryFilter::default();
             filter.exclude_rigid_body(&self.rigid_body);
 
-            let translation = self
-                .character_controller
-                .move_shape(&self.collider, filter, delta, movement.to_network());
+            let translation =
+                self.character_controller
+                    .move_shape(&self.collider, filter, delta, movement.to_network());
             self.rigid_body
                 .set_position(self.rigid_body.get_position() + translation);
         }
@@ -231,7 +235,18 @@ impl INode3D for PlayerController {
 
             if let Some((result, position)) = world.bind().raycast(dir, max_toi, from, filter) {
                 let msg = match result {
-                    RaycastResult::Block(block_position) => format!("Block:{block_position:?}"),
+                    RaycastResult::Block(block_position) => {
+                        let msg = WorldEdit::EditBlock {
+                            position: block_position.clone(),
+                            new_block_info: BlockInfo::new(BlockType::Stone),
+                        };
+                        world
+                            .bind()
+                            .get_main()
+                            .bind()
+                            .network_send_message(msg, NetworkMessageType::ReliableOrdered);
+                        format!("Block:{block_position:?}")
+                    }
                     RaycastResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),
                 };
                 log::debug!(target: "player", "Hit at position {position}: {msg}");

@@ -120,6 +120,9 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     entities_manager.despawn(ids);
                 }
             }
+            ServerMessages::EditBlock { position, new_block_info } => {
+                todo!();
+            }
             _ => panic!("unsupported message"),
         }
     }
