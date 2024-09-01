@@ -188,7 +188,7 @@ impl INode3D for PlayerController {
         let world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
-        let chunk_loaded = match world.bind().get_chunk(&chunk_pos) {
+        let chunk_loaded = match world.bind().get_chunk_map().get_chunk(&chunk_pos) {
             Some(c) => c.read().is_loaded(),
             None => false,
         };
@@ -237,6 +237,7 @@ impl INode3D for PlayerController {
                 let msg = match result {
                     RaycastResult::Block(block_position) => {
                         let msg = ClientMessages::EditBlockRequest {
+                            world_slug: world.bind().get_slug().clone(),
                             position: block_position.clone(),
                             new_block_info: BlockInfo::new(BlockType::Stone),
                         };

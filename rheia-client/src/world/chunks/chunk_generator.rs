@@ -1,7 +1,6 @@
 use super::{
     chunk_column::{ChunkBase, ColumnDataLockType},
     chunk_data_formatter::format_chunk_data_with_boundaries,
-    chunk_section::ChunkSection,
     mesh::mesh_generator::generate_chunk_geometry,
     near_chunk_data::NearChunksData,
 };
@@ -27,26 +26,10 @@ pub(crate) fn generate_chunk(
         let material: Gd<Material> = Gd::from_instance_id(material_instance_id);
 
         let mut chunk_base = Gd::<ChunkBase>::from_init_fn(|base| ChunkBase::create(base));
+
         {
             let mut c = chunk_base.bind_mut();
-
-            let name = GString::from(format!("ChunkColumn {}", chunk_position));
-            c.base_mut().set_name(name);
-
-            for y in 0..VERTICAL_SECTIONS {
-                let mut section = Gd::<ChunkSection>::from_init_fn(|base| {
-                    ChunkSection::create(base, material.clone(), y as u8, chunk_position.clone())
-                });
-
-                let name = GString::from(format!("Section {}", y));
-                section.bind_mut().base_mut().set_name(name.clone());
-
-                c.base_mut().add_child(section.clone().upcast());
-                let pos = section.bind().get_section_local_position();
-                section.bind_mut().base_mut().set_position(pos);
-
-                c.sections.push(section);
-            }
+            c.spawn_sections(&chunk_position, material);
 
             let t = texture_mapper.read();
             for y in 0..VERTICAL_SECTIONS {
@@ -61,6 +44,7 @@ pub(crate) fn generate_chunk(
                 section.send_to_update_mesh(geometry);
             }
         }
+
         chunks_loaded.send((chunk_position, chunk_base.instance_id())).unwrap();
     });
 }

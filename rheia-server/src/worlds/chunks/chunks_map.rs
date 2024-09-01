@@ -1,6 +1,6 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
-use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
+use common::{blocks::block_info::BlockInfo, chunks::{block_position::{BlockPosition, BlockPositionTrait}, chunk_position::ChunkPosition}, utils::vec_remove_item, VERTICAL_SECTIONS};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
@@ -219,6 +219,19 @@ impl ChunkMap {
                 self.chunks.insert(chunk.clone(), chunk_column);
             }
         }
+    }
+
+    pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) -> bool {
+        let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
+            return false;
+        };
+
+        let (section, block_position) = position.get_block_position();
+        if section > VERTICAL_SECTIONS as u32 {
+            return false;
+        }
+        chunk_column.write().change_block(section, block_position, new_block_info);
+        return true;
     }
 }
 

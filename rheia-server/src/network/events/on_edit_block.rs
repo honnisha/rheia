@@ -2,19 +2,24 @@ use bevy::prelude::{Event, ResMut};
 use bevy_ecs::prelude::EventReader;
 use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 
-use crate::{network::{clients_container::ClientCell, sync_world_change::sync_world_block_change}, worlds::worlds_manager::WorldsManager};
+use crate::{
+    network::{clients_container::ClientCell, sync_world_change::sync_world_block_change},
+    worlds::worlds_manager::WorldsManager,
+};
 
 #[derive(Event)]
 pub struct EditBlockEvent {
     client: ClientCell,
+    world_slug: String,
     position: BlockPosition,
     new_block_info: BlockInfo,
 }
 
 impl EditBlockEvent {
-    pub fn new(client: ClientCell, position: BlockPosition, new_block_info: BlockInfo) -> Self {
+    pub fn new(client: ClientCell, world_slug: String, position: BlockPosition, new_block_info: BlockInfo) -> Self {
         Self {
             client,
+            world_slug,
             position,
             new_block_info,
         }
@@ -38,11 +43,20 @@ pub fn on_edit_block(mut edit_block_events: EventReader<EditBlockEvent>, worlds_
             }
         };
 
+        if *world_entity.get_world_slug() != event.world_slug {
+            log::error!(
+                target: "network",
+                "Client ip:{} tries to send edit block from another world!",
+                client
+            );
+            continue;
+        }
+
         let world_manager = worlds_manager
             .get_world_manager(&world_entity.get_world_slug())
             .unwrap();
 
-        world_manager.edit_block(event.position.clone(), event.new_block_info.clone());
+        world_manager.get_chunks_map().edit_block(event.position.clone(), event.new_block_info.clone());
         sync_world_block_change(&*world_manager, event.position, event.new_block_info)
     }
 }

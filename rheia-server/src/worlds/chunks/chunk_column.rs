@@ -53,8 +53,7 @@ impl ChunkColumn {
             panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
         }
         let s = self.sections.get_mut(section as usize).unwrap();
-        let cell = s.get_mut(&chunk_block).unwrap();
-        *cell = new_block_info;
+        s.insert(chunk_block, new_block_info);
     }
 
     pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {

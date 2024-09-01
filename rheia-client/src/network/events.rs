@@ -83,14 +83,14 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 sections,
             } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
-                    world.bind_mut().load_chunk(chunk_position, sections);
+                    world.bind_mut().get_chunk_map_mut().load_chunk(chunk_position, sections);
                     chunks.push(chunk_position);
                 }
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
                     for chunk_position in chunks.iter() {
-                        world.bind_mut().unload_chunk(*chunk_position);
+                        world.bind_mut().get_chunk_map_mut().unload_chunk(*chunk_position);
                     }
                 }
             }
@@ -120,8 +120,11 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     entities_manager.despawn(ids);
                 }
             }
-            ServerMessages::EditBlock { position, new_block_info } => {
-                todo!();
+            ServerMessages::EditBlock { world_slug, position, new_block_info } => {
+                if let Some(world) = get_world_mut(main, world_slug) {
+                    let mut w = world.bind_mut();
+                    w.get_chunk_map_mut().edit_block(position, new_block_info);
+                }
             }
             _ => panic!("unsupported message"),
         }

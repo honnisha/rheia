@@ -1,5 +1,5 @@
-use ahash::AHashMap;
-use common::chunks::{chunk_position::ChunkPosition, utils::SectionsData};
+use ahash::{AHashMap, HashSet};
+use common::{blocks::block_info::BlockInfo, chunks::{block_position::{BlockPosition, BlockPositionTrait}, chunk_position::ChunkPosition, utils::SectionsData}, VERTICAL_SECTIONS};
 use godot::{engine::Material, prelude::*};
 use log::error;
 use parking_lot::RwLock;
@@ -31,7 +31,7 @@ pub struct ChunkMap {
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
 
-    sended_chunks: Rc<RefCell<Vec<ChunkPosition>>>,
+    sended_chunks: Rc<RefCell<HashSet<ChunkPosition>>>,
     loaded_chunks: (
         Sender<(ChunkPosition, InstanceId)>,
         Receiver<(ChunkPosition, InstanceId)>,
@@ -80,7 +80,7 @@ impl ChunkMap {
         let chunk_column = ChunkColumn::create(chunk_position, sections);
         self.chunks
             .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
-        self.sended_chunks.borrow_mut().push(chunk_position);
+        self.sended_chunks.borrow_mut().insert(chunk_position);
     }
 
     pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
@@ -113,7 +113,6 @@ impl ChunkMap {
                 chunk_position.clone(),
                 self.loaded_chunks.0.clone(),
             );
-            chunk_column.read().set_sended();
             return false;
         });
     }
@@ -135,5 +134,18 @@ impl ChunkMap {
         for (chunk_position, chunk_lock) in self.chunks.iter_mut() {
             chunk_lock.write().set_active(chunk_position == active_chunk_position);
         }
+    }
+    
+    pub fn edit_block(&mut self, position: BlockPosition, new_block_info: BlockInfo) {
+        let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
+            return;
+        };
+
+        let (section, block_position) = position.get_block_position();
+        if section > VERTICAL_SECTIONS as u32 {
+            return;
+        }
+        chunk_column.write().change_block_info(section, block_position, new_block_info);
+        self.sended_chunks.borrow_mut().insert(position.get_chunk_position());
     }
 }

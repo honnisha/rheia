@@ -1,9 +1,10 @@
 use arrayvec::ArrayVec;
 use common::{
-    chunks::{chunk_position::ChunkPosition, utils::SectionsData},
+    blocks::block_info::BlockInfo,
+    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
     VERTICAL_SECTIONS,
 };
-use godot::prelude::*;
+use godot::{engine::Material, prelude::*};
 use parking_lot::RwLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -31,6 +32,26 @@ impl ChunkBase {
         Self {
             base,
             sections: Default::default(),
+        }
+    }
+
+    pub fn spawn_sections(&mut self, chunk_position: &ChunkPosition, material: Gd<Material>) {
+        let name = GString::from(format!("ChunkColumn {}", chunk_position));
+        self.base_mut().set_name(name);
+
+        for y in 0..VERTICAL_SECTIONS {
+            let mut section = Gd::<ChunkSection>::from_init_fn(|base| {
+                ChunkSection::create(base, material.clone(), y as u8, chunk_position.clone())
+            });
+
+            let name = GString::from(format!("Section {}", y));
+            section.bind_mut().base_mut().set_name(name.clone());
+
+            self.base_mut().add_child(section.clone().upcast());
+            let pos = section.bind().get_section_local_position();
+            section.bind_mut().base_mut().set_position(pos);
+
+            self.sections.push(section);
         }
     }
 }
@@ -67,14 +88,6 @@ impl ChunkColumn {
         &self.data
     }
 
-    pub fn is_sended(&self) -> bool {
-        self.sended.load(Ordering::Relaxed)
-    }
-
-    pub fn set_sended(&self) {
-        self.sended.store(true, Ordering::Relaxed);
-    }
-
     pub fn is_loaded(&self) -> bool {
         self.loaded.load(Ordering::Relaxed)
     }
@@ -106,5 +119,14 @@ impl ChunkColumn {
                 section.bind_mut().set_active(state);
             }
         }
+    }
+
+    pub fn change_block_info(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: BlockInfo) {
+        if section > VERTICAL_SECTIONS as u32 {
+            panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
+        }
+
+        let mut d = self.data.write();
+        d[section as usize].insert(chunk_block, new_block_info);
     }
 }

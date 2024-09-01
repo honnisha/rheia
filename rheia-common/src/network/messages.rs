@@ -23,6 +23,7 @@ pub enum ClientMessages {
     PlayerMove { position: Vector3, rotation: Rotation },
     ChunkRecieved { chunk_positions: Vec<ChunkPosition> },
     EditBlockRequest {
+        world_slug: String,
         position: BlockPosition,
         new_block_info: BlockInfo,
     },
@@ -80,6 +81,7 @@ pub enum ServerMessages {
         rotation: Rotation,
     },
     EditBlock {
+        world_slug: String,
         position: BlockPosition,
         new_block_info: BlockInfo,
     },

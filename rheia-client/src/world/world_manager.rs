@@ -1,5 +1,5 @@
 use super::{
-    chunks::chunks_map::{ChunkLock, ChunkMap},
+    chunks::chunks_map::ChunkMap,
     physics::{PhysicsProxy, PhysicsType},
     worlds_manager::TextureMapperType,
 };
@@ -9,10 +9,7 @@ use crate::{
     main_scene::Main,
     utils::bridge::{IntoChunkPositionVector, IntoNetworkVector},
 };
-use common::{
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    network::messages::NetworkMessageType, physics::QueryFilter,
-};
+use common::{chunks::block_position::BlockPosition, network::messages::NetworkMessageType, physics::QueryFilter};
 use godot::{engine::Material, prelude::*};
 
 pub enum RaycastResult {
@@ -65,7 +62,13 @@ impl WorldManager {
         }
     }
 
-    pub fn raycast(&self, dir: Vector3, max_toi: f32, from: Vector3, filter: QueryFilter) -> Option<(RaycastResult, Vector3)> {
+    pub fn raycast(
+        &self,
+        dir: Vector3,
+        max_toi: f32,
+        from: Vector3,
+        filter: QueryFilter,
+    ) -> Option<(RaycastResult, Vector3)> {
         let Some((collider_type, position)) = self.physics.raycast(dir, max_toi, from, filter) else {
             return None;
         };
@@ -73,7 +76,7 @@ impl WorldManager {
         let result = match collider_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
                 RaycastResult::Block(BlockPosition::from_global(&position.to_network()))
-            },
+            }
             PhysicsType::EntityCollider(entity_id) => {
                 let manager = self.entities_manager.bind();
                 let Some(entity) = manager.get(entity_id) else {
@@ -101,19 +104,12 @@ impl WorldManager {
         self.chunk_map.bind().get_chunks_count()
     }
 
-    pub fn get_chunk(&self, chunk_position: &ChunkPosition) -> Option<ChunkLock> {
-        if let Some(chunk) = self.chunk_map.bind().get_chunk(chunk_position) {
-            return Some(chunk.clone());
-        }
-        return None;
+    pub fn get_chunk_map(&self) -> GdRef<ChunkMap> {
+        self.chunk_map.bind()
     }
 
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
-        self.chunk_map.bind_mut().load_chunk(chunk_position, sections);
-    }
-
-    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
-        self.chunk_map.bind_mut().unload_chunk(chunk_position);
+    pub fn get_chunk_map_mut(&mut self) -> GdMut<ChunkMap> {
+        self.chunk_map.bind_mut()
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
@@ -135,7 +131,8 @@ impl WorldManager {
     #[func]
     fn handler_player_move(&mut self, movement: Gd<EntityMovement>, new_chunk: bool) {
         let main = self.get_main();
-        main.bind().network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
+        main.bind()
+            .network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
 
         if new_chunk {
             self.chunk_map

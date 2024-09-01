@@ -117,10 +117,10 @@ impl DebugInfo {
                 )
                 .get_chunk_position();
 
-                let chunk_info = match world.get_chunk(&chunk_pos) {
+                let chunk_info = match world.get_chunk_map().get_chunk(&chunk_pos) {
                     Some(c) => {
                         let c = c.read();
-                        format!("sended:{} loaded:{}", c.is_sended(), c.is_loaded())
+                        format!("loaded:{}", c.is_loaded())
                     }
                     None => "-".to_string(),
                 };

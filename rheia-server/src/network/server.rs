@@ -169,10 +169,11 @@ fn receive_message_system(
                 connection_info_events.send(info);
             }
             ClientMessages::EditBlockRequest {
+                world_slug,
                 position,
                 new_block_info,
             } => {
-                let edit = EditBlockEvent::new(client.clone(), position, new_block_info);
+                let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
                 edit_block_events.send(edit);
             }
         }

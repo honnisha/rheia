@@ -19,6 +19,7 @@ pub fn sync_world_block_change(world_manager: &WorldManager, position: BlockPosi
             let client = network.get_client();
 
             let msg = ServerMessages::EditBlock {
+                world_slug: world_manager.get_slug().clone(),
                 position: position.clone(),
                 new_block_info: new_block_info.clone(),
             };
