@@ -171,6 +171,8 @@ impl INode for WorldManager {
         map.send_chunks_to_load();
         map.spawn_loaded_chunks(&self.physics);
 
+        map.update_chunks();
+
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(30) {
             log::debug!(target: "world", "World \"{}\" process: {:.2?}", self.slug, elapsed);

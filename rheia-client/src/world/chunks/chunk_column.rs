@@ -16,7 +16,7 @@ use crate::{
     world::{physics::PhysicsProxy, worlds_manager::TextureMapperType},
 };
 
-use super::chunk_section::ChunkSection;
+use super::{chunk_data_formatter::format_chunk_data_with_boundaries, chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData};
 
 type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 
@@ -95,13 +95,32 @@ impl ChunkColumn {
         }
     }
 
-    pub fn get_chunk_position(&self) -> &ChunkPosition {
-        &self.chunk_position
-    }
-
     pub fn get_base(&self) -> Gd<ChunkBase> {
         let base: Gd<ChunkBase> = Gd::from_instance_id(self.base_id);
         base
+    }
+
+    pub fn spawn_sections(&self) {
+        assert!(!self.is_loaded(), "Chunk cannot spawn sections twice!");
+
+        let mut chunk_base = self.get_base();
+
+        let material: Gd<Material> = Gd::from_instance_id(self.material_instance_id);
+        chunk_base.bind_mut().spawn_sections(&self.chunk_position, material);
+    }
+
+    pub fn generate_section_geometry(&self, chunks_near: &NearChunksData, y: usize) {
+        let data = self.get_chunk_data().clone();
+        let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+
+        let mut chunk_base = self.get_base();
+        let mut c = chunk_base.bind_mut();
+
+        let t = self.texture_mapper.read();
+        let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
+        let mut section = c.sections[y].bind_mut();
+
+        section.set_new_geometry(geometry);
     }
 
     pub fn free(&mut self) {
@@ -132,8 +151,8 @@ impl ChunkColumn {
         c.base_mut().set_global_position(self.chunk_position.to_godot());
 
         for section in c.sections.iter_mut() {
-            if section.bind().need_sync {
-                section.bind_mut().chunk_section_sync(physics);
+            if section.bind().need_update_geometry {
+                section.bind_mut().update_geometry(physics);
             }
         }
         self.set_loaded();

@@ -39,7 +39,9 @@ pub struct ChunkMap {
     material: Gd<Material>,
 
     sended_chunks: Rc<RefCell<HashSet<ChunkPosition>>>,
-    loaded_chunks: (Sender<ChunkLock>, Receiver<ChunkLock>),
+    chunks_to_spawn: (Sender<ChunkLock>, Receiver<ChunkLock>),
+
+    chunks_to_update: Rc<RefCell<HashSet<(ChunkPosition, usize)>>>,
 }
 
 impl ChunkMap {
@@ -50,7 +52,8 @@ impl ChunkMap {
             texture_mapper,
             material,
             sended_chunks: Default::default(),
-            loaded_chunks: unbounded(),
+            chunks_to_spawn: unbounded(),
+            chunks_to_update: Default::default(),
         }
     }
 
@@ -115,7 +118,7 @@ impl ChunkMap {
             }
 
             let chunk_column = self.get_chunk(&chunk_position).unwrap();
-            generate_chunk(chunk_column.clone(), near_chunks_data, self.loaded_chunks.0.clone());
+            generate_chunk(chunk_column.clone(), near_chunks_data, self.chunks_to_spawn.0.clone());
             return false;
         });
     }
@@ -123,7 +126,7 @@ impl ChunkMap {
     /// Retrieving loaded chunks to add them to the root node
     pub fn spawn_loaded_chunks(&mut self, physics: &PhysicsProxy) {
         let mut base = self.base_mut().clone();
-        for l in self.loaded_chunks.1.drain() {
+        for l in self.chunks_to_spawn.1.drain() {
             let mut chunk_column = l.write();
 
             let chunk_base = chunk_column.get_base();
@@ -138,7 +141,7 @@ impl ChunkMap {
         }
     }
 
-    pub fn edit_block(&mut self, position: BlockPosition, new_block_info: BlockInfo) {
+    pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             return;
         };
@@ -150,6 +153,23 @@ impl ChunkMap {
         chunk_column
             .write()
             .change_block_info(section, block_position, new_block_info);
-        self.sended_chunks.borrow_mut().insert(position.get_chunk_position());
+        self.chunks_to_update
+            .borrow_mut()
+            .insert((position.get_chunk_position(), section as usize));
+    }
+
+    pub fn update_chunks(&self) {
+        self.chunks_to_update.borrow_mut().retain(|(chunk_position, y)| {
+            let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
+
+            // Load only if all chunks around are loaded
+            if !near_chunks_data.is_full() {
+                return true;
+            }
+
+            let chunk_column = self.get_chunk(&chunk_position).unwrap();
+            chunk_column.read().generate_section_geometry(&near_chunks_data, *y);
+            return false;
+        });
     }
 }

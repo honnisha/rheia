@@ -34,7 +34,7 @@ pub struct ChunkSection {
     chunk_position: ChunkPosition,
     y: u8,
 
-    pub need_sync: bool,
+    pub need_update_geometry: bool,
 
     collider: Option<PhysicsCollider>,
     colider_builder: Option<PhysicsColliderBuilder>,
@@ -55,7 +55,7 @@ impl ChunkSection {
             chunk_position,
             y,
 
-            need_sync: false,
+            need_update_geometry: false,
             collider: None,
             colider_builder: None,
         }
@@ -72,7 +72,7 @@ impl ChunkSection {
     }
 
     /// Updates the mesh from a separate thread
-    pub fn send_to_update_mesh(&mut self, geometry: Geometry) {
+    pub fn set_new_geometry(&mut self, geometry: Geometry) {
         let mesh = self.mesh.borrow_mut();
 
         let c = geometry.mesh_ist.get_surface_count();
@@ -82,13 +82,13 @@ impl ChunkSection {
 
         mesh.set_mesh(geometry.mesh_ist.upcast());
 
-        self.need_sync = true;
+        self.need_update_geometry = true;
         self.colider_builder = geometry.collider_builder
     }
 
     /// Causes an update in the main thread after the entire chunk has been loaded
-    pub fn chunk_section_sync(&mut self, physics: &PhysicsProxy) {
-        self.need_sync = false;
+    pub fn update_geometry(&mut self, physics: &PhysicsProxy) {
+        self.need_update_geometry = false;
 
         // Remove old collider if exists
         if let Some(collider) = self.collider.take() {
