@@ -1,7 +1,14 @@
 use ahash::{AHashMap, HashSet};
-use common::{blocks::block_info::BlockInfo, chunks::{block_position::{BlockPosition, BlockPositionTrait}, chunk_position::ChunkPosition, utils::SectionsData}, VERTICAL_SECTIONS};
+use common::{
+    blocks::block_info::BlockInfo,
+    chunks::{
+        block_position::{BlockPosition, BlockPositionTrait},
+        chunk_position::ChunkPosition,
+        utils::SectionsData,
+    },
+    VERTICAL_SECTIONS,
+};
 use godot::{engine::Material, prelude::*};
-use log::error;
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -10,7 +17,7 @@ use std::sync::Arc;
 use crate::world::{physics::PhysicsProxy, worlds_manager::TextureMapperType};
 
 use super::{
-    chunk_column::{ChunkBase, ChunkColumn, ColumnDataLockType},
+    chunk_column::{ChunkColumn, ColumnDataLockType},
     chunk_generator::generate_chunk,
     near_chunk_data::NearChunksData,
 };
@@ -32,10 +39,7 @@ pub struct ChunkMap {
     material: Gd<Material>,
 
     sended_chunks: Rc<RefCell<HashSet<ChunkPosition>>>,
-    loaded_chunks: (
-        Sender<(ChunkPosition, InstanceId)>,
-        Receiver<(ChunkPosition, InstanceId)>,
-    ),
+    loaded_chunks: (Sender<ChunkLock>, Receiver<ChunkLock>),
 }
 
 impl ChunkMap {
@@ -70,14 +74,20 @@ impl ChunkMap {
 
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         if self.chunks.contains_key(&chunk_position) {
-            error!(
+            log::error!(
+                target: "chunk_map",
                 "Network sended chunk to load, but it already exists: {}",
                 chunk_position
             );
             return;
         }
 
-        let chunk_column = ChunkColumn::create(chunk_position, sections);
+        let chunk_column = ChunkColumn::create(
+            chunk_position,
+            sections,
+            self.material.instance_id(),
+            self.texture_mapper.clone(),
+        );
         self.chunks
             .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
         self.sended_chunks.borrow_mut().insert(chunk_position);
@@ -90,7 +100,7 @@ impl ChunkMap {
             unloaded = true;
         }
         if !unloaded {
-            error!("Unload chunk not found: {}", chunk_position);
+            log::error!(target: "chunk_map", "Unload chunk not found: {}", chunk_position);
         }
     }
 
@@ -105,14 +115,7 @@ impl ChunkMap {
             }
 
             let chunk_column = self.get_chunk(&chunk_position).unwrap();
-            generate_chunk(
-                chunk_column.read().get_chunk_data().clone(),
-                near_chunks_data,
-                self.texture_mapper.clone(),
-                self.material.instance_id(),
-                chunk_position.clone(),
-                self.loaded_chunks.0.clone(),
-            );
+            generate_chunk(chunk_column.clone(), near_chunks_data, self.loaded_chunks.0.clone());
             return false;
         });
     }
@@ -120,13 +123,12 @@ impl ChunkMap {
     /// Retrieving loaded chunks to add them to the root node
     pub fn spawn_loaded_chunks(&mut self, physics: &PhysicsProxy) {
         let mut base = self.base_mut().clone();
-        for (chunk_position, instance_id) in self.loaded_chunks.1.drain() {
-            let l = self.get_chunk(&chunk_position).unwrap();
+        for l in self.loaded_chunks.1.drain() {
             let mut chunk_column = l.write();
 
-            let chunk_base = Gd::<ChunkBase>::from_instance_id(instance_id);
+            let chunk_base = chunk_column.get_base();
             base.add_child(chunk_base.clone().upcast());
-            chunk_column.spawn_loaded_chunk(chunk_base, physics);
+            chunk_column.spawn_loaded_chunk(physics);
         }
     }
 
@@ -135,7 +137,7 @@ impl ChunkMap {
             chunk_lock.write().set_active(chunk_position == active_chunk_position);
         }
     }
-    
+
     pub fn edit_block(&mut self, position: BlockPosition, new_block_info: BlockInfo) {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             return;
@@ -145,7 +147,9 @@ impl ChunkMap {
         if section > VERTICAL_SECTIONS as u32 {
             return;
         }
-        chunk_column.write().change_block_info(section, block_position, new_block_info);
+        chunk_column
+            .write()
+            .change_block_info(section, block_position, new_block_info);
         self.sended_chunks.borrow_mut().insert(position.get_chunk_position());
     }
 }

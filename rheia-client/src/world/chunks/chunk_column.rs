@@ -11,7 +11,10 @@ use std::sync::{
     Arc,
 };
 
-use crate::{utils::bridge::IntoGodotVector, world::physics::PhysicsProxy};
+use crate::{
+    utils::bridge::IntoGodotVector,
+    world::{physics::PhysicsProxy, worlds_manager::TextureMapperType},
+};
 
 use super::chunk_section::ChunkSection;
 
@@ -59,27 +62,51 @@ impl ChunkBase {
 /// Vertical section, contains all vertical sections
 /// with VERTICAL_SECTIONS chunks sections
 pub struct ChunkColumn {
-    base: Option<Gd<ChunkBase>>,
+    base_id: InstanceId,
 
     chunk_position: ChunkPosition,
     data: ColumnDataLockType,
-    sended: Arc<AtomicBool>,
+
+    // Is chunk spawned on base
     loaded: Arc<AtomicBool>,
+
+    pub material_instance_id: InstanceId,
+    pub texture_mapper: TextureMapperType,
 }
 
 impl ChunkColumn {
-    pub fn create(chunk_position: ChunkPosition, data: SectionsData) -> Self {
+    pub fn create(
+        chunk_position: ChunkPosition,
+        data: SectionsData,
+        material_instance_id: InstanceId,
+        texture_mapper: TextureMapperType,
+    ) -> Self {
+        let chunk_base = Gd::<ChunkBase>::from_init_fn(|base| ChunkBase::create(base));
+
         Self {
-            base: Default::default(),
+            base_id: chunk_base.instance_id(),
+
             chunk_position,
             data: Arc::new(RwLock::new(data)),
-            sended: Arc::new(AtomicBool::new(false)),
             loaded: Arc::new(AtomicBool::new(false)),
+
+            material_instance_id,
+            texture_mapper,
         }
     }
 
+    pub fn get_chunk_position(&self) -> &ChunkPosition {
+        &self.chunk_position
+    }
+
+    pub fn get_base(&self) -> Gd<ChunkBase> {
+        let base: Gd<ChunkBase> = Gd::from_instance_id(self.base_id);
+        base
+    }
+
     pub fn free(&mut self) {
-        if let Some(base) = self.base.as_mut() {
+        if self.is_loaded() {
+            let mut base = self.get_base();
             base.bind_mut().base_mut().queue_free();
         }
     }
@@ -96,9 +123,9 @@ impl ChunkColumn {
         self.loaded.store(true, Ordering::Relaxed);
     }
 
-    pub fn spawn_loaded_chunk(&mut self, mut chunk_base: Gd<ChunkBase>, physics: &PhysicsProxy) {
-        self.base = Some(chunk_base.clone());
-        let mut c = chunk_base.bind_mut();
+    pub fn spawn_loaded_chunk(&mut self, physics: &PhysicsProxy) {
+        let mut base = self.get_base();
+        let mut c = base.bind_mut();
 
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
@@ -114,7 +141,8 @@ impl ChunkColumn {
 
     /// Deactivates chunks that are far away from the player
     pub fn set_active(&mut self, state: bool) {
-        if let Some(base) = self.base.as_mut() {
+        if self.is_loaded() {
+            let mut base = self.get_base();
             for section in base.bind_mut().sections.as_mut() {
                 section.bind_mut().set_active(state);
             }
