@@ -7,11 +7,17 @@ use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::{entities_manager::EntitiesManager, entity::Entity},
     main_scene::Main,
-    utils::bridge::{IntoChunkPositionVector, IntoNetworkVector},
+    utils::{
+        bridge::{IntoChunkPositionVector, IntoNetworkVector},
+        primitives::generate_box_mesh,
+    },
 };
 use common::{chunks::block_position::BlockPosition, network::messages::NetworkMessageType, physics::QueryFilter};
-use godot::{engine::Material, prelude::*};
-
+use godot::engine::mesh::PrimitiveType;
+use godot::{
+    engine::{Material, MeshInstance3D},
+    prelude::*,
+};
 pub enum RaycastResult {
     Block(BlockPosition),
     Entity(u32, Gd<Entity>),
@@ -36,6 +42,8 @@ pub struct WorldManager {
     player_controller: Gd<PlayerController>,
 
     entities_manager: Gd<EntitiesManager>,
+
+    block_selection: Gd<MeshInstance3D>,
 }
 
 impl WorldManager {}
@@ -59,7 +67,13 @@ impl WorldManager {
             player_controller,
 
             entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
+
+            block_selection: generate_box_mesh(),
         }
+    }
+
+    pub fn get_block_selection_mut(&mut self) -> &mut Gd<MeshInstance3D> {
+        &mut self.block_selection
     }
 
     pub fn raycast(
@@ -160,6 +174,9 @@ impl INode for WorldManager {
 
         let entities_manager = self.entities_manager.clone().upcast();
         self.base_mut().add_child(entities_manager);
+
+        let block_selection = self.block_selection.clone().upcast();
+        self.base_mut().add_child(block_selection);
     }
 
     fn process(&mut self, delta: f64) {

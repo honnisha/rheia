@@ -163,6 +163,47 @@ impl PlayerController {
 
         movement
     }
+
+    pub fn update_vision(&self) {
+        let camera_controller = self.camera_controller.bind();
+        let camera = camera_controller.get_camera();
+
+        let screen = camera.get_viewport().unwrap().get_visible_rect().size;
+
+        let from = camera.project_ray_origin(screen / 2.0);
+        let to = from + camera.project_ray_normal(screen / 2.0) * 10.0;
+
+        let dir = to - from;
+        let (dir, max_toi) = (dir.normalized(), dir.length());
+
+        let mut filter = QueryFilter::default();
+        filter.exclude_rigid_body(&self.rigid_body);
+
+        let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
+        let mut w = world.bind_mut();
+        if let Some((result, position)) = w.raycast(dir, max_toi, from, filter) {
+            match result {
+                RaycastResult::Block(block_position) => {
+                    let msg = ClientMessages::EditBlockRequest {
+                        world_slug: w.get_slug().clone(),
+                        position: block_position.clone(),
+                        new_block_info: BlockInfo::new(BlockType::Stone),
+                    };
+                    if self.controls.bind().is_main_action() {
+                        w.get_main()
+                            .bind()
+                            .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
+                    }
+                    let mut block_selection = w.get_block_selection_mut();
+                    block_selection.set_visible(true);
+                    block_selection.set_position(position);
+                }
+                RaycastResult::Entity(_entity_id, _entity) => {
+                    todo!();
+                }
+            };
+        };
+    }
 }
 
 #[godot_api]
@@ -207,6 +248,8 @@ impl INode3D for PlayerController {
                     .move_shape(&self.collider, filter, delta, movement.to_network());
             self.rigid_body
                 .set_position(self.rigid_body.get_position() + translation);
+
+            self.update_vision();
         }
 
         // Sync godot object position
@@ -217,42 +260,6 @@ impl INode3D for PlayerController {
             physics_pos.y - CONTROLLER_HEIGHT / 2.0,
             physics_pos.z,
         ));
-
-        if self.controls.bind().is_main_action() {
-            let camera_controller = self.camera_controller.bind();
-            let camera = camera_controller.get_camera();
-
-            let screen = camera.get_viewport().unwrap().get_visible_rect().size;
-
-            let from = camera.project_ray_origin(screen / 2.0);
-            let to = from + camera.project_ray_normal(screen / 2.0) * 10.0;
-
-            let dir = to - from;
-            let (dir, max_toi) = (dir.normalized(), dir.length());
-
-            let mut filter = QueryFilter::default();
-            filter.exclude_rigid_body(&self.rigid_body);
-
-            if let Some((result, position)) = world.bind().raycast(dir, max_toi, from, filter) {
-                let msg = match result {
-                    RaycastResult::Block(block_position) => {
-                        let msg = ClientMessages::EditBlockRequest {
-                            world_slug: world.bind().get_slug().clone(),
-                            position: block_position.clone(),
-                            new_block_info: BlockInfo::new(BlockType::Stone),
-                        };
-                        world
-                            .bind()
-                            .get_main()
-                            .bind()
-                            .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
-                        format!("Block:{block_position:?}")
-                    }
-                    RaycastResult::Entity(entity_id, _entity) => format!("Entity:{:?}", entity_id),
-                };
-                log::debug!(target: "player", "Hit at position {position}: {msg}");
-            }
-        }
 
         // Handle player movement
         let new_movement = Gd::<EntityMovement>::from_init_fn(|_base| {
