@@ -2,7 +2,7 @@ use arrayvec::ArrayVec;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
-    VERTICAL_SECTIONS,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{engine::Material, prelude::*};
 use parking_lot::RwLock;
@@ -11,12 +11,12 @@ use std::sync::{
     Arc,
 };
 
-use crate::{
-    utils::bridge::IntoGodotVector,
-    world::{physics::PhysicsProxy, worlds_manager::TextureMapperType},
-};
+use crate::world::{physics::PhysicsProxy, worlds_manager::TextureMapperType};
 
-use super::{chunk_data_formatter::format_chunk_data_with_boundaries, chunk_section::ChunkSection, mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData};
+use super::{
+    chunk_data_formatter::format_chunk_data_with_boundaries, chunk_section::ChunkSection,
+    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
+};
 
 type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 
@@ -142,13 +142,21 @@ impl ChunkColumn {
         self.loaded.store(true, Ordering::Relaxed);
     }
 
+    pub fn get_chunk_position(&self) -> Vector3 {
+        Vector3::new(
+            self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
+            -1_f32,
+            self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
+        )
+    }
+
     pub fn spawn_loaded_chunk(&mut self, physics: &PhysicsProxy) {
         let mut base = self.get_base();
         let mut c = base.bind_mut();
 
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-        c.base_mut().set_global_position(self.chunk_position.to_godot());
+        c.base_mut().set_global_position(self.get_chunk_position());
 
         for section in c.sections.iter_mut() {
             if section.bind().need_update_geometry {

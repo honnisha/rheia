@@ -13,7 +13,6 @@ use crate::{
     },
 };
 use common::{chunks::block_position::BlockPosition, network::messages::NetworkMessageType, physics::QueryFilter};
-use godot::engine::mesh::PrimitiveType;
 use godot::{
     engine::{Material, MeshInstance3D},
     prelude::*,
@@ -43,7 +42,7 @@ pub struct WorldManager {
 
     entities_manager: Gd<EntitiesManager>,
 
-    block_selection: Gd<MeshInstance3D>,
+    block_selection: Gd<Node3D>,
 }
 
 impl WorldManager {}
@@ -58,6 +57,11 @@ impl WorldManager {
         let player_controller =
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics));
 
+        let mut selection = Node3D::new_alloc();
+        let mut mesh = generate_box_mesh();
+        selection.add_child(mesh.clone().upcast());
+        mesh.set_position(Vector3::new(0.5, 0.5, 0.5));
+
         Self {
             base,
             slug: slug,
@@ -68,11 +72,11 @@ impl WorldManager {
 
             entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
 
-            block_selection: generate_box_mesh(),
+            block_selection: selection,
         }
     }
 
-    pub fn get_block_selection_mut(&mut self) -> &mut Gd<MeshInstance3D> {
+    pub fn get_block_selection_mut(&mut self) -> &mut Gd<Node3D> {
         &mut self.block_selection
     }
 

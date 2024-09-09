@@ -1,6 +1,6 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
-use crate::utils::bridge::{IntoChunkPositionVector, IntoNetworkVector};
+use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::world::physics::PhysicsProxy;
 use crate::world::world_manager::{RaycastResult, WorldManager};
 use common::blocks::block_info::BlockInfo;
@@ -50,6 +50,8 @@ pub struct PlayerController {
 
     vertical_movement: f32,
     grounded_timer: f32,
+
+    look_at_message: String,
 }
 
 impl PlayerController {
@@ -77,6 +79,8 @@ impl PlayerController {
 
             vertical_movement: 0.0,
             grounded_timer: 0.0,
+
+            look_at_message: Default::default(),
         }
     }
 
@@ -164,7 +168,7 @@ impl PlayerController {
         movement
     }
 
-    pub fn update_vision(&self) {
+    pub fn update_vision(&mut self) {
         let camera_controller = self.camera_controller.bind();
         let camera = camera_controller.get_camera();
 
@@ -181,28 +185,45 @@ impl PlayerController {
 
         let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let mut w = world.bind_mut();
-        if let Some((result, position)) = w.raycast(dir, max_toi, from, filter) {
-            match result {
-                RaycastResult::Block(block_position) => {
+        let Some((result, _position)) = w.raycast(dir, max_toi, from, filter) else {
+            self.look_at_message = "-".to_string();
+            return;
+        };
+        self.look_at_message = match result {
+            RaycastResult::Block(block_position) => {
+                if self.controls.bind().is_main_action() {
                     let msg = ClientMessages::EditBlockRequest {
                         world_slug: w.get_slug().clone(),
                         position: block_position.clone(),
                         new_block_info: BlockInfo::new(BlockType::Stone),
                     };
-                    if self.controls.bind().is_main_action() {
-                        w.get_main()
-                            .bind()
-                            .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
-                    }
-                    let mut block_selection = w.get_block_selection_mut();
-                    block_selection.set_visible(true);
-                    block_selection.set_position(position);
+                    w.get_main()
+                        .bind()
+                        .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
                 }
-                RaycastResult::Entity(_entity_id, _entity) => {
-                    todo!();
+                if self.controls.bind().is_second_action() {
+                    let msg = ClientMessages::EditBlockRequest {
+                        world_slug: w.get_slug().clone(),
+                        position: block_position.clone(),
+                        new_block_info: BlockInfo::new(BlockType::Air),
+                    };
+                    w.get_main()
+                        .bind()
+                        .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
                 }
-            };
+                let block_selection = w.get_block_selection_mut();
+                block_selection.set_visible(true);
+                block_selection.set_position(block_position.get_position().to_godot());
+                format!("block:{block_position:?}")
+            }
+            RaycastResult::Entity(_entity_id, entity) => {
+                format!("entity:{entity}")
+            }
         };
+    }
+
+    pub fn get_look_at_message(&self) -> &String {
+        &self.look_at_message
     }
 }
 

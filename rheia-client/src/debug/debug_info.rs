@@ -38,7 +38,9 @@ Controller position: {}
 Character state: {}
 Chunks loaded: {}
 Chunk position: {}
-Chunk info: {}"
+Chunk info: {}
+Look at: {}
+"
     };
 }
 macro_rules! debug_network_string {
@@ -133,6 +135,7 @@ impl DebugInfo {
                     world.get_chunks_count(),
                     chunk_pos,
                     chunk_info,
+                    player_controller.get_look_at_message(),
                 )
             }
             None => "World: -".to_string(),

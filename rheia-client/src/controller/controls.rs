@@ -47,6 +47,11 @@ impl Controls {
         let input = Input::singleton();
         input.is_action_just_pressed(ControllerActions::ActionMain.to_string().into())
     }
+
+    pub fn is_second_action(&self) -> bool {
+        let input = Input::singleton();
+        input.is_action_just_pressed(ControllerActions::ActionSecond.to_string().into())
+    }
 }
 
 fn deadzone_threshold(value: f32) -> f32 {

@@ -150,6 +150,13 @@ impl ChunkMap {
         if section > VERTICAL_SECTIONS as u32 {
             return;
         }
+        log::info!(
+            "edit_block {:?} {:?} section:{}, block_position:{:?}",
+            position,
+            new_block_info,
+            section,
+            block_position
+        );
         chunk_column
             .write()
             .change_block_info(section, block_position, new_block_info);

@@ -3,7 +3,7 @@ use std::borrow::BorrowMut;
 use common::{
     blocks::blocks_storage::BlockType,
     chunks::chunk_position::ChunkPosition,
-    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder},
+    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder}, CHUNK_SIZE,
 };
 use godot::{
     engine::{Material, MeshInstance3D},
@@ -66,9 +66,11 @@ impl ChunkSection {
     }
 
     pub fn get_section_position(&self) -> Vector3 {
-        let mut pos = self.chunk_position.to_godot();
-        pos.y = GodotPositionConverter::get_chunk_y_local(self.y);
-        pos
+        Vector3::new(
+            self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
+            GodotPositionConverter::get_chunk_y_local(self.y) - 1_f32,
+            self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
+        )
     }
 
     /// Updates the mesh from a separate thread
