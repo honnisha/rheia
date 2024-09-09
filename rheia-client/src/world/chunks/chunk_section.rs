@@ -79,7 +79,7 @@ impl ChunkSection {
 
         let c = geometry.mesh_ist.get_surface_count();
 
-        // Set active onlt for sections that conatains vertices
+        // Set active only for sections that conatains vertices
         mesh.set_process(c > 0);
 
         mesh.set_mesh(geometry.mesh_ist.upcast());

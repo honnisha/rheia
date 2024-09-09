@@ -189,7 +189,7 @@ impl INode for WorldManager {
         map.send_chunks_to_load();
         map.spawn_loaded_chunks(&self.physics);
 
-        map.update_chunks();
+        map.update_chunks(&self.physics);
 
         let elapsed = now.elapsed();
         if elapsed > std::time::Duration::from_millis(30) {

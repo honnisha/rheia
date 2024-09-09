@@ -92,9 +92,8 @@ impl BlockPositionTrait for BlockPosition {
 
 #[cfg(test)]
 mod tests {
-    use crate::chunks::block_position::ChunkBlockPosition;
-
     use super::BlockPosition;
+    use crate::chunks::block_position::ChunkBlockPosition;
 
     #[test]
     fn test_block_position() {

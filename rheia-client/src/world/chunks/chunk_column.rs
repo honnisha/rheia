@@ -150,20 +150,25 @@ impl ChunkColumn {
         )
     }
 
-    pub fn spawn_loaded_chunk(&mut self, physics: &PhysicsProxy) {
+    pub fn spawn_loaded_chunk(&mut self) {
         let mut base = self.get_base();
         let mut c = base.bind_mut();
 
         // It must be updated in main thread because of
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
         c.base_mut().set_global_position(self.get_chunk_position());
+        self.set_loaded();
+    }
+
+    pub fn update_geometry(&mut self, physics: &PhysicsProxy) {
+        let mut base = self.get_base();
+        let mut c = base.bind_mut();
 
         for section in c.sections.iter_mut() {
             if section.bind().need_update_geometry {
                 section.bind_mut().update_geometry(physics);
             }
         }
-        self.set_loaded();
     }
 
     /// Deactivates chunks that are far away from the player

@@ -131,7 +131,8 @@ impl ChunkMap {
 
             let chunk_base = chunk_column.get_base();
             base.add_child(chunk_base.clone().upcast());
-            chunk_column.spawn_loaded_chunk(physics);
+            chunk_column.spawn_loaded_chunk();
+            chunk_column.update_geometry(physics);
         }
     }
 
@@ -165,7 +166,7 @@ impl ChunkMap {
             .insert((position.get_chunk_position(), section as usize));
     }
 
-    pub fn update_chunks(&self) {
+    pub fn update_chunks(&self, physics: &PhysicsProxy) {
         self.chunks_to_update.borrow_mut().retain(|(chunk_position, y)| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -175,7 +176,9 @@ impl ChunkMap {
             }
 
             let chunk_column = self.get_chunk(&chunk_position).unwrap();
-            chunk_column.read().generate_section_geometry(&near_chunks_data, *y);
+            let mut c = chunk_column.write();
+            c.generate_section_geometry(&near_chunks_data, *y);
+            c.update_geometry(physics);
             return false;
         });
     }
