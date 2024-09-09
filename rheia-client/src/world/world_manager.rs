@@ -13,10 +13,7 @@ use crate::{
     },
 };
 use common::{chunks::block_position::BlockPosition, network::messages::NetworkMessageType, physics::QueryFilter};
-use godot::{
-    engine::{Material, MeshInstance3D},
-    prelude::*,
-};
+use godot::{engine::Material, prelude::*};
 pub enum RaycastResult {
     Block(BlockPosition),
     Entity(u32, Gd<Entity>),

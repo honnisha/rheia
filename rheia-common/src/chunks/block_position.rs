@@ -1,4 +1,7 @@
-use crate::{utils::{fix_chunk_loc_pos, fix_loc_pos}, CHUNK_SIZE};
+use crate::{
+    utils::{fix_chunk_loc_pos, fix_loc_pos},
+    CHUNK_SIZE,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{chunk_position::ChunkPosition, position::Vector3};
@@ -56,14 +59,21 @@ impl BlockPosition {
         )
     }
 
+    fn fix_chunk_negative(pos: i64) -> u8 {
+        let mut p = pos as f32 % CHUNK_SIZE as f32;
+        if p < 0.0 {
+            p = CHUNK_SIZE as f32 + p;
+        }
+        p as u8
+    }
+
     pub fn get_block_position(&self) -> (u32, ChunkBlockPosition) {
-        let size = CHUNK_SIZE as f32;
-        let section = (self.y as f32 / size).floor() as u32;
         let block_position = ChunkBlockPosition::new(
-            (self.x as f32 % size) as u8,
-            (self.y as f32 % size) as u8,
-            (self.z as f32 % size) as u8,
+            BlockPosition::fix_chunk_negative(self.x),
+            BlockPosition::fix_chunk_negative(self.y),
+            BlockPosition::fix_chunk_negative(self.z),
         );
+        let section = (self.y as f32 / CHUNK_SIZE as f32).floor() as u32;
         return (section, block_position);
     }
 }
@@ -77,5 +87,26 @@ impl std::fmt::Debug for BlockPosition {
 impl BlockPositionTrait for BlockPosition {
     fn get_chunk_position(&self) -> ChunkPosition {
         ChunkPosition::new(fix_chunk_loc_pos(self.x as i64), fix_chunk_loc_pos(self.z as i64))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::chunks::block_position::ChunkBlockPosition;
+
+    use super::BlockPosition;
+
+    #[test]
+    fn test_block_position() {
+        let (section, block_position) = BlockPosition::new(1, 1, 1).get_block_position();
+        assert_eq!(section, 0);
+        assert_eq!(block_position, ChunkBlockPosition::new(1, 1, 1));
+    }
+
+    #[test]
+    fn test_block_position_negative() {
+        let (section, block_position) = BlockPosition::new(-1, 1, -1).get_block_position();
+        assert_eq!(section, 0);
+        assert_eq!(block_position, ChunkBlockPosition::new(15, 1, 15));
     }
 }

@@ -94,14 +94,6 @@ impl AxisPermutation {
 
     /// Returns the [`Axes`] in the order specified by the permutation.
     ///
-    /// # Example
-    ///
-    /// ```
-    /// # use block_mesh::*;
-    /// let xyz = AxisPermutation::Xyz;
-    /// assert_eq!(xyz.axes(), [Axis::X, Axis::Y, Axis::Z]);
-    /// ```
-    ///
     /// [`Axes`]: Axis
     #[inline]
     pub const fn axes(&self) -> [Axis; 3] {
