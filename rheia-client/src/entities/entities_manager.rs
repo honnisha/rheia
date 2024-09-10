@@ -20,7 +20,7 @@ impl EntitiesManager {
         }
     }
 
-    pub fn get(&self, entity_id: u32) -> Option<&Gd<Entity>> {
+    pub fn _get(&self, entity_id: u32) -> Option<&Gd<Entity>> {
         self.entities.get(&entity_id)
     }
 

@@ -3,7 +3,8 @@ use std::borrow::BorrowMut;
 use common::{
     blocks::blocks_storage::BlockType,
     chunks::chunk_position::ChunkPosition,
-    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder}, CHUNK_SIZE,
+    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder},
+    CHUNK_SIZE,
 };
 use godot::{
     engine::{Material, MeshInstance3D},
@@ -12,7 +13,7 @@ use godot::{
 use ndshape::{ConstShape, ConstShape3u32};
 
 use crate::{
-    utils::bridge::{GodotPositionConverter, IntoGodotVector, IntoNetworkVector},
+    utils::bridge::{GodotPositionConverter, IntoNetworkVector},
     world::physics::{PhysicsProxy, PhysicsType},
 };
 

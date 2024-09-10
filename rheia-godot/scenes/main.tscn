@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=3 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
+[ext_resource type="PackedScene" uid="uid://c7qoi2fie684w" path="res://scenes/cross.tscn" id="2_ihtux"]
 
 [node name="Main" type="Main"]
 
@@ -11,3 +12,6 @@ clouds_height = 0.4
 clouds_size = 0.52
 clouds_quality = 100
 wind_strength = 0.05
+
+[node name="Cross" parent="." instance=ExtResource("2_ihtux")]
+position = Vector2(0, 0)

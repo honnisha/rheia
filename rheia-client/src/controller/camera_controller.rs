@@ -1,7 +1,13 @@
 use common::network::messages::Rotation;
 use godot::prelude::*;
+use godot::engine::{Sprite2D};
 
-use super::{controls::Controls, player_controller::CAMERA_DISTANCE};
+use super::{
+    controls::Controls,
+    player_controller::{CAMERA_DISTANCE, CONTROLLER_CAMERA_OFFSET_RIGHT},
+};
+
+const CROSS_SCENE: &str = "res://scenes/cross.tscn";
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
@@ -9,14 +15,18 @@ pub struct CameraController {
     base: Base<Node3D>,
     camera: Gd<Camera3D>,
     controls: Gd<Controls>,
+    cross: Gd<Sprite2D>,
 }
 
 impl CameraController {
     pub fn create(base: Base<Node3D>, controls: Gd<Controls>) -> Self {
+        let cross = load::<PackedScene>(CROSS_SCENE).instantiate_as::<Sprite2D>();
+
         Self {
             base,
             camera: Camera3D::new_alloc(),
             controls,
+            cross,
         }
     }
 
@@ -26,7 +36,7 @@ impl CameraController {
     }
 
     /// Vertical degrees
-    pub fn get_pitch(&self) -> f32 {
+    pub fn _get_pitch(&self) -> f32 {
         self.base().get_rotation_degrees().x
     }
 
@@ -48,8 +58,15 @@ impl INode3D for CameraController {
         let camera = self.camera.clone().upcast();
         self.base_mut().add_child(camera);
 
+        let cross = self.cross.clone().upcast();
+        self.base_mut().add_child(cross);
+
+        let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+        self.cross.set_position(screen * 0.5);
+
         let mut t = self.camera.get_transform();
         t.origin.z = CAMERA_DISTANCE;
+        t.origin.x = CONTROLLER_CAMERA_OFFSET_RIGHT;
         self.camera.set_transform(t);
     }
 

@@ -3,7 +3,7 @@ use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::entities_manager::EntitiesManager,
     main_scene::Main,
-    utils::{bridge::IntoChunkPositionVector, primitives::generate_box_mesh},
+    utils::{bridge::IntoChunkPositionVector, primitives::generate_lines},
 };
 use common::network::messages::NetworkMessageType;
 use godot::{engine::Material, prelude::*};
@@ -44,7 +44,21 @@ impl WorldManager {
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics));
 
         let mut selection = Node3D::new_alloc();
-        let mut mesh = generate_box_mesh();
+
+        let positions = vec![
+            Vector3::new(-0.5, -0.5, -0.5),
+            Vector3::new(0.5, -0.5, -0.5),
+
+            Vector3::new(0.5, -0.5, -0.5),
+            Vector3::new(0.5, 0.5, -0.5),
+
+            Vector3::new(0.5, 0.5, -0.5),
+            Vector3::new(-0.5, 0.5, 1.0),
+
+            Vector3::new(-0.5, 0.5, 1.0),
+            Vector3::new(-0.5, -0.5, -0.5),
+        ];
+        let mut mesh = generate_lines(positions, Color::from_rgb(0.0, 0.0, 0.0));
         selection.add_child(mesh.clone().upcast());
         mesh.set_position(Vector3::new(0.5, 0.5, 0.5));
 

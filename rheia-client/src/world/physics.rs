@@ -11,7 +11,7 @@ use common::{
 use godot::prelude::*;
 use parking_lot::RwLock;
 
-use crate::utils::bridge::{IntoGodotVector, IntoNetworkVector};
+use crate::utils::bridge::IntoNetworkVector;
 
 #[derive(Clone)]
 pub enum PhysicsType {
