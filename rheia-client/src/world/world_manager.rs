@@ -170,7 +170,8 @@ impl INode for WorldManager {
     }
 
     fn process(&mut self, delta: f64) {
-        let now = std::time::Instant::now();
+        #[cfg(feature = "trace")]
+        let _span = tracing::span!(tracing::Level::INFO, "world_manager").entered();
 
         self.physics.step(delta as f32);
 
@@ -179,11 +180,6 @@ impl INode for WorldManager {
         map.spawn_loaded_chunks(&self.physics);
 
         map.update_chunks(&self.physics);
-
-        let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(30) {
-            log::debug!(target: "world", "World \"{}\" process: {:.2?}", self.slug, elapsed);
-        }
     }
 }
 

@@ -4,6 +4,11 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[features]
+default = ["trace"]
+
+trace = []
+
 [lib]
 crate-type = ["cdylib"]
 
@@ -59,3 +64,6 @@ flate2 = "1.0"
 fastnbt = "2"
 
 image = "0.24.8"
+
+tracing = "0.1"
+tracing-subscriber = "0.3"

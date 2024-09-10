@@ -5234,6 +5234,8 @@ dependencies = [
  "spiral 0.1.9",
  "strum 0.25.0",
  "strum_macros 0.25.3",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

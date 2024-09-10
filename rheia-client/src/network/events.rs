@@ -28,7 +28,7 @@ fn get_world_mut(main: &mut Main, world_slug: String) -> Option<&mut Gd<WorldMan
 }
 
 pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
-    let lock = main.get_network_lock();
+    let lock = main.get_network_lock().expect("network is not set");
     let network = lock.read();
     let network_info = network.get_network_info().clone();
 

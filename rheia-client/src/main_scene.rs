@@ -29,12 +29,15 @@ pub struct Main {
 }
 
 impl Main {
-    pub fn get_network_lock(&self) -> NetworkLockType {
-        self.network.as_ref().unwrap().get_network_lock()
+    pub fn get_network_lock(&self) -> Option<NetworkLockType> {
+        match self.network.as_ref() {
+            Some(n) => Some(n.get_network_lock()),
+            None => None,
+        }
     }
 
     pub fn network_send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
-        let lock = self.get_network_lock();
+        let lock = self.get_network_lock().expect("network is not set");
         let network = lock.read();
         network.send_message(message, message_type);
     }
@@ -48,7 +51,11 @@ impl Main {
     }
 
     pub fn close() {
-        Engine::singleton().get_main_loop().unwrap().cast::<SceneTree>().quit();
+        Engine::singleton()
+            .get_main_loop()
+            .expect("main loop is not found")
+            .cast::<SceneTree>()
+            .quit();
     }
 }
 
@@ -67,7 +74,15 @@ impl INode for Main {
     }
 
     fn ready(&mut self) {
-        log::set_logger(&CONSOLE_LOGGER).unwrap();
+        #[cfg(feature = "trace")]
+        if let Err(e) = tracing_subscriber::fmt::try_init() {
+            log::error!("tracing_subscriber error: {}", e)
+        }
+
+        #[cfg(not(feature = "trace"))]
+        if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
+            log::error!("log::set_logger error: {}", e)
+        }
         log::set_max_level(log::LevelFilter::Debug);
 
         let console = self.console.clone().upcast();
@@ -96,7 +111,8 @@ impl INode for Main {
     }
 
     fn process(&mut self, _delta: f64) {
-        let now = std::time::Instant::now();
+        #[cfg(feature = "trace")]
+        let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
 
         let network_info = handle_network_events(self);
 
@@ -118,11 +134,6 @@ impl INode for Main {
             if DebugInfo::is_active() {
                 self.console.bind_mut().toggle(false);
             }
-        }
-
-        let elapsed = now.elapsed();
-        if elapsed > std::time::Duration::from_millis(20) {
-            log::debug!(target: "main", "Main process: {:.2?}", elapsed);
         }
     }
 

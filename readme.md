@@ -24,9 +24,4 @@ cargo run --features bevy/dynamic_linking -p rheia-client-bevy
 cargo run --features bevy/trace_tracy -p rheia-client-bevy
 ```
 
-## Debug
-```
-    #[cfg(feature = "trace")]
-    let _span = bevy_utils::tracing::info_span!("send_chunks").entered();
-}
-```
+[Module tracing::span](https://docs.rs/tracing/latest/tracing/span/index.html)

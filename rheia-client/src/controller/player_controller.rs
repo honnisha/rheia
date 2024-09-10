@@ -256,6 +256,9 @@ impl INode3D for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
+        #[cfg(feature = "trace")]
+        let _span = tracing::span!(tracing::Level::INFO, "player_controller").entered();
+
         let world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let pos = self.get_position();
         let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
