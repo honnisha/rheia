@@ -16,6 +16,6 @@ pub(crate) fn generate_chunk(
             c.generate_section_geometry(&chunks_near, y);
         }
 
-        chunks_loaded.send(chunk_column.clone()).unwrap();
+        chunks_loaded.send(chunk_column.clone()).expect("chunks_loaded channel poisoned");
     });
 }

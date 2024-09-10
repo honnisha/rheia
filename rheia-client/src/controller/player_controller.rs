@@ -1,7 +1,7 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
-use crate::world::physics::{PhysicsProxy, PhysicsType};
+use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use crate::world::world_manager::WorldManager;
 use common::blocks::block_info::BlockInfo;
 use common::blocks::blocks_storage::BlockType;
@@ -25,9 +25,9 @@ const GROUND_TIMER: f32 = 0.5;
 const CHARACTER_GRAVITY: f32 = -10.0;
 const JUMP_SPEED: f32 = 10.0;
 
-pub(crate) const CAMERA_DISTANCE: f32 = 3.5;
+pub(crate) const CAMERA_DISTANCE: f32 = 2.5;
 pub(crate) const CONTROLLER_CAMERA_OFFSET_RIGHT: f32 = 0.45;
-pub(crate) const CONTROLLER_CAMERA_OFFSET_VERTICAL: f32 = CONTROLLER_HEIGHT * 0.9;
+pub(crate) const CONTROLLER_CAMERA_OFFSET_VERTICAL: f32 = CONTROLLER_HEIGHT * 0.95;
 
 const CONTROLLER_HEIGHT: f32 = 1.8;
 const CONTROLLER_RADIUS: f32 = 0.4;
@@ -192,6 +192,9 @@ impl PlayerController {
             self.look_at_message = "-".to_string();
             return;
         };
+
+        w.get_block_selection_mut().set_visible(false);
+
         self.look_at_message = match physics_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
                 let selected_block = cast_result.get_selected_block();
@@ -204,7 +207,7 @@ impl PlayerController {
                     w.get_main()
                         .bind()
                         .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
-                    log::info!("cast_result.normal:{:?}", cast_result.normal);
+                    let d = get_degrees_from_normal(cast_result.normal.to_godot());
                 }
                 if self.controls.bind().is_second_action() {
                     let msg = ClientMessages::EditBlockRequest {
@@ -218,8 +221,9 @@ impl PlayerController {
                 }
                 let block_selection = w.get_block_selection_mut();
                 block_selection.set_visible(true);
-                block_selection.set_position(selected_block.get_position().to_godot());
-                block_selection.set_rotation_degrees(cast_result.normal.to_godot() * 180.0);
+                block_selection
+                    .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
+                block_selection.set_rotation_degrees(get_degrees_from_normal(cast_result.normal.to_godot()));
                 format!("block:{selected_block:?}")
             }
             PhysicsType::EntityCollider(entity_id) => {

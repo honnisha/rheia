@@ -53,14 +53,17 @@ impl WorldManager {
             Vector3::new(0.5, 0.5, -0.5),
 
             Vector3::new(0.5, 0.5, -0.5),
-            Vector3::new(-0.5, 0.5, 1.0),
+            Vector3::new(-0.5, 0.5, -0.5),
 
-            Vector3::new(-0.5, 0.5, 1.0),
+            Vector3::new(-0.5, 0.5, -0.5),
             Vector3::new(-0.5, -0.5, -0.5),
+
+            Vector3::new(-0.5, -0.5, -0.5),
+            Vector3::new(0.0, 0.0, 0.0),
         ];
-        let mut mesh = generate_lines(positions, Color::from_rgb(0.0, 0.0, 0.0));
+        let mesh = generate_lines(positions, Color::from_rgb(0.0, 0.0, 0.0));
         selection.add_child(mesh.clone().upcast());
-        mesh.set_position(Vector3::new(0.5, 0.5, 0.5));
+        selection.set_visible(false);
 
         Self {
             base,

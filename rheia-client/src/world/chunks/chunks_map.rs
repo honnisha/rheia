@@ -117,7 +117,9 @@ impl ChunkMap {
                 return true;
             }
 
-            let chunk_column = self.get_chunk(&chunk_position).unwrap();
+            let chunk_column = self
+                .get_chunk(&chunk_position)
+                .expect("chunk from sended_chunks is not found");
             generate_chunk(chunk_column.clone(), near_chunks_data, self.chunks_to_spawn.0.clone());
             return false;
         });
@@ -168,7 +170,9 @@ impl ChunkMap {
                 return true;
             }
 
-            let chunk_column = self.get_chunk(&chunk_position).unwrap();
+            let chunk_column = self
+                .get_chunk(&chunk_position)
+                .expect("chunk from chunks_to_update is not found");
             let mut c = chunk_column.write();
             c.generate_section_geometry(&near_chunks_data, *y);
             c.update_geometry(physics);

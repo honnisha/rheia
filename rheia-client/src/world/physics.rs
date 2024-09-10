@@ -77,3 +77,19 @@ impl PhysicsProxy {
         }
     }
 }
+
+pub fn get_degrees_from_normal(normal: Vector3) -> Vector3 {
+    if normal == Vector3::new(0.0, 0.0, -1.0) { return Vector3::new(0.0, 0.0, 0.0) };
+    if normal == Vector3::new(-1.0, 0.0, 0.0) { return Vector3::new(0.0, 90.0, 0.0) };
+    if normal == Vector3::new(0.0, 0.0, 1.0) { return Vector3::new(0.0, 180.0, 0.0) };
+    if normal == Vector3::new(1.0, 0.0, 0.0) { return Vector3::new(0.0, 270.0, 0.0) };
+
+    // Top
+    if normal == Vector3::new(0.0, 1.0, 0.0) { return Vector3::new(90.0, 0.0, 0.0) };
+
+    // Down
+    if normal == Vector3::new(0.0, -1.0, 0.0) { return Vector3::new(-90.0, 0.0, 0.0) };
+
+    println!("get_degrees_from_normal is not support normal:{normal}");
+    return Vector3::new(33.0, 33.0, 33.0);
+}
