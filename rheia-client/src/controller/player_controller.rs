@@ -1,8 +1,8 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
-use crate::world::physics::PhysicsProxy;
-use crate::world::world_manager::{RaycastResult, WorldManager};
+use crate::world::physics::{PhysicsProxy, PhysicsType};
+use crate::world::world_manager::WorldManager;
 use common::blocks::block_info::BlockInfo;
 use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
@@ -185,16 +185,17 @@ impl PlayerController {
 
         let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let mut w = world.bind_mut();
-        let Some((result, _position)) = w.raycast(dir, max_toi, from, filter) else {
+        let Some((cast_result, physics_type)) = w.get_physics_mut().cast_ray_and_get_normal(dir, max_toi, from, filter) else {
             self.look_at_message = "-".to_string();
             return;
         };
-        self.look_at_message = match result {
-            RaycastResult::Block(block_position) => {
+        self.look_at_message = match physics_type {
+            PhysicsType::ChunkMeshCollider(_chunk_position) => {
+                let selected_block = cast_result.get_selected_block();
                 if self.controls.bind().is_main_action() {
                     let msg = ClientMessages::EditBlockRequest {
                         world_slug: w.get_slug().clone(),
-                        position: block_position.clone(),
+                        position: cast_result.get_place_block(),
                         new_block_info: BlockInfo::new(BlockType::Stone),
                     };
                     w.get_main()
@@ -204,7 +205,7 @@ impl PlayerController {
                 if self.controls.bind().is_second_action() {
                     let msg = ClientMessages::EditBlockRequest {
                         world_slug: w.get_slug().clone(),
-                        position: block_position.clone(),
+                        position: selected_block,
                         new_block_info: BlockInfo::new(BlockType::Air),
                     };
                     w.get_main()
@@ -213,12 +214,12 @@ impl PlayerController {
                 }
                 let block_selection = w.get_block_selection_mut();
                 block_selection.set_visible(true);
-                block_selection.set_position(block_position.get_position().to_godot());
-                format!("block:{block_position:?}")
-            }
-            RaycastResult::Entity(_entity_id, entity) => {
-                format!("entity:{entity}")
-            }
+                block_selection.set_position(selected_block.get_position().to_godot());
+                format!("block:{selected_block:?}")
+            },
+            PhysicsType::EntityCollider(entity_id) => {
+                format!("entity_id:{entity_id}")
+            },
         };
     }
 

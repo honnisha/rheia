@@ -4,7 +4,7 @@ use ahash::AHashMap;
 use common::{
     chunks::chunk_position::ChunkPosition,
     physics::{
-        physics::{IPhysicsCollider, IPhysicsContainer},
+        physics::{IPhysicsCollider, IPhysicsContainer, RayCastResultNormal},
         PhysicsCollider, PhysicsColliderBuilder, PhysicsContainer, PhysicsRigidBody, QueryFilter,
     },
 };
@@ -42,36 +42,36 @@ impl PhysicsProxy {
         collider
     }
 
-    pub fn spawn_rigid_body(&self, collider_builder: PhysicsColliderBuilder,) -> (PhysicsRigidBody, PhysicsCollider) {
+    pub fn spawn_rigid_body(&self, collider_builder: PhysicsColliderBuilder) -> (PhysicsRigidBody, PhysicsCollider) {
         self.physics_container.spawn_rigid_body(collider_builder)
     }
 
-    pub fn get_type_by_collider(&self, collider_id: usize) -> Option<PhysicsType> {
-        match self.collider_type_map.read().get(&collider_id) {
+    pub fn get_type_by_collider(&self, collider_id: &usize) -> Option<PhysicsType> {
+        match self.collider_type_map.read().get(collider_id) {
             Some(c) => Some(c.clone()),
             None => None,
         }
     }
 
-    pub fn raycast(
+    pub fn cast_ray_and_get_normal(
         &self,
         dir: Vector3,
         max_toi: f32,
         from: Vector3,
         filter: QueryFilter,
-    ) -> Option<(PhysicsType, Vector3)> {
+    ) -> Option<(RayCastResultNormal, PhysicsType)> {
         match self
             .physics_container
-            .raycast(dir.to_network(), max_toi, from.to_network(), filter)
+            .cast_ray_and_get_normal(dir.to_network(), max_toi, from.to_network(), filter)
         {
-            Some((collider_id, pos)) => {
-                let map = self.collider_type_map.read();
-                let Some(collider_type) = map.get(&collider_id) else {
+            Some(result) => {
+                let Some(collider_type) = self.get_type_by_collider(&result.collider_id) else {
                     panic!(
-                        "collider_id:{collider_id} not found inside physics proxy; collider_type_map is not consistent"
+                        "collider_id:{} not found inside physics proxy; collider_type_map is not consistent",
+                        result.collider_id
                     )
                 };
-                Some((collider_type.clone(), pos.to_godot()))
+                Some((result, collider_type))
             }
             None => None,
         }

@@ -1,7 +1,4 @@
-use crate::{
-    utils::{fix_chunk_loc_pos, fix_loc_pos},
-    CHUNK_SIZE,
-};
+use crate::{utils::fix_chunk_loc_pos, CHUNK_SIZE};
 use serde::{Deserialize, Serialize};
 
 use super::{chunk_position::ChunkPosition, position::Vector3};
@@ -43,20 +40,16 @@ impl BlockPosition {
         Self { x, y, z }
     }
 
-    pub fn from_global(pos: &Vector3) -> Self {
+    pub fn from_position(position: &Vector3) -> Self {
         Self {
-            x: pos.x.floor() as i64,
-            y: pos.y.floor() as i64,
-            z: pos.z.floor() as i64,
+            x: position.x.floor() as i64,
+            y: position.y.floor() as i64,
+            z: position.z.floor() as i64,
         }
     }
 
     pub fn get_position(&self) -> Vector3 {
-        Vector3::new(
-            fix_loc_pos(self.x as f32),
-            fix_loc_pos(self.y as f32),
-            fix_loc_pos(self.z as f32),
-        )
+        Vector3::new(self.x as f32, self.y as f32, self.z as f32)
     }
 
     fn fix_chunk_negative(pos: i64) -> u8 {

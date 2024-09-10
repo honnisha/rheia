@@ -13,10 +13,6 @@ pub fn vec_remove_item<T: PartialEq>(vec: &mut Vec<T>, item: &T) -> bool {
     return false;
 }
 
-pub fn fix_loc_pos(p: f32) -> f32 {
-    p
-}
-
 pub fn fix_chunk_loc_pos(p: i64) -> i64 {
     if p < 0 {
         return (p + 1_i64) / CHUNK_SIZE as i64 + -1_i64;

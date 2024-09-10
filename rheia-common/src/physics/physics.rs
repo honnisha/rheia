@@ -1,4 +1,4 @@
-use crate::network::messages::Vector3;
+use crate::{chunks::block_position::BlockPosition, network::messages::Vector3};
 
 pub trait IQueryFilter<T: IPhysicsRigidBody>: Default {
     fn exclude_rigid_body(&mut self, rigid_body: &T);
@@ -37,5 +37,47 @@ pub trait IPhysicsContainer<T: IPhysicsRigidBody, C: IPhysicsCollider, B: IPhysi
     fn spawn_rigid_body(&self, collider_builder: B) -> (T, C);
     fn spawn_collider(&self, collider_builder: B) -> C;
 
-    fn raycast(&self, dir: Vector3, max_toi: f32, origin: Vector3, filter: F) -> Option<(usize, Vector3)>;
+    fn cast_ray_and_get_normal(
+        &self,
+        dir: Vector3,
+        max_toi: f32,
+        origin: Vector3,
+        filter: F,
+    ) -> Option<RayCastResultNormal>;
+}
+
+#[derive(Debug)]
+pub struct RayCastResultNormal {
+    pub collider_id: usize,
+    pub point: Vector3,
+    pub normal: Vector3,
+}
+
+impl RayCastResultNormal {
+    pub fn get_place_block(&self) -> BlockPosition {
+        let p = self.point.clone() + self.normal.clone() * 0.5;
+        BlockPosition::from_position(&p)
+    }
+
+    pub fn get_selected_block(&self) -> BlockPosition {
+        let p = self.point.clone() - self.normal.clone() * 0.5;
+        BlockPosition::from_position(&p)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RayCastResultNormal;
+    use crate::{chunks::block_position::BlockPosition, network::messages::Vector3};
+
+    #[test]
+    fn test_normal() {
+        let result = RayCastResultNormal {
+            collider_id: 0,
+            point: Vector3::new(0.8913913, 25.0, 0.7640153),
+            normal: Vector3::new(0.0, 1.0, 0.0),
+        };
+        assert_eq!(result.get_place_block(), BlockPosition::new(0, 25, 0));
+        assert_eq!(result.get_selected_block(), BlockPosition::new(0, 24, 0));
+    }
 }

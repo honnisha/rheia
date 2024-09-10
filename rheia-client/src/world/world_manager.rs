@@ -1,23 +1,12 @@
-use super::{
-    chunks::chunks_map::ChunkMap,
-    physics::{PhysicsProxy, PhysicsType},
-    worlds_manager::TextureMapperType,
-};
+use super::{chunks::chunks_map::ChunkMap, physics::PhysicsProxy, worlds_manager::TextureMapperType};
 use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
-    entities::{entities_manager::EntitiesManager, entity::Entity},
+    entities::entities_manager::EntitiesManager,
     main_scene::Main,
-    utils::{
-        bridge::{IntoChunkPositionVector, IntoNetworkVector},
-        primitives::generate_box_mesh,
-    },
+    utils::{bridge::IntoChunkPositionVector, primitives::generate_box_mesh},
 };
-use common::{chunks::block_position::BlockPosition, network::messages::NetworkMessageType, physics::QueryFilter};
+use common::network::messages::NetworkMessageType;
 use godot::{engine::Material, prelude::*};
-pub enum RaycastResult {
-    Block(BlockPosition),
-    Entity(u32, Gd<Entity>),
-}
 
 /// Godot world
 /// Contains all things inside world
@@ -77,38 +66,16 @@ impl WorldManager {
         &mut self.block_selection
     }
 
-    pub fn raycast(
-        &self,
-        dir: Vector3,
-        max_toi: f32,
-        from: Vector3,
-        filter: QueryFilter,
-    ) -> Option<(RaycastResult, Vector3)> {
-        let Some((collider_type, position)) = self.physics.raycast(dir, max_toi, from, filter) else {
-            return None;
-        };
-
-        let result = match collider_type {
-            PhysicsType::ChunkMeshCollider(_chunk_position) => {
-                RaycastResult::Block(BlockPosition::from_global(&position.to_network()))
-            }
-            PhysicsType::EntityCollider(entity_id) => {
-                let manager = self.entities_manager.bind();
-                let Some(entity) = manager.get(entity_id) else {
-                    panic!("Entity is not found for id \"{}\"", entity_id);
-                };
-                RaycastResult::Entity(entity_id, entity.clone())
-            }
-        };
-        Some((result, position))
-    }
-
     pub fn _get_entities_manager(&self) -> GdRef<EntitiesManager> {
         self.entities_manager.bind()
     }
 
     pub fn get_entities_manager_mut(&mut self) -> GdMut<EntitiesManager> {
         self.entities_manager.bind_mut()
+    }
+
+    pub fn get_physics_mut(&mut self) -> &mut PhysicsProxy {
+        &mut self.physics
     }
 
     pub fn get_slug(&self) -> &String {
@@ -136,7 +103,12 @@ impl WorldManager {
     }
 
     pub fn get_main(&self) -> Gd<Main> {
-        let main = self.base().to_godot().get_parent().unwrap().cast::<Main>();
+        let main = self
+            .base()
+            .to_godot()
+            .get_parent()
+            .expect("main scene not found")
+            .cast::<Main>();
         main.clone()
     }
 }
@@ -195,5 +167,15 @@ impl INode for WorldManager {
         if elapsed > std::time::Duration::from_millis(30) {
             log::debug!(target: "world", "World \"{}\" process: {:.2?}", self.slug, elapsed);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use godot::prelude::*;
+
+    #[test]
+    fn test_() {
+        Vector3::new(14.464218, 28.0, -27.820688);
     }
 }

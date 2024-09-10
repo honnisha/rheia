@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{self, Display, Formatter},
-    ops::Add,
+    ops::{Add, Sub},
 };
 
 /// Network 3D vector
@@ -35,6 +35,41 @@ impl Add for Vector3 {
             y: self.y + other.y,
             z: self.z + other.z,
         }
+    }
+}
+
+impl Sub for Vector3 {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for Vector3 {
+    type Output = Self;
+
+    fn mul(self, other: f32) -> Self {
+        Self {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+        }
+    }
+}
+
+impl AsRef<Vector3> for Vector3 {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+impl AsMut<Vector3> for Vector3 {
+    fn as_mut(&mut self) -> &mut Self {
+        self
     }
 }
 

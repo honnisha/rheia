@@ -1,4 +1,4 @@
-use crate::network::messages::Vector3 as NetworkVector3;
+use crate::{network::messages::Vector3 as NetworkVector3, physics::physics::RayCastResultNormal};
 use nalgebra::Point3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::prelude::*;
@@ -104,13 +104,13 @@ impl<'a>
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    fn raycast(
+    fn cast_ray_and_get_normal(
         &self,
         dir: NetworkVector3,
         max_toi: f32,
         origin: NetworkVector3,
         filter: RapierQueryFilter,
-    ) -> Option<(usize, NetworkVector3)> {
+    ) -> Option<RayCastResultNormal> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
         let direction = dir.to_na();
 
@@ -119,7 +119,7 @@ impl<'a>
         let solid = true;
 
         let pipeline = self.query_pipeline.read();
-        if let Some((handle, toi)) = pipeline.cast_ray(
+        if let Some((handle, ray_intersection)) = pipeline.cast_ray_and_get_normal(
             &self.rigid_body_set.read(),
             &self.collider_set.read(),
             &ray,
@@ -127,11 +127,17 @@ impl<'a>
             solid,
             filter.filter,
         ) {
-            let point = ray.point_at(toi);
-            return Some((
-                handle.into_raw_parts().0 as usize,
-                NetworkVector3::new(point.x, point.y, point.z),
-            ));
+            let point = ray.point_at(ray_intersection.time_of_impact);
+            let result = RayCastResultNormal {
+                collider_id: handle.into_raw_parts().0 as usize,
+                point: NetworkVector3::new(point.x, point.y, point.z),
+                normal: NetworkVector3::new(
+                    ray_intersection.normal.x,
+                    ray_intersection.normal.y,
+                    ray_intersection.normal.z,
+                ),
+            };
+            return Some(result);
         }
         return None;
     }
