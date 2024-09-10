@@ -22,21 +22,21 @@ pub fn get_client_channels_config() -> Vec<ChannelConfig> {
     vec![
         ChannelConfig {
             channel_id: ClientChannel::ReliableOrdered.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024,
+            max_memory_usage_bytes: 1024 * 1024 * 5,
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
         },
         ChannelConfig {
             channel_id: ClientChannel::ReliableUnordered.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024,
+            max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::ReliableUnordered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
         },
         ChannelConfig {
             channel_id: ClientChannel::Unreliable.into(),
-            max_memory_usage_bytes: 1 * 1024 * 1024,
+            max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::Unreliable,
         },
     ]
@@ -62,21 +62,21 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
     vec![
         ChannelConfig {
             channel_id: ServerChannel::ReliableOrdered.into(),
-            max_memory_usage_bytes: 5 * 1024 * 1024, // in MB
+            max_memory_usage_bytes: 1024 * 1024 * 5,
             send_type: SendType::ReliableOrdered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
         },
         ChannelConfig {
             channel_id: ServerChannel::ReliableUnordered.into(),
-            max_memory_usage_bytes: 5 * 1024 * 1024,
+            max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::ReliableUnordered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
         },
         ChannelConfig {
             channel_id: ServerChannel::Unreliable.into(),
-            max_memory_usage_bytes: 5 * 1024 * 1024,
+            max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::Unreliable,
         },
     ]

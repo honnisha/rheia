@@ -23,7 +23,7 @@ pub fn sync_world_block_change(world_manager: &WorldManager, position: BlockPosi
                 position: position.clone(),
                 new_block_info: new_block_info.clone(),
             };
-            client.send_message(NetworkMessageType::ReliableOrdered, msg);
+            client.send_message(NetworkMessageType::WorldInfo, msg);
         }
     }
 }

@@ -1,6 +1,6 @@
 use common::network::messages::Rotation;
+use godot::engine::Sprite2D;
 use godot::prelude::*;
-use godot::engine::{Sprite2D};
 
 use super::{
     controls::Controls,
@@ -53,6 +53,15 @@ impl CameraController {
 }
 
 #[godot_api]
+impl CameraController {
+    #[func]
+    fn on_viewport_size_changed(&mut self) {
+        let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+        self.cross.set_position(screen * 0.5);
+    }
+}
+
+#[godot_api]
 impl INode3D for CameraController {
     fn ready(&mut self) {
         let camera = self.camera.clone().upcast();
@@ -63,6 +72,11 @@ impl INode3D for CameraController {
 
         let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
         self.cross.set_position(screen * 0.5);
+
+        self.base().get_tree().unwrap().get_root().unwrap().connect(
+            "size_changed".into(),
+            Callable::from_object_method(&self.base().to_godot(), "on_viewport_size_changed"),
+        );
 
         let mut t = self.camera.get_transform();
         t.origin.z = CAMERA_DISTANCE;

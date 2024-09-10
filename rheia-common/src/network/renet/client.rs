@@ -114,6 +114,7 @@ impl RenetClientNetwork {
             NetworkMessageType::ReliableOrdered => ServerChannel::ReliableOrdered,
             NetworkMessageType::ReliableUnordered => ServerChannel::ReliableUnordered,
             NetworkMessageType::Unreliable => ServerChannel::Unreliable,
+            NetworkMessageType::WorldInfo => ServerChannel::ReliableOrdered,
         }
     }
 

@@ -91,4 +91,5 @@ pub enum NetworkMessageType {
     ReliableOrdered,
     ReliableUnordered,
     Unreliable,
+    WorldInfo,
 }

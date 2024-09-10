@@ -171,6 +171,6 @@ fn handle_events_system(
         let input = ClientMessages::ChunkRecieved {
             chunk_positions: chunks,
         };
-        network.send_message(&input, NetworkMessageType::ReliableOrdered);
+        network.send_message(&input, NetworkMessageType::WorldInfo);
     }
 }

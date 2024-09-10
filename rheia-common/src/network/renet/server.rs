@@ -52,6 +52,7 @@ impl RenetServerNetwork {
             NetworkMessageType::ReliableOrdered => ServerChannel::ReliableOrdered,
             NetworkMessageType::Unreliable => ServerChannel::Unreliable,
             NetworkMessageType::ReliableUnordered => ServerChannel::ReliableUnordered,
+            NetworkMessageType::WorldInfo => ServerChannel::ReliableOrdered,
         }
     }
 }

@@ -207,7 +207,6 @@ impl PlayerController {
                     w.get_main()
                         .bind()
                         .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
-                    let d = get_degrees_from_normal(cast_result.normal.to_godot());
                 }
                 if self.controls.bind().is_second_action() {
                     let msg = ClientMessages::EditBlockRequest {

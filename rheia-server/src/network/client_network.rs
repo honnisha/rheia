@@ -163,7 +163,7 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        self.send_message(NetworkMessageType::ReliableUnordered, message);
+        self.send_message(NetworkMessageType::WorldInfo, message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
