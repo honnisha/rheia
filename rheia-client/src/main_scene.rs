@@ -15,6 +15,11 @@ use godot::prelude::*;
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[cfg(feature = "trace")]
+#[global_allocator]
+static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
+    tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
+
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct Main {
@@ -74,12 +79,6 @@ impl INode for Main {
     }
 
     fn ready(&mut self) {
-        #[cfg(feature = "trace")]
-        if let Err(e) = tracing_subscriber::fmt::try_init() {
-            log::error!("tracing_subscriber error: {}", e)
-        }
-
-        #[cfg(not(feature = "trace"))]
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
             log::error!("log::set_logger error: {}", e)
         }
