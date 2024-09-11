@@ -20,7 +20,7 @@ pub trait IPhysicsCollider: Clone {
 pub trait IPhysicsCharacterController<T: IPhysicsRigidBody, C: IPhysicsCollider, F: IQueryFilter<T>> {
     fn create(custom_mass: Option<f32>) -> Self;
     fn move_shape(&mut self, collider: &C, filter: F, delta: f64, impulse: Vector3) -> Vector3;
-    fn is_grounded(&mut self) -> bool;
+    fn is_grounded(&self) -> bool;
     fn get_custom_mass(&mut self) -> &Option<f32>;
 }
 

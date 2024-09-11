@@ -1,10 +1,10 @@
-use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
-use crate::physics::physics::IPhysicsCharacterController;
-use rapier3d::control::{CharacterAutostep, CharacterCollision, CharacterLength, KinematicCharacterController};
 use super::bridge::IntoNaVector3;
 use super::collider::RapierPhysicsCollider;
 use super::query_filter::RapierQueryFilter;
 use super::rigid_body::RapierPhysicsRigidBody;
+use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
+use crate::physics::physics::IPhysicsCharacterController;
+use rapier3d::control::{CharacterCollision, CharacterLength, KinematicCharacterController};
 
 pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
@@ -19,11 +19,11 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollid
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Absolute(0.01);
         character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.1));
-        character_controller.autostep = Some(CharacterAutostep {
-            max_height: CharacterLength::Absolute(0.5),
-            min_width: CharacterLength::Absolute(0.5),
-            include_dynamic_bodies: false,
-        });
+        //character_controller.autostep = Some(CharacterAutostep {
+        //    max_height: CharacterLength::Absolute(0.5),
+        //    min_width: CharacterLength::Absolute(0.5),
+        //    include_dynamic_bodies: false,
+        //});
         Self {
             character_controller,
             custom_mass,
@@ -74,7 +74,7 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollid
         corrected_movement.translation.to_network()
     }
 
-    fn is_grounded(&mut self) -> bool {
+    fn is_grounded(&self) -> bool {
         self.grounded
     }
 

@@ -23,7 +23,7 @@ const MOVEMENT_SPEED: f32 = 4.0;
 const GROUND_TIMER: f32 = 0.5;
 
 const CHARACTER_GRAVITY: f32 = -10.0;
-const JUMP_SPEED: f32 = 10.0;
+const JUMP_SPEED: f32 = 7.5;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 2.5;
 pub(crate) const CONTROLLER_CAMERA_OFFSET_RIGHT: f32 = 0.45;
