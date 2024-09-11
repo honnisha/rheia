@@ -1,11 +1,14 @@
 use crate::network::messages::Vector3 as NetworkVector3;
 use crate::physics::physics::IPhysicsCollider;
+use physx::owner::Owner;
+
+use super::types::{PxRigidStatic, PxShape};
 
 #[derive(Clone)]
 pub struct PhysxPhysicsCollider {}
 
 impl PhysxPhysicsCollider {
-    fn create() -> Self {
+    pub(crate) fn create(actor: Owner<PxRigidStatic>, shape: Owner<PxShape>) -> Self {
         Self {}
     }
 }

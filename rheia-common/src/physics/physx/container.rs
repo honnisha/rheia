@@ -1,6 +1,9 @@
 use super::{
-    collider::PhysxPhysicsCollider, controller::PhysxPhysicsController, query_filter::PhysxQueryFilter,
+    collider::PhysxPhysicsCollider,
+    controller::PhysxPhysicsController,
+    query_filter::PhysxQueryFilter,
     rigid_body::PhysxPhysicsRigidBody,
+    types::{PxRigidStatic, PxShape},
 };
 use crate::{
     chunks::position::IntoNetworkVector,
@@ -8,10 +11,18 @@ use crate::{
     physics::physics::{IPhysicsContainer, RayCastResultNormal},
 };
 use parking_lot::RwLock;
-use physx::traits::Class;
-use physx_sys::{PxHitFlags, PxSceneQueryExt_raycastSingle};
-use std::ptr::null_mut;
+use physx::owner::Owner;
+use physx::{
+    math::{PxTransform, PxVec3},
+    prelude::{Physics, RigidActor, RigidStatic},
+    traits::Class,
+};
+use physx_sys::{
+    phys_PxCreateStatic, PxHitFlags, PxPhysics_createShape_mut, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut,
+    PxShapeFlags,
+};
 use std::{mem::MaybeUninit, sync::Arc};
+use std::{ops::Deref, ptr::null_mut};
 
 use super::{bridge::IntoPxVec3, collider_builder::PhysxPhysicsColliderBuilder};
 
@@ -36,13 +47,61 @@ impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysics
 
     fn spawn_rigid_body(
         &self,
-        _collider_builder: PhysxPhysicsColliderBuilder,
+        collider_builder: PhysxPhysicsColliderBuilder,
     ) -> (PhysxPhysicsRigidBody, PhysxPhysicsCollider) {
-        todo!()
+        let mut controller = self.controller.as_ref().write();
+
+        let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
+        let geometry = collider_builder.get_geometry(&mut *controller);
+        let actor: Owner<PxRigidStatic> = unsafe {
+            RigidStatic::from_raw(
+                phys_PxCreateStatic(
+                    controller.physics.as_mut_ptr(),
+                    PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)).as_ptr(),
+                    geometry.deref().as_ptr(),
+                    material.as_mut_ptr(),
+                    PxTransform::default().as_ptr(),
+                ),
+                (),
+            )
+            .unwrap()
+        };
+
+        unsafe {
+            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), std::ptr::null());
+        }
+        let rigid_body = PhysxPhysicsRigidBody::create(actor);
     }
 
-    fn spawn_collider(&self, _collider_builder: PhysxPhysicsColliderBuilder) -> PhysxPhysicsCollider {
-        todo!()
+    fn spawn_collider(&self, mut collider_builder: PhysxPhysicsColliderBuilder) -> PhysxPhysicsCollider {
+        let mut controller = self.controller.as_ref().write();
+
+        let mut actor = controller
+            .physics
+            .create_static(PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)), ())
+            .unwrap();
+        unsafe {
+            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), std::ptr::null());
+        }
+
+        let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
+        let geometry = collider_builder.get_geometry(&mut *controller);
+        let flags = PxShapeFlags::SceneQueryShape | PxShapeFlags::SimulationShape | PxShapeFlags::Visualization;
+        let mut shape: Owner<PxShape> = unsafe {
+            physx::shape::Shape::from_raw(
+                PxPhysics_createShape_mut(
+                    controller.physics.as_mut_ptr(),
+                    geometry.deref().as_ptr(),
+                    material.as_mut_ptr(),
+                    true,
+                    flags,
+                ),
+                (),
+            )
+            .unwrap()
+        };
+        actor.attach_shape(&mut shape);
+        PhysxPhysicsCollider::create(actor, shape)
     }
 
     fn cast_ray_and_get_normal(

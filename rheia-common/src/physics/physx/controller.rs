@@ -8,7 +8,7 @@ use super::container::PhysxPhysicsContainer;
 use super::types::{OnAdvance, OnCollision, PxScene, PxShape};
 
 pub struct PhysxPhysicsController {
-    physics: PhysicsFoundation<DefaultAllocator, PxShape>,
+    pub(crate) physics: PhysicsFoundation<DefaultAllocator, PxShape>,
     pub(crate) scene: Owner<PxScene>,
 }
 

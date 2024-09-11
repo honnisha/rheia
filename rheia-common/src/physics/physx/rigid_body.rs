@@ -1,11 +1,14 @@
 use crate::network::messages::Vector3 as NetworkVector3;
 use crate::physics::physics::IPhysicsRigidBody;
+use physx::owner::Owner;
+
+use super::types::PxRigidStatic;
 
 #[derive(Clone)]
 pub struct PhysxPhysicsRigidBody {}
 
 impl PhysxPhysicsRigidBody {
-    fn create() -> Self {
+    pub(crate) fn create(actor: Owner<PxRigidStatic>) -> Self {
         Self {}
     }
 }
