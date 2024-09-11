@@ -26,6 +26,12 @@ impl Vector3 {
     }
 }
 
+impl PartialEq for Vector3 {
+    fn eq(&self, other: &Vector3) -> bool {
+        self.x == other.x && self.y == other.y && self.z == other.z
+    }
+}
+
 impl Add for Vector3 {
     type Output = Self;
 

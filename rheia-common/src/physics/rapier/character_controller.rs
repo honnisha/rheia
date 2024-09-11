@@ -82,3 +82,28 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollid
         &self.custom_mass
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::network::messages::Vector3 as NetworkVector3;
+    use crate::physics::{
+        physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsContainer},
+        rapier::{
+            character_controller::RapierPhysicsCharacterController, collider_builder::RapierPhysicsColliderBuilder,
+            container::RapierPhysicsContainer, query_filter::RapierQueryFilter,
+        },
+    };
+
+    #[test]
+    fn test_move_shape() {
+        let physics = RapierPhysicsContainer::default();
+        let collider_builder = RapierPhysicsColliderBuilder::cylinder(2.0, 1.0);
+        let (_rigid_body, collider) = physics.spawn_rigid_body(collider_builder);
+
+        let mut character_controller = RapierPhysicsCharacterController::create(Some(1.0));
+        let filter = RapierQueryFilter::default();
+
+        let result = character_controller.move_shape(&collider, filter, 0.5, NetworkVector3::new(0.0, 1.0, 0.0));
+        assert_eq!(result, NetworkVector3::new(0.0, 1.0, 0.0));
+    }
+}
