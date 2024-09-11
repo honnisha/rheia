@@ -1,7 +1,6 @@
 use super::bridge::IntoNaVector3;
 use super::collider::RapierPhysicsCollider;
 use super::query_filter::RapierQueryFilter;
-use super::rigid_body::RapierPhysicsRigidBody;
 use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
 use crate::physics::physics::IPhysicsCharacterController;
 use rapier3d::control::{CharacterCollision, CharacterLength, KinematicCharacterController};
@@ -12,7 +11,7 @@ pub struct RapierPhysicsCharacterController {
     grounded: bool,
 }
 
-impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollider, RapierQueryFilter<'a>>
+impl<'a> IPhysicsCharacterController<RapierPhysicsCollider, RapierQueryFilter<'a>>
     for RapierPhysicsCharacterController
 {
     fn create(custom_mass: Option<f32>) -> Self {
@@ -86,8 +85,9 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsRigidBody, RapierPhysicsCollid
 #[cfg(test)]
 mod tests {
     use crate::network::messages::Vector3 as NetworkVector3;
+    use crate::physics::physics::{IPhysicsCharacterController, IPhysicsContainer};
     use crate::physics::{
-        physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsContainer},
+        physics::IPhysicsColliderBuilder,
         rapier::{
             character_controller::RapierPhysicsCharacterController, collider_builder::RapierPhysicsColliderBuilder,
             container::RapierPhysicsContainer, query_filter::RapierQueryFilter,
@@ -98,7 +98,7 @@ mod tests {
     fn test_move_shape() {
         let physics = RapierPhysicsContainer::default();
         let collider_builder = RapierPhysicsColliderBuilder::cylinder(2.0, 1.0);
-        let (_rigid_body, collider) = physics.spawn_rigid_body(collider_builder);
+        let collider = physics.spawn_collider(collider_builder);
 
         let mut character_controller = RapierPhysicsCharacterController::create(Some(1.0));
         let filter = RapierQueryFilter::default();

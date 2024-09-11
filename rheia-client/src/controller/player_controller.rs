@@ -7,10 +7,8 @@ use common::blocks::block_info::BlockInfo;
 use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::network::messages::{ClientMessages, NetworkMessageType, Rotation};
-use common::physics::physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsRigidBody, IQueryFilter};
-use common::physics::{
-    PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, PhysicsRigidBody, QueryFilter,
-};
+use common::physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
+use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 
@@ -46,7 +44,6 @@ pub struct PlayerController {
     cache_movement: Option<Gd<EntityMovement>>,
 
     // Physics
-    rigid_body: PhysicsRigidBody,
     collider: PhysicsCollider,
     character_controller: PhysicsCharacterController,
 
@@ -64,7 +61,7 @@ impl PlayerController {
         camera_controller.set_position(Vector3::new(0.0, CONTROLLER_CAMERA_OFFSET_VERTICAL, 0.0));
 
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
-        let (rigid_body, collider) = physics.spawn_rigid_body(collider_builder);
+        let collider = physics.create_collider(collider_builder, None);
 
         Self {
             base,
@@ -75,7 +72,6 @@ impl PlayerController {
             controls,
             cache_movement: None,
 
-            rigid_body,
             character_controller: PhysicsCharacterController::create(Some(CONTROLLER_MASS)),
             collider,
 
@@ -111,7 +107,7 @@ impl PlayerController {
         // The center of the physical collider at his center
         // So it shifts to half the height
         let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
-        self.rigid_body.set_position(physics_pos.to_network());
+        self.collider.set_position(physics_pos.to_network());
     }
 
     pub fn set_rotation(&mut self, rotation: Rotation) {
@@ -183,7 +179,7 @@ impl PlayerController {
         let (dir, max_toi) = (dir.normalized(), dir.length());
 
         let mut filter = QueryFilter::default();
-        filter.exclude_rigid_body(&self.rigid_body);
+        filter.exclude_exclude_collider(&self.collider);
 
         let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let mut w = world.bind_mut();
@@ -268,25 +264,24 @@ impl INode3D for PlayerController {
         };
 
         // Set lock if chunk is in loading
-        self.rigid_body.set_enabled(chunk_loaded);
+        self.collider.set_enabled(chunk_loaded);
 
         if chunk_loaded {
             let movement = self.get_movement(delta);
 
             let mut filter = QueryFilter::default();
-            filter.exclude_rigid_body(&self.rigid_body);
+            filter.exclude_exclude_collider(&self.collider);
 
             let translation =
                 self.character_controller
                     .move_shape(&self.collider, filter, delta, movement.to_network());
-            self.rigid_body
-                .set_position(self.rigid_body.get_position() + translation);
+            self.collider.set_position(self.collider.get_position() + translation);
 
             self.update_vision();
         }
 
         // Sync godot object position
-        let physics_pos = self.rigid_body.get_position();
+        let physics_pos = self.collider.get_position();
         // Controller position is lowered by half of the center of mass position
         self.base_mut().set_position(Vector3::new(
             physics_pos.x,

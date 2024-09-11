@@ -1,9 +1,5 @@
 use super::{
-    collider::PhysxPhysicsCollider,
-    controller::PhysxPhysicsController,
-    query_filter::PhysxQueryFilter,
-    rigid_body::PhysxPhysicsRigidBody,
-    types::{PxRigidStatic, PxShape},
+    collider::PhysxPhysicsCollider, controller::PhysxPhysicsController, query_filter::PhysxQueryFilter, types::PxShape,
 };
 use crate::{
     chunks::position::IntoNetworkVector,
@@ -11,15 +7,14 @@ use crate::{
     physics::physics::{IPhysicsContainer, RayCastResultNormal},
 };
 use parking_lot::RwLock;
-use physx::owner::Owner;
 use physx::{
     math::{PxTransform, PxVec3},
-    prelude::{Physics, RigidActor, RigidStatic},
+    prelude::{Physics, RigidActor},
     traits::Class,
 };
+use physx::{owner::Owner, shape::Shape};
 use physx_sys::{
-    phys_PxCreateStatic, PxHitFlags, PxPhysics_createShape_mut, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut,
-    PxShapeFlags,
+    PxHitFlags, PxPhysics_createShape_mut, PxSceneQueryExt_raycastSingle, PxScene_addActor_mut, PxShapeFlags,
 };
 use std::{mem::MaybeUninit, sync::Arc};
 use std::{ops::Deref, ptr::null_mut};
@@ -38,39 +33,9 @@ impl Default for PhysxPhysicsContainer {
     }
 }
 
-impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQueryFilter>
-    for PhysxPhysicsContainer
-{
+impl IPhysicsContainer<PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQueryFilter> for PhysxPhysicsContainer {
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
-    }
-
-    fn spawn_rigid_body(
-        &self,
-        collider_builder: PhysxPhysicsColliderBuilder,
-    ) -> (PhysxPhysicsRigidBody, PhysxPhysicsCollider) {
-        let mut controller = self.controller.as_ref().write();
-
-        let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
-        let geometry = collider_builder.get_geometry(&mut *controller);
-        let actor: Owner<PxRigidStatic> = unsafe {
-            RigidStatic::from_raw(
-                phys_PxCreateStatic(
-                    controller.physics.as_mut_ptr(),
-                    PxTransform::from_translation(&PxVec3::new(0.0, 0.0, 0.0)).as_ptr(),
-                    geometry.deref().as_ptr(),
-                    material.as_mut_ptr(),
-                    PxTransform::default().as_ptr(),
-                ),
-                (),
-            )
-            .unwrap()
-        };
-
-        unsafe {
-            PxScene_addActor_mut(controller.scene.as_mut_ptr(), actor.as_mut_ptr(), std::ptr::null());
-        }
-        let rigid_body = PhysxPhysicsRigidBody::create(actor);
     }
 
     fn spawn_collider(&self, mut collider_builder: PhysxPhysicsColliderBuilder) -> PhysxPhysicsCollider {
@@ -87,6 +52,7 @@ impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysics
         let mut material = controller.physics.create_material(0.0, 0.0, 0.0, ()).unwrap();
         let geometry = collider_builder.get_geometry(&mut *controller);
         let flags = PxShapeFlags::SceneQueryShape | PxShapeFlags::SimulationShape | PxShapeFlags::Visualization;
+        //panic!("geometry.deref().as_ptr():{:?}", geometry.deref().as_ptr());
         let mut shape: Owner<PxShape> = unsafe {
             physx::shape::Shape::from_raw(
                 PxPhysics_createShape_mut(
@@ -96,12 +62,12 @@ impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysics
                     true,
                     flags,
                 ),
-                (),
+                rand::random::<usize>(),
             )
             .unwrap()
         };
         actor.attach_shape(&mut shape);
-        PhysxPhysicsCollider::create(actor, shape)
+        PhysxPhysicsCollider::create(self.controller.clone(), actor, shape)
     }
 
     fn cast_ray_and_get_normal(
@@ -135,9 +101,14 @@ impl IPhysicsContainer<PhysxPhysicsRigidBody, PhysxPhysicsCollider, PhysxPhysics
         let raycast_hit = unsafe { raycast_hit.assume_init() };
 
         Some(RayCastResultNormal {
-            collider_id: todo!(),
+            collider_id: unsafe { get_shape_id_from_ptr(raycast_hit.shape) },
             point: raycast_hit.position.to_network(),
             normal: raycast_hit.normal.to_network(),
         })
     }
+}
+
+unsafe fn get_shape_id_from_ptr(shape: *const physx_sys::PxShape) -> usize {
+    let shape = &*(shape as *const PxShape);
+    *shape.get_user_data()
 }

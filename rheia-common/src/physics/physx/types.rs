@@ -1,7 +1,7 @@
 use physx::prelude::*;
 
 pub type PxMaterial = physx::material::PxMaterial<()>;
-pub type PxShape = physx::shape::PxShape<(), PxMaterial>;
+pub type PxShape = physx::shape::PxShape<usize, PxMaterial>;
 pub type PxArticulationLink = physx::articulation_link::PxArticulationLink<(), PxShape>;
 pub type PxRigidStatic = physx::rigid_static::PxRigidStatic<(), PxShape>;
 pub type PxRigidDynamic = physx::rigid_dynamic::PxRigidDynamic<(), PxShape>;
@@ -9,7 +9,7 @@ pub type PxArticulationReducedCoordinate =
     physx::articulation_reduced_coordinate::PxArticulationReducedCoordinate<(), PxArticulationLink>;
 
 pub type PxScene = physx::scene::PxScene<
-    (),
+    *const std::ffi::c_void,
     PxArticulationLink,
     PxRigidStatic,
     PxRigidDynamic,

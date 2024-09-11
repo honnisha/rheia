@@ -8,7 +8,7 @@ use crate::physics::physics::IPhysicsContainer;
 
 use super::{
     bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder,
-    controller::RapierPhysicsController, query_filter::RapierQueryFilter, rigid_body::RapierPhysicsRigidBody,
+    controller::RapierPhysicsController, query_filter::RapierQueryFilter,
 };
 
 #[derive(Clone)]
@@ -67,34 +67,11 @@ impl Default for RapierPhysicsContainer {
     }
 }
 
-impl<'a>
-    IPhysicsContainer<
-        RapierPhysicsRigidBody,
-        RapierPhysicsCollider,
-        RapierPhysicsColliderBuilder,
-        RapierQueryFilter<'a>,
-    > for RapierPhysicsContainer
+impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, RapierQueryFilter<'a>>
+    for RapierPhysicsContainer
 {
     fn step(&self, delta: f32) {
         self.controller.as_ref().write().step(delta, self);
-    }
-
-    fn spawn_rigid_body(
-        &self,
-        mut collider_builder: RapierPhysicsColliderBuilder,
-    ) -> (RapierPhysicsRigidBody, RapierPhysicsCollider) {
-        let mut rigid_body = RigidBodyBuilder::kinematic_position_based().build();
-        rigid_body.set_enabled_rotations(false, false, false, true);
-        let rigid_handle = self.rigid_body_set.write().insert(rigid_body);
-        let rigid = RapierPhysicsRigidBody::create(&self, rigid_handle);
-
-        let mut collider_set = self.collider_set.write();
-        let mut rigid_body_set = self.rigid_body_set.write();
-        let builder = std::mem::take(&mut collider_builder.builder);
-        let collider_handle = collider_set.insert_with_parent(builder, rigid_handle, &mut rigid_body_set);
-        let collider = RapierPhysicsCollider::create(&self, collider_handle);
-
-        (rigid, collider)
     }
 
     fn spawn_collider(&self, mut collider_builder: RapierPhysicsColliderBuilder) -> RapierPhysicsCollider {

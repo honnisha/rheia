@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["network-renet", "physics-physx"]
+default = ["network-renet", "physics-rapier"]
 
 network-renet = ["renet"]
 network-steamworks = ["steamworks"]
@@ -21,6 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 log = { version = "0.4.22" }
 flume = "0.11.0"
 num = "0.4"
+rand = "0.8.5"
 
 # Scripts
 rhai = { version = "1.19.0", features = ["internals", "serde"] }

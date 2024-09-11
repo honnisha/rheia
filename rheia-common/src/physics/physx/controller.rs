@@ -20,9 +20,9 @@ impl PhysxPhysicsController {
                 gravity: PxVec3::new(0.0, -9.81, 0.0),
                 on_advance: Some(OnAdvance),
                 on_collide: Some(OnCollision),
-                ..SceneDescriptor::new(())
+                ..SceneDescriptor::new(std::ptr::null())
             })
-            .unwrap();
+            .expect("scene creation error");
         Self { physics, scene }
     }
 

@@ -94,7 +94,7 @@ impl ChunkSection {
         self.need_update_geometry = false;
 
         // Remove old collider if exists
-        if let Some(collider) = self.collider.take() {
+        if let Some(mut collider) = self.collider.take() {
             collider.remove();
         }
 
@@ -102,7 +102,7 @@ impl ChunkSection {
         if let Some(colider_builder) = self.colider_builder.take() {
             let mut collider = physics.create_collider(
                 colider_builder,
-                PhysicsType::ChunkMeshCollider(self.chunk_position.clone()),
+                Some(PhysicsType::ChunkMeshCollider(self.chunk_position.clone())),
             );
             let pos = self.get_section_position().clone();
             collider.set_position(pos.to_network());

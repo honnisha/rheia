@@ -62,3 +62,32 @@ impl IPhysicsColliderBuilder for PhysxPhysicsColliderBuilder {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::PhysxPhysicsColliderBuilder;
+    use crate::physics::physics::IPhysicsColliderBuilder;
+    use crate::{
+        network::messages::Vector3 as NetworkVector3,
+        physics::{
+            physics::{IPhysicsCollider, IPhysicsContainer},
+            physx::container::PhysxPhysicsContainer,
+        },
+    };
+
+    #[test]
+    fn test_collider() {
+        let verts = vec![
+            NetworkVector3::new(0., 1., 0.),
+            NetworkVector3::new(0., -1., 0.),
+            NetworkVector3::new(1., 0., 0.),
+        ];
+        let indices: Vec<[u32; 3]> = Default::default();
+        let collider = PhysxPhysicsColliderBuilder::trimesh(verts, indices);
+
+        let container = PhysxPhysicsContainer::default();
+        let collider = container.spawn_collider(collider);
+        assert_eq!(collider.get_index(), 0_usize);
+        assert_eq!(collider.get_position(), NetworkVector3::zero());
+    }
+}

@@ -1874,6 +1874,7 @@ dependencies = [
  "physx",
  "physx-sys",
  "rak-rs",
+ "rand",
  "rapier3d",
  "renet",
  "rhai",
