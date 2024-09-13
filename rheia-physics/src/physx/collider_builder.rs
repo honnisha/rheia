@@ -1,5 +1,6 @@
 use super::controller::PhysxPhysicsController;
-use crate::{network::messages::Vector3 as NetworkVector3, physics::physics::IPhysicsColliderBuilder};
+use crate::physics::IPhysicsColliderBuilder;
+use common::chunks::position::Vector3;
 use physx::cooking;
 use physx::prelude::{Geometry, TriangleMeshGeometry};
 use physx::{cooking::PxTriangleMeshDesc, math::PxVec3};
@@ -45,7 +46,7 @@ impl IPhysicsColliderBuilder for PhysxPhysicsColliderBuilder {
         }
     }
 
-    fn trimesh(verts: Vec<NetworkVector3>, indices: Vec<[u32; 3]>) -> Self {
+    fn trimesh(verts: Vec<Vector3>, indices: Vec<[u32; 3]>) -> Self {
         let verts: Vec<PxVec3> = verts.into_iter().map(|v| PxVec3::new(v.x, v.y, v.z)).collect();
 
         let mut desc = PxTriangleMeshDesc::new();
@@ -66,21 +67,18 @@ impl IPhysicsColliderBuilder for PhysxPhysicsColliderBuilder {
 #[cfg(test)]
 mod tests {
     use super::PhysxPhysicsColliderBuilder;
-    use crate::physics::physics::IPhysicsColliderBuilder;
     use crate::{
-        network::messages::Vector3 as NetworkVector3,
-        physics::{
-            physics::{IPhysicsCollider, IPhysicsContainer},
-            physx::container::PhysxPhysicsContainer,
-        },
+        physics::{IPhysicsCollider, IPhysicsColliderBuilder, IPhysicsContainer},
+        physx::container::PhysxPhysicsContainer,
     };
+    use common::chunks::position::Vector3;
 
     #[test]
     fn test_collider() {
         let verts = vec![
-            NetworkVector3::new(0., 1., 0.),
-            NetworkVector3::new(0., -1., 0.),
-            NetworkVector3::new(1., 0., 0.),
+            Vector3::new(0., 1., 0.),
+            Vector3::new(0., -1., 0.),
+            Vector3::new(1., 0., 0.),
         ];
         let indices: Vec<[u32; 3]> = Default::default();
         let collider = PhysxPhysicsColliderBuilder::trimesh(verts, indices);
@@ -88,6 +86,6 @@ mod tests {
         let container = PhysxPhysicsContainer::default();
         let collider = container.spawn_collider(collider);
         assert_eq!(collider.get_index(), 0_usize);
-        assert_eq!(collider.get_position(), NetworkVector3::zero());
+        assert_eq!(collider.get_position(), Vector3::zero());
     }
 }

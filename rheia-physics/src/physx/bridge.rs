@@ -1,33 +1,22 @@
-use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
+use common::chunks::position::Vector3;
 use physx::prelude::*;
 
-pub trait IntoPxVec3 {
-    fn to_physx(&self) -> PxVec3;
-    fn to_physx_sys(&self) -> physx_sys::PxVec3;
+pub(crate) fn physx_to_network(other: &PxVec3) -> Vector3 {
+    Vector3::new(other.x(), other.y(), other.z())
 }
 
-impl IntoPxVec3 for NetworkVector3 {
-    fn to_physx(&self) -> PxVec3 {
-        PxVec3::new(self.x, self.y, self.z)
-    }
-
-    fn to_physx_sys(&self) -> physx_sys::PxVec3 {
-        physx_sys::PxVec3 {
-            x: self.x,
-            y: self.y,
-            z: self.z,
-        }
-    }
+pub(crate) fn physx_sys_to_network(other: &physx_sys::PxVec3) -> Vector3 {
+    Vector3::new(other.x, other.y, other.z)
 }
 
-impl IntoNetworkVector for PxVec3 {
-    fn to_network(&self) -> NetworkVector3 {
-        NetworkVector3::new(self.x(), self.y(), self.z())
-    }
+pub(crate) fn network_to_physx(other: &Vector3) -> PxVec3 {
+    PxVec3::new(other.x, other.y, other.z)
 }
 
-impl IntoNetworkVector for physx_sys::PxVec3 {
-    fn to_network(&self) -> NetworkVector3 {
-        NetworkVector3::new(self.x, self.y, self.z)
+pub(crate) fn network_to_physx_sys(other: &Vector3) -> physx_sys::PxVec3 {
+    physx_sys::PxVec3 {
+        x: other.x,
+        y: other.y,
+        z: other.z,
     }
 }

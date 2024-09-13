@@ -1,6 +1,7 @@
+use super::bridge::{network_to_physx, physx_to_network};
 use super::controller::PhysxPhysicsController;
-use crate::physics::physics::IPhysicsCollider;
-use crate::{chunks::position::IntoNetworkVector, network::messages::Vector3 as NetworkVector3};
+use crate::physics::IPhysicsCollider;
+use common::chunks::position::Vector3;
 use parking_lot::RwLock;
 use physx::actor::Actor;
 use physx::math::PxTransform;
@@ -10,7 +11,6 @@ use physx::{owner::Owner, prelude::RigidActor};
 use physx_sys::PxScene_removeActor_mut;
 use std::sync::Arc;
 
-use super::bridge::IntoPxVec3;
 use super::types::{PxRigidStatic, PxShape};
 
 pub struct PhysxPhysicsCollider {
@@ -34,8 +34,8 @@ impl PhysxPhysicsCollider {
 }
 
 impl IPhysicsCollider for PhysxPhysicsCollider {
-    fn get_position(&self) -> NetworkVector3 {
-        self.actor.get_global_position().to_network()
+    fn get_position(&self) -> Vector3 {
+        physx_to_network(&self.actor.get_global_position())
     }
 
     fn set_enabled(&mut self, active: bool) {
@@ -46,9 +46,9 @@ impl IPhysicsCollider for PhysxPhysicsCollider {
         self.shape.get_user_data().clone()
     }
 
-    fn set_position(&mut self, position: NetworkVector3) {
+    fn set_position(&mut self, position: Vector3) {
         self.actor
-            .set_global_pose(&PxTransform::from_translation(&position.to_physx()), true);
+            .set_global_pose(&PxTransform::from_translation(&network_to_physx(&position)), true);
     }
 
     fn remove(&mut self) {

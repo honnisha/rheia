@@ -1,11 +1,9 @@
 use super::{
-    collider::PhysxPhysicsCollider, controller::PhysxPhysicsController, query_filter::PhysxQueryFilter, types::PxShape,
+    bridge::{network_to_physx_sys, physx_sys_to_network}, collider::PhysxPhysicsCollider, controller::PhysxPhysicsController,
+    query_filter::PhysxQueryFilter, types::PxShape,
 };
-use crate::{
-    chunks::position::IntoNetworkVector,
-    network::messages::Vector3 as NetworkVector3,
-    physics::physics::{IPhysicsContainer, RayCastResultNormal},
-};
+use crate::physics::{IPhysicsContainer, RayCastResultNormal};
+use common::chunks::position::Vector3;
 use parking_lot::RwLock;
 use physx::{
     math::{PxTransform, PxVec3},
@@ -19,7 +17,7 @@ use physx_sys::{
 use std::{mem::MaybeUninit, sync::Arc};
 use std::{ops::Deref, ptr::null_mut};
 
-use super::{bridge::IntoPxVec3, collider_builder::PhysxPhysicsColliderBuilder};
+use super::collider_builder::PhysxPhysicsColliderBuilder;
 
 #[derive(Clone)]
 pub struct PhysxPhysicsContainer {
@@ -72,9 +70,9 @@ impl IPhysicsContainer<PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQ
 
     fn cast_ray_and_get_normal(
         &self,
-        dir: NetworkVector3,
+        dir: Vector3,
         max_toi: f32,
-        origin: NetworkVector3,
+        origin: Vector3,
         filter: PhysxQueryFilter,
     ) -> Option<RayCastResultNormal> {
         let controller = self.controller.as_ref().read();
@@ -84,8 +82,8 @@ impl IPhysicsContainer<PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQ
         if !unsafe {
             PxSceneQueryExt_raycastSingle(
                 controller.scene.as_ptr(),
-                &origin.to_physx_sys(),
-                &dir.to_physx_sys(),
+                &network_to_physx_sys(&origin),
+                &network_to_physx_sys(&dir),
                 max_toi,
                 PxHitFlags::Default,
                 raycast_hit.as_mut_ptr(),
@@ -102,8 +100,8 @@ impl IPhysicsContainer<PhysxPhysicsCollider, PhysxPhysicsColliderBuilder, PhysxQ
 
         Some(RayCastResultNormal {
             collider_id: unsafe { get_shape_id_from_ptr(raycast_hit.shape) },
-            point: raycast_hit.position.to_network(),
-            normal: raycast_hit.normal.to_network(),
+            point: physx_sys_to_network(&raycast_hit.position),
+            normal: physx_sys_to_network(&raycast_hit.normal),
         })
     }
 }

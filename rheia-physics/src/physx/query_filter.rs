@@ -1,5 +1,5 @@
+use crate::physics::IQueryFilter;
 use super::collider::PhysxPhysicsCollider;
-use crate::physics::physics::IQueryFilter;
 use physx::traits::Class;
 use physx_sys::{
     create_raycast_filter_callback, PxQueryFilterCallback, PxQueryFilterCallback_delete, PxQueryFilterData,
