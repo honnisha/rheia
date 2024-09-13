@@ -14,7 +14,9 @@ pub struct PhysxPhysicsController {
 
 impl PhysxPhysicsController {
     pub(crate) fn create() -> Self {
-        let mut physics = PhysicsFoundation::<_, PxShape>::default();
+        let builder = physx::physics::PhysicsFoundationBuilder::default();
+        let mut physics = builder.build().expect("building PhysX foundation failed");
+
         let scene: Owner<PxScene> = physics
             .create(SceneDescriptor {
                 gravity: PxVec3::new(0.0, -9.81, 0.0),

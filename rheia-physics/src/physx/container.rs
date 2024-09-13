@@ -110,3 +110,14 @@ unsafe fn get_shape_id_from_ptr(shape: *const physx_sys::PxShape) -> usize {
     let shape = &*(shape as *const PxShape);
     *shape.get_user_data()
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{physics::IPhysicsContainer, physx::container::PhysxPhysicsContainer};
+
+    #[test]
+    fn test_create_and_step() {
+        let container = PhysxPhysicsContainer::default();
+        container.step(1.0);
+    }
+}
