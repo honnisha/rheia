@@ -1,5 +1,6 @@
-use common::network::messages::{ClientMessages, Rotation};
+use common::chunks::rotation::Rotation;
 use godot::{prelude::Vector3, register::GodotClass};
+use network::messages::ClientMessages;
 use std::fmt::{self, Display, Formatter};
 
 use crate::utils::bridge::IntoNetworkVector;

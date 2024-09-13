@@ -1,5 +1,5 @@
 use ahash::AHashMap;
-use common::network::messages::Rotation;
+use common::chunks::rotation::Rotation;
 use godot::prelude::*;
 
 use super::entity::Entity;

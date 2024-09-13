@@ -1,4 +1,4 @@
-use common::network::messages::Rotation;
+use common::chunks::rotation::Rotation;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
 use parking_lot::RwLock;

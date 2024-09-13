@@ -1,8 +1,7 @@
-use super::bridge::IntoNaVector3;
+use super::bridge::{na_to_network, IntoNaVector3};
 use super::container::RapierPhysicsContainer;
-use crate::chunks::position::IntoNetworkVector;
-use crate::network::messages::Vector3 as NetworkVector3;
-use crate::physics::physics::IPhysicsCollider;
+use common::chunks::position::{Vector3 as NetworkVector3};
+use crate::physics::IPhysicsCollider;
 use rapier3d::prelude::*;
 
 /// For stationary bodies
@@ -23,7 +22,7 @@ impl RapierPhysicsCollider {
 impl IPhysicsCollider for RapierPhysicsCollider {
     fn get_position(&self) -> NetworkVector3 {
         let collider = self.physics_container.get_collider_mut(&self.collider_handle).unwrap();
-        collider.translation().to_network()
+        na_to_network(&collider.translation())
     }
 
     fn set_position(&mut self, position: NetworkVector3) {

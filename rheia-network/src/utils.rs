@@ -1,15 +1,12 @@
 use std::collections::HashMap;
 
 use arrayvec::ArrayVec;
+use common::blocks::blocks_storage::BlockType;
+use common::VERTICAL_SECTIONS;
+use common::{blocks::block_info::BlockInfo, chunks::block_position::ChunkBlockPosition};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    blocks::{block_info::BlockInfo, blocks_storage::BlockType},
-    network::messages::{ChunkDataType, NetworkSectionsType},
-    VERTICAL_SECTIONS,
-};
-
-use super::block_position::ChunkBlockPosition;
+use crate::messages::{ChunkDataType, NetworkSectionsType};
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct PacketChunkSectionData {
@@ -19,7 +16,12 @@ pub struct PacketChunkSectionData {
 
 impl std::fmt::Display for PacketChunkSectionData {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(f, "pallete:{:?} block_indexes len:{}", self.pallete, self.block_indexes.len())
+        write!(
+            f,
+            "pallete:{:?} block_indexes len:{}",
+            self.pallete,
+            self.block_indexes.len()
+        )
     }
 }
 

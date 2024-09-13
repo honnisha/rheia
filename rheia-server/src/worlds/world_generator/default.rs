@@ -3,8 +3,9 @@ use bracket_noise::prelude::*;
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
-    CHUNK_SIZE, network::messages::ChunkDataType,
+    CHUNK_SIZE,
 };
+use network::messages::ChunkDataType;
 
 pub struct WorldGenerator {
     noise: FastNoise,

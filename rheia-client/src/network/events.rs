@@ -1,10 +1,8 @@
-use common::network::client::{ClientNetwork, NetworkInfo};
-use common::network::messages::NetworkMessageType;
-use common::{
-    chunks::chunk_position::ChunkPosition,
-    network::messages::{ClientMessages, ServerMessages},
-};
+use common::chunks::chunk_position::ChunkPosition;
 use godot::obj::Gd;
+use network::client::{ClientNetwork, NetworkInfo};
+use network::messages::NetworkMessageType;
+use network::messages::{ClientMessages, ServerMessages};
 
 use crate::console::console_handler::Console;
 use crate::main_scene::Main;
@@ -83,7 +81,10 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 sections,
             } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
-                    world.bind_mut().get_chunk_map_mut().load_chunk(chunk_position, sections);
+                    world
+                        .bind_mut()
+                        .get_chunk_map_mut()
+                        .load_chunk(chunk_position, sections);
                     chunks.push(chunk_position);
                 }
             }
@@ -106,7 +107,12 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     entities_manager.create_entity(id, position.to_godot(), rotation);
                 }
             }
-            ServerMessages::EntityMove { world_slug, id, position, rotation } => {
+            ServerMessages::EntityMove {
+                world_slug,
+                id,
+                position,
+                rotation,
+            } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
                     let mut w = world.bind_mut();
                     let mut entities_manager = w.get_entities_manager_mut();
@@ -120,7 +126,11 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     entities_manager.despawn(ids);
                 }
             }
-            ServerMessages::EditBlock { world_slug, position, new_block_info } => {
+            ServerMessages::EditBlock {
+                world_slug,
+                position,
+                new_block_info,
+            } => {
                 if let Some(world) = get_world_mut(main, world_slug) {
                     let mut w = world.bind_mut();
                     w.get_chunk_map_mut().edit_block(position, new_block_info);

@@ -1,9 +1,9 @@
 use bevy::prelude::Entity;
 use common::{
     chunks::chunk_position::ChunkPosition,
-    network::messages::{NetworkMessageType, ServerMessages},
     utils::vec_remove_item,
 };
+use network::messages::{NetworkMessageType, ServerMessages};
 use core::fmt;
 use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLock;

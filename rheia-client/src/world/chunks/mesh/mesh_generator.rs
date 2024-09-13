@@ -3,10 +3,9 @@ use crate::{
     utils::textures::texture_mapper::TextureMapper,
     world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered},
 };
-use common::network::messages::Vector3 as NetworkVector3;
+use common::chunks::position::Vector3 as NetworkVector3;
 use common::{
     blocks::blocks_storage::BlockType,
-    physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder},
     utils::block_mesh::{
         greedy::{greedy_quads, GreedyQuadsBuffer},
         QuadBuffer,
@@ -32,6 +31,7 @@ use godot::{
 use log::error;
 use ndshape::ConstShape;
 use parking_lot::RwLockReadGuard;
+use physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder};
 
 #[allow(dead_code)]
 pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {

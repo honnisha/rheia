@@ -1871,18 +1871,11 @@ dependencies = [
  "ndshape",
  "num",
  "parking_lot 0.12.3",
- "physx",
- "physx-sys",
- "rak-rs",
  "rand",
- "rapier3d",
- "renet",
  "rhai",
  "serde",
- "steamworks",
  "strum 0.26.3",
  "strum_macros 0.26.4",
- "tokio",
  "typetag",
 ]
 
@@ -3763,9 +3756,9 @@ dependencies = [
 
 [[package]]
 name = "matrixmultiply"
-version = "0.3.8"
+version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7574c1cf36da4798ab73da5b215bbf444f50718207754cb522201d78d1cd0ff2"
+checksum = "9380b911e3e96d10c1f415da0876389aaf1b56759054eeb0de7df940c456ba1a"
 dependencies = [
  "autocfg",
  "rawpointer",
@@ -4116,6 +4109,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "975bce586ad637e27f6dc26ee907c07050686a588695bfd64b7873a9d48a700c"
 dependencies = [
  "static_assertions",
+]
+
+[[package]]
+name = "network"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "arrayvec 0.7.4",
+ "bincode",
+ "common",
+ "downcast-rs",
+ "flume 0.11.0",
+ "ilattice",
+ "log",
+ "miniz_oxide 0.8.0",
+ "ndcopy",
+ "ndshape",
+ "num",
+ "parking_lot 0.12.3",
+ "rak-rs",
+ "rand",
+ "renet",
+ "rhai",
+ "serde",
+ "steamworks",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tokio",
+ "typetag",
 ]
 
 [[package]]
@@ -4631,9 +4653,9 @@ dependencies = [
 
 [[package]]
 name = "ordered-float"
-version = "4.2.1"
+version = "4.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19ff2cf528c6c03d9ed653d6c4ce1dc0582dc4af309790ad92f07c1cd551b0be"
+checksum = "4a91171844676f8c7990ce64959210cd2eaef32c2612c50f9fae9f8aaa6065a6"
 dependencies = [
  "num-traits",
 ]
@@ -4718,9 +4740,9 @@ dependencies = [
 
 [[package]]
 name = "parry3d"
-version = "0.17.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33f1a44b6ced345a7bb52f5df9912fecae07c6e22d231ba1bab7abf807f52ec9"
+checksum = "b5ebb313092c7cd16da86f8a6a14ac823e36ff1d9b8f727d25bdebf3e4bc4d56"
 dependencies = [
  "approx",
  "arrayvec 0.7.4",
@@ -4763,6 +4785,38 @@ dependencies = [
  "indexmap",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "physics"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "arrayvec 0.7.4",
+ "bincode",
+ "common",
+ "downcast-rs",
+ "flume 0.11.0",
+ "ilattice",
+ "log",
+ "miniz_oxide 0.8.0",
+ "ndcopy",
+ "ndshape",
+ "num",
+ "parking_lot 0.12.3",
+ "physx",
+ "physx-sys",
+ "rak-rs",
+ "rand",
+ "rapier3d",
+ "renet",
+ "rhai",
+ "serde",
+ "steamworks",
+ "strum 0.26.3",
+ "strum_macros 0.26.4",
+ "tokio",
+ "typetag",
 ]
 
 [[package]]
@@ -5251,7 +5305,9 @@ dependencies = [
  "lazy_static",
  "log",
  "ndshape",
+ "network",
  "parking_lot 0.12.3",
+ "physics",
  "rand",
  "rayon",
  "regex",
@@ -5319,6 +5375,7 @@ dependencies = [
  "fxhash",
  "lazy_static",
  "log",
+ "network",
  "parking_lot 0.12.3",
  "rayon",
  "regex",
@@ -5745,9 +5802,9 @@ dependencies = [
 
 [[package]]
 name = "spade"
-version = "2.10.0"
+version = "2.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d676a3ce6cfd1e455199fefcf82db082f970872ce017df660f076a4e07a0d64"
+checksum = "93f5ef1f863aca7d1d7dda7ccfc36a0a4279bd6d3c375176e5e0712e25cb4889"
 dependencies = [
  "hashbrown",
  "num-traits",
@@ -5870,9 +5927,9 @@ dependencies = [
 
 [[package]]
 name = "subtle"
-version = "2.5.0"
+version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "svg_fmt"
@@ -7285,9 +7342,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.7.0"
+version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "525b4ec142c6b68a2d10f01f7bbf6755599ca3f81ea53b8431b7dd348f5fdb2d"
+checksum = "ced3678a2879b30306d323f4542626697a464a97c0a07c9aebf7ebca65cd4dde"
 
 [[package]]
 name = "zune-inflate"

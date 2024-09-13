@@ -6,8 +6,8 @@ use std::sync::{
 use crate::world::worlds_manager::WorldsManager;
 use common::{
     chunks::block_position::{BlockPosition, BlockPositionTrait},
-    network::client::NetworkInfo,
 };
+use network::client::NetworkInfo;
 use godot::{
     engine::{
         rendering_server::RenderingInfo, Engine, HBoxContainer, IMarginContainer, MarginContainer, RenderingServer,

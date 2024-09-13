@@ -4,16 +4,18 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[lib]
+crate-type = ["cdylib"]
+
 [features]
 default = []
 
 trace = ["tracing", "tracing-tracy", "tracy-client"]
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 common = { path = "../rheia-common" }
+network = { path = "../rheia-network" }
+physics = { path = "../rheia-physics" }
 
 godot = { version = "0.1.3", features = ["experimental-threads"] }
 

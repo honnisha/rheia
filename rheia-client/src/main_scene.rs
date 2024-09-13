@@ -6,11 +6,11 @@ use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
 use crate::world::worlds_manager::WorldsManager;
-use common::network::client::ClientNetwork;
-use common::network::messages::{ClientMessages, NetworkMessageType};
 use godot::engine::input::MouseMode;
 use godot::engine::Engine;
 use godot::prelude::*;
+use network::client::ClientNetwork;
+use network::messages::{ClientMessages, NetworkMessageType};
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");

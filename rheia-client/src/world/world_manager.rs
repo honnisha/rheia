@@ -5,8 +5,8 @@ use crate::{
     main_scene::Main,
     utils::{bridge::IntoChunkPositionVector, primitives::generate_lines},
 };
-use common::network::messages::NetworkMessageType;
 use godot::{engine::Material, prelude::*};
+use network::messages::NetworkMessageType;
 
 /// Godot world
 /// Contains all things inside world
@@ -48,13 +48,10 @@ impl WorldManager {
         let positions = vec![
             Vector3::new(-0.5, -0.5, -0.5),
             Vector3::new(0.5, -0.5, -0.5),
-
             Vector3::new(0.5, -0.5, -0.5),
             Vector3::new(0.5, 0.5, -0.5),
-
             Vector3::new(0.5, 0.5, -0.5),
             Vector3::new(-0.5, 0.5, -0.5),
-
             Vector3::new(-0.5, 0.5, -0.5),
             Vector3::new(-0.5, -0.5, -0.5),
         ];

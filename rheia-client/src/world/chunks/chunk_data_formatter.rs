@@ -2,9 +2,9 @@ use arrayvec::ArrayVec;
 use common::{
     blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility},
     chunks::block_position::ChunkBlockPosition,
-    network::messages::ChunkDataType,
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
+use network::messages::ChunkDataType;
 use ndshape::ConstShape;
 
 use super::{

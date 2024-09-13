@@ -1,9 +1,9 @@
 use common::{
     blocks::{block_info::BlockInfo, blocks_storage::BlockType},
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
-    network::messages::ChunkDataType,
     CHUNK_SIZE,
 };
+use network::messages::ChunkDataType;
 
 #[derive(Default)]
 pub struct SphereWorldGenerator {}

@@ -1,15 +1,16 @@
 use std::sync::Arc;
 
 use ahash::AHashMap;
-use common::{
-    chunks::chunk_position::ChunkPosition,
-    physics::{
-        physics::{IPhysicsCollider, IPhysicsContainer, RayCastResultNormal},
-        PhysicsCollider, PhysicsColliderBuilder, PhysicsContainer, QueryFilter,
-    },
-};
+use common::chunks::chunk_position::ChunkPosition;
 use godot::prelude::*;
 use parking_lot::RwLock;
+use physics::physics::IPhysicsCollider;
+use physics::physics::IPhysicsContainer;
+use physics::physics::RayCastResultNormal;
+use physics::PhysicsCollider;
+use physics::PhysicsColliderBuilder;
+use physics::PhysicsContainer;
+use physics::QueryFilter;
 
 use crate::utils::bridge::IntoNetworkVector;
 

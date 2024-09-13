@@ -4,11 +4,11 @@ use common::{
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_position::ChunkPosition,
-        utils::SectionsData,
     },
     VERTICAL_SECTIONS,
 };
 use godot::{engine::Material, prelude::*};
+use network::utils::SectionsData;
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -68,7 +68,7 @@ impl ChunkMap {
         }
     }
 
-    pub fn get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataLockType> {
+    pub fn _get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataLockType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.read().get_chunk_data().clone()),
             None => None,

@@ -1,10 +1,10 @@
-use crate::{network::messages::Vector3 as NetworkVector3, physics::physics::RayCastResultNormal};
+use common::chunks::position::Vector3;
 use nalgebra::Point3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rapier3d::prelude::*;
 use std::sync::Arc;
 
-use crate::physics::physics::IPhysicsContainer;
+use crate::physics::{IPhysicsContainer, RayCastResultNormal};
 
 use super::{
     bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder,
@@ -83,9 +83,9 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
     fn cast_ray_and_get_normal(
         &self,
-        dir: NetworkVector3,
+        dir: Vector3,
         max_toi: f32,
-        origin: NetworkVector3,
+        origin: Vector3,
         filter: RapierQueryFilter,
     ) -> Option<RayCastResultNormal> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
@@ -107,8 +107,8 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
             let point = ray.point_at(ray_intersection.time_of_impact);
             let result = RayCastResultNormal {
                 collider_id: handle.into_raw_parts().0 as usize,
-                point: NetworkVector3::new(point.x, point.y, point.z),
-                normal: NetworkVector3::new(
+                point: Vector3::new(point.x, point.y, point.z),
+                normal: Vector3::new(
                     ray_intersection.normal.x,
                     ray_intersection.normal.y,
                     ray_intersection.normal.z,

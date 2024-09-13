@@ -1,10 +1,11 @@
 use arrayvec::ArrayVec;
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, utils::SectionsData},
+    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{engine::Material, prelude::*};
+use network::utils::SectionsData;
 use parking_lot::RwLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},

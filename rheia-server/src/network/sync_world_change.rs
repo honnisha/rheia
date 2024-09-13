@@ -1,8 +1,8 @@
 use common::{
     blocks::block_info::BlockInfo,
     chunks::block_position::{BlockPosition, BlockPositionTrait},
-    network::messages::{NetworkMessageType, ServerMessages},
 };
+use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{entities::entity::NetworkComponent, worlds::world_manager::WorldManager};
 

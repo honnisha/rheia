@@ -16,10 +16,10 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use crate::chunks::utils::unpack_network_sectioins;
-use crate::network::messages::ClientMessages;
-use crate::network::messages::NetworkMessageType;
-use crate::network::{client::ClientNetwork, client::NetworkInfo, messages::ServerMessages};
+use crate::messages::ClientMessages;
+use crate::messages::NetworkMessageType;
+use crate::utils::unpack_network_sectioins;
+use crate::{client::ClientNetwork, client::NetworkInfo, messages::ServerMessages};
 
 use super::channels::ServerChannel;
 use super::{connection_config, PROTOCOL_ID};

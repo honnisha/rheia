@@ -1,6 +1,6 @@
 use bevy_ecs::prelude::Component;
-use common::network::messages::Rotation as NetworkRotation;
-use common::network::messages::Vector3 as NetworkVector3;
+use common::chunks::position::Vector3 as NetworkVector3;
+use common::chunks::rotation::Rotation as NetworkRotation;
 use common::{
     chunks::{block_position::BlockPositionTrait, chunk_position::ChunkPosition},
     utils::fix_chunk_loc_pos,

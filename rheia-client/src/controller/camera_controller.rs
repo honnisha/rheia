@@ -1,4 +1,4 @@
-use common::network::messages::Rotation;
+use common::chunks::rotation::Rotation;
 use godot::engine::Sprite2D;
 use godot::prelude::*;
 

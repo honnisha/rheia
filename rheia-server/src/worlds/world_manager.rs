@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
-use common::network::messages::ServerMessages;
+use network::messages::ServerMessages;
 use parking_lot::RwLock;
 
 use crate::entities::entity::{NetworkComponent, Position, Rotation};

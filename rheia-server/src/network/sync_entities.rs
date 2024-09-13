@@ -2,8 +2,8 @@ use bevy::prelude::{Entity, EntityRef, Event, EventReader};
 use bevy_ecs::system::Res;
 use common::{
     chunks::block_position::BlockPositionTrait,
-    network::messages::{NetworkMessageType, ServerMessages},
 };
+use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
     entities::entity::{NetworkComponent, Position, Rotation},

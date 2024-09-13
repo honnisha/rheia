@@ -1,27 +1,31 @@
 use std::collections::HashMap;
 
+use common::chunks::block_position::ChunkBlockPosition;
+use common::chunks::chunk_position::ChunkPosition;
+use common::chunks::rotation::Rotation;
+use common::VERTICAL_SECTIONS;
+use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
+use common::chunks::position::Vector3;
 
-use crate::{
-    blocks::block_info::BlockInfo,
-    chunks::{
-        block_position::{BlockPosition, ChunkBlockPosition},
-        chunk_position::ChunkPosition,
-        utils::{PacketChunkSectionData, SectionsData},
-    },
-    VERTICAL_SECTIONS,
-};
-
-pub use crate::chunks::position::{IntoNetworkVector, Vector3};
-pub use crate::chunks::rotation::Rotation;
+use crate::utils::{PacketChunkSectionData, SectionsData};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
-    ConnectionInfo { login: String },
-    ConsoleInput { command: String },
-    PlayerMove { position: Vector3, rotation: Rotation },
-    ChunkRecieved { chunk_positions: Vec<ChunkPosition> },
+    ConnectionInfo {
+        login: String,
+    },
+    ConsoleInput {
+        command: String,
+    },
+    PlayerMove {
+        position: Vector3,
+        rotation: Rotation,
+    },
+    ChunkRecieved {
+        chunk_positions: Vec<ChunkPosition>,
+    },
     EditBlockRequest {
         world_slug: String,
         position: BlockPosition,

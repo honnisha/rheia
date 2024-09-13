@@ -10,13 +10,14 @@ use renet::{
     ClientId, RenetServer, ServerEvent,
 };
 
+use crate::{
+    messages::{ClientMessages, NetworkMessageType, ServerMessages},
+    server::{ConnectionMessages, ServerNetwork},
+};
+
 use super::{
     channels::{ClientChannel, ServerChannel},
     connection_config, PROTOCOL_ID,
-};
-use crate::network::{
-    messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, ServerNetwork},
 };
 
 type ServerLock = Arc<RwLock<RenetServer>>;

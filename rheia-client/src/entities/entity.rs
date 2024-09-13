@@ -1,4 +1,4 @@
-use common::network::messages::Rotation;
+use common::chunks::rotation::Rotation;
 use godot::{global::lerp, prelude::*};
 
 use super::{enums::generic_animations::GenericAnimations, generic_skin::GenericSkin};

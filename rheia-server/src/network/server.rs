@@ -9,11 +9,11 @@ use bevy_ecs::{
     system::{Res, ResMut, Resource},
     world::World,
 };
-use common::network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use common::network::server::{ConnectionMessages, ServerNetwork};
-use common::network::NetworkServer;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use network::server::{ConnectionMessages, ServerNetwork};
+use network::NetworkServer;
 
 use super::events::{
     on_connection::{on_connection, PlayerConnectionEvent},

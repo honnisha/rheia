@@ -6,11 +6,12 @@ use crate::world::world_manager::WorldManager;
 use common::blocks::block_info::BlockInfo;
 use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
-use common::network::messages::{ClientMessages, NetworkMessageType, Rotation};
-use common::physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
-use common::physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
+use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
+use network::messages::{ClientMessages, NetworkMessageType};
+use physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
+use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 
 use super::camera_controller::CameraController;
 use super::controls::Controls;

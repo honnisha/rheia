@@ -1,8 +1,9 @@
-use super::bridge::IntoNaVector3;
+use crate::physics::IPhysicsCharacterController;
+
+use super::bridge::{na_to_network, IntoNaVector3};
 use super::collider::RapierPhysicsCollider;
 use super::query_filter::RapierQueryFilter;
-use crate::network::messages::{IntoNetworkVector, Vector3 as NetworkVector3};
-use crate::physics::physics::IPhysicsCharacterController;
+use common::chunks::position::Vector3;
 use rapier3d::control::{CharacterCollision, CharacterLength, KinematicCharacterController};
 
 pub struct RapierPhysicsCharacterController {
@@ -35,8 +36,8 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsCollider, RapierQueryFilter<'a
         collider: &RapierPhysicsCollider,
         filter: RapierQueryFilter,
         delta: f64,
-        movement: NetworkVector3,
-    ) -> NetworkVector3 {
+        movement: Vector3,
+    ) -> Vector3 {
         let physics_container = collider.physics_container.clone();
         let collider = physics_container
             .get_collider(&collider.collider_handle)
@@ -70,7 +71,7 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsCollider, RapierQueryFilter<'a
             );
         };
 
-        corrected_movement.translation.to_network()
+        na_to_network(&corrected_movement.translation)
     }
 
     fn is_grounded(&self) -> bool {
@@ -84,15 +85,14 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsCollider, RapierQueryFilter<'a
 
 #[cfg(test)]
 mod tests {
-    use crate::network::messages::Vector3 as NetworkVector3;
-    use crate::physics::physics::{IPhysicsCharacterController, IPhysicsContainer};
-    use crate::physics::{
-        physics::IPhysicsColliderBuilder,
+    use crate::{
+        physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsContainer},
         rapier::{
             character_controller::RapierPhysicsCharacterController, collider_builder::RapierPhysicsColliderBuilder,
             container::RapierPhysicsContainer, query_filter::RapierQueryFilter,
         },
     };
+    use common::chunks::position::Vector3;
 
     #[test]
     fn test_move_shape() {
@@ -103,7 +103,7 @@ mod tests {
         let mut character_controller = RapierPhysicsCharacterController::create(Some(1.0));
         let filter = RapierQueryFilter::default();
 
-        let result = character_controller.move_shape(&collider, filter, 0.5, NetworkVector3::new(0.0, 1.0, 0.0));
-        assert_eq!(result, NetworkVector3::new(0.0, 1.0, 0.0));
+        let result = character_controller.move_shape(&collider, filter, 0.5, Vector3::new(0.0, 1.0, 0.0));
+        assert_eq!(result, Vector3::new(0.0, 1.0, 0.0));
     }
 }

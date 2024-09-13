@@ -1,5 +1,5 @@
 use common::{
-    chunks::chunk_position::ChunkPosition, network::messages::Vector3 as NetworkVector3, utils::fix_chunk_loc_pos,
+    chunks::chunk_position::ChunkPosition, chunks::position::Vector3 as NetworkVector3, utils::fix_chunk_loc_pos,
     CHUNK_SIZE,
 };
 use godot::prelude::Vector3 as GDVector3;

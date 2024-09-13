@@ -1,4 +1,4 @@
-use crate::{chunks::block_position::BlockPosition, network::messages::Vector3};
+use common::chunks::{block_position::BlockPosition, position::Vector3};
 
 pub trait IQueryFilter<C: IPhysicsCollider>: Default {
     fn exclude_exclude_collider(&mut self, collider: &C);
@@ -61,7 +61,7 @@ impl RayCastResultNormal {
 #[cfg(test)]
 mod tests {
     use super::RayCastResultNormal;
-    use crate::{chunks::block_position::BlockPosition, network::messages::Vector3};
+    use common::chunks::{block_position::BlockPosition, position::Vector3};
 
     #[test]
     fn test_normal() {

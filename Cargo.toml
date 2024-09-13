@@ -4,5 +4,7 @@ members = [
     "rheia-client-bevy",
     "rheia-server",
     "rheia-common",
+    "rheia-physics",
+    "rheia-network",
 ]
 resolver = "2"

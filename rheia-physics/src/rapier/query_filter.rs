@@ -1,6 +1,6 @@
 use rapier3d::prelude::QueryFilter;
 
-use crate::physics::physics::IQueryFilter;
+use crate::physics::IQueryFilter;
 
 use super::collider::RapierPhysicsCollider;
 

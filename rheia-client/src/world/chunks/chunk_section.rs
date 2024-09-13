@@ -1,21 +1,18 @@
 use std::borrow::BorrowMut;
 
-use common::{
-    blocks::blocks_storage::BlockType,
-    chunks::chunk_position::ChunkPosition,
-    physics::{physics::IPhysicsCollider, PhysicsCollider, PhysicsColliderBuilder},
-    CHUNK_SIZE,
-};
+use common::{blocks::blocks_storage::BlockType, chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
 use godot::{
     engine::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
+use physics::{physics::IPhysicsCollider, PhysicsCollider};
 
 use crate::{
     utils::bridge::{GodotPositionConverter, IntoNetworkVector},
     world::physics::{PhysicsProxy, PhysicsType},
 };
+use physics::PhysicsColliderBuilder;
 
 use super::mesh::mesh_generator::Geometry;
 

@@ -9,6 +9,7 @@ trace = []
 
 [dependencies]
 common = { path = "../rheia-common" }
+network = { path = "../rheia-network" }
 
 serde = { version = "1.0.196", features = ["derive"] }
 serde_yaml = "0.9.30"
