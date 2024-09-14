@@ -1,14 +1,18 @@
 use common::chunks::position::Vector3;
 use nalgebra::Point3;
 use parking_lot::{MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
-use rapier3d::prelude::*;
-use std::sync::Arc;
+use rapier3d::na::Vector3 as NaVector3;
+use rapier3d::{parry::query::ShapeCastOptions, prelude::*};
+use std::{f32::consts::FRAC_PI_2, sync::Arc};
 
-use crate::physics::{IPhysicsContainer, RayCastResultNormal};
+use crate::physics::{IPhysicsContainer, RayCastResultNormal, ShapeCastResult};
 
 use super::{
-    bridge::IntoNaVector3, collider::RapierPhysicsCollider, collider_builder::RapierPhysicsColliderBuilder,
-    controller::RapierPhysicsController, query_filter::RapierQueryFilter,
+    bridge::IntoNaVector3,
+    collider::{RapierPhysicsCollider, RapierPhysicsShape},
+    collider_builder::RapierPhysicsColliderBuilder,
+    controller::RapierPhysicsController,
+    query_filter::RapierQueryFilter,
 };
 
 #[derive(Clone)]
@@ -67,7 +71,8 @@ impl Default for RapierPhysicsContainer {
     }
 }
 
-impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, RapierQueryFilter<'a>>
+impl<'a>
+    IPhysicsContainer<RapierPhysicsShape, RapierPhysicsCollider, RapierPhysicsColliderBuilder, RapierQueryFilter<'a>>
     for RapierPhysicsContainer
 {
     fn step(&self, delta: f32) {
@@ -81,7 +86,7 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
     }
 
     // https://docs.godotengine.org/en/stable/classes/class_node3d.html#class-node3d-property-rotation
-    fn cast_ray_and_get_normal(
+    fn cast_ray(
         &self,
         dir: Vector3,
         max_toi: f32,
@@ -89,11 +94,7 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
         filter: RapierQueryFilter,
     ) -> Option<RayCastResultNormal> {
         let origin = Point3::new(origin.x, origin.y, origin.z);
-        let direction = dir.to_na();
-
-        let ray = Ray::new(origin, direction);
-
-        let solid = true;
+        let ray = Ray::new(origin, dir.to_na());
 
         let pipeline = self.query_pipeline.read();
         if let Some((handle, ray_intersection)) = pipeline.cast_ray_and_get_normal(
@@ -101,7 +102,7 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
             &self.collider_set.read(),
             &ray,
             max_toi,
-            solid,
+            true,
             filter.filter,
         ) {
             let point = ray.point_at(ray_intersection.time_of_impact);
@@ -117,5 +118,71 @@ impl<'a> IPhysicsContainer<RapierPhysicsCollider, RapierPhysicsColliderBuilder, 
             return Some(result);
         }
         return None;
+    }
+
+    fn cast_shape(
+        &self,
+        shape: RapierPhysicsShape,
+        origin: Vector3,
+        target: Vector3,
+        filter: RapierQueryFilter,
+    ) -> Option<ShapeCastResult> {
+        let axisangle = NaVector3::y() * FRAC_PI_2;
+        let shape_pos = Isometry::new(origin.to_na(), axisangle);
+
+        let ray = Ray::new(Point3::new(origin.x, origin.y, origin.z), target.to_na());
+
+        let options = ShapeCastOptions::default();
+        let pipeline = self.query_pipeline.read();
+        if let Some((handle, shape_hit)) = pipeline.cast_shape(
+            &self.rigid_body_set.read(),
+            &self.collider_set.read(),
+            &shape_pos,
+            &target.to_na(),
+            shape.get_shape(),
+            options,
+            filter.filter,
+        ) {
+            let point = ray.point_at(shape_hit.time_of_impact);
+            let result = ShapeCastResult {
+                collider_id: handle.into_raw_parts().0 as usize,
+                point: Vector3::new(point.x, point.y, point.z),
+            };
+            return Some(result);
+        }
+        return None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use common::chunks::position::Vector3;
+
+    use crate::{
+        physics::{IPhysicsCollider, IPhysicsColliderBuilder, IPhysicsContainer},
+        rapier::{collider_builder::RapierPhysicsColliderBuilder, query_filter::RapierQueryFilter},
+    };
+
+    use super::RapierPhysicsContainer;
+
+    #[test]
+    fn test_cast_shape() {
+        let container = RapierPhysicsContainer::default();
+
+        let mut first_collider = container.spawn_collider(RapierPhysicsColliderBuilder::cylinder(1.0, 1.0));
+        first_collider.set_position(Vector3::new(10.0, 0.0, 0.0));
+
+        let mut second_collider = container.spawn_collider(RapierPhysicsColliderBuilder::cylinder(1.0, 1.0));
+        second_collider.set_position(Vector3::new(0.0, 0.0, 0.0));
+
+        let filter = RapierQueryFilter::default();
+        let result = container.cast_shape(
+            second_collider.get_shape(),
+            second_collider.get_position(),
+            first_collider.get_position(),
+            filter,
+        );
+
+        assert!(result.is_some(), "first shape must intersect second");
     }
 }

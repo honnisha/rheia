@@ -184,7 +184,7 @@ impl PlayerController {
 
         let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let mut w = world.bind_mut();
-        let Some((cast_result, physics_type)) = w.get_physics_mut().cast_ray_and_get_normal(dir, max_toi, from, filter)
+        let Some((cast_result, physics_type)) = w.get_physics_mut().raycast(dir, max_toi, from, filter)
         else {
             self.look_at_message = "-".to_string();
             return;

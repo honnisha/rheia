@@ -50,7 +50,7 @@ impl PhysicsProxy {
         }
     }
 
-    pub fn cast_ray_and_get_normal(
+    pub fn raycast(
         &self,
         dir: Vector3,
         max_toi: f32,
@@ -59,7 +59,7 @@ impl PhysicsProxy {
     ) -> Option<(RayCastResultNormal, PhysicsType)> {
         match self
             .physics_container
-            .cast_ray_and_get_normal(dir.to_network(), max_toi, from.to_network(), filter)
+            .raycast(dir.to_network(), max_toi, from.to_network(), filter)
         {
             Some(result) => {
                 let Some(collider_type) = self.get_type_by_collider(&result.collider_id) else {

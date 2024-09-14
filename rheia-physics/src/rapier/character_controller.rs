@@ -1,7 +1,7 @@
 use crate::physics::IPhysicsCharacterController;
 
 use super::bridge::{na_to_network, IntoNaVector3};
-use super::collider::RapierPhysicsCollider;
+use super::collider::{RapierPhysicsCollider, RapierPhysicsShape};
 use super::query_filter::RapierQueryFilter;
 use common::chunks::position::Vector3;
 use rapier3d::control::{CharacterCollision, CharacterLength, KinematicCharacterController};
@@ -12,7 +12,7 @@ pub struct RapierPhysicsCharacterController {
     grounded: bool,
 }
 
-impl<'a> IPhysicsCharacterController<RapierPhysicsCollider, RapierQueryFilter<'a>>
+impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, RapierQueryFilter<'a>>
     for RapierPhysicsCharacterController
 {
     fn create(custom_mass: Option<f32>) -> Self {

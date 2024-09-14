@@ -1,18 +1,21 @@
 use common::chunks::{block_position::BlockPosition, position::Vector3};
 
-pub trait IQueryFilter<C: IPhysicsCollider>: Default {
+pub trait IQueryFilter<S: IPhysicsShape, C: IPhysicsCollider<S>>: Default {
     fn exclude_exclude_collider(&mut self, collider: &C);
 }
 
-pub trait IPhysicsCollider {
+pub trait IPhysicsShape {}
+
+pub trait IPhysicsCollider<S: IPhysicsShape> {
     fn get_position(&self) -> Vector3;
     fn set_position(&mut self, position: Vector3);
     fn set_enabled(&mut self, active: bool);
     fn get_index(&self) -> usize;
     fn remove(&mut self);
+    fn get_shape(&self) -> S;
 }
 
-pub trait IPhysicsCharacterController<C: IPhysicsCollider, F: IQueryFilter<C>> {
+pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, F: IQueryFilter<S, C>> {
     fn create(custom_mass: Option<f32>) -> Self;
     fn move_shape(&mut self, collider: &C, filter: F, delta: f64, impulse: Vector3) -> Vector3;
     fn is_grounded(&self) -> bool;
@@ -24,19 +27,14 @@ pub trait IPhysicsColliderBuilder {
     fn trimesh(verts: Vec<Vector3>, indices: Vec<[u32; 3]>) -> Self;
 }
 
-pub trait IPhysicsContainer<C: IPhysicsCollider, B: IPhysicsColliderBuilder, F: IQueryFilter<C>>:
+pub trait IPhysicsContainer<S: IPhysicsShape, C: IPhysicsCollider<S>, B: IPhysicsColliderBuilder, F: IQueryFilter<S, C>>:
     Clone + Default
 {
     fn step(&self, delta: f32);
     fn spawn_collider(&self, collider_builder: B) -> C;
 
-    fn cast_ray_and_get_normal(
-        &self,
-        dir: Vector3,
-        max_toi: f32,
-        origin: Vector3,
-        filter: F,
-    ) -> Option<RayCastResultNormal>;
+    fn cast_ray(&self, dir: Vector3, max_toi: f32, origin: Vector3, filter: F) -> Option<RayCastResultNormal>;
+    fn cast_shape(&self, shape: S, origin: Vector3, target: Vector3, filter: F) -> Option<ShapeCastResult>;
 }
 
 #[derive(Debug)]
@@ -56,6 +54,11 @@ impl RayCastResultNormal {
         let p = self.point.clone() - self.normal.clone() * 0.5;
         BlockPosition::from_position(&p)
     }
+}
+
+pub struct ShapeCastResult {
+    pub collider_id: usize,
+    pub point: Vector3,
 }
 
 #[cfg(test)]

@@ -1,8 +1,28 @@
+use std::borrow::Borrow;
+
 use super::bridge::{na_to_network, IntoNaVector3};
 use super::container::RapierPhysicsContainer;
-use common::chunks::position::{Vector3 as NetworkVector3};
-use crate::physics::IPhysicsCollider;
+use crate::physics::{IPhysicsCollider, IPhysicsShape};
+use common::chunks::position::Vector3 as NetworkVector3;
 use rapier3d::prelude::*;
+
+pub struct RapierPhysicsShape {
+    shape: Box<dyn Shape>,
+}
+
+impl RapierPhysicsShape {
+    pub(crate) fn create(shape: &dyn Shape) -> Self {
+        Self {
+            shape: shape.clone_dyn(),
+        }
+    }
+
+    pub(crate) fn get_shape(&self) -> &dyn Shape {
+        self.shape.borrow()
+    }
+}
+
+impl IPhysicsShape for RapierPhysicsShape {}
 
 /// For stationary bodies
 pub struct RapierPhysicsCollider {
@@ -19,7 +39,7 @@ impl RapierPhysicsCollider {
     }
 }
 
-impl IPhysicsCollider for RapierPhysicsCollider {
+impl IPhysicsCollider<RapierPhysicsShape> for RapierPhysicsCollider {
     fn get_position(&self) -> NetworkVector3 {
         let collider = self.physics_container.get_collider_mut(&self.collider_handle).unwrap();
         na_to_network(&collider.translation())
@@ -50,4 +70,14 @@ impl IPhysicsCollider for RapierPhysicsCollider {
             true,
         );
     }
+
+    fn get_shape(&self) -> RapierPhysicsShape {
+        let physics_container = self.physics_container.clone();
+        let collider = physics_container
+            .get_collider(&self.collider_handle)
+            .unwrap()
+            .clone();
+        RapierPhysicsShape::create(collider.shape())
+    }
+
 }
