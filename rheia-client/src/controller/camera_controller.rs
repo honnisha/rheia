@@ -9,6 +9,11 @@ use super::{
 
 const CROSS_SCENE: &str = "res://scenes/cross.tscn";
 
+pub struct RayDirection {
+    pub dir: Vector3,
+    pub from: Vector3,
+    pub max_toi: f32,
+}
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
 pub struct CameraController {
@@ -49,6 +54,17 @@ impl CameraController {
         r.x = rotation.yaw % 360.0;
         r.y = rotation.pitch % 360.0;
         self.base_mut().set_rotation_degrees(r);
+    }
+
+    pub fn get_ray_from_center(&self) -> RayDirection {
+        let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
+
+        let from = self.camera.project_ray_origin(screen / 2.0);
+        let to = from + self.camera.project_ray_normal(screen / 2.0) * 10.0;
+
+        let dir = to - from;
+        let (dir, max_toi) = (dir.normalized(), dir.length());
+        RayDirection { dir, from, max_toi }
     }
 }
 

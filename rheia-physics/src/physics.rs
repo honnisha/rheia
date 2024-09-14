@@ -16,9 +16,8 @@ pub trait IPhysicsCollider<S: IPhysicsShape> {
 }
 
 pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, F: IQueryFilter<S, C>> {
-    fn create(custom_mass: Option<f32>) -> Self;
+    fn create(custom_mass: Option<f32>, snap_to_ground: Option<f32>) -> Self;
     fn move_shape(&mut self, collider: &C, filter: F, delta: f64, impulse: Vector3) -> Vector3;
-    fn is_grounded(&self) -> bool;
     fn get_custom_mass(&mut self) -> &Option<f32>;
 }
 
@@ -33,8 +32,8 @@ pub trait IPhysicsContainer<S: IPhysicsShape, C: IPhysicsCollider<S>, B: IPhysic
     fn step(&self, delta: f32);
     fn spawn_collider(&self, collider_builder: B) -> C;
 
-    fn cast_ray(&self, dir: Vector3, max_toi: f32, origin: Vector3, filter: F) -> Option<RayCastResultNormal>;
-    fn cast_shape(&self, shape: S, origin: Vector3, target: Vector3, filter: F) -> Option<ShapeCastResult>;
+    fn cast_ray(&self, origin: Vector3, dir: Vector3, max_toi: f32, filter: F) -> Option<RayCastResultNormal>;
+    fn cast_shape(&self, shape: S, origin: Vector3, dir: Vector3, max_toi: f32, filter: F) -> Option<ShapeCastResult>;
 }
 
 #[derive(Debug)]

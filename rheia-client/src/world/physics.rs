@@ -10,8 +10,11 @@ use physics::physics::RayCastResultNormal;
 use physics::PhysicsCollider;
 use physics::PhysicsColliderBuilder;
 use physics::PhysicsContainer;
+use physics::PhysicsShape;
 use physics::QueryFilter;
 
+use crate::controller::camera_controller::RayDirection;
+use crate::utils::bridge::IntoGodotVector;
 use crate::utils::bridge::IntoNetworkVector;
 
 #[derive(Clone)]
@@ -50,17 +53,17 @@ impl PhysicsProxy {
         }
     }
 
-    pub fn raycast(
+    pub fn cast_ray(
         &self,
-        dir: Vector3,
-        max_toi: f32,
-        from: Vector3,
+        ray_direction: RayDirection,
         filter: QueryFilter,
     ) -> Option<(RayCastResultNormal, PhysicsType)> {
-        match self
-            .physics_container
-            .raycast(dir.to_network(), max_toi, from.to_network(), filter)
-        {
+        match self.physics_container.cast_ray(
+            ray_direction.from.to_network(),
+            ray_direction.dir.to_network(),
+            ray_direction.max_toi,
+            filter,
+        ) {
             Some(result) => {
                 let Some(collider_type) = self.get_type_by_collider(&result.collider_id) else {
                     panic!(
@@ -70,6 +73,21 @@ impl PhysicsProxy {
                 };
                 Some((result, collider_type))
             }
+            None => None,
+        }
+    }
+
+    pub fn cast_shape(&self, shape: PhysicsShape, ray_direction: RayDirection, filter: QueryFilter) -> Option<Vector3> {
+        match self.physics_container.cast_shape(
+            shape,
+            ray_direction.from.to_network(),
+            ray_direction.dir.to_network(),
+            ray_direction.max_toi,
+            filter,
+        ) {
+            Some(result) => {
+                Some(result.point.to_godot())
+            },
             None => None,
         }
     }

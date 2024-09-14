@@ -13,16 +13,16 @@ use network::messages::{ClientMessages, NetworkMessageType};
 use physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
 use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 
-use super::camera_controller::CameraController;
+use super::camera_controller::{CameraController, RayDirection};
 use super::controls::Controls;
 use super::entity_movement::EntityMovement;
 
 const TURN_SPEED: f64 = 6.0;
 const MOVEMENT_SPEED: f32 = 4.0;
-const GROUND_TIMER: f32 = 0.5;
 
 const CHARACTER_GRAVITY: f32 = -10.0;
-const JUMP_SPEED: f32 = 7.5;
+const JUMP_SPEED: f32 = 8.0;
+const SNAP_TO_GROUND: f32 = 0.1;
 
 pub(crate) const CAMERA_DISTANCE: f32 = 2.5;
 pub(crate) const CONTROLLER_CAMERA_OFFSET_RIGHT: f32 = 0.45;
@@ -49,6 +49,7 @@ pub struct PlayerController {
     character_controller: PhysicsCharacterController,
 
     vertical_movement: f32,
+    is_grounded: bool,
     grounded_timer: f32,
 
     look_at_message: String,
@@ -73,10 +74,11 @@ impl PlayerController {
             controls,
             cache_movement: None,
 
-            character_controller: PhysicsCharacterController::create(Some(CONTROLLER_MASS)),
+            character_controller: PhysicsCharacterController::create(Some(CONTROLLER_MASS), Some(SNAP_TO_GROUND)),
             collider,
 
             vertical_movement: 0.0,
+            is_grounded: false,
             grounded_timer: 0.0,
 
             look_at_message: Default::default(),
@@ -118,6 +120,31 @@ impl PlayerController {
         self.entity.bind_mut().rotate(rotation);
     }
 
+    fn detect_is_grounded(&mut self, delta: f64) {
+        let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
+        let mut w = world.bind_mut();
+
+        let ray_direction = RayDirection {
+            dir: Vector3::new(0.0, -1.0, 0.0),
+            from: self.collider.get_position().to_godot(),
+            max_toi: SNAP_TO_GROUND,
+        };
+        let mut filter = QueryFilter::default();
+        filter.exclude_exclude_collider(&self.collider);
+        self.is_grounded = w
+            .get_physics_mut()
+            .cast_shape(self.collider.get_shape(), ray_direction, filter)
+            .is_some();
+
+        if self.is_grounded {
+            self.grounded_timer = self.grounded_timer.max(0.0);
+            self.grounded_timer += delta as f32;
+        } else {
+            self.grounded_timer = self.grounded_timer.min(0.0);
+            self.grounded_timer -= delta as f32;
+        }
+    }
+
     fn get_movement(&mut self, delta: f64) -> Vector3 {
         let mut movement = Vector3::ZERO;
 
@@ -142,21 +169,14 @@ impl PlayerController {
             movement = self.entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }
 
-        // Check physics ground check
-        if self.character_controller.is_grounded() {
-            self.grounded_timer = GROUND_TIMER;
+        if self.grounded_timer > 0.1 {
             self.vertical_movement = 0.0;
         }
 
-        // If we are grounded we can jump
-        if self.grounded_timer > 0.0 {
-            self.grounded_timer -= delta as f32;
-            // If we jump we clear the grounded tolerance
-            if controls.is_jumping() {
-                self.entity.bind_mut().trigger_animation(GenericAnimations::Jump);
-                self.vertical_movement = JUMP_SPEED;
-                self.grounded_timer = 0.0;
-            }
+        // Check physics ground check
+        if controls.is_jumping() && self.grounded_timer > -0.1 {
+            self.entity.bind_mut().trigger_animation(GenericAnimations::Jump);
+            self.vertical_movement = JUMP_SPEED;
         }
 
         movement.y = self.vertical_movement;
@@ -168,29 +188,20 @@ impl PlayerController {
     }
 
     pub fn update_vision(&mut self) {
-        let camera_controller = self.camera_controller.bind();
-        let camera = camera_controller.get_camera();
-
-        let screen = camera.get_viewport().unwrap().get_visible_rect().size;
-
-        let from = camera.project_ray_origin(screen / 2.0);
-        let to = from + camera.project_ray_normal(screen / 2.0) * 10.0;
-
-        let dir = to - from;
-        let (dir, max_toi) = (dir.normalized(), dir.length());
-
         let mut filter = QueryFilter::default();
         filter.exclude_exclude_collider(&self.collider);
 
         let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
         let mut w = world.bind_mut();
-        let Some((cast_result, physics_type)) = w.get_physics_mut().raycast(dir, max_toi, from, filter)
-        else {
+
+        w.get_block_selection_mut().set_visible(false);
+
+        let camera_controller = self.camera_controller.bind();
+        let ray_direction = camera_controller.get_ray_from_center();
+        let Some((cast_result, physics_type)) = w.get_physics_mut().cast_ray(ray_direction, filter) else {
             self.look_at_message = "-".to_string();
             return;
         };
-
-        w.get_block_selection_mut().set_visible(false);
 
         self.look_at_message = match physics_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
@@ -280,6 +291,8 @@ impl INode3D for PlayerController {
 
             self.update_vision();
         }
+
+        self.detect_is_grounded(delta);
 
         // Sync godot object position
         let physics_pos = self.collider.get_position();

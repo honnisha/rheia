@@ -9,16 +9,19 @@ use rapier3d::control::{CharacterCollision, CharacterLength, KinematicCharacterC
 pub struct RapierPhysicsCharacterController {
     character_controller: KinematicCharacterController,
     custom_mass: Option<f32>,
-    grounded: bool,
 }
 
 impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, RapierQueryFilter<'a>>
     for RapierPhysicsCharacterController
 {
-    fn create(custom_mass: Option<f32>) -> Self {
+    fn create(custom_mass: Option<f32>, snap_to_ground: Option<f32>) -> Self {
         let mut character_controller = KinematicCharacterController::default();
         character_controller.offset = CharacterLength::Absolute(0.01);
-        character_controller.snap_to_ground = Some(CharacterLength::Absolute(0.1));
+
+        character_controller.snap_to_ground = match snap_to_ground {
+            Some(s) => Some(CharacterLength::Absolute(s)),
+            None => None,
+        };
         //character_controller.autostep = Some(CharacterAutostep {
         //    max_height: CharacterLength::Absolute(0.5),
         //    min_width: CharacterLength::Absolute(0.5),
@@ -27,7 +30,6 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, 
         Self {
             character_controller,
             custom_mass,
-            grounded: false,
         }
     }
 
@@ -55,7 +57,7 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, 
             filter.filter,
             |_| {},
         );
-        self.grounded = corrected_movement.grounded;
+        // self.grounded = corrected_movement.grounded;
 
         let _collisions: Vec<CharacterCollision> = vec![];
         if let Some(character_mass) = self.custom_mass {
@@ -72,10 +74,6 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, 
         };
 
         na_to_network(&corrected_movement.translation)
-    }
-
-    fn is_grounded(&self) -> bool {
-        self.grounded
     }
 
     fn get_custom_mass(&mut self) -> &Option<f32> {
@@ -100,7 +98,7 @@ mod tests {
         let collider_builder = RapierPhysicsColliderBuilder::cylinder(2.0, 1.0);
         let collider = physics.spawn_collider(collider_builder);
 
-        let mut character_controller = RapierPhysicsCharacterController::create(Some(1.0));
+        let mut character_controller = RapierPhysicsCharacterController::create(Some(1.0), Some(0.1));
         let filter = RapierQueryFilter::default();
 
         let result = character_controller.move_shape(&collider, filter, 0.5, Vector3::new(0.0, 1.0, 0.0));
