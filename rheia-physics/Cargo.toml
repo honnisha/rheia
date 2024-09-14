@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["physics-physx"]
+default = ["physics-rapier"]
 
 physics-rapier = ["rapier3d"]
 physics-physx = ["physx", "physx-sys"]

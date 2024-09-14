@@ -1,4 +1,4 @@
-use common::chunks::position::{IntoNetworkVector, Vector3};
+use common::chunks::position::Vector3;
 use rapier3d::na::Vector3 as NaVector3;
 
 pub trait IntoNaVector3<T> {
