@@ -1,12 +1,14 @@
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
-use log::info;
-use serde_yaml::Error;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+use std::path::PathBuf;
+
+use crate::ServerSettings;
 
 use super::resource_instance::ResourceInstance;
-use super::resource_instance::ResourceManifest;
 
 /// resources: slug, ResourceInstance
 #[derive(Resource)]
@@ -25,16 +27,14 @@ impl ResourceManager {
         &self.resources
     }
 
-    pub fn rescan_scripts(&mut self) {
-        let mut path = env::current_dir().unwrap().clone();
-        path.push("resources");
+    pub fn rescan_scripts(&mut self, path: PathBuf) {
         let path_str = path.into_os_string().into_string().unwrap();
-        info!(target: "resources", "▼ Rescan resources folders inside: {}", path_str);
+        log::info!(target: "resources", "▼ Rescan resources folders inside: {}", path_str);
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                info!(target: "resources", "□ read directory \"{}\" error: {}", path_str, e);
+                log::info!(target: "resources", "□ read directory \"{}\" error: {}", path_str, e);
                 return ();
             }
         };
@@ -42,42 +42,37 @@ impl ResourceManager {
         for resource_path in resource_paths {
             let current_path = resource_path.unwrap().path();
 
-            let manifest_path = format!("{}/manifest.yml", current_path.display());
-
-            let data = match fs::read_to_string(manifest_path.clone()) {
-                Ok(d) => d,
-                Err(e) => {
-                    info!(target: "resources", "□ error with manifest file {}: {}", manifest_path, e);
-                    continue;
-                }
-            };
-
-            let manifest_result: Result<ResourceManifest, Error> = serde_yaml::from_str(&data);
-            let manifest = match manifest_result {
-                Ok(m) => m,
-                Err(e) => {
-                    info!(target: "resources", "□ error with parse manifest yaml {}: {}", manifest_path, e);
-                    continue;
-                }
-            };
-
-            let resource_instance = match ResourceInstance::from_manifest(&manifest, current_path.clone()) {
+            let resource_instance = match ResourceInstance::from_manifest(current_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    info!(target: "resources", "□ error with resource {}: {}", current_path.display(), e);
+                    log::info!(target: "resources", "□ error with resource {}: {}", current_path.display(), e);
                     continue;
                 }
             };
-            info!(
+            log::info!(
                 target: "resources",
-                "□ Resource \"{}\"; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{}",
+                "□ Resource \"{}\" successfully loaded; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{} Media:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),
                 resource_instance.get_version(),
                 resource_instance.get_autor(),
                 resource_instance.get_scripts_count(),
+                resource_instance.get_media_count(),
             );
-            self.resources.insert(manifest.slug, resource_instance);
+            self.resources
+                .insert(resource_instance.get_slug().clone(), resource_instance);
         }
     }
+}
+
+pub(crate) fn rescan_scripts(mut resource_manager: ResMut<ResourceManager>, settings: Res<ServerSettings>) {
+    let resources_path = match settings.args.resources_path.as_ref() {
+        Some(p) => PathBuf::from(shellexpand::tilde(p).to_string()),
+        None => {
+            let mut path = env::current_dir().unwrap().clone();
+            path.push("resources");
+            path
+        }
+    };
+    resource_manager.rescan_scripts(resources_path);
 }

@@ -15,6 +15,9 @@ pub struct MainCommand {
 
     #[arg(long, default_value_t = String::from("debug"))]
     pub logs: String,
+
+    #[arg(long = "resources-path")]
+    pub resources_path: Option<String>,
 }
 
 pub(crate) fn get_log_level(level: &String) -> LevelFilter {
