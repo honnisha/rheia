@@ -1,97 +1,114 @@
-use std::ops::Deref;
+use std::borrow::Cow;
 
+use log::Level;
 
-const COLORS_REGEX = r"(?:(?<!\\)(&[0-9]{1,2}|&r))";
+const COLORS_REGEX: &str = r"(?:&[0-9rabcdef]{1})";
 
 pub enum Color {
     Reset,
-
     Black,
-    Red,
-    Green,
-    Yellow,
+    DarkBlue,
+    DarkGreen,
+    DarkAqua,
+    DarkRed,
+    DarkPurple,
+    Gold,
+    Gray,
+    DarkGray,
     Blue,
-    Magenta,
-    Cyan,
+    Green,
+    Aqua,
+    Red,
+    LightPurple,
+    Yellow,
     White,
-    BrightBlack,
-    BrightRed,
-    BrightGreen,
-    BrightYellow,
-    BrightBlue,
-    BrightMagenta,
-    BrightCyan,
-    BrightWhite,
-
-    BG_Black,
-    BG_Red,
-    BG_Green,
-    BG_Yellow,
-    BG_Blue,
-    BG_Magenta,
-    BG_Cyan,
-    BG_White,
-    BG_BrightBlack,
-    BG_BrightRed,
-    BG_BrightGreen,
-    BG_BrightYellow,
-    BG_BrightBlue,
-    BG_BrightMagenta,
-    BG_BrightCyan,
-    BG_BrightWhite,
 }
 
 impl Color {
-    pub fn to_str(&self) -> Cow<'static, str> {
+    pub fn from_str(origin: &str) -> Option<Color> {
+        let color = match origin {
+            "&r" => Color::Reset,
+            "&0" => Color::Reset,
+            "&1" => Color::DarkBlue,
+            "&2" => Color::DarkGreen,
+            "&3" => Color::DarkAqua,
+            "&4" => Color::DarkRed,
+            "&5" => Color::DarkPurple,
+            "&6" => Color::Gold,
+            "&7" => Color::Gray,
+            "&8" => Color::DarkGray,
+            "&9" => Color::Blue,
+            "&a" => Color::Green,
+            "&b" => Color::Aqua,
+            "&c" => Color::Red,
+            "&d" => Color::LightPurple,
+            "&e" => Color::Yellow,
+            "&f" => Color::White,
+            _ => return None,
+        };
+        return Some(color);
+    }
+
+    pub fn to_terminal_code(&self) -> Cow<'static, str> {
         match *self {
             Color::Reset => "0".into(),
-
             Color::Black => "30".into(),
-            Color::Red => "31".into(),
-            Color::Green => "32".into(),
-            Color::Yellow => "33".into(),
-            Color::Blue => "34".into(),
-            Color::Magenta => "35".into(),
-            Color::Cyan => "36".into(),
-            Color::White => "37".into(),
-            Color::BrightBlack => "90".into(),
-            Color::BrightRed => "91".into(),
-            Color::BrightGreen => "92".into(),
-            Color::BrightYellow => "93".into(),
-            Color::BrightBlue => "94".into(),
-            Color::BrightMagenta => "95".into(),
-            Color::BrightCyan => "96".into(),
-            Color::BrightWhite => "97".into(),
-
-            Color::BG_Black => "40".into(),
-            Color::BG_Red => "41".into(),
-            Color::BG_Green => "42".into(),
-            Color::BG_Yellow => "43".into(),
-            Color::BG_Blue => "44".into(),
-            Color::BG_Magenta => "45".into(),
-            Color::BG_Cyan => "46".into(),
-            Color::BG_White => "47".into(),
-            Color::BG_BrightBlack => "100".into(),
-            Color::BG_BrightRed => "101".into(),
-            Color::BG_BrightGreen => "102".into(),
-            Color::BG_BrightYellow => "103".into(),
-            Color::BG_BrightBlue => "104".into(),
-            Color::BG_BrightMagenta => "105".into(),
-            Color::BG_BrightCyan => "106".into(),
-            Color::BG_BrightWhite => "107".into(),
+            Color::DarkBlue => "34".into(),
+            Color::DarkGreen => "32".into(),
+            Color::DarkAqua => "36".into(),
+            Color::DarkRed => "31".into(),
+            Color::DarkPurple => "35".into(),
+            Color::Gold => "33".into(),
+            Color::Gray => "37".into(),
+            Color::DarkGray => "90".into(),
+            Color::Blue => "94".into(),
+            Color::Green => "92".into(),
+            Color::Aqua => "96".into(),
+            Color::Red => "91".into(),
+            Color::LightPurple => "95".into(),
+            Color::Yellow => "93".into(),
+            Color::White => "97".into(),
         }
+    }
+
+    pub fn to_terminal(&self) -> String {
+        //format!("\\e[38;5;{}m", self.to_terminal_code())
+        format!("\x1b[0;{}m", self.to_terminal_code())
     }
 }
 
 pub fn parse_to_terminal_colors(origin: &String) -> String {
-    let result = origin.deref().clone();
+    let mut result = origin.clone();
     let re = regex::Regex::new(COLORS_REGEX).unwrap();
-    let captures = re.captures(origin).unwrap();
 
-    for capture in captures.iter() {
-        let c = capture.unwrap();
-        c.start();
-        todo!();
+    let mut offset = 0;
+    for c in re.find_iter(&origin) {
+        if c.start() + offset >= 1 {
+            let pre = result.as_bytes()[c.start() - 1 + offset] as char;
+            if pre == '\\' {
+                result.remove(c.start() - 1 + offset);
+                offset -= 1;
+                continue;
+            }
+        }
+
+        let replace_str = match Color::from_str(c.as_str()) {
+            Some(c) => c.to_terminal(),
+            None => continue,
+        };
+        result.replace_range(c.start() + offset..c.end() + offset, &replace_str);
+        offset += replace_str.len() - c.as_str().len();
+    }
+    return format!("{}{}", result, Color::Reset.to_terminal());
+}
+
+pub fn get_log_level_color(level: &Level) -> Color {
+    match level {
+        Level::Error => Color::Red,
+        Level::Warn => Color::Gold,
+        Level::Info => Color::Green,
+        Level::Debug => Color::Gray,
+        Level::Trace => Color::DarkGray,
     }
 }
 
@@ -101,7 +118,10 @@ mod tests {
 
     #[test]
     fn test_terminal_colors() {
-        let r = parse_to_terminal_colors(&"Test&1 console log&r output".to_string());
-        assert_eq!(r, "".to_string());
+        let r = parse_to_terminal_colors(&"&5magenta_blue-&1_skeep-\\&2_gold-&6_red-&4_test".to_string());
+        assert_eq!(
+            r,
+            "\u{1b}[35mmagenta_blue-\u{1b}[34m_skeep-&2_gold-\u{1b}[33m_red-\u{1b}[31m_test\u{1b}[0m".to_string()
+        );
     }
 }

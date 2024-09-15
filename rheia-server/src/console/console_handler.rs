@@ -3,13 +3,15 @@ use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::{error, info};
 use rustyline::{
-    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config, Editor, ExternalPrinter
+    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config,
+    Editor, ExternalPrinter,
 };
 use std::{fs::OpenOptions, thread, time::Duration};
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
 use super::{
+    colors::parse_to_terminal_colors,
     completer::{CustomCompleter, CustomHinter},
     helper::CustomHelper,
 };
@@ -71,7 +73,9 @@ impl ConsoleHandler {
                 Err(ReadlineError::Interrupted) => {
                     let _ = match rl.save_history(CONSOLE_HISTORY_FILE) {
                         Ok(_) => info!(target: "console", "Console file history saved in \"{}\"", CONSOLE_HISTORY_FILE),
-                        Err(e) => error!(target: "console", "Console file \"{}\" history save error: {}", CONSOLE_HISTORY_FILE, e),
+                        Err(e) => {
+                            error!(target: "console", "Console file \"{}\" history save error: {}", CONSOLE_HISTORY_FILE, e)
+                        }
                     };
 
                     RuntimePlugin::stop();
@@ -98,7 +102,7 @@ impl ConsoleHandler {
 
     pub fn update(printer: &mut dyn ExternalPrinter) {
         for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
-            printer.print(message).unwrap();
+            printer.print(parse_to_terminal_colors(&message)).unwrap();
             thread::sleep(Duration::from_millis(1));
         }
     }

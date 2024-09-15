@@ -16,10 +16,11 @@ use std::{
     time::{Duration, SystemTime},
 };
 
+use crate::client::IClientNetwork;
 use crate::messages::ClientMessages;
 use crate::messages::NetworkMessageType;
 use crate::utils::unpack_network_sectioins;
-use crate::{client::ClientNetwork, client::NetworkInfo, messages::ServerMessages};
+use crate::{client::NetworkInfo, messages::ServerMessages};
 
 use super::channels::ServerChannel;
 use super::{connection_config, PROTOCOL_ID};
@@ -194,7 +195,7 @@ impl RenetClientNetwork {
     }
 }
 
-impl ClientNetwork for RenetClientNetwork {
+impl IClientNetwork for RenetClientNetwork {
     fn new(ip_port: String) -> Result<Self, String> {
         let client = RenetClient::new(connection_config());
 

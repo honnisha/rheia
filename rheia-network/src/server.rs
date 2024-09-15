@@ -3,7 +3,7 @@ use std::time::Duration;
 use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
 pub trait IServerNetwork {
-    fn create(ip_port: String) -> Self;
+    fn new(ip_port: String) -> Self;
     fn step(&self, delta: Duration) -> bool;
 
     fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)>;

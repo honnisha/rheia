@@ -12,7 +12,7 @@ use renet::{
 
 use crate::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, ServerNetwork},
+    server::{ConnectionMessages, IServerNetwork},
 };
 
 use super::{
@@ -58,7 +58,7 @@ impl RenetServerNetwork {
     }
 }
 
-impl ServerNetwork for RenetServerNetwork {
+impl IServerNetwork for RenetServerNetwork {
     fn new(ip_port: String) -> Self {
         let server = RenetServer::new(connection_config());
 

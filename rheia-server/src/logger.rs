@@ -1,6 +1,9 @@
 use log::{Metadata, Record};
 
-use crate::console::console_handler::ConsoleHandler;
+use crate::console::{
+    colors::{get_log_level_color, Color},
+    console_handler::ConsoleHandler,
+};
 
 pub(crate) static CONSOLE_LOGGER: ConsoleLogger = ConsoleLogger;
 
@@ -17,9 +20,12 @@ impl log::Log for ConsoleLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             ConsoleHandler::send_message(format!(
-                "{} {}: {}",
+                "{}{} {}{}{}: {}",
+                Color::DarkGray.to_terminal(),
                 record.metadata().target(),
+                get_log_level_color(&record.level()).to_terminal(),
                 record.level(),
+                Color::Reset.to_terminal(),
                 record.args().to_string()
             ));
         }

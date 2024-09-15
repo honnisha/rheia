@@ -12,7 +12,7 @@ use bevy_ecs::{
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use network::server::{ConnectionMessages, ServerNetwork};
+use network::server::{ConnectionMessages, IServerNetwork};
 use network::NetworkServer;
 
 use super::events::{
