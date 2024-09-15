@@ -59,8 +59,7 @@ impl ResourceManager {
                 resource_instance.get_scripts_count(),
                 resource_instance.get_media_count(),
             );
-            self.resources
-                .insert(resource_instance.get_slug().clone(), resource_instance);
+            self.resources.insert(resource_instance.get_slug().clone(), resource_instance);
         }
     }
 }

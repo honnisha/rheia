@@ -9,6 +9,7 @@ pub mod console_sender;
 pub mod helper;
 pub mod completer;
 pub mod command;
+pub mod colors;
 
 pub struct ConsolePlugin;
 

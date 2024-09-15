@@ -1,13 +1,11 @@
-use crate::network::client::NetworkInfo;
-
-use crate::network::{
-    client::ClientNetwork,
+use crate::{
+    client::{IClientNetwork, NetworkInfo},
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
 };
 
 pub struct TokioClient {}
 
-impl ClientNetwork for TokioClient {
+impl IClientNetwork for TokioClient {
     fn new(_ip_port: String) -> Result<Self, String> {
         todo!()
     }

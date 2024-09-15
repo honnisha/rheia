@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["network-renet"]
+default = ["network-tokio"]
 
 network-renet = ["renet"]
 network-steamworks = ["steamworks"]

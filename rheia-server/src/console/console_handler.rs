@@ -3,8 +3,7 @@ use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::{error, info};
 use rustyline::{
-    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, Config, Editor,
-    ExternalPrinter,
+    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config, Editor, ExternalPrinter
 };
 use std::{fs::OpenOptions, thread, time::Duration};
 
@@ -34,6 +33,7 @@ impl ConsoleHandler {
             .history_ignore_space(true)
             .auto_add_history(true)
             .edit_mode(rustyline::EditMode::Emacs)
+            .color_mode(ColorMode::Enabled)
             .build();
 
         let helper = CustomHelper {

@@ -12,7 +12,7 @@ pub struct NetworkInfo {
     pub packet_loss: f64,
 }
 
-pub trait ClientNetwork: Sized {
+pub trait IClientNetwork: Sized {
     fn new(ip_port: String) -> Result<Self, String>;
     // fn step(&self, delta: Duration) -> bool;
 

@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use crate::network::{
+use crate::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, ServerNetwork},
+    server::{ConnectionMessages, IServerNetwork},
 };
 
 pub struct TokioServer {
@@ -14,13 +14,14 @@ pub struct TokioServer {
     channel_errors: (flume::Sender<String>, flume::Receiver<String>),
 }
 
-impl ServerNetwork for TokioServer {
-    fn new(_ip_port: String) -> Self {
-        Self {
+impl IServerNetwork for TokioServer {
+    fn create(ip_port: String) -> Self {
+        let result = Self {
             channel_client_messages: flume::unbounded(),
             channel_connections: flume::unbounded(),
             channel_errors: flume::unbounded(),
-        }
+        };
+        return result
     }
 
     fn step(&self, _delta: Duration) -> bool {
