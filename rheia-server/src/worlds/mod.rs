@@ -32,14 +32,14 @@ impl Plugin for WorldsHandlerPlugin {
         commands_handler.add_command_executer(CommandExecuter::new(command_parser_world(), command_world));
         commands_handler.add_command_executer(CommandExecuter::new(command_parser_teleport(), command_teleport));
 
-        let mut wm = WorldsManager::default();
+        let mut worlds_manager = WorldsManager::default();
 
         let default_world = "default".to_string();
-        if wm.count() == 0 && !wm.has_world_with_slug(&default_world) {
+        if worlds_manager.count() == 0 && !worlds_manager.has_world_with_slug(&default_world) {
             let mut rng = RandomNumberGenerator::new();
             let seed = rng.next_u64();
 
-            match wm.create_world(default_world.clone(), seed) {
+            match worlds_manager.create_world(default_world.clone(), seed) {
                 Ok(_) => {
                     info!(target: "worlds", "Default world \"{}\" was created", default_world);
                 }
@@ -48,7 +48,7 @@ impl Plugin for WorldsHandlerPlugin {
                 }
             }
         }
-        app.insert_resource(wm);
+        app.insert_resource(worlds_manager);
 
         app.add_systems(Update, update_world_chunks);
         app.add_systems(Update, on_chunk_loaded);
