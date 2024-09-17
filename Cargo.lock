@@ -1872,6 +1872,7 @@ dependencies = [
  "num",
  "parking_lot 0.12.3",
  "rand",
+ "regex",
  "rhai",
  "serde",
  "strum 0.26.3",

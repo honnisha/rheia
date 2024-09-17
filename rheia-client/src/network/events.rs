@@ -1,6 +1,6 @@
 use common::chunks::chunk_position::ChunkPosition;
 use godot::obj::Gd;
-use network::client::{ClientNetwork, NetworkInfo};
+use network::client::{IClientNetwork, NetworkInfo};
 use network::messages::NetworkMessageType;
 use network::messages::{ClientMessages, ServerMessages};
 
@@ -66,6 +66,18 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                         log::error!(target: "network", "Client resource slug:\"{}\" error: {}", slug, e);
                     }
                 }
+            }
+            ServerMessages::ResourceMedia {
+                resurce_slug,
+                name,
+                data,
+            } => {
+                let resource_manager = main.get_resource_manager_mut();
+                let Some(resourse) = resource_manager.get_resource_mut(&resurce_slug) else {
+                    log::error!(target: "network", "Client media resource slug:\"{}\" not found", resurce_slug);
+                    continue;
+                };
+                resourse.add_media(name, data);
             }
             ServerMessages::Teleport {
                 world_slug,

@@ -1,4 +1,5 @@
 use chrono::Local;
+use common::utils::colors::parse_to_terminal_colors;
 use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use log::{error, info};
@@ -11,7 +12,6 @@ use std::{fs::OpenOptions, thread, time::Duration};
 use crate::network::runtime_plugin::RuntimePlugin;
 
 use super::{
-    colors::parse_to_terminal_colors,
     completer::{CustomCompleter, CustomHinter},
     helper::CustomHelper,
 };

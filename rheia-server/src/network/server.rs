@@ -124,6 +124,15 @@ impl NetworkPlugin {
                 scripts: resource.get_client_scripts().clone(),
             };
             client.send_message(NetworkMessageType::ReliableOrdered, input);
+
+            for (media_slug, media_data) in resource.get_media().iter() {
+                let media_msg = ServerMessages::ResourceMedia {
+                    resurce_slug: resource.get_slug().clone(),
+                    name: media_slug.clone(),
+                    data: media_data.clone(),
+                };
+                client.send_message(NetworkMessageType::ReliableOrdered, media_msg);
+            }
         }
     }
 }

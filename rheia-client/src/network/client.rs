@@ -1,7 +1,7 @@
 use network::NetworkClient;
 use parking_lot::RwLock;
 use std::sync::Arc;
-use network::client::ClientNetwork;
+use network::client::IClientNetwork;
 
 pub type NetworkLockType = Arc<RwLock<NetworkClient>>;
 

@@ -46,6 +46,11 @@ pub enum ServerMessages {
         slug: String,
         scripts: HashMap<String, String>,
     },
+    ResourceMedia {
+        resurce_slug: String,
+        name: String,
+        data: Vec<u8>,
+    },
     // Used to teleport the player's client controller.
     Teleport {
         world_slug: String,

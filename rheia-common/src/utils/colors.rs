@@ -4,6 +4,8 @@ use log::Level;
 
 const COLORS_REGEX: &str = r"(?:&[0-9rabcdef]{1})";
 
+// https://minecraft.fandom.com/wiki/Formatting_codes
+
 pub enum Color {
     Reset,
     Black,
@@ -28,7 +30,7 @@ impl Color {
     pub fn from_str(origin: &str) -> Option<Color> {
         let color = match origin {
             "&r" => Color::Reset,
-            "&0" => Color::Reset,
+            "&0" => Color::Black,
             "&1" => Color::DarkBlue,
             "&2" => Color::DarkGreen,
             "&3" => Color::DarkAqua,
@@ -46,6 +48,7 @@ impl Color {
             "&f" => Color::White,
             _ => return None,
         };
+        let color = color;
         return Some(color);
     }
 
@@ -102,13 +105,17 @@ pub fn parse_to_terminal_colors(origin: &String) -> String {
     return format!("{}{}", result, Color::Reset.to_terminal());
 }
 
-pub fn get_log_level_color(level: &Level) -> Color {
+pub fn parse_to_console_godot(origin: &String) -> String {
+    origin.clone()
+}
+
+pub fn get_log_level_color(level: &Level) -> Cow<'static, str> {
     match level {
-        Level::Error => Color::Red,
-        Level::Warn => Color::Gold,
-        Level::Info => Color::Green,
-        Level::Debug => Color::Gray,
-        Level::Trace => Color::DarkGray,
+        Level::Error => "&c".into(),
+        Level::Warn => "&6".into(),
+        Level::Info => "&a".into(),
+        Level::Debug => "&7".into(),
+        Level::Trace => "&8".into(),
     }
 }
 

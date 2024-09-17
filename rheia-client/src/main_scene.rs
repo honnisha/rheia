@@ -9,7 +9,7 @@ use crate::world::worlds_manager::WorldsManager;
 use godot::engine::input::MouseMode;
 use godot::engine::Engine;
 use godot::prelude::*;
-use network::client::ClientNetwork;
+use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
 
 pub type FloatType = f32;

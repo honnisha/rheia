@@ -48,6 +48,10 @@ impl ResourceInstance {
         self.media.len()
     }
 
+    pub fn get_media(&self) -> &HashMap<String, Vec<u8>> {
+        &self.media
+    }
+
     pub fn get_client_scripts(&self) -> &HashMap<String, String> {
         &self.scripts
     }

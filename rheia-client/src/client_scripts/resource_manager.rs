@@ -33,7 +33,11 @@ impl ResourceManager {
         Ok(())
     }
 
-    pub fn run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {
+    pub fn get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
+        self.resources.get_mut(slug)
+    }
+
+    pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {
         for (_slug, resource) in self.resources.iter_mut() {
             resource.run_event(&mut self.rhai_engine, callback_name, args);
         }

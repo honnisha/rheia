@@ -1,4 +1,5 @@
 pub mod block_mesh;
+pub mod colors;
 
 use crate::CHUNK_SIZE;
 

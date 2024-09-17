@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 use chrono::Local;
+use common::utils::colors::parse_to_console_godot;
 use flume::{bounded, unbounded, Drain};
 use flume::{Receiver, Sender};
 use godot::{
@@ -45,7 +46,7 @@ impl Console {
         let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
 
         godot_print!("{}", m);
-        CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
+        CONSOLE_OUTPUT_CHANNEL.0.send(parse_to_console_godot(&m)).unwrap();
     }
 
     fn append_text(&mut self, message: String) {

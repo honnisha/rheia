@@ -1,7 +1,7 @@
+use common::utils::colors::get_log_level_color;
 use log::{Metadata, Record};
 
 use crate::console::{
-    colors::{get_log_level_color, Color},
     console_handler::ConsoleHandler,
 };
 
@@ -20,12 +20,10 @@ impl log::Log for ConsoleLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             ConsoleHandler::send_message(format!(
-                "{}{} {}{}{}: {}",
-                Color::DarkGray.to_terminal(),
+                "&8{} {}{}&r: {}",
                 record.metadata().target(),
-                get_log_level_color(&record.level()).to_terminal(),
+                get_log_level_color(&record.level()),
                 record.level(),
-                Color::Reset.to_terminal(),
                 record.args().to_string()
             ));
         }
