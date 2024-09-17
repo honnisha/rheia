@@ -3,6 +3,8 @@ use bracket_lib::random::RandomNumberGenerator;
 use log::info;
 use on_chunk_loaded::on_chunk_loaded;
 
+pub mod bevy_commands;
+
 use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
 
 use self::{
