@@ -20,6 +20,7 @@ use super::events::{
     on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
     on_disconnect::{on_disconnect, PlayerDisconnectEvent},
     on_edit_block::{on_edit_block, EditBlockEvent},
+    on_media_loaded::{on_media_loaded, PlayerMediaLoadedEvent},
     on_player_move::{on_player_move, PlayerMoveEvent},
 };
 use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
@@ -105,6 +106,9 @@ impl NetworkPlugin {
         app.add_event::<EditBlockEvent>();
         app.add_systems(Update, on_edit_block.after(handle_events_system));
 
+        app.add_event::<PlayerMediaLoadedEvent>();
+        app.add_systems(Update, on_media_loaded.after(handle_events_system));
+
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
 
@@ -144,6 +148,7 @@ fn receive_message_system(
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut edit_block_events: EventWriter<EditBlockEvent>,
+    mut player_media_loaded_events: EventWriter<PlayerMediaLoadedEvent>,
 ) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("receive_message_system").entered();
@@ -184,6 +189,10 @@ fn receive_message_system(
             } => {
                 let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
                 edit_block_events.send(edit);
+            }
+            ClientMessages::MediaLoaded => {
+                let msg = PlayerMediaLoadedEvent::new(client.clone());
+                player_media_loaded_events.send(msg);
             }
         }
     }

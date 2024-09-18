@@ -31,7 +31,7 @@ impl Command for SpawnPlayer {
     fn apply(self, world: &mut World) {
         world.resource_scope(|world, worlds_manager: Mut<WorldsManager>| {
             let Some(mut world_manager) = worlds_manager.get_world_manager_mut(&self.world_slug) else {
-                return;
+                panic!("SpawnPlayer: world \"{}\" doesn't exists", self.world_slug);
             };
 
             let world_entity = world_manager.spawn_player(self.client.clone(), self.position, self.rotation);

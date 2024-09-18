@@ -40,6 +40,10 @@ impl ResourceInstance {
     pub fn add_media(&mut self, media_slug: String, data: Vec<u8>) {
         self.media.insert(media_slug, data);
     }
+
+    pub fn get_media_count(&self) -> usize {
+        self.media.len()
+    }
 }
 
 impl AsRef<ScriptInstance> for ScriptInstance {

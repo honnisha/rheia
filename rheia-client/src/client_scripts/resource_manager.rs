@@ -9,6 +9,8 @@ use super::resource_instance::ResourceInstance;
 pub struct ResourceManager {
     rhai_engine: Engine,
     resources: HashMap<String, ResourceInstance>,
+
+    server_target_media_count: u32,
 }
 
 impl ResourceManager {
@@ -20,6 +22,7 @@ impl ResourceManager {
         ResourceManager {
             rhai_engine: engine,
             resources: HashMap::new(),
+            server_target_media_count: 0,
         }
     }
 
@@ -35,6 +38,22 @@ impl ResourceManager {
 
     pub fn get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
         self.resources.get_mut(slug)
+    }
+
+    pub fn set_target_media_count(&mut self, target: u32) {
+        self.server_target_media_count = target;
+    }
+
+    pub fn get_target_media_count(&mut self) -> &u32 {
+        &self.server_target_media_count
+    }
+
+    pub fn get_media_count(&self) -> u32 {
+        let mut count: u32 = 0;
+        for (slug, resource) in self.resources.iter() {
+            count += resource.get_media_count() as u32;
+        }
+        return count;
     }
 
     pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {

@@ -27,6 +27,14 @@ impl ResourceManager {
         &self.resources
     }
 
+    pub fn get_media_count(&self) -> u32 {
+        let mut count: u32 = 0;
+        for (_slug, resource) in self.resources.iter() {
+            count += resource.get_media_count() as u32;
+        }
+        return count;
+    }
+
     pub fn rescan_scripts(&mut self, path: PathBuf) {
         let path_str = path.into_os_string().into_string().unwrap();
         log::info!(target: "resources", "▼ Rescan resources folders inside: {}", path_str);

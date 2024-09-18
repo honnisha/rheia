@@ -67,6 +67,10 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     }
                 }
             }
+            ServerMessages::MediaCount { count } => {
+                let resource_manager = main.get_resource_manager_mut();
+                resource_manager.set_target_media_count(count);
+            }
             ServerMessages::ResourceMedia {
                 resurce_slug,
                 name,
@@ -78,6 +82,10 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     continue;
                 };
                 resourse.add_media(name, data);
+
+                if resource_manager.get_media_count() >= *resource_manager.get_target_media_count() {
+                    network.send_message(&ClientMessages::MediaLoaded, NetworkMessageType::ReliableOrdered);
+                }
             }
             ServerMessages::Teleport {
                 world_slug,
