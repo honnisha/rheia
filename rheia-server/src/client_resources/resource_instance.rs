@@ -22,6 +22,11 @@ pub struct ResourceInstance {
     media: HashMap<String, Vec<u8>>,
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub struct MediaMeta {
+    path: String,
+}
+
 impl ResourceInstance {
     pub fn get_slug(&self) -> &String {
         &self.slug
@@ -102,11 +107,31 @@ impl ResourceInstance {
         }
         if let Some(media_list) = &manifest.media {
             for media in media_list.iter() {
-                let path = format!("{}/{}", path.display(), media);
+                let media_manifest_path = format!("{}/{}", path.display(), media);
+
+                let media_manifest_data = match std::fs::read_to_string(media_manifest_path.clone()) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        log::error!(target: "resources", "media manifest file \"{}\" error: {}", media, e);
+                        continue;
+                    }
+                };
+
+                let media_manifest_result: Result<MediaMeta, serde_yaml::Error> =
+                    serde_yaml::from_str(&media_manifest_data);
+                let media_manifest = match media_manifest_result {
+                    Ok(m) => m,
+                    Err(e) => {
+                        log::error!(target: "resources", "media manifest \"{}\" yaml error: {}", media, e);
+                        continue;
+                    }
+                };
+
+                let path = format!("{}/{}", path.display(), media_manifest.path);
                 let data = match std::fs::read(path) {
                     Ok(v) => v,
                     Err(e) => {
-                        log::error!(target: "resources", "□ media file \"{}\" error: {:?}", media, e);
+                        log::error!(target: "resources", "□ media content file \"{}\" error: {:?}", media, e);
                         continue;
                     }
                 };
