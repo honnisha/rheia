@@ -1,7 +1,6 @@
 pub mod messages;
 pub mod client;
 pub mod server;
-pub mod utils;
 
 #[cfg(feature = "network-renet")]
 pub mod renet;

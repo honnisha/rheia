@@ -1,15 +1,14 @@
 use crate::{
     main_scene::FloatType,
-    utils::textures::texture_mapper::TextureMapper,
-    world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered},
+    world::{
+        chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered},
+        worlds_manager::{BlockStorageRef, TextureMapperRef},
+    },
 };
 use common::chunks::position::Vector3 as NetworkVector3;
-use common::{
-    blocks::blocks_storage::BlockType,
-    utils::block_mesh::{
-        greedy::{greedy_quads, GreedyQuadsBuffer},
-        QuadBuffer,
-    },
+use common::utils::block_mesh::{
+    greedy::{greedy_quads, GreedyQuadsBuffer},
+    QuadBuffer,
 };
 use common::{
     utils::block_mesh::{buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
@@ -29,30 +28,12 @@ use godot::{
     prelude::{Array, Gd},
 };
 use log::error;
-use ndshape::ConstShape;
-use parking_lot::RwLockReadGuard;
 use physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder};
 
-#[allow(dead_code)]
-pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {
-    let mut b_chunk = [BlockType::Air; ChunkBordersShape::SIZE as usize];
-
-    for i in 0u32..(ChunkBordersShape::SIZE as u32) {
-        let [x, y, z] = ChunkBordersShape::delinearize(i);
-        b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < radius {
-            true => BlockType::Stone,
-            _ => BlockType::Air,
-        };
-    }
-    b_chunk
-}
-
-pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
-    //let b_chunk = get_test_sphere(7.0);
-
+pub fn generate_buffer(chunk_collider_data: &ChunkColliderDataBordered) -> UnitQuadBuffer {
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        chunk_data, //&b_chunk,
+        chunk_collider_data,
         &ChunkBordersShape {},
         [0; 3],
         [CHUNK_SIZE as u32 + 1; 3],
@@ -62,10 +43,10 @@ pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
     buffer
 }
 
-pub fn _generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
-    let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
+pub fn _generate_buffer_greedy(chunk_collider_data: &ChunkColliderDataBordered) -> QuadBuffer {
+    let mut buffer = GreedyQuadsBuffer::new(chunk_collider_data.len());
     greedy_quads(
-        chunk_data, //&b_chunk,
+        chunk_collider_data,
         &ChunkBordersShape {},
         [0; 3],
         [CHUNK_SIZE as u32 + 1; 3],
@@ -86,13 +67,14 @@ unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
 pub fn generate_chunk_geometry(
-    texture_mapper: &RwLockReadGuard<TextureMapper>,
-    chunk_data: &ChunkDataBordered,
+    texture_mapper: &TextureMapperRef,
+    chunk_collider_data: &ChunkColliderDataBordered,
+    block_storage: &BlockStorageRef,
 ) -> Geometry {
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(ArrayType::MAX.ord() as usize, &Variant::nil());
 
-    let buffer = generate_buffer(chunk_data);
+    let buffer = generate_buffer(chunk_collider_data);
 
     let mut indices = PackedInt32Array::new();
     let mut verts = PackedVector3Array::new();
@@ -118,7 +100,7 @@ pub fn generate_chunk_geometry(
             collider_indices.push([i[3] as u32, i[4] as u32, i[5] as u32]);
 
             let voxel_size = 1.0;
-            let v = face.quad_corners(&quad.into(), true).map(|c| {
+            let v = face.quad_corners(&quad.clone().into(), true).map(|c| {
                 collider_verts.push(NetworkVector3::new(c.x as f32, c.y as f32, c.z as f32));
                 Vector3::new(c.x as f32, c.y as f32, c.z as f32) * voxel_size
             });
@@ -127,25 +109,18 @@ pub fn generate_chunk_geometry(
             let n = face.signed_normal();
             normals.extend([Vector3::new(n.x as f32, n.y as f32, n.z as f32); 4]);
 
-            let block_type_info = match quad.block_type.get_block_type_info() {
-                Some(e) => e,
-                _ => {
-                    error!("GENERATE_CHUNK_GEOMETRY cant get block_type_info");
-                    panic!();
-                }
-            };
+            let block_info = quad
+                .block_info
+                .expect("GENERATE_CHUNK_GEOMETRY block info is not found");
+            let i = block_info.get_id() as usize;
+            let block_type = block_storage
+                .get(&i)
+                .expect("GENERATE_CHUNK_GEOMETRY block type is not found");
+
             let unoriented_quad = UnorientedQuad::from(quad);
             for i in &face.tex_coords_godot(RIGHT_HANDED_Y_UP_CONFIG.u_flip_face, false, &unoriented_quad) {
-                let offset = match texture_mapper.get_uv_offset(block_type_info, side_index as i8) {
-                    //let offset = match block_type.get_uv_offset(side_index as i8) {
-                    Some(o) => o,
-                    _ => {
-                        error!(
-                            "GENERATE_CHUNK_GEOMETRY cant find offset for block type: {}",
-                            block_type_info
-                        );
-                        panic!();
-                    }
+                let Some(offset) = texture_mapper.get_uv_offset(block_type, side_index as i8) else {
+                    continue;
                 };
                 let ui_offset = Vector2::new(
                     steep * ((offset % 32) as i32) as FloatType,

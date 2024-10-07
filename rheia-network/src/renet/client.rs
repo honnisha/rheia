@@ -19,7 +19,6 @@ use std::{
 use crate::client::IClientNetwork;
 use crate::messages::ClientMessages;
 use crate::messages::NetworkMessageType;
-use crate::utils::unpack_network_sectioins;
 use crate::{client::NetworkInfo, messages::ServerMessages};
 
 use super::channels::ServerChannel;
@@ -93,20 +92,6 @@ impl RenetClientNetwork {
                 return None;
             }
         };
-        // Handle decoded messages before send them back
-        let decoded: ServerMessages = match decoded {
-            ServerMessages::ChunkSectionEncodedInfo {
-                world_slug,
-                chunk_position,
-                mut sections,
-            } => ServerMessages::ChunkSectionInfo {
-                world_slug,
-                chunk_position,
-                sections: unpack_network_sectioins(&mut sections),
-            },
-            other => other,
-        };
-
         Some(decoded)
     }
 

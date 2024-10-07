@@ -1,23 +1,31 @@
-use super::{
-    block_type_info::BlockTypeInfo,
-    blocks_storage::{get_block_type_info, BlockType},
-    voxel_visibility::{Voxel, VoxelVisibility},
-};
+use super::voxel_visibility::VoxelVisibility;
 
-impl BlockType {
-    pub fn get_block_type_info(&self) -> Option<&'static BlockTypeInfo> {
-        get_block_type_info(self)
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BlockContent {
+    Texture {
+        texture: String,
+        side_texture: Option<String>,
+        bottom_texture: Option<String>,
+    },
+    ModelCube {
+        voxel_visibility: VoxelVisibility,
+        model: String,
+    },
 }
 
-impl Voxel for BlockType {
-    fn get_visibility(&self) -> VoxelVisibility {
-        match get_block_type_info(self) {
-            Some(t) => t.voxel_visibility.clone(),
-            None => VoxelVisibility::Empty,
-        }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BlockType {
+    voxel_visibility: VoxelVisibility,
+    block_content: BlockContent,
+    selectable: bool,
+}
+
+impl BlockType {
+    pub fn get_voxel_visibility(&self) -> &VoxelVisibility {
+        &self.voxel_visibility
     }
-    fn get_type(&self) -> &BlockType {
-        return self;
+
+    pub fn get_block_content(&self) -> &BlockContent {
+        &self.block_content
     }
 }

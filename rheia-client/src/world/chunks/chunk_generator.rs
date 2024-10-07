@@ -7,11 +7,12 @@ pub(crate) fn generate_chunk(
     chunk_column: ChunkLock,
     chunks_near: NearChunksData,
     chunks_loaded: flume::Sender<ChunkLock>,
+    material_instance_id: InstanceId
 ) {
     rayon::spawn(move || {
         let c = chunk_column.read();
 
-        c.spawn_sections();
+        c.spawn_sections(&material_instance_id);
         for y in 0..VERTICAL_SECTIONS {
             c.generate_section_geometry(&chunks_near, y);
         }

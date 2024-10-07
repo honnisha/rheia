@@ -1,39 +1,33 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use super::{blocks_storage::BlockType, block_type_info::BlockTypeInfo};
+#[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize, PartialEq)]
+pub enum BlockFace {
+    Down,
+    East,
+    North,
+    South,
+    Up,
+    West,
+}
 
-#[derive(Debug, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize)]
 pub struct BlockInfo {
-    block_type: BlockType,
+    id: u32,
+    face: Option<BlockFace>,
 }
 
 impl BlockInfo {
-    pub fn new(block_type: BlockType) -> BlockInfo {
-        BlockInfo {
-            block_type: block_type,
-        }
+    pub fn create(id: u32, face: Option<BlockFace>) -> BlockInfo {
+        BlockInfo { id, face }
     }
 
-    #[allow(dead_code)]
-    pub fn get_block_type_info(&self) -> &'static BlockTypeInfo {
-        self.block_type.get_block_type_info().unwrap()
-    }
-
-    pub fn get_block_type(&self) -> BlockType {
-        self.block_type
-    }
-}
-
-impl Clone for BlockInfo {
-    fn clone(&self) -> BlockInfo {
-        BlockInfo {
-            block_type: self.block_type,
-        }
+    pub fn get_id(&self) -> u32 {
+        self.id
     }
 }
 
 impl PartialEq for BlockInfo {
     fn eq(&self, other: &BlockInfo) -> bool {
-        self.block_type == other.block_type
+        self.id == other.id && self.face == other.face
     }
 }

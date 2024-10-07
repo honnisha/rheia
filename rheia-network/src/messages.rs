@@ -9,8 +9,6 @@ use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 use common::chunks::position::Vector3;
 
-use crate::utils::{PacketChunkSectionData, SectionsData};
-
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
     ConnectionInfo {
@@ -35,7 +33,7 @@ pub enum ClientMessages {
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
-pub type NetworkSectionsType = [PacketChunkSectionData; VERTICAL_SECTIONS];
+pub type SectionsData = [Box<ChunkDataType>; VERTICAL_SECTIONS];
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {
@@ -60,11 +58,6 @@ pub enum ServerMessages {
         world_slug: String,
         position: Vector3,
         rotation: Rotation,
-    },
-    ChunkSectionEncodedInfo {
-        world_slug: String,
-        chunk_position: ChunkPosition,
-        sections: NetworkSectionsType,
     },
     ChunkSectionInfo {
         world_slug: String,

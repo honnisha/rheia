@@ -1,4 +1,10 @@
-use super::{chunks::chunks_map::ChunkMap, physics::PhysicsProxy, worlds_manager::TextureMapperType};
+use std::sync::Arc;
+
+use super::{
+    chunks::chunks_map::ChunkMap,
+    physics::PhysicsProxy,
+    worlds_manager::{BlockStorageType, TextureMapperType},
+};
 use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::entities_manager::EntitiesManager,
@@ -29,15 +35,22 @@ pub struct WorldManager {
     entities_manager: Gd<EntitiesManager>,
 
     block_selection: Gd<Node3D>,
+
+    texture_mapper: TextureMapperType,
+    material: Gd<Material>,
+    block_storage: BlockStorageType,
 }
 
-impl WorldManager {}
-
 impl WorldManager {
-    pub fn create(base: Base<Node>, slug: String, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+    pub fn create(
+        base: Base<Node>,
+        slug: String,
+        texture_mapper: TextureMapperType,
+        material: Gd<Material>,
+        block_storage: BlockStorageType,
+    ) -> Self {
         let mut physics = PhysicsProxy::default();
-        let mut chunk_map =
-            Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base, texture_mapper.clone(), material.clone()));
+        let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base));
         let container_name = GString::from("ChunkMap");
         chunk_map.bind_mut().base_mut().set_name(container_name.clone());
         let player_controller =
@@ -70,6 +83,10 @@ impl WorldManager {
             entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
 
             block_selection: selection,
+
+            texture_mapper,
+            material,
+            block_storage,
         }
     }
 
@@ -170,19 +187,9 @@ impl INode for WorldManager {
         self.physics.step(delta as f32);
 
         let mut map = self.chunk_map.bind_mut();
-        map.send_chunks_to_load();
+        map.send_chunks_to_load(self.material.instance_id());
         map.spawn_loaded_chunks(&self.physics);
 
-        map.update_chunks(&self.physics);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use godot::prelude::*;
-
-    #[test]
-    fn test_() {
-        Vector3::new(14.464218, 28.0, -27.820688);
+        map.update_chunks(&self.physics, &self.block_storage.read(), &self.texture_mapper.read());
     }
 }

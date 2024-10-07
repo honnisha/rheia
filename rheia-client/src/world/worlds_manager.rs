@@ -1,6 +1,9 @@
+use ahash::AHashMap;
+use common::blocks::block_type::BlockType;
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
+use parking_lot::lock_api::RwLockReadGuard;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -9,6 +12,10 @@ use crate::utils::textures::{material_builder::build_blocks_material, texture_ma
 use super::world_manager::WorldManager;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
+pub type TextureMapperRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, TextureMapper>;
+
+pub type BlockStorageType = Arc<RwLock<AHashMap<usize, BlockType>>>;
+pub type BlockStorageRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, AHashMap<usize, BlockType>>;
 
 pub struct WorldsManager {
     base: Gd<Node>,
@@ -16,6 +23,8 @@ pub struct WorldsManager {
 
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
+
+    block_storage: BlockStorageType,
 }
 
 impl WorldsManager {
@@ -28,7 +37,17 @@ impl WorldsManager {
 
             material: texture.duplicate().unwrap().cast::<Material>(),
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+
+            block_storage: Arc::new(RwLock::new(Default::default())),
         }
+    }
+
+    pub fn get_block_storage(&self) -> BlockStorageRef {
+        self.block_storage.read()
+    }
+
+    pub fn get_texture_mapper(&self) -> TextureMapperRef {
+        self.texture_mapper.read()
     }
 
     pub fn get_world(&self) -> Option<&Gd<WorldManager>> {
@@ -72,7 +91,13 @@ impl WorldsManager {
 
     pub fn create_world(&mut self, world_slug: String) {
         let mut world = Gd::<WorldManager>::from_init_fn(|base| {
-            WorldManager::create(base, world_slug, self.texture_mapper.clone(), self.material.clone())
+            WorldManager::create(
+                base,
+                world_slug,
+                self.texture_mapper.clone(),
+                self.material.clone(),
+                self.block_storage.clone(),
+            )
         });
 
         let world_name = GString::from("World");

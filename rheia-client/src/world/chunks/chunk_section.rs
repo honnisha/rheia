@@ -1,6 +1,6 @@
 use std::borrow::BorrowMut;
 
-use common::{blocks::blocks_storage::BlockType, chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
+use common::{blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
 use godot::{
     engine::{Material, MeshInstance3D},
     prelude::*,
@@ -20,7 +20,7 @@ use super::mesh::mesh_generator::Geometry;
 pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
 
 //pub type ChunkData = [BlockInfo; ChunkShape::SIZE as usize];
-pub type ChunkDataBordered = [BlockType; ChunkBordersShape::SIZE as usize];
+pub type ChunkColliderDataBordered = [ChunkColliderInfo; ChunkBordersShape::SIZE as usize];
 
 /// One chunk section
 /// Contains mesh and data of the chunk section blocks

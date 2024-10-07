@@ -51,6 +51,10 @@ impl Main {
         &mut self.resource_manager
     }
 
+    pub fn get_worlds_manager(&self) -> &WorldsManager {
+        &self.worlds_manager
+    }
+
     pub fn get_worlds_manager_mut(&mut self) -> &mut WorldsManager {
         &mut self.worlds_manager
     }

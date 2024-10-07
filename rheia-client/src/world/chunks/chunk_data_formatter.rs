@@ -1,25 +1,28 @@
 use arrayvec::ArrayVec;
 use common::{
-    blocks::{blocks_storage::BlockType, voxel_visibility::VoxelVisibility},
+    blocks::{chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
     chunks::block_position::ChunkBlockPosition,
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
-use network::messages::ChunkDataType;
 use ndshape::ConstShape;
+use network::messages::ChunkDataType;
+
+use crate::world::worlds_manager::BlockStorageRef;
 
 use super::{
     chunk_column::ColumnDataLockType,
-    chunk_section::{ChunkBordersShape, ChunkDataBordered},
+    chunk_section::{ChunkBordersShape, ChunkColliderDataBordered},
     near_chunk_data::NearChunksData,
 };
 
 pub fn format_chunk_data_with_boundaries(
     chunks_near: Option<&NearChunksData>,
     chunk_data: &ColumnDataLockType,
+    block_storage: &BlockStorageRef,
     y: usize,
-) -> ChunkDataBordered {
+) -> ChunkColliderDataBordered {
     // Fill with solid block by default
-    let mut b_chunk = [BlockType::Stone; ChunkBordersShape::SIZE as usize];
+    let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
 
     let mut mesh_count = 0;
 
@@ -30,16 +33,20 @@ pub fn format_chunk_data_with_boundaries(
         for y in 0_u32..(CHUNK_SIZE as u32) {
             for z in 0_u32..(CHUNK_SIZE as u32) {
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
-                let block_type = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
-                    Some(e) => e.get_block_type(),
-                    None => BlockType::Air,
+                let info = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
+                    Some(block_info) => {
+                        let i = block_info.get_id() as usize;
+                        let block_type = block_storage.get(&i).expect("block type is not found");
+                        ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()))
+                    }
+                    None => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
                 };
 
-                if block_type.get_block_type_info().unwrap().get_voxel_visibility() != VoxelVisibility::Empty {
+                if *info.get_voxel_visibility() != VoxelVisibility::Empty {
                     mesh_count += 1
                 }
 
-                b_chunk[b_chunk_pos as usize] = block_type;
+                b_chunk[b_chunk_pos as usize] = info;
             }
         }
     }
@@ -77,10 +84,17 @@ pub fn format_chunk_data_with_boundaries(
                 let pos_o = ChunkBlockPosition::new(pos_outside[0] as u8, pos_outside[1] as u8, pos_outside[2] as u8);
                 let block_type = match chunk_section.as_ref() {
                     Some(c) => match c.get(&pos_o) {
-                        Some(e) => e.get_block_type(),
-                        None => BlockType::Air,
+                        Some(block_info) => {
+                            let i = block_info.get_id() as usize;
+                            let block_type = block_storage.get(&i).expect("block type is not found");
+                            ChunkColliderInfo::create(
+                                block_type.get_voxel_visibility().clone(),
+                                Some(block_info.clone()),
+                            )
+                        }
+                        None => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
                     },
-                    None => BlockType::Air,
+                    None => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
                 };
                 b_chunk[pos_i as usize] = block_type;
             }

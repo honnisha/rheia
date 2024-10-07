@@ -1,6 +1,6 @@
 use strum_macros::Display;
 
-use super::blocks_storage::BlockType;
+use super::block_info::BlockInfo;
 
 /// Describes how this voxel influences mesh generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
@@ -17,7 +17,7 @@ pub enum VoxelVisibility {
 /// how to generate geometry for this voxel.
 pub trait Voxel {
     fn get_visibility(&self) -> VoxelVisibility;
-    fn get_type(&self) -> &BlockType;
+    fn get_block_info(&self) -> &Option<BlockInfo>;
 }
 
 /// Used as a dummy for functions that must wrap a voxel
@@ -29,8 +29,8 @@ impl<'a, T: Voxel> Voxel for IdentityVoxel<'a, T> {
     fn get_visibility(&self) -> VoxelVisibility {
         self.0.get_visibility()
     }
-    fn get_type(&self) -> &BlockType {
-        self.0.get_type()
+    fn get_block_info(&self) -> &Option<BlockInfo> {
+        self.0.get_block_info()
     }
 }
 

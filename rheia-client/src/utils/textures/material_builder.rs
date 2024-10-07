@@ -1,4 +1,3 @@
-use common::blocks::blocks_storage::BlockType;
 use godot::{
     engine::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},

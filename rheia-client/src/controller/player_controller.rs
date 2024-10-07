@@ -4,7 +4,6 @@ use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetwork
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use crate::world::world_manager::WorldManager;
 use common::blocks::block_info::BlockInfo;
-use common::blocks::blocks_storage::BlockType;
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
@@ -210,7 +209,7 @@ impl PlayerController {
                     let msg = ClientMessages::EditBlockRequest {
                         world_slug: w.get_slug().clone(),
                         position: cast_result.get_place_block(),
-                        new_block_info: BlockInfo::new(BlockType::Stone),
+                        new_block_info: BlockInfo::create(1, None),
                     };
                     w.get_main()
                         .bind()
@@ -220,7 +219,7 @@ impl PlayerController {
                     let msg = ClientMessages::EditBlockRequest {
                         world_slug: w.get_slug().clone(),
                         position: selected_block,
-                        new_block_info: BlockInfo::new(BlockType::Air),
+                        new_block_info: BlockInfo::create(0, None),
                     };
                     w.get_main()
                         .bind()

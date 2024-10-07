@@ -71,14 +71,7 @@ pub fn greedy_quads<T, S>(
     T: MergeVoxel,
     S: Shape<3, Coord = u32>,
 {
-    greedy_quads_with_merge_strategy::<_, _, VoxelMerger<T>>(
-        voxels,
-        voxels_shape,
-        min,
-        max,
-        faces,
-        output,
-    )
+    greedy_quads_with_merge_strategy::<_, _, VoxelMerger<T>>(voxels, voxels_shape, min, max, faces, output)
 }
 
 /// Run the greedy meshing algorithm with a custom quad merging strategy using the [`MergeStrategy`] trait.
@@ -107,8 +100,7 @@ pub fn greedy_quads_with_merge_strategy<T, S, Merger>(
     } = output;
 
     let interior = extent.padded(-1); // Avoid accessing out of bounds with a 3x3x3 kernel.
-    let interior =
-        Extent::from_min_and_shape(interior.minimum.as_uvec3(), interior.shape.as_uvec3());
+    let interior = Extent::from_min_and_shape(interior.minimum.as_uvec3(), interior.shape.as_uvec3());
 
     for (group, face) in groups.iter_mut().zip(faces.iter()) {
         greedy_quads_for_face::<_, _, Merger>(voxels, voxels_shape, interior, face, visited, group);
@@ -192,16 +184,8 @@ fn greedy_quads_for_face<T, S, Merger>(
             let max_width = u_ub - quad_min_array[i_u];
             let max_height = v_ub - quad_min_array[i_v];
 
-            let (quad_width, quad_height) = unsafe {
-                Merger::find_quad(
-                    quad_min_index,
-                    max_width,
-                    max_height,
-                    &face_strides,
-                    voxels,
-                    visited,
-                )
-            };
+            let (quad_width, quad_height) =
+                unsafe { Merger::find_quad(quad_min_index, max_width, max_height, &face_strides, voxels, visited) };
             debug_assert!(quad_width >= 1);
             debug_assert!(quad_width <= max_width);
             debug_assert!(quad_height >= 1);
@@ -242,8 +226,7 @@ where
         return false;
     }
 
-    let adjacent_voxel =
-        voxels.get_unchecked(voxel_stride.wrapping_add(visibility_offset) as usize);
+    let adjacent_voxel = voxels.get_unchecked(voxel_stride.wrapping_add(visibility_offset) as usize);
 
     // TODO: If the face lies between two transparent voxels, we choose not to mesh it. We might need to extend the IsOpaque
     // trait with different levels of transparency to support this.
@@ -256,7 +239,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG;
+    use crate::{blocks::block_info::BlockInfo, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};
@@ -300,7 +283,6 @@ mod tests {
     const EMPTY: BoolVoxel = BoolVoxel(false);
 
     impl Voxel for BoolVoxel {
-
         fn get_visibility(&self) -> VoxelVisibility {
             if *self == EMPTY {
                 VoxelVisibility::Empty
@@ -309,7 +291,7 @@ mod tests {
             }
         }
 
-        fn get_type(&self) -> &crate::blocks::blocks_storage::BlockType {
+        fn get_block_info(&self) -> &Option<BlockInfo> {
             todo!()
         }
     }

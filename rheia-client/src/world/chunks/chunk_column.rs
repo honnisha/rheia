@@ -5,14 +5,17 @@ use common::{
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{engine::Material, prelude::*};
-use network::utils::SectionsData;
+use network::messages::SectionsData;
 use parking_lot::RwLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
 
-use crate::world::{physics::PhysicsProxy, worlds_manager::TextureMapperType};
+use crate::world::{
+    physics::PhysicsProxy,
+    worlds_manager::{BlockStorageRef, TextureMapperRef},
+};
 
 use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries, chunk_section::ChunkSection,
@@ -70,18 +73,10 @@ pub struct ChunkColumn {
 
     // Is chunk spawned on base
     loaded: Arc<AtomicBool>,
-
-    pub material_instance_id: InstanceId,
-    pub texture_mapper: TextureMapperType,
 }
 
 impl ChunkColumn {
-    pub fn create(
-        chunk_position: ChunkPosition,
-        data: SectionsData,
-        material_instance_id: InstanceId,
-        texture_mapper: TextureMapperType,
-    ) -> Self {
+    pub fn create(chunk_position: ChunkPosition, data: SectionsData) -> Self {
         let chunk_base = Gd::<ChunkBase>::from_init_fn(|base| ChunkBase::create(base));
 
         Self {
@@ -90,9 +85,6 @@ impl ChunkColumn {
             chunk_position,
             data: Arc::new(RwLock::new(data)),
             loaded: Arc::new(AtomicBool::new(false)),
-
-            material_instance_id,
-            texture_mapper,
         }
     }
 
@@ -101,24 +93,29 @@ impl ChunkColumn {
         base
     }
 
-    pub fn spawn_sections(&self) {
+    pub fn spawn_sections(&self, material_instance_id: &InstanceId) {
         assert!(!self.is_loaded(), "Chunk cannot spawn sections twice!");
 
         let mut chunk_base = self.get_base();
 
-        let material: Gd<Material> = Gd::from_instance_id(self.material_instance_id);
+        let material: Gd<Material> = Gd::from_instance_id(*material_instance_id);
         chunk_base.bind_mut().spawn_sections(&self.chunk_position, material);
     }
 
-    pub fn generate_section_geometry(&self, chunks_near: &NearChunksData, y: usize) {
+    pub fn generate_section_geometry(
+        &self,
+        chunks_near: &NearChunksData,
+        y: usize,
+        block_storage: &BlockStorageRef,
+        texture_mapper: &TextureMapperRef,
+    ) {
         let data = self.get_chunk_data().clone();
-        let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, y);
+        let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y);
 
         let mut chunk_base = self.get_base();
         let mut c = chunk_base.bind_mut();
 
-        let t = self.texture_mapper.read();
-        let geometry = generate_chunk_geometry(&t, &bordered_chunk_data);
+        let geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data, &block_storage);
         let mut section = c.sections[y].bind_mut();
 
         section.set_new_geometry(geometry);

@@ -7,14 +7,17 @@ use common::{
     },
     VERTICAL_SECTIONS,
 };
-use godot::{engine::Material, prelude::*};
-use network::utils::SectionsData;
+use godot::prelude::*;
+use network::messages::SectionsData;
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::world::{physics::PhysicsProxy, worlds_manager::TextureMapperType};
+use crate::world::{
+    physics::PhysicsProxy,
+    worlds_manager::{BlockStorageRef, TextureMapperRef},
+};
 
 use super::{
     chunk_column::{ChunkColumn, ColumnDataLockType},
@@ -35,9 +38,6 @@ pub struct ChunkMap {
     // Hash map with chunk columns
     chunks: ChunksType,
 
-    texture_mapper: TextureMapperType,
-    material: Gd<Material>,
-
     sended_chunks: Rc<RefCell<HashSet<ChunkPosition>>>,
     chunks_to_spawn: (Sender<ChunkLock>, Receiver<ChunkLock>),
 
@@ -45,12 +45,10 @@ pub struct ChunkMap {
 }
 
 impl ChunkMap {
-    pub fn create(base: Base<Node>, texture_mapper: TextureMapperType, material: Gd<Material>) -> Self {
+    pub fn create(base: Base<Node>) -> Self {
         Self {
             base,
             chunks: Default::default(),
-            texture_mapper,
-            material,
             sended_chunks: Default::default(),
             chunks_to_spawn: unbounded(),
             chunks_to_update: Default::default(),
@@ -85,12 +83,7 @@ impl ChunkMap {
             return;
         }
 
-        let chunk_column = ChunkColumn::create(
-            chunk_position,
-            sections,
-            self.material.instance_id(),
-            self.texture_mapper.clone(),
-        );
+        let chunk_column = ChunkColumn::create(chunk_position, sections);
         self.chunks
             .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
         self.sended_chunks.borrow_mut().insert(chunk_position);
@@ -108,7 +101,7 @@ impl ChunkMap {
     }
 
     /// Send new recieved chunks to load (render)
-    pub fn send_chunks_to_load(&mut self) {
+    pub fn send_chunks_to_load(&mut self, material_instance_id: InstanceId) {
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -120,7 +113,12 @@ impl ChunkMap {
             let chunk_column = self
                 .get_chunk(&chunk_position)
                 .expect("chunk from sended_chunks is not found");
-            generate_chunk(chunk_column.clone(), near_chunks_data, self.chunks_to_spawn.0.clone());
+            generate_chunk(
+                chunk_column.clone(),
+                near_chunks_data,
+                self.chunks_to_spawn.0.clone(),
+                material_instance_id,
+            );
             return false;
         });
     }
@@ -161,7 +159,12 @@ impl ChunkMap {
             .insert((position.get_chunk_position(), section as usize));
     }
 
-    pub fn update_chunks(&self, physics: &PhysicsProxy) {
+    pub fn update_chunks(
+        &self,
+        physics: &PhysicsProxy,
+        block_storage: &BlockStorageRef,
+        texture_mapper: &TextureMapperRef,
+    ) {
         self.chunks_to_update.borrow_mut().retain(|(chunk_position, y)| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -174,7 +177,7 @@ impl ChunkMap {
                 .get_chunk(&chunk_position)
                 .expect("chunk from chunks_to_update is not found");
             let mut c = chunk_column.write();
-            c.generate_section_geometry(&near_chunks_data, *y);
+            c.generate_section_geometry(&near_chunks_data, *y, &block_storage, &texture_mapper);
             c.update_geometry(physics);
             return false;
         });
