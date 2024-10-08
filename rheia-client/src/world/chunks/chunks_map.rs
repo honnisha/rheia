@@ -16,7 +16,7 @@ use std::sync::Arc;
 
 use crate::world::{
     physics::PhysicsProxy,
-    worlds_manager::{BlockStorageRef, TextureMapperRef},
+    worlds_manager::{BlockStorageRef, BlockStorageType, TextureMapperRef, TextureMapperType},
 };
 
 use super::{
@@ -101,7 +101,12 @@ impl ChunkMap {
     }
 
     /// Send new recieved chunks to load (render)
-    pub fn send_chunks_to_load(&mut self, material_instance_id: InstanceId) {
+    pub fn send_chunks_to_load(
+        &mut self,
+        material_instance_id: InstanceId,
+        texture_mapper: TextureMapperType,
+        block_storage: BlockStorageType,
+    ) {
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
@@ -118,6 +123,8 @@ impl ChunkMap {
                 near_chunks_data,
                 self.chunks_to_spawn.0.clone(),
                 material_instance_id,
+                texture_mapper.clone(),
+                block_storage.clone(),
             );
             return false;
         });

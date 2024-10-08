@@ -1,3 +1,4 @@
+use common::blocks::block_type::BlockContent;
 use godot::{
     engine::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
@@ -11,17 +12,13 @@ use log::error;
 use log::trace;
 use std::io::Cursor;
 
+use crate::world::worlds_manager::BlockStorageRef;
+
 use super::texture_mapper::TextureMapper;
 
-fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_option: Option<&'static str>) {
-    let texture = match texture_option {
-        Some(t) => t,
-        None => {
-            return;
-        }
-    };
+fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_path: &String) {
 
-    let path = format!("res://assets/block/{}", texture);
+    let path = format!("res://assets/block/{}", texture_path);
     let image = match try_load::<Texture2D>(&path) {
         //let image = match Image::load_from_file(GString::from(&path)) {
         Ok(t) => t.get_image().unwrap(),
@@ -39,7 +36,7 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
             return;
         }
     };
-    let index = match texture_mapper.add_texture(texture.to_string()) {
+    let index = match texture_mapper.add_texture(texture_path.clone()) {
         Some(i) => i,
         None => {
             return;
@@ -52,19 +49,25 @@ fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_o
     imageops::overlay(img, &image_png, offset_x, offset_y);
 }
 
-fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
+fn generate_texture(texture_mapper: &mut TextureMapper, block_storage: &BlockStorageRef) -> Vec<u8> {
     let size = 16 * 32;
     let mut img: RgbaImage = ImageBuffer::new(size, size);
 
-    for block_type in BlockType::to_iter() {
-        let block_type_data = match block_type.get_block_type_info() {
-            Some(d) => d,
-            None => continue,
-        };
+    for (_index, block_type) in block_storage.iter() {
+        match block_type.get_block_content() {
+            BlockContent::Texture { texture, side_texture, bottom_texture } => {
+                load_image(texture_mapper, &mut img, texture);
 
-        load_image(texture_mapper, &mut img, block_type_data.top_texture);
-        load_image(texture_mapper, &mut img, block_type_data.side_texture);
-        load_image(texture_mapper, &mut img, block_type_data.bottom_texture);
+                if let Some(t) = side_texture {
+                    load_image(texture_mapper, &mut img, t);
+                }
+
+                if let Some(t) = bottom_texture {
+                    load_image(texture_mapper, &mut img, t);
+                }
+            },
+            _ => continue,
+        }
     }
 
     let mut b: Vec<u8> = Vec::new();
@@ -73,7 +76,7 @@ fn generate_texture(texture_mapper: &mut TextureMapper) -> Vec<u8> {
     b.to_vec()
 }
 
-pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardMaterial3D> {
+pub fn build_blocks_material(texture_mapper: &mut TextureMapper, block_storage: &BlockStorageRef) -> Gd<StandardMaterial3D> {
     trace!("build_blocks_material started");
     let mut material = StandardMaterial3D::new_gd();
     if Engine::singleton().is_editor_hint() {
@@ -98,7 +101,7 @@ pub fn build_blocks_material(texture_mapper: &mut TextureMapper) -> Gd<StandardM
     material.set_refraction(0.27_f32);
 
     let mut pba = PackedByteArray::new();
-    pba.extend(generate_texture(texture_mapper));
+    pba.extend(generate_texture(texture_mapper, &block_storage));
 
     let mut image = Image::new_gd();
     image.load_png_from_buffer(pba);

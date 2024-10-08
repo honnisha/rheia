@@ -13,6 +13,17 @@ pub enum BlockContent {
     },
 }
 
+impl BlockContent {
+
+    #[allow(unused_variables)]
+    pub fn is_texture(&self) -> bool {
+        match self {
+            BlockContent::Texture { texture, side_texture, bottom_texture } => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockType {
     voxel_visibility: VoxelVisibility,

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use super::{
     chunks::chunks_map::ChunkMap,
     physics::PhysicsProxy,
@@ -187,9 +185,15 @@ impl INode for WorldManager {
         self.physics.step(delta as f32);
 
         let mut map = self.chunk_map.bind_mut();
-        map.send_chunks_to_load(self.material.instance_id());
+        map.send_chunks_to_load(
+            self.material.instance_id(),
+            self.texture_mapper.clone(),
+            self.block_storage.clone(),
+        );
         map.spawn_loaded_chunks(&self.physics);
 
-        map.update_chunks(&self.physics, &self.block_storage.read(), &self.texture_mapper.read());
+        let bs = self.block_storage.read();
+        let tm = self.texture_mapper.read();
+        map.update_chunks(&self.physics, &bs, &tm);
     }
 }

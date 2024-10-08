@@ -7,7 +7,7 @@ use parking_lot::lock_api::RwLockReadGuard;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::utils::textures::{material_builder::build_blocks_material, texture_mapper::TextureMapper};
+use crate::utils::textures::{texture_mapper::TextureMapper};
 
 use super::world_manager::WorldManager;
 
@@ -30,15 +30,16 @@ pub struct WorldsManager {
 impl WorldsManager {
     pub fn create(base: Gd<Node>) -> Self {
         let mut texture_mapper = TextureMapper::new();
-        let texture = build_blocks_material(&mut texture_mapper);
+        let block_storage: BlockStorageType = Arc::new(RwLock::new(Default::default()));
+        let material = texture_mapper.build(&block_storage.read());
         Self {
             base,
             world: None,
 
-            material: texture.duplicate().unwrap().cast::<Material>(),
+            material,
             texture_mapper: Arc::new(RwLock::new(texture_mapper)),
 
-            block_storage: Arc::new(RwLock::new(Default::default())),
+            block_storage: block_storage,
         }
     }
 
