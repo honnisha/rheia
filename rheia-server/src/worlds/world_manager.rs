@@ -8,7 +8,7 @@ use parking_lot::RwLock;
 
 use crate::entities::entity::{NetworkComponent, Position, Rotation};
 use crate::network::clients_container::ClientCell;
-use crate::{CHUNKS_DISTANCE, CHUNKS_ZIP_PALLETE};
+use crate::CHUNKS_DISTANCE;
 
 use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
@@ -64,12 +64,7 @@ impl WorldManager {
         self.get_chunks_map().count()
     }
 
-    pub fn spawn_player(
-        &mut self,
-        client: ClientCell,
-        position: Position,
-        rotation: Rotation,
-    ) -> WorldEntity {
+    pub fn spawn_player(&mut self, client: ClientCell, position: Position, rotation: Rotation) -> WorldEntity {
         let client_id = client.read().get_client_id();
         let bundle = (position.clone(), rotation, NetworkComponent::new(client, client_id));
 
@@ -143,7 +138,7 @@ impl WorldManager {
                 if !chunk_column.is_loaded() {
                     return None;
                 }
-                Some(chunk_column.build_network_format(CHUNKS_ZIP_PALLETE))
+                Some(chunk_column.build_network_format())
             }
             None => None,
         }

@@ -50,7 +50,7 @@ impl ResourceManager {
 
     pub fn get_media_count(&self) -> u32 {
         let mut count: u32 = 0;
-        for (slug, resource) in self.resources.iter() {
+        for (_slug, resource) in self.resources.iter() {
             count += resource.get_media_count() as u32;
         }
         return count;

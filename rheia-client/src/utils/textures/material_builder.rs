@@ -17,7 +17,6 @@ use crate::world::worlds_manager::BlockStorageRef;
 use super::texture_mapper::TextureMapper;
 
 fn load_image(texture_mapper: &mut TextureMapper, img: &mut RgbaImage, texture_path: &String) {
-
     let path = format!("res://assets/block/{}", texture_path);
     let image = match try_load::<Texture2D>(&path) {
         //let image = match Image::load_from_file(GString::from(&path)) {
@@ -55,7 +54,11 @@ fn generate_texture(texture_mapper: &mut TextureMapper, block_storage: &BlockSto
 
     for (_index, block_type) in block_storage.iter() {
         match block_type.get_block_content() {
-            BlockContent::Texture { texture, side_texture, bottom_texture } => {
+            BlockContent::Texture {
+                texture,
+                side_texture,
+                bottom_texture,
+            } => {
                 load_image(texture_mapper, &mut img, texture);
 
                 if let Some(t) = side_texture {
@@ -65,7 +68,7 @@ fn generate_texture(texture_mapper: &mut TextureMapper, block_storage: &BlockSto
                 if let Some(t) = bottom_texture {
                     load_image(texture_mapper, &mut img, t);
                 }
-            },
+            }
             _ => continue,
         }
     }
@@ -76,7 +79,10 @@ fn generate_texture(texture_mapper: &mut TextureMapper, block_storage: &BlockSto
     b.to_vec()
 }
 
-pub fn build_blocks_material(texture_mapper: &mut TextureMapper, block_storage: &BlockStorageRef) -> Gd<StandardMaterial3D> {
+pub fn build_blocks_material(
+    texture_mapper: &mut TextureMapper,
+    block_storage: &BlockStorageRef,
+) -> Gd<StandardMaterial3D> {
     trace!("build_blocks_material started");
     let mut material = StandardMaterial3D::new_gd();
     if Engine::singleton().is_editor_hint() {

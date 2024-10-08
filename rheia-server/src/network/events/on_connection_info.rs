@@ -1,12 +1,11 @@
-use bevy::prelude::{Commands, Event};
+use bevy::prelude::{Commands, Event, EventWriter};
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
 use network::messages::{NetworkMessageType, ServerMessages};
 
-use crate::entities::entity::{Position, Rotation};
 use crate::network::client_network::ClientInfo;
 use crate::network::clients_container::ClientCell;
-use crate::worlds::bevy_commands::SpawnPlayer;
+use crate::network::events::on_media_loaded::PlayerMediaLoadedEvent;
 use crate::worlds::worlds_manager::WorldsManager;
 use crate::{client_resources::resources_manager::ResourceManager, network::server::NetworkPlugin};
 
@@ -23,10 +22,9 @@ impl PlayerConnectionInfoEvent {
 }
 
 pub fn on_connection_info(
-    mut commands: Commands,
     mut connection_info_events: EventReader<PlayerConnectionInfoEvent>,
     resources_manager: Res<ResourceManager>,
-    worlds_manager: Res<WorldsManager>,
+    mut player_media_loaded_events: EventWriter<PlayerMediaLoadedEvent>,
 ) {
     for event in connection_info_events.read() {
         event
@@ -54,21 +52,11 @@ pub fn on_connection_info(
             };
             client.send_message(NetworkMessageType::ReliableOrdered, msg);
             NetworkPlugin::send_resources(&client, &resources_manager);
-
         } else {
-            // Or spawn player
+            // Or send player as loaded
 
-            let default_world = "default".to_string();
-            if !worlds_manager.has_world_with_slug(&default_world) {
-                panic!("default world is not found");
-            };
-
-            commands.add(SpawnPlayer::create(
-                default_world,
-                event.client.clone(),
-                Position::new(0.0, 30.0, 0.0),
-                Rotation::new(0.0, 0.0),
-            ));
+            let msg = PlayerMediaLoadedEvent::new(event.client.clone());
+            player_media_loaded_events.send(msg);
         }
     }
 }

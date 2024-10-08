@@ -1,5 +1,5 @@
 use common::{
-    blocks::{block_info::BlockInfo, blocks_storage::BlockType},
+    blocks::block_info::BlockInfo,
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE,
 };
@@ -31,7 +31,7 @@ impl SphereWorldGenerator {
 
                     if d < 10.0 {
                         let pos = ChunkBlockPosition::new(x, y, z);
-                        chunk_data.insert(pos, BlockInfo::new(BlockType::GrassBlock));
+                        chunk_data.insert(pos, BlockInfo::create(1, None));
                     };
                 }
             }

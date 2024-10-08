@@ -34,9 +34,6 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const CHUNKS_DISTANCE: u16 = 12;
 pub const CHUNKS_DESPAWN_TIMER: Duration = Duration::from_secs(5);
 
-// Pack network chunk message with pallete
-pub const CHUNKS_ZIP_PALLETE: bool = true;
-
 #[derive(Resource, Clone, Debug)]
 pub struct ServerSettings {
     args: MainCommand,

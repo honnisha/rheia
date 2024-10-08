@@ -6,7 +6,6 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::VERTICAL_SECTIONS;
 use core::fmt;
 use network::messages::{ChunkDataType, ServerMessages};
-use network::utils::PacketChunkSectionData;
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{collections::HashMap, sync::Arc, time::Duration};
@@ -68,28 +67,16 @@ impl ChunkColumn {
         *self.despawn_timer.write() += new_despawn;
     }
 
-    pub(crate) fn build_network_format(&self, chunks_zip_pallete: bool) -> ServerMessages {
-        if chunks_zip_pallete {
-            let mut data: ArrayVec<PacketChunkSectionData, VERTICAL_SECTIONS> = Default::default();
-            for section in self.sections.iter() {
-                data.push(PacketChunkSectionData::new(&mut section.clone()));
-            }
-            return ServerMessages::ChunkSectionEncodedInfo {
-                world_slug: self.world_slug.clone(),
-                sections: data.into_inner().unwrap(),
-                chunk_position: self.chunk_position.clone(),
-            };
-        } else {
-            let mut data: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS> = Default::default();
-            for section in self.sections.iter() {
-                data.push(section.clone());
-            }
-            return ServerMessages::ChunkSectionInfo {
-                world_slug: self.world_slug.clone(),
-                sections: data.into_inner().unwrap(),
-                chunk_position: self.chunk_position.clone(),
-            };
+    pub(crate) fn build_network_format(&self) -> ServerMessages {
+        let mut data: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS> = Default::default();
+        for section in self.sections.iter() {
+            data.push(section.clone());
         }
+        return ServerMessages::ChunkSectionInfo {
+            world_slug: self.world_slug.clone(),
+            sections: data.into_inner().unwrap(),
+            chunk_position: self.chunk_position.clone(),
+        };
     }
 }
 

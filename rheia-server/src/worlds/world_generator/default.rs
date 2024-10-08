@@ -1,7 +1,7 @@
 use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
 use common::{
-    blocks::{block_info::BlockInfo, blocks_storage::BlockType},
+    blocks::{block_info::BlockInfo},
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE,
 };
@@ -53,10 +53,10 @@ impl WorldGenerator {
 
                     if height > y_global {
                         has_any_block = true;
-                        chunk_data.insert(pos, BlockInfo::new(BlockType::GrassBlock));
+                        chunk_data.insert(pos, BlockInfo::create(2, None)); // GrassBlock
                     }
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        chunk_data.insert(pos, BlockInfo::new(BlockType::GrassBlock));
+                        chunk_data.insert(pos, BlockInfo::create(2, None)); // GrassBlock
                     }
                 }
             }
