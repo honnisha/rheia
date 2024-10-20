@@ -2,15 +2,13 @@ use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use std::collections::HashMap;
-use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::ServerSettings;
+use crate::LaunchSettings;
 
 use super::resource_instance::ResourceInstance;
 
-/// resources: slug, ResourceInstance
 #[derive(Resource)]
 pub struct ResourceManager {
     resources: HashMap<String, ResourceInstance>,
@@ -18,8 +16,8 @@ pub struct ResourceManager {
 
 impl ResourceManager {
     pub fn new() -> Self {
-        ResourceManager {
-            resources: HashMap::new(),
+        Self {
+            resources: Default::default(),
         }
     }
 
@@ -48,12 +46,18 @@ impl ResourceManager {
         };
 
         for resource_path in resource_paths {
-            let current_path = resource_path.unwrap().path();
+            let resource_path = resource_path.unwrap().path();
 
-            let resource_instance = match ResourceInstance::from_manifest(current_path.clone()) {
+            let mut manifest_path = resource_path.clone();
+            manifest_path.push("manifest.yml");
+            if !manifest_path.exists() {
+                continue;
+            }
+
+            let resource_instance = match ResourceInstance::from_manifest(resource_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    log::info!(target: "resources", "□ error with resource {}: {}", current_path.display(), e);
+                    log::error!(target: "resources", "□ error with resource {}: {}", resource_path.display(), e);
                     continue;
                 }
             };
@@ -67,19 +71,12 @@ impl ResourceManager {
                 resource_instance.get_scripts_count(),
                 resource_instance.get_media_count(),
             );
-            self.resources.insert(resource_instance.get_slug().clone(), resource_instance);
+            self.resources
+                .insert(resource_instance.get_slug().clone(), resource_instance);
         }
     }
 }
 
-pub(crate) fn rescan_scripts(mut resource_manager: ResMut<ResourceManager>, settings: Res<ServerSettings>) {
-    let resources_path = match settings.args.resources_path.as_ref() {
-        Some(p) => PathBuf::from(shellexpand::tilde(p).to_string()),
-        None => {
-            let mut path = env::current_dir().unwrap().clone();
-            path.push("resources");
-            path
-        }
-    };
-    resource_manager.rescan_scripts(resources_path);
+pub(crate) fn rescan_scripts(mut resource_manager: ResMut<ResourceManager>, launch_settings: Res<LaunchSettings>) {
+    resource_manager.rescan_scripts(launch_settings.get_resources_path());
 }

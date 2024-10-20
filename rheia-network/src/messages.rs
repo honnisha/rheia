@@ -30,6 +30,7 @@ pub enum ClientMessages {
         new_block_info: BlockInfo,
     },
     MediaLoaded,
+    SettingsLoaded,
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
@@ -44,6 +45,9 @@ pub enum ServerMessages {
     Resource {
         slug: String,
         scripts: HashMap<String, String>,
+    },
+    Settings {
+        block_types: String,
     },
     MediaCount {
         count: u32,

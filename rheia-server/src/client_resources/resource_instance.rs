@@ -1,5 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use rustyline::completion::Candidate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -61,9 +62,11 @@ impl ResourceInstance {
         &self.scripts
     }
 
-    pub fn from_manifest(path: PathBuf) -> Result<Self, String> {
-        let manifest_path = format!("{}/manifest.yml", path.display());
-        log::info!(target: "resources", "Start loading manifest \"{}\"", manifest_path);
+    pub fn from_manifest(resource_path: PathBuf) -> Result<Self, String> {
+        let mut manifest_path = resource_path.clone();
+        manifest_path.push("manifest.yml");
+
+        log::info!(target: "resources", "Start loading manifest \"{}\"", manifest_path.display());
 
         let manifest_data = match std::fs::read_to_string(manifest_path.clone()) {
             Ok(d) => d,
@@ -94,8 +97,10 @@ impl ResourceInstance {
         };
         if let Some(client_scripts) = &manifest.client_scripts {
             for client_script in client_scripts.iter() {
-                let path = format!("{}/{}", path.display(), client_script);
-                let data = match std::fs::read_to_string(path) {
+                let mut script_path = resource_path.clone();
+                script_path.push(client_script);
+
+                let data = match std::fs::read_to_string(script_path) {
                     Ok(d) => d,
                     Err(e) => {
                         log::error!(target: "resources", "□ script file \"{}\" error: {:?}", client_script, e);
@@ -107,12 +112,13 @@ impl ResourceInstance {
         }
         if let Some(media_list) = &manifest.media {
             for media in media_list.iter() {
-                let media_manifest_path = format!("{}/{}", path.display(), media);
+                let mut media_manifest = resource_path.clone();
+                media_manifest.push(media);
 
-                let media_manifest_data = match std::fs::read_to_string(media_manifest_path.clone()) {
+                let media_manifest_data = match std::fs::read_to_string(media_manifest.clone()) {
                     Ok(d) => d,
                     Err(e) => {
-                        log::error!(target: "resources", "media manifest file \"{}\" error: {}", media, e);
+                        log::error!(target: "resources", "media manifest file \"{}\" error: {}", media_manifest.display(), e);
                         continue;
                     }
                 };
@@ -122,16 +128,17 @@ impl ResourceInstance {
                 let media_manifest = match media_manifest_result {
                     Ok(m) => m,
                     Err(e) => {
-                        log::error!(target: "resources", "media manifest \"{}\" yaml error: {}", media, e);
+                        log::error!(target: "resources", "media manifest \"{}\" yaml error: {}", media_manifest.display(), e);
                         continue;
                     }
                 };
 
-                let path = format!("{}/{}", path.display(), media_manifest.path);
-                let data = match std::fs::read(path) {
+                let mut media_path = resource_path.clone();
+                media_path.push(media_manifest.path);
+                let data = match std::fs::read(media_path.clone()) {
                     Ok(v) => v,
                     Err(e) => {
-                        log::error!(target: "resources", "□ media content file \"{}\" error: {:?}", media, e);
+                        log::error!(target: "resources", "□ media content file \"{}\" error: {:?}", media_path.display(), e);
                         continue;
                     }
                 };

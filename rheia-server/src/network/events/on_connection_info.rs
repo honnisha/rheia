@@ -1,4 +1,4 @@
-use bevy::prelude::{Commands, Event, EventWriter};
+use bevy::prelude::{Event, EventWriter};
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
 use network::messages::{NetworkMessageType, ServerMessages};
@@ -6,7 +6,6 @@ use network::messages::{NetworkMessageType, ServerMessages};
 use crate::network::client_network::ClientInfo;
 use crate::network::clients_container::ClientCell;
 use crate::network::events::on_media_loaded::PlayerMediaLoadedEvent;
-use crate::worlds::worlds_manager::WorldsManager;
 use crate::{client_resources::resources_manager::ResourceManager, network::server::NetworkPlugin};
 
 #[derive(Event)]

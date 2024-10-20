@@ -22,6 +22,7 @@ use super::events::{
     on_edit_block::{on_edit_block, EditBlockEvent},
     on_media_loaded::{on_media_loaded, PlayerMediaLoadedEvent},
     on_player_move::{on_player_move, PlayerMoveEvent},
+    on_settings_loaded::{on_settings_loaded, PlayerSettingsLoadedEvent},
 };
 use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
 use crate::network::chunks_sender::send_chunks;
@@ -29,7 +30,7 @@ use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_entities::{sync_player_spawn, PlayerSpawnEvent};
 use crate::{
-    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, ServerSettings,
+    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, LaunchSettings,
 };
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
@@ -77,7 +78,7 @@ impl NetworkContainer {
 
 impl NetworkPlugin {
     pub fn build(app: &mut App) {
-        let server_settings = app.world().get_resource::<ServerSettings>().unwrap();
+        let server_settings = app.world().get_resource::<LaunchSettings>().unwrap();
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
         log::info!(target: "network", "Starting server on {}", ip_port);
@@ -108,6 +109,9 @@ impl NetworkPlugin {
 
         app.add_event::<PlayerMediaLoadedEvent>();
         app.add_systems(Update, on_media_loaded.after(handle_events_system));
+
+        app.add_event::<PlayerSettingsLoadedEvent>();
+        app.add_systems(Update, on_settings_loaded.after(handle_events_system));
 
         app.add_event::<SendClientMessageEvent>();
         app.add_systems(Update, send_client_messages.after(on_disconnect));
@@ -149,6 +153,7 @@ fn receive_message_system(
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut edit_block_events: EventWriter<EditBlockEvent>,
     mut player_media_loaded_events: EventWriter<PlayerMediaLoadedEvent>,
+    mut settings_loaded_events: EventWriter<PlayerSettingsLoadedEvent>,
 ) {
     #[cfg(feature = "trace")]
     let _span = bevy_utils::tracing::info_span!("receive_message_system").entered();
@@ -193,6 +198,10 @@ fn receive_message_system(
             ClientMessages::MediaLoaded => {
                 let msg = PlayerMediaLoadedEvent::new(client.clone());
                 player_media_loaded_events.send(msg);
+            }
+            ClientMessages::SettingsLoaded => {
+                let msg = PlayerSettingsLoadedEvent::new(client.clone());
+                settings_loaded_events.send(msg);
             }
         }
     }
