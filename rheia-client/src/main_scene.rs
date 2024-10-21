@@ -88,9 +88,20 @@ impl INode for Main {
 
     fn ready(&mut self) {
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
-            log::error!("log::set_logger error: {}", e)
+            log::error!(target: "main", "log::set_logger error: {}", e)
         }
         log::set_max_level(log::LevelFilter::Debug);
+
+        log::info!(target: "main", "Start loading local resources");
+        match self.resource_manager.load_local_resources() {
+            Ok(_) => (),
+            Err(e) => {
+                log::error!(target: "main", "Resources error: {}", e);
+                Main::close();
+                return;
+            }
+        }
+        log::info!(target: "main", "Local resources loaded successfully ({})", self.resource_manager.get_resources_count());
 
         let console = self.console.clone().upcast();
         self.base_mut().add_child(console);

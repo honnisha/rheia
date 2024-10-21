@@ -6,10 +6,10 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 
 pub const DEFAULT_MEDIA: &'static [&'static str] = &[
-    "default/block/grass_top.png",
-    "default/block/grass_block_side.png",
-    "default/block/dirt.png",
-    "default/block/stone.png",
+    "default://assets/block/grass_top.png",
+    "default://assets/block/grass_block_side.png",
+    "default://assets/block/dirt.png",
+    "default://assets/block/stone.png",
 ];
 
 lazy_static! {
@@ -20,9 +20,9 @@ lazy_static! {
             BlockType::new(
                 VoxelVisibility::Opaque,
                 BlockContent::Texture {
-                    texture: "default/block/grass_top.png".to_string(),
-                    side_texture: Some("default/block/grass_block_side.png".to_string()),
-                    bottom_texture: Some("default/block/dirt.png".to_string()),
+                    texture: "default://assets/block/grass_top.png".to_string(),
+                    side_texture: Some("default://assets/block/grass_block_side.png".to_string()),
+                    bottom_texture: Some("default://assets/block/dirt.png".to_string()),
                 },
             ),
         );
@@ -31,7 +31,7 @@ lazy_static! {
             BlockType::new(
                 VoxelVisibility::Opaque,
                 BlockContent::Texture {
-                    texture: "default/block/stone.png".to_string(),
+                    texture: "default://assets/block/stone.png".to_string(),
                     side_texture: None,
                     bottom_texture: None,
                 },

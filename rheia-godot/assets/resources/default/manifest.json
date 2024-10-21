@@ -1,0 +1,14 @@
+{
+	"slug": "default",
+	"title": "Default",
+
+	"media": [
+		"res://assets/block/dirt.png",
+		"res://assets/block/grass_block_side.png",
+		"res://assets/block/grass_top.png",
+		"res://assets/block/stone.png",
+
+		"res://assets/models/generic/generic.glb",
+		"res://assets/models/generic/replace.glb"
+	],
+}

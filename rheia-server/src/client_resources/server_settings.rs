@@ -36,7 +36,7 @@ impl ServerSettings {
     }
 
     fn load(&mut self, path: PathBuf, resource_manager: &ResourceManager) -> Result<(), String> {
-        log::info!(target: "server_settings", "Start loading server settings &e\"{}\"", path.display());
+        log::info!(target: "server_settings", "Start loading server settings &e{}", path.display());
 
         self.block_types = DEFAULT_BLOCKS.clone();
 
@@ -76,18 +76,18 @@ impl ServerSettings {
                         bottom_texture,
                     } => {
                         if !resource_manager.has_media(texture) {
-                            return Err(format!("&ctexture not found: \"{}\"", texture));
+                            return Err(format!("&ctexture not found: {}", texture));
                         }
                         if side_texture.is_some() && !resource_manager.has_media(&side_texture.as_ref().unwrap()) {
-                            return Err(format!("&ctexture not found: \"{}\"", side_texture.as_ref().unwrap()));
+                            return Err(format!("&ctexture not found: {}", side_texture.as_ref().unwrap()));
                         }
                         if bottom_texture.is_some() && !resource_manager.has_media(&bottom_texture.as_ref().unwrap()) {
-                            return Err(format!("&ctexture not found: \"{}\"", bottom_texture.as_ref().unwrap()));
+                            return Err(format!("&ctexture not found: {}", bottom_texture.as_ref().unwrap()));
                         }
                     }
                     BlockContent::ModelCube { model } => {
                         if !resource_manager.has_media(model) {
-                            return Err(format!("&cmodel not found: \"{}\"", model));
+                            return Err(format!("&cmodel not found: {}", model));
                         }
                     }
                 }

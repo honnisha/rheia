@@ -32,18 +32,18 @@ impl BlockStorage {
                     bottom_texture,
                 } => {
                     if !resource_manager.has_media(texture) {
-                        return Err(format!("texture not found: \"{}\"", texture));
+                        return Err(format!("texture not found: {}", texture));
                     }
                     if side_texture.is_some() && !resource_manager.has_media(&side_texture.as_ref().unwrap()) {
-                        return Err(format!("texture not found: \"{}\"", side_texture.as_ref().unwrap()));
+                        return Err(format!("texture not found: {}", side_texture.as_ref().unwrap()));
                     }
                     if bottom_texture.is_some() && !resource_manager.has_media(&bottom_texture.as_ref().unwrap()) {
-                        return Err(format!("texture not found: \"{}\"", bottom_texture.as_ref().unwrap()));
+                        return Err(format!("texture not found: {}", bottom_texture.as_ref().unwrap()));
                     }
                 }
                 BlockContent::ModelCube { model } => {
-                    if resource_manager.has_media(model) {
-                        return Err(format!("model not found: \"{}\"", model));
+                    if !resource_manager.has_media(model) {
+                        return Err(format!("model not found: {}", model));
                     }
                 }
             }

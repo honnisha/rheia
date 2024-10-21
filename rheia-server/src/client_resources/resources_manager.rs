@@ -39,14 +39,14 @@ impl ResourceManager {
             return true;
         }
 
-        let s: Vec<&str> = slug.split('/').collect();
+        let s: Vec<&str> = slug.split("://").collect();
         if s.len() < 2 {
             return false;
         }
 
-        for (slug, resource) in self.resources.iter() {
+        for (resource_slug, resource) in self.resources.iter() {
             let res_slug = s[1..s.len()].join("/");
-            if slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
+            if resource_slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
                 return true;
             }
         }

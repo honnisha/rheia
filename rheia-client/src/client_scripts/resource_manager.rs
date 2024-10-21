@@ -3,6 +3,7 @@ use rhai::Dynamic;
 use rhai::Engine;
 use std::collections::HashMap;
 
+use super::local_loader::get_local_resources;
 use super::modules::main_api;
 use super::resource_instance::ResourceInstance;
 
@@ -27,14 +28,38 @@ impl ResourceManager {
     }
 
     pub fn try_load(&mut self, slug: &String, scripts: HashMap<String, String>, is_network: bool) -> Result<(), String> {
+        if self.resources.contains_key(slug) {
+            return Err(format!("Resource \"{}\" already exists", slug));
+        }
+
         match ResourceInstance::try_init(&mut self.rhai_engine, slug, scripts, is_network) {
             Ok(resource_instance) => {
                 self.resources.insert(slug.clone(), resource_instance);
             }
-            Err(e) => {
-                return Err(e);
-            }
+            Err(e) => return Err(e)
         };
+        Ok(())
+    }
+
+    pub fn load_local_resources(&mut self) -> Result<(), String> {
+        let local_resources = match get_local_resources() {
+            Ok(m) => m,
+            Err(e) => return Err(e),
+        };
+        for mut local_resource in local_resources {
+            match self.try_load(&local_resource.slug, local_resource.scripts, false) {
+                Ok(_) => (),
+                Err(e) => return Err(e)
+            }
+
+            let resource_instance = self.resources.get_mut(&local_resource.slug).unwrap();
+
+            for (media_slug, media_data) in local_resource.media.drain() {
+                resource_instance.add_media(media_slug, media_data);
+            }
+
+            log::info!(target:"resources", "Local resource \"{}\" loaded", local_resource.slug);
+        }
         Ok(())
     }
 
@@ -50,6 +75,10 @@ impl ResourceManager {
         &self.server_target_media_count
     }
 
+    pub fn get_resources_count(&mut self) -> usize {
+        self.resources.len()
+    }
+
     pub fn get_media_count(&self, only_network: bool) -> u32 {
         let mut count: u32 = 0;
         for (_slug, resource) in self.resources.iter() {
@@ -61,8 +90,15 @@ impl ResourceManager {
     }
 
     pub fn has_media(&self, slug: &String) -> bool {
-        for (_slug, resource) in self.resources.iter() {
-            if resource.has_media(slug) {
+        let s: Vec<&str> = slug.split("://").collect();
+        if s.len() < 2 {
+            return false;
+        }
+
+        for (resource_slug, resource) in self.resources.iter() {
+            let res_slug = s[1..s.len()].join("/");
+
+            if resource_slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
                 return true;
             }
         }

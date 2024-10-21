@@ -1,13 +1,14 @@
+use bevy::prelude::IntoSystemConfigs;
 use bevy_app::{App, Plugin, Startup};
 use resources_manager::rescan_scripts;
 use server_settings::{rescan_server_settings, ServerSettings};
 
 use self::resources_manager::ResourceManager;
 
+pub mod default_resources;
 pub mod resource_instance;
 pub mod resources_manager;
 pub mod server_settings;
-pub mod default_resources;
 
 pub struct ResourcesPlugin;
 
@@ -23,6 +24,6 @@ impl Plugin for ResourcesPlugin {
         app.add_systems(Startup, rescan_scripts);
 
         app.insert_resource(ServerSettings::new());
-        app.add_systems(Startup, rescan_server_settings);
+        app.add_systems(Startup, rescan_server_settings.after(rescan_scripts));
     }
 }

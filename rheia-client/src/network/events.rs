@@ -56,7 +56,7 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 log::info!(target: "network", "{}", message);
             }
             ServerMessages::Resource { slug, scripts } => {
-                log::info!(target: "network", "Revieved resource from network \"{}\"; loading", slug);
+                log::info!(target: "network", "Recieved resource from network \"{}\"; loading", slug);
 
                 let resource_manager = main.get_resource_manager_mut();
                 log::info!(target: "network", "Start loading client resource slug:\"{}\"", slug);
@@ -78,7 +78,7 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 name,
                 data,
             } => {
-                log::info!(target: "network", "Revieved resource media \"{}/{}\"", resurce_slug, name);
+                log::trace!(target: "network", "Recieved resource \"{}\" media \"{}\"", resurce_slug, name);
 
                 let resource_manager = main.get_resource_manager_mut();
                 let Some(resourse) = resource_manager.get_resource_mut(&resurce_slug) else {

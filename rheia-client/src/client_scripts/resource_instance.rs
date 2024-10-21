@@ -5,6 +5,7 @@ use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct ResourceInstance {
+    slug: String,
     scripts: Vec<ScriptInstance>,
     media: HashMap<String, Vec<u8>>,
     is_network: bool,
@@ -18,6 +19,7 @@ impl ResourceInstance {
         is_network: bool,
     ) -> Result<Self, String> {
         let mut resource_instance = ResourceInstance {
+            slug: slug.clone(),
             scripts: Default::default(),
             media: Default::default(),
             is_network,
@@ -48,7 +50,8 @@ impl ResourceInstance {
     }
 
     pub fn add_media(&mut self, media_slug: String, data: Vec<u8>) {
-        self.media.insert(media_slug, data);
+        self.media.insert(media_slug.clone(), data);
+        log::trace!(target:"resources", "Resource \"{}\" media \"{}\" loaded", self.slug, media_slug);
     }
 
     pub fn get_media_count(&self) -> usize {
