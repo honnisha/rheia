@@ -7,6 +7,7 @@ use self::resources_manager::ResourceManager;
 pub mod resource_instance;
 pub mod resources_manager;
 pub mod server_settings;
+pub mod default_resources;
 
 pub struct ResourcesPlugin;
 

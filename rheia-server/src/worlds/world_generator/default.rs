@@ -53,10 +53,10 @@ impl WorldGenerator {
 
                     if height > y_global {
                         has_any_block = true;
-                        chunk_data.insert(pos, BlockInfo::create(2, None)); // GrassBlock
+                        chunk_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
                     }
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        chunk_data.insert(pos, BlockInfo::create(2, None)); // GrassBlock
+                        chunk_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
                     }
                 }
             }

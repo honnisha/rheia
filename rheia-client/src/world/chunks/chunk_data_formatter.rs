@@ -35,8 +35,9 @@ pub fn format_chunk_data_with_boundaries(
                 let b_chunk_pos = ChunkBordersShape::linearize([x + 1, y + 1, z + 1]);
                 let info = match section_data.get(&ChunkBlockPosition::new(x as u8, y as u8, z as u8)) {
                     Some(block_info) => {
-                        let i = block_info.get_id() as usize;
-                        let block_type = block_storage.get(&i).expect("block type is not found");
+                        let block_type = block_storage
+                            .get(&block_info.get_id())
+                            .expect("block type is not found");
                         ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()))
                     }
                     None => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
@@ -85,8 +86,9 @@ pub fn format_chunk_data_with_boundaries(
                 let block_type = match chunk_section.as_ref() {
                     Some(c) => match c.get(&pos_o) {
                         Some(block_info) => {
-                            let i = block_info.get_id() as usize;
-                            let block_type = block_storage.get(&i).expect("block type is not found");
+                            let block_type = block_storage
+                                .get(&block_info.get_id())
+                                .expect("block type is not found");
                             ChunkColliderInfo::create(
                                 block_type.get_voxel_visibility().clone(),
                                 Some(block_info.clone()),

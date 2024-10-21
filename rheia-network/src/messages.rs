@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
+use common::blocks::block_type::BlockType;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
+use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
 use common::VERTICAL_SECTIONS;
 use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
-use common::chunks::position::Vector3;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
@@ -47,7 +48,7 @@ pub enum ServerMessages {
         scripts: HashMap<String, String>,
     },
     Settings {
-        block_types: String,
+        block_types: HashMap<u32, BlockType>,
     },
     MediaCount {
         count: u32,

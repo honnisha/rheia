@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use crate::LaunchSettings;
 
+use super::default_resources::DEFAULT_MEDIA;
 use super::resource_instance::ResourceInstance;
 
 #[derive(Resource)]
@@ -33,14 +34,33 @@ impl ResourceManager {
         return count;
     }
 
+    pub fn has_media(&self, slug: &String) -> bool {
+        if DEFAULT_MEDIA.contains(&slug.as_str()) {
+            return true;
+        }
+
+        let s: Vec<&str> = slug.split('/').collect();
+        if s.len() < 2 {
+            return false;
+        }
+
+        for (slug, resource) in self.resources.iter() {
+            let res_slug = s[1..s.len()].join("/");
+            if slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn rescan_scripts(&mut self, path: PathBuf) {
         let path_str = path.into_os_string().into_string().unwrap();
-        log::info!(target: "resources", "▼ Rescan resources folders inside: {}", path_str);
+        log::info!(target: "resources", "▼ Rescan resources folders inside: &e{}", path_str);
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                log::info!(target: "resources", "□ read directory \"{}\" error: {}", path_str, e);
+                log::info!(target: "resources", "□ read directory &e\"{}\"&r error: &c{}", path_str, e);
                 return ();
             }
         };
@@ -57,13 +77,13 @@ impl ResourceManager {
             let resource_instance = match ResourceInstance::from_manifest(resource_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    log::error!(target: "resources", "□ error with resource {}: {}", resource_path.display(), e);
+                    log::error!(target: "resources", "□ error with resource {}: &c{}", resource_path.display(), e);
                     continue;
                 }
             };
             log::info!(
                 target: "resources",
-                "□ Resource \"{}\" successfully loaded; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{} Media:{}",
+                "□ Resource &2\"{}\"&r successfully loaded; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{} Media:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),
                 resource_instance.get_version(),

@@ -26,9 +26,11 @@ impl ResourceManager {
         }
     }
 
-    pub fn try_load(&mut self, slug: &String, scripts: HashMap<String, String>) -> Result<(), String> {
-        match ResourceInstance::try_init(&mut self.rhai_engine, slug, scripts) {
-            Ok(i) => self.resources.insert(slug.clone(), i),
+    pub fn try_load(&mut self, slug: &String, scripts: HashMap<String, String>, is_network: bool) -> Result<(), String> {
+        match ResourceInstance::try_init(&mut self.rhai_engine, slug, scripts, is_network) {
+            Ok(resource_instance) => {
+                self.resources.insert(slug.clone(), resource_instance);
+            }
             Err(e) => {
                 return Err(e);
             }
@@ -48,17 +50,28 @@ impl ResourceManager {
         &self.server_target_media_count
     }
 
-    pub fn get_media_count(&self) -> u32 {
+    pub fn get_media_count(&self, only_network: bool) -> u32 {
         let mut count: u32 = 0;
         for (_slug, resource) in self.resources.iter() {
-            count += resource.get_media_count() as u32;
+            if !only_network || resource.is_network() {
+                count += resource.get_media_count() as u32;
+            }
         }
         return count;
     }
 
+    pub fn has_media(&self, slug: &String) -> bool {
+        for (_slug, resource) in self.resources.iter() {
+            if resource.has_media(slug) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {
         for (_slug, resource) in self.resources.iter_mut() {
-            resource.run_event(&mut self.rhai_engine, callback_name, args);
+            resource._run_event(&mut self.rhai_engine, callback_name, args);
         }
     }
 }

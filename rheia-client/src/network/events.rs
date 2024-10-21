@@ -56,14 +56,16 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 log::info!(target: "network", "{}", message);
             }
             ServerMessages::Resource { slug, scripts } => {
+                log::info!(target: "network", "Revieved resource from network \"{}\"; loading", slug);
+
                 let resource_manager = main.get_resource_manager_mut();
                 log::info!(target: "network", "Start loading client resource slug:\"{}\"", slug);
-                match resource_manager.try_load(&slug, scripts) {
+                match resource_manager.try_load(&slug, scripts, true) {
                     Ok(_) => {
-                        log::info!(target: "network", "Client resource slug:\"{}\" loaded", slug);
+                        log::info!(target: "network", "Client resurce \"{}\" loaded", slug);
                     }
                     Err(e) => {
-                        log::error!(target: "network", "Client resource slug:\"{}\" error: {}", slug, e);
+                        log::error!(target: "network", "Client resource \"{}\" error: {}", slug, e);
                     }
                 }
             }
@@ -76,6 +78,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 name,
                 data,
             } => {
+                log::info!(target: "network", "Revieved resource media \"{}/{}\"", resurce_slug, name);
+
                 let resource_manager = main.get_resource_manager_mut();
                 let Some(resourse) = resource_manager.get_resource_mut(&resurce_slug) else {
                     log::error!(target: "network", "Client media resource slug:\"{}\" not found", resurce_slug);
@@ -83,9 +87,19 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 };
                 resourse.add_media(name, data);
 
-                if resource_manager.get_media_count() >= *resource_manager.get_target_media_count() {
+                if resource_manager.get_media_count(true) >= *resource_manager.get_target_media_count() {
+                    log::info!(target: "network", "All media is loaded ({})", resource_manager.get_target_media_count());
                     network.send_message(&ClientMessages::MediaLoaded, NetworkMessageType::ReliableOrdered);
                 }
+            }
+            ServerMessages::Settings { block_types } => {
+                log::info!(target: "network", "Recieved settings from the network");
+
+                let worlds_manager = main.get_worlds_manager();
+                let mut block_storage = worlds_manager.get_block_storage_mut();
+
+                block_storage.load(block_types, main.get_resource_manager()).unwrap();
+                network.send_message(&ClientMessages::SettingsLoaded, NetworkMessageType::ReliableOrdered);
             }
             ServerMessages::Teleport {
                 world_slug,
@@ -156,7 +170,6 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                     w.get_chunk_map_mut().edit_block(position, new_block_info);
                 }
             }
-            _ => panic!("unsupported message"),
         }
     }
 

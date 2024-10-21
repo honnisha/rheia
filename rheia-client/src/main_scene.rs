@@ -47,6 +47,10 @@ impl Main {
         network.send_message(message, message_type);
     }
 
+    pub fn get_resource_manager(&self) -> &ResourceManager {
+        &self.resource_manager
+    }
+
     pub fn get_resource_manager_mut(&mut self) -> &mut ResourceManager {
         &mut self.resource_manager
     }

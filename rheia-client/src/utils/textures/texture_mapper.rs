@@ -53,10 +53,7 @@ impl TextureMapper {
                     },
                 }
             }
-            BlockContent::ModelCube {
-                voxel_visibility,
-                model,
-            } => return None,
+            BlockContent::ModelCube { model } => return None,
         };
 
         self.textures_map.iter().position(|t| t == texture)

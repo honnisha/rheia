@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
 use super::block_info::BlockInfo;
 
 /// Describes how this voxel influences mesh generation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Display)]
+#[serde(rename_all = "snake_case")]
 pub enum VoxelVisibility {
     /// This voxel should not produce any geometry.
     Empty,

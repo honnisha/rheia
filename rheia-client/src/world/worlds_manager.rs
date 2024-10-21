@@ -1,21 +1,21 @@
-use ahash::AHashMap;
-use common::blocks::block_type::BlockType;
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
 use godot::{engine::Material, prelude::Gd};
-use parking_lot::lock_api::RwLockReadGuard;
+use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::utils::textures::{texture_mapper::TextureMapper};
 
+use super::block_storage::BlockStorage;
 use super::world_manager::WorldManager;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 pub type TextureMapperRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, TextureMapper>;
 
-pub type BlockStorageType = Arc<RwLock<AHashMap<usize, BlockType>>>;
-pub type BlockStorageRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, AHashMap<usize, BlockType>>;
+pub type BlockStorageType = Arc<RwLock<BlockStorage>>;
+pub type BlockStorageRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, BlockStorage>;
+pub type BlockStorageRefMut<'a> = RwLockWriteGuard<'a, parking_lot::RawRwLock, BlockStorage>;
 
 pub struct WorldsManager {
     base: Gd<Node>,
@@ -45,6 +45,10 @@ impl WorldsManager {
 
     pub fn get_block_storage(&self) -> BlockStorageRef {
         self.block_storage.read()
+    }
+
+    pub fn get_block_storage_mut(&self) -> BlockStorageRefMut {
+        self.block_storage.write()
     }
 
     pub fn get_texture_mapper(&self) -> TextureMapperRef {

@@ -27,7 +27,6 @@ use godot::{
     obj::NewGd,
     prelude::{Array, Gd},
 };
-use log::error;
 use physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder};
 
 pub fn generate_buffer(chunk_collider_data: &ChunkColliderDataBordered) -> UnitQuadBuffer {
@@ -112,9 +111,8 @@ pub fn generate_chunk_geometry(
             let block_info = quad
                 .block_info
                 .expect("GENERATE_CHUNK_GEOMETRY block info is not found");
-            let i = block_info.get_id() as usize;
             let block_type = block_storage
-                .get(&i)
+                .get(&block_info.get_id())
                 .expect("GENERATE_CHUNK_GEOMETRY block type is not found");
 
             let unoriented_quad = UnorientedQuad::from(quad);
