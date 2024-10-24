@@ -1,6 +1,8 @@
 pub mod block_mesh;
 pub mod colors;
 
+use std::hash::{DefaultHasher, Hash, Hasher};
+
 use crate::CHUNK_SIZE;
 
 /// https://github.com/feather-rs/feather
@@ -19,4 +21,10 @@ pub fn fix_chunk_loc_pos(p: i64) -> i64 {
         return (p + 1_i64) / CHUNK_SIZE as i64 + -1_i64;
     }
     return p / CHUNK_SIZE as i64;
+}
+
+pub fn calculate_hash<T: Hash>(obj: T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    obj.hash(&mut hasher);
+    hasher.finish()
 }

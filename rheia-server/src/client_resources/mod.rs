@@ -1,6 +1,6 @@
 use bevy::prelude::IntoSystemConfigs;
 use bevy_app::{App, Plugin, Startup};
-use resources_manager::rescan_scripts;
+use resources_manager::rescan_resources;
 use server_settings::{rescan_server_settings, ServerSettings};
 
 use self::resources_manager::ResourceManager;
@@ -20,10 +20,10 @@ impl Default for ResourcesPlugin {
 
 impl Plugin for ResourcesPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ResourceManager::new());
-        app.add_systems(Startup, rescan_scripts);
+        app.insert_resource(ResourceManager::default());
+        app.add_systems(Startup, rescan_resources);
 
-        app.insert_resource(ServerSettings::new());
-        app.add_systems(Startup, rescan_server_settings.after(rescan_scripts));
+        app.insert_resource(ServerSettings::default());
+        app.add_systems(Startup, rescan_server_settings.after(rescan_resources));
     }
 }

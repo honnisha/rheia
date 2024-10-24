@@ -29,9 +29,7 @@ use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_entities::{sync_player_spawn, PlayerSpawnEvent};
-use crate::{
-    client_resources::resources_manager::ResourceManager, console::commands_executer::CommandsHandler, LaunchSettings,
-};
+use crate::{console::commands_executer::CommandsHandler, LaunchSettings};
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
 
@@ -124,25 +122,6 @@ impl NetworkPlugin {
         let input = ServerMessages::ConsoleOutput { message: message };
         client.send_message(NetworkMessageType::ReliableOrdered, input);
     }
-
-    pub(crate) fn send_resources(client: &ClientNetwork, resources_manager: &Res<ResourceManager>) {
-        for resource in resources_manager.get_resources().values() {
-            let input = ServerMessages::Resource {
-                slug: resource.get_slug().clone(),
-                scripts: resource.get_client_scripts().clone(),
-            };
-            client.send_message(NetworkMessageType::ReliableOrdered, input);
-
-            for (media_slug, media_data) in resource.get_media().iter() {
-                let media_msg = ServerMessages::ResourceMedia {
-                    resurce_slug: resource.get_slug().clone(),
-                    name: media_slug.clone(),
-                    data: media_data.clone(),
-                };
-                client.send_message(NetworkMessageType::ReliableOrdered, media_msg);
-            }
-        }
-    }
 }
 
 fn receive_message_system(
@@ -173,6 +152,14 @@ fn receive_message_system(
     for (client_id, decoded) in network.drain_client_messages() {
         let client = clients.get(&client_id).unwrap();
         match decoded {
+            ClientMessages::ResourcesLoaded { last_index } => {
+                let msg = PlayerMediaLoadedEvent::new(client.clone(), Some(last_index));
+                player_media_loaded_events.send(msg);
+            }
+            ClientMessages::SettingsLoaded => {
+                let msg = PlayerSettingsLoadedEvent::new(client.clone());
+                settings_loaded_events.send(msg);
+            }
             ClientMessages::ConsoleInput { command } => {
                 CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
@@ -194,14 +181,6 @@ fn receive_message_system(
             } => {
                 let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
                 edit_block_events.send(edit);
-            }
-            ClientMessages::MediaLoaded => {
-                let msg = PlayerMediaLoadedEvent::new(client.clone());
-                player_media_loaded_events.send(msg);
-            }
-            ClientMessages::SettingsLoaded => {
-                let msg = PlayerSettingsLoadedEvent::new(client.clone());
-                settings_loaded_events.send(msg);
             }
         }
     }

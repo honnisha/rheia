@@ -29,7 +29,7 @@ pub fn get_client_channels_config() -> Vec<ChannelConfig> {
         },
         ChannelConfig {
             channel_id: ClientChannel::ReliableUnordered.into(),
-            max_memory_usage_bytes: 1024 * 256,
+            max_memory_usage_bytes: 1024 * 1024 * 5,
             send_type: SendType::ReliableUnordered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },
@@ -69,7 +69,7 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
         },
         ChannelConfig {
             channel_id: ServerChannel::ReliableUnordered.into(),
-            max_memory_usage_bytes: 1024 * 256,
+            max_memory_usage_bytes: 1024 * 1024 * 5,
             send_type: SendType::ReliableUnordered {
                 resend_time: Duration::from_secs_f32(0.5_f32),
             },

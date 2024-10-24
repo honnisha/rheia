@@ -1,7 +1,6 @@
-use std::{collections::HashMap, path::PathBuf};
-
-use rustyline::completion::Candidate;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::Iter;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ResourceManifest {
@@ -58,12 +57,31 @@ impl ResourceInstance {
         self.media.contains_key(slug)
     }
 
+    pub fn iter_scripts(&self) -> Iter<'_, String, String> {
+        self.scripts.iter()
+    }
+
+    pub fn iter_media(&self) -> Iter<'_, String, Vec<u8>> {
+        self.media.iter()
+    }
+
     pub fn get_media(&self) -> &HashMap<String, Vec<u8>> {
         &self.media
     }
 
     pub fn get_client_scripts(&self) -> &HashMap<String, String> {
         &self.scripts
+    }
+
+    pub fn empty(slug: String) -> Self {
+        Self {
+            slug: slug.clone(),
+            title: slug,
+            autor: None,
+            version: None,
+            scripts: Default::default(),
+            media: Default::default(),
+        }
     }
 
     pub fn from_manifest(resource_path: PathBuf) -> Result<Self, String> {
@@ -111,7 +129,7 @@ impl ResourceInstance {
                         continue;
                     }
                 };
-                inst.scripts.insert(client_script.clone(), data);
+                inst.add_script(client_script.clone(), data);
             }
         }
         if let Some(media_list) = &manifest.media {
@@ -126,9 +144,17 @@ impl ResourceInstance {
                         continue;
                     }
                 };
-                inst.media.insert(media.clone(), data);
+                inst.add_media(media.clone(), data);
             }
         }
         Ok(inst)
+    }
+
+    pub fn add_script(&mut self, slug: String, data: String) {
+        self.scripts.insert(slug, data);
+    }
+
+    pub fn add_media(&mut self, slug: String, data: Vec<u8>) {
+        self.media.insert(slug, data);
     }
 }

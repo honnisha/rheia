@@ -30,12 +30,25 @@ pub enum ClientMessages {
         position: BlockPosition,
         new_block_info: BlockInfo,
     },
-    MediaLoaded,
+    ResourcesLoaded {
+        last_index: u32,
+    },
     SettingsLoaded,
 }
 
 pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
 pub type SectionsData = [Box<ChunkDataType>; VERTICAL_SECTIONS];
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ResurceScheme {
+    pub slug: String,
+
+    // Hash: name
+    pub scripts: HashMap<String, String>,
+
+    // Hash: name
+    pub media: HashMap<String, String>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {
@@ -43,21 +56,20 @@ pub enum ServerMessages {
     ConsoleOutput {
         message: String,
     },
-    Resource {
-        slug: String,
-        scripts: HashMap<String, String>,
+
+    // Server settings and resources
+    ResourcesScheme {
+        list: Vec<ResurceScheme>,
+    },
+    ResourcesPart {
+        index: u32,
+        data: Vec<u8>,
+        last: bool,
     },
     Settings {
         block_types: HashMap<u32, BlockType>,
     },
-    MediaCount {
-        count: u32,
-    },
-    ResourceMedia {
-        resurce_slug: String,
-        name: String,
-        data: Vec<u8>,
-    },
+
     // Used to teleport the player's client controller.
     Teleport {
         world_slug: String,

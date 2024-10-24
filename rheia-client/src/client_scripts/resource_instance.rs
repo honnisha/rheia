@@ -12,30 +12,27 @@ pub struct ResourceInstance {
 }
 
 impl ResourceInstance {
-    pub fn try_init(
-        rhai_engine: &mut Engine,
-        slug: &String,
-        scripts: HashMap<String, String>,
-        is_network: bool,
-    ) -> Result<Self, String> {
-        let mut resource_instance = ResourceInstance {
-            slug: slug.clone(),
-            scripts: Default::default(),
-            media: Default::default(),
+    pub fn new(slug: String, is_network: bool) -> Self {
+        Self {
+            slug,
             is_network,
-        };
+            ..Default::default()
+        }
+    }
 
-        for (source_file, code) in scripts {
-            match ScriptInstance::try_to_load(rhai_engine, slug, source_file, code.clone()) {
-                Ok(i) => resource_instance.scripts.push(i),
-                Err(e) => {
-                    println!("code: {}", code);
-                    return Err(format!("slug \"{}\" {}", slug, e).into());
-                }
+    pub fn add_script(&mut self, rhai_engine: &mut Engine, slug: String, code: String) -> Result<(), String> {
+        match ScriptInstance::try_to_load(rhai_engine, slug, code) {
+            Ok(i) => self.scripts.push(i),
+            Err(e) => {
+                return Err(format!("rhai script error:{}", e));
             }
         }
+        Ok(())
+    }
 
-        Ok(resource_instance)
+    pub fn add_media(&mut self, media_slug: String, data: Vec<u8>) {
+        self.media.insert(media_slug.clone(), data);
+        log::info!(target:"resources", "Resource \"{}\" media \"{}\" loaded", self.slug, media_slug);
     }
 
     pub fn _run_event(&mut self, rhai_engine: &mut Engine, callback_name: &String, attrs: &Vec<Dynamic>) {
@@ -44,14 +41,13 @@ impl ResourceInstance {
 
             if let Some(fn_name) = option_fn {
                 let bind = EmptyEvent {};
-                let _result = script.run_fn(&rhai_engine, &fn_name, attrs, &mut to_dynamic(bind).unwrap());
+                let _result = script._run_fn(&rhai_engine, &fn_name, attrs, &mut to_dynamic(bind).unwrap());
             }
         }
     }
 
-    pub fn add_media(&mut self, media_slug: String, data: Vec<u8>) {
-        self.media.insert(media_slug.clone(), data);
-        log::trace!(target:"resources", "Resource \"{}\" media \"{}\" loaded", self.slug, media_slug);
+    pub fn get_slug(&self) -> &String {
+        &self.slug
     }
 
     pub fn get_media_count(&self) -> usize {

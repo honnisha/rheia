@@ -74,7 +74,7 @@ impl ChunkColumn {
         }
         return ServerMessages::ChunkSectionInfo {
             world_slug: self.world_slug.clone(),
-            sections: data.into_inner().unwrap(),
+            sections: data.into_inner().expect("data error"),
             chunk_position: self.chunk_position.clone(),
         };
     }
@@ -99,6 +99,9 @@ pub(crate) fn load_chunk(
             chunk_column.sections.push(Box::new(chunk_section));
         }
         chunk_column.loaded = true;
-        loaded_chunks.send(chunk_column.chunk_position.clone()).unwrap();
+
+        if !cfg!(test) {
+            loaded_chunks.send(chunk_column.chunk_position.clone()).expect("channel poisoned");
+        }
     })
 }

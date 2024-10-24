@@ -16,12 +16,7 @@ impl ScriptInstance {
         &self.scope_instance
     }
 
-    pub fn try_to_load(
-        rhai_engine: &mut Engine,
-        slug: &String,
-        source_file: String,
-        code: String,
-    ) -> Result<Self, String> {
+    pub fn try_to_load(rhai_engine: &mut Engine, slug: String, code: String) -> Result<Self, String> {
         let mut scope = Scope::new();
         let shared_controller = ScriptInstanceScope::new(slug.clone());
         let scope_instance = Rc::new(RefCell::new(shared_controller));
@@ -30,14 +25,14 @@ impl ScriptInstance {
         let mut ast = match rhai_engine.compile(&code) {
             Ok(a) => a,
             Err(e) => {
-                return Err(format!("rhai \"{}\" syntax error: {}", source_file, e).into());
+                return Err(format!("rhai \"{}\" syntax error: {}", slug, e).into());
             }
         };
-        ast.set_source(ImmutableString::from(slug));
+        ast.set_source(ImmutableString::from(slug.clone()));
         match rhai_engine.run_ast_with_scope(&mut scope, &ast) {
             Ok(()) => (),
             Err(e) => {
-                return Err(format!("rhai \"{}\" syntax error: {}", source_file, e).into());
+                return Err(format!("rhai \"{}\" syntax error: {}", slug, e).into());
             }
         };
 
@@ -48,7 +43,7 @@ impl ScriptInstance {
         })
     }
 
-    pub fn run_fn(
+    pub fn _run_fn(
         &mut self,
         rhai_engine: &Engine,
         fn_name: &String,

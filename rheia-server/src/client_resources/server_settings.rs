@@ -16,20 +16,13 @@ pub struct ServerSettingsManifest {
     pub blocks: Option<HashMap<u32, BlockType>>,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct ServerSettings {
     block_types: HashMap<u32, BlockType>,
     loaded: bool,
 }
 
 impl ServerSettings {
-    pub fn new() -> Self {
-        Self {
-            block_types: Default::default(),
-            loaded: false,
-        }
-    }
-
     pub fn get_block_types(&self) -> &HashMap<u32, BlockType> {
         assert!(self.loaded, "server settings is not loaded");
         &self.block_types
