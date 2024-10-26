@@ -1,3 +1,4 @@
+use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
 use rhai::exported_module;
 use rhai::Dynamic;
@@ -119,11 +120,7 @@ impl ResourceManager {
         Ok(())
     }
 
-    pub fn _get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
-        self.resources.get_mut(slug)
-    }
-
-    pub fn get_resources_count(&mut self) -> usize {
+    pub fn get_resources_count(&self) -> usize {
         self.resources.len()
     }
 
@@ -137,20 +134,30 @@ impl ResourceManager {
         return count;
     }
 
-    pub fn has_media(&self, slug: &String) -> bool {
-        let s: Vec<&str> = slug.split("://").collect();
-        if s.len() < 2 {
+    pub fn has_media(&self, path: &String) -> bool {
+        let Some((res_slug, res_path)) = split_resource_path(path) else {
             return false;
-        }
+        };
 
-        for (resource_slug, resource) in self.resources.iter() {
-            let res_slug = s[1..s.len()].join("/");
-
-            if resource_slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
+        for (resource_path, resource) in self.resources.iter() {
+            if *resource_path == res_slug && resource.has_media(&res_path) {
                 return true;
             }
         }
         return false;
+    }
+
+    pub fn get_media(&self, path: &String) -> Option<&Vec<u8>> {
+        let Some((res_slug, res_path)) = split_resource_path(path) else {
+            return None;
+        };
+
+        for (resource_path, resource) in self.resources.iter() {
+            if *resource_path == res_slug {
+                return resource.get_media(&res_path);
+            }
+        }
+        return None;
     }
 
     pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {

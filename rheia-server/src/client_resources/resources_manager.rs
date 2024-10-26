@@ -2,6 +2,7 @@ use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use common::utils::calculate_hash;
+use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
 use std::collections::HashMap;
 use std::fs;
@@ -73,19 +74,17 @@ impl ResourceManager {
         return count;
     }
 
-    pub fn has_media(&self, slug: &String) -> bool {
-        if DEFAULT_MEDIA.contains(&slug.as_str()) {
+    pub fn has_media(&self, path: &String) -> bool {
+        if DEFAULT_MEDIA.contains(&path.as_str()) {
             return true;
         }
 
-        let s: Vec<&str> = slug.split("://").collect();
-        if s.len() < 2 {
+        let Some((res_slug, res_path)) = split_resource_path(path) else {
             return false;
-        }
+        };
 
         for (resource_slug, resource) in self.resources.iter() {
-            let res_slug = s[1..s.len()].join("/");
-            if resource_slug == s.get(0).unwrap() && resource.has_media(&res_slug) {
+            if *resource_slug == res_slug && resource.has_media(&res_path) {
                 return true;
             }
         }

@@ -57,12 +57,12 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             }
 
             ServerMessages::ResourcesScheme { list } => {
-                let resource_manager = main.get_resource_manager_mut();
+                let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list);
                 log::info!(target: "network", "Resources scheme loaded from network");
             }
             ServerMessages::ResourcesPart { index, mut data, last } => {
-                let resource_manager = main.get_resource_manager_mut();
+                let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.load_archive_chunk(&mut data);
 
                 if last {
@@ -76,10 +76,14 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             ServerMessages::Settings { block_types } => {
                 log::info!(target: "network", "Recieved settings from the network");
 
-                let worlds_manager = main.get_worlds_manager();
-                let mut block_storage = worlds_manager.get_block_storage_mut();
+                let worlds_manager = main.get_worlds_manager_mut();
+                let resource_manager =  main.get_resource_manager();
 
-                block_storage.load(block_types, main.get_resource_manager()).unwrap();
+                let mut block_storage = worlds_manager.get_block_storage_mut();
+                block_storage.load_blocks_types(block_types, &*resource_manager).unwrap();
+
+                worlds_manager.build_textures(&*resource_manager);
+
                 network.send_message(&ClientMessages::SettingsLoaded, NetworkMessageType::ReliableOrdered);
             }
 

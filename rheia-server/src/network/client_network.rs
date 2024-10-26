@@ -16,7 +16,7 @@ use crate::{
 
 use super::server::{NetworkPlugin, SendClientMessageEvent};
 
-static SEND_CHUNK_QUEUE_LIMIT: usize = 128;
+static SEND_CHUNK_QUEUE_LIMIT: usize = 64;
 
 /// Store player current world slug and his entity
 #[derive(Clone)]

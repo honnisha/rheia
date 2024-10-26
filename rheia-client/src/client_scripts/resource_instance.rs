@@ -58,6 +58,10 @@ impl ResourceInstance {
         self.media.contains_key(slug)
     }
 
+    pub fn get_media(&self, slug: &String) -> Option<&Vec<u8>> {
+        self.media.get(slug)
+    }
+
     pub fn is_network(&self) -> bool {
         self.is_network
     }

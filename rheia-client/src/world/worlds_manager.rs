@@ -5,7 +5,8 @@ use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::utils::textures::{texture_mapper::TextureMapper};
+use crate::client_scripts::resource_manager::ResourceManager;
+use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::block_storage::BlockStorage;
 use super::world_manager::WorldManager;
@@ -22,28 +23,37 @@ pub struct WorldsManager {
     world: Option<Gd<WorldManager>>,
 
     texture_mapper: TextureMapperType,
-    material: Gd<Material>,
+    material: Option<Gd<Material>>,
 
     block_storage: BlockStorageType,
 }
 
 impl WorldsManager {
     pub fn create(base: Gd<Node>) -> Self {
-        let mut texture_mapper = TextureMapper::new();
-        let block_storage: BlockStorageType = Arc::new(RwLock::new(Default::default()));
-        let material = texture_mapper.build(&block_storage.read());
         Self {
             base,
             world: None,
 
-            material,
-            texture_mapper: Arc::new(RwLock::new(texture_mapper)),
+            material: None,
+            texture_mapper: Arc::new(RwLock::new(Default::default())),
 
-            block_storage: block_storage,
+            block_storage: Arc::new(RwLock::new(Default::default())),
         }
     }
 
-    pub fn get_block_storage(&self) -> BlockStorageRef {
+    pub fn build_textures(&mut self, resource_manager: &ResourceManager) -> Result<(), String> {
+        let mut texture_mapper = self.texture_mapper.write();
+        let block_storage = self.block_storage.read();
+
+        let texture = match texture_mapper.build(&*block_storage, resource_manager) {
+            Ok(i) => i,
+            Err(e) => return Err(e),
+        };
+        self.material = Some(texture);
+        return Ok(());
+    }
+
+    pub fn _get_block_storage(&self) -> BlockStorageRef {
         self.block_storage.read()
     }
 
@@ -51,7 +61,7 @@ impl WorldsManager {
         self.block_storage.write()
     }
 
-    pub fn get_texture_mapper(&self) -> TextureMapperRef {
+    pub fn _get_texture_mapper(&self) -> TextureMapperRef {
         self.texture_mapper.read()
     }
 
@@ -100,7 +110,7 @@ impl WorldsManager {
                 base,
                 world_slug,
                 self.texture_mapper.clone(),
-                self.material.clone(),
+                self.material.as_ref().unwrap().clone(),
                 self.block_storage.clone(),
             )
         });

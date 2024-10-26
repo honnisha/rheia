@@ -1,33 +1,42 @@
 use crate::{
     main_scene::FloatType,
+    utils::textures::texture_mapper::TextureMapper,
     world::{
+        block_storage::BlockStorage,
         chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered},
-        worlds_manager::{BlockStorageRef, TextureMapperRef},
     },
 };
-use common::chunks::position::Vector3 as NetworkVector3;
-use common::utils::block_mesh::{
-    greedy::{greedy_quads, GreedyQuadsBuffer},
-    QuadBuffer,
-};
 use common::{
-    utils::block_mesh::{buffer::UnitQuadBuffer, visible_block_faces, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG},
+    blocks::{block_info::BlockInfo, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
+    chunks::position::Vector3 as NetworkVector3,
+    utils::block_mesh::{
+        buffer::UnitQuadBuffer,
+        greedy::{greedy_quads, GreedyQuadsBuffer},
+        visible_block_faces, QuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
+    },
     CHUNK_SIZE,
 };
 use godot::{
     classes::mesh::PrimitiveType,
     engine::{mesh::ArrayType, ArrayMesh},
-    prelude::{Variant, Vector2, Vector3},
+    obj::{EngineEnum, NewGd},
+    prelude::{Array, Gd, PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant, Vector2, Vector3},
 };
-use godot::{
-    obj::EngineEnum,
-    prelude::{PackedInt32Array, PackedVector2Array, PackedVector3Array},
-};
-use godot::{
-    obj::NewGd,
-    prelude::{Array, Gd},
-};
+use ndshape::ConstShape;
 use physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder};
+
+pub(crate) fn _get_test_sphere(radius: f32, block_info: BlockInfo) -> ChunkColliderDataBordered {
+    let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
+
+    for i in 0u32..(ChunkBordersShape::SIZE as u32) {
+        let [x, y, z] = ChunkBordersShape::delinearize(i);
+        b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < radius {
+            true => ChunkColliderInfo::create(VoxelVisibility::Opaque, Some(block_info.clone())),
+            _ => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
+        };
+    }
+    b_chunk
+}
 
 pub fn generate_buffer(chunk_collider_data: &ChunkColliderDataBordered) -> UnitQuadBuffer {
     let mut buffer = UnitQuadBuffer::new();
@@ -66,10 +75,12 @@ unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
 
 pub fn generate_chunk_geometry(
-    texture_mapper: &TextureMapperRef,
+    texture_mapper: &TextureMapper,
     chunk_collider_data: &ChunkColliderDataBordered,
-    block_storage: &BlockStorageRef,
+    block_storage: &BlockStorage,
 ) -> Geometry {
+    let chunk_collider_data = &_get_test_sphere(8.0, BlockInfo::create(1, None));
+
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(ArrayType::MAX.ord() as usize, &Variant::nil());
 

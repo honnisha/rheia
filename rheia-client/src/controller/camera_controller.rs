@@ -45,7 +45,7 @@ impl CameraController {
         self.base().get_rotation_degrees().x
     }
 
-    pub fn get_camera(&self) -> &Gd<Camera3D> {
+    pub fn _get_camera(&self) -> &Gd<Camera3D> {
         &self.camera
     }
 

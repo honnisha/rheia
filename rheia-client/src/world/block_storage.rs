@@ -18,7 +18,8 @@ impl BlockStorage {
         self.blocks.iter()
     }
 
-    pub fn load(
+    /// Saves the server-side block scheme
+    pub fn load_blocks_types(
         &mut self,
         block_types: HashMap<u32, BlockType>,
         resource_manager: &ResourceManager,

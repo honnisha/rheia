@@ -1,33 +1,30 @@
 use common::blocks::block_type::{BlockContent, BlockType};
 use godot::{engine::Material, obj::Gd};
+use image::RgbaImage;
 
-use crate::world::worlds_manager::BlockStorageRef;
+use crate::{client_scripts::resource_manager::ResourceManager, world::block_storage::BlockStorage};
 
 use super::material_builder::build_blocks_material;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TextureMapper {
     textures_map: Vec<String>,
 }
 
 impl TextureMapper {
-    pub fn new() -> TextureMapper {
-        TextureMapper {
-            textures_map: Vec::new(),
-        }
+    pub fn build(
+        &mut self,
+        block_storage: &BlockStorage,
+        resource_manager: &ResourceManager,
+    ) -> Result<Gd<Material>, String> {
+        let texture = build_blocks_material(self, block_storage, resource_manager).unwrap();
+        Ok(texture.duplicate().unwrap().cast::<Material>())
     }
 
-    pub fn build(&mut self, block_storage: &BlockStorageRef) -> Gd<Material> {
-        let texture = build_blocks_material(self, block_storage);
-        texture.duplicate().unwrap().cast::<Material>()
-    }
-
-    pub fn add_texture(&mut self, texture_name: String) -> Option<i64> {
-        if self.textures_map.contains(&texture_name) {
-            return None;
-        };
+    pub fn add_texture(&mut self, texture_name: String) -> i64 {
+        assert!(!self.textures_map.contains(&texture_name), "texture already exists");
         self.textures_map.push(texture_name);
-        Some(self.textures_map.len() as i64 - 1_i64)
+        self.textures_map.len() as i64 - 1_i64
     }
 
     #[allow(unused_variables)]
@@ -57,5 +54,35 @@ impl TextureMapper {
         };
 
         self.textures_map.iter().position(|t| t == texture)
+    }
+
+    pub fn load_image(
+        &mut self,
+        img: &mut RgbaImage,
+        texture_path: &String,
+        resource_manager: &ResourceManager,
+    ) -> Result<(), String> {
+        if self.textures_map.contains(&texture_path) {
+            return Ok(());
+        };
+
+        let Some(media_data) = resource_manager.get_media(texture_path) else {
+            return Err(format!("Texture media \"{}\" not found inside resources", texture_path));
+        };
+
+        let image_png = match image::load_from_memory(&media_data) {
+            Ok(t) => t,
+            Err(e) => {
+                return Err(format!("Can't load texture \"{}\"; error: {:?}", texture_path, e));
+            }
+        };
+
+        let index = self.add_texture(texture_path.clone());
+
+        let offset_x = 16 * (index % 32_i64);
+        let offset_y = 16 * (index as f64 / 32_f64).floor() as i64;
+
+        image::imageops::overlay(img, &image_png, offset_x, offset_y);
+        Ok(())
     }
 }

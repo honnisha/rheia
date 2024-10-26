@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::enums::controller_actions::ControllerActions;
@@ -79,7 +82,7 @@ impl INode for Main {
         Main {
             base,
             network: None,
-            resource_manager: ResourceManager::new(),
+            resource_manager: Rc::new(RefCell::new(ResourceManager::new())),
             worlds_manager: worlds_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
@@ -93,7 +96,7 @@ impl INode for Main {
         log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
-        match self.resource_manager.load_local_resources() {
+        match self.get_resource_manager_mut().load_local_resources() {
             Ok(_) => (),
             Err(e) => {
                 log::error!(target: "main", "Resources error: {}", e);
@@ -101,7 +104,7 @@ impl INode for Main {
                 return;
             }
         }
-        log::info!(target: "main", "Local resources loaded successfully ({})", self.resource_manager.get_resources_count());
+        log::info!(target: "main", "Local resources loaded successfully ({})", self.get_resource_manager().get_resources_count());
 
         let console = self.console.clone().upcast();
         self.base_mut().add_child(console);

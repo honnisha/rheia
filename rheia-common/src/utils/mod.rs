@@ -28,3 +28,14 @@ pub fn calculate_hash<T: Hash>(obj: T) -> u64 {
     obj.hash(&mut hasher);
     hasher.finish()
 }
+
+
+// Split "test://test/file.glb" into ("test", "test/file.glb")
+pub fn split_resource_path(path: &String) -> Option<(String, String)> {
+    let s: Vec<&str> = path.split("://").collect();
+    if s.len() < 2 {
+        return None;
+    }
+    let res_path = s[1..s.len()].join("/");
+    return Some((s.get(0).unwrap().to_string(), res_path));
+}
