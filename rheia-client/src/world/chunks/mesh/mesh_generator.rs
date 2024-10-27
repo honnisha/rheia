@@ -79,7 +79,7 @@ pub fn generate_chunk_geometry(
     chunk_collider_data: &ChunkColliderDataBordered,
     block_storage: &BlockStorage,
 ) -> Geometry {
-    let chunk_collider_data = &_get_test_sphere(8.0, BlockInfo::create(1, None));
+    // let chunk_collider_data = &_get_test_sphere(8.0, BlockInfo::create(1, None));
 
     let mut arrays: Array<Variant> = Array::new();
     arrays.resize(ArrayType::MAX.ord() as usize, &Variant::nil());

@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::enums::controller_actions::ControllerActions;
@@ -28,7 +31,7 @@ pub struct Main {
     network: Option<NetworkContainer>,
 
     resource_manager: ResourceManager,
-    worlds_manager: WorldsManager,
+    worlds_manager: Rc<RefCell<WorldsManager>>,
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
 }
@@ -55,12 +58,12 @@ impl Main {
         &mut self.resource_manager
     }
 
-    pub fn get_worlds_manager(&self) -> &WorldsManager {
-        &self.worlds_manager
+    pub fn get_worlds_manager(&self) -> std::cell::Ref<'_, WorldsManager> {
+        self.worlds_manager.borrow()
     }
 
-    pub fn get_worlds_manager_mut(&mut self) -> &mut WorldsManager {
-        &mut self.worlds_manager
+    pub fn get_worlds_manager_mut(&self) -> std::cell::RefMut<'_, WorldsManager> {
+        self.worlds_manager.borrow_mut()
     }
 
     pub fn close() {
@@ -80,7 +83,7 @@ impl INode for Main {
             base,
             network: None,
             resource_manager: ResourceManager::new(),
-            worlds_manager: worlds_manager,
+            worlds_manager: Rc::new(RefCell::new(worlds_manager)),
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
         }
@@ -134,9 +137,9 @@ impl INode for Main {
 
         let network_info = handle_network_events(self);
 
-        self.debug_info
-            .bind_mut()
-            .update_debug(&self.worlds_manager, network_info);
+        let wm = self.worlds_manager.clone();
+        let worlds_manager = wm.borrow();
+        self.debug_info.bind_mut().update_debug(&worlds_manager, network_info);
 
         let input = Input::singleton();
         if input.is_action_just_pressed(ControllerActions::ToggleConsole.to_string().into()) {

@@ -8,9 +8,9 @@ use crate::console::console_handler::Console;
 use crate::main_scene::Main;
 use crate::utils::bridge::IntoGodotVector;
 use crate::world::world_manager::WorldManager;
+use crate::world::worlds_manager::WorldsManager;
 
-fn get_world_mut(main: &mut Main, world_slug: String) -> Option<&mut Gd<WorldManager>> {
-    let worlds_manager = main.get_worlds_manager_mut();
+fn get_world_mut(worlds_manager: &mut WorldsManager, world_slug: String) -> Option<&mut Gd<WorldManager>> {
     let world = match worlds_manager.get_world_mut() {
         Some(w) => w,
         None => {
@@ -57,12 +57,12 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             }
 
             ServerMessages::ResourcesScheme { list } => {
-                let mut resource_manager = main.get_resource_manager_mut();
+                let resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list);
                 log::info!(target: "network", "Resources scheme loaded from network");
             }
             ServerMessages::ResourcesPart { index, mut data, last } => {
-                let mut resource_manager = main.get_resource_manager_mut();
+                let resource_manager = main.get_resource_manager_mut();
                 resource_manager.load_archive_chunk(&mut data);
 
                 if last {
@@ -76,13 +76,17 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             ServerMessages::Settings { block_types } => {
                 log::info!(target: "network", "Recieved settings from the network");
 
-                let worlds_manager = main.get_worlds_manager_mut();
-                let resource_manager =  main.get_resource_manager();
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let resource_manager = main.get_resource_manager();
 
-                let mut block_storage = worlds_manager.get_block_storage_mut();
-                block_storage.load_blocks_types(block_types, &*resource_manager).unwrap();
+                {
+                    let mut block_storage = worlds_manager.get_block_storage_mut();
+                    block_storage
+                        .load_blocks_types(block_types, &*resource_manager)
+                        .unwrap();
+                }
 
-                worlds_manager.build_textures(&*resource_manager);
+                worlds_manager.build_textures(&*resource_manager).unwrap();
 
                 network.send_message(&ClientMessages::SettingsLoaded, NetworkMessageType::ReliableOrdered);
             }
@@ -100,7 +104,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 chunk_position,
                 sections,
             } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     world
                         .bind_mut()
                         .get_chunk_map_mut()
@@ -109,7 +114,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 }
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     for chunk_position in chunks.iter() {
                         world.bind_mut().get_chunk_map_mut().unload_chunk(*chunk_position);
                     }
@@ -121,7 +127,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 position,
                 rotation,
             } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     let mut w = world.bind_mut();
                     let mut entities_manager = w.get_entities_manager_mut();
                     entities_manager.create_entity(id, position.to_godot(), rotation);
@@ -133,14 +140,16 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 position,
                 rotation,
             } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     let mut w = world.bind_mut();
                     let mut entities_manager = w.get_entities_manager_mut();
                     entities_manager.move_entity(id, position.to_godot(), rotation);
                 }
             }
             ServerMessages::StopStreamingEntities { world_slug, ids } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     let mut w = world.bind_mut();
                     let mut entities_manager = w.get_entities_manager_mut();
                     entities_manager.despawn(ids);
@@ -151,7 +160,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 position,
                 new_block_info,
             } => {
-                if let Some(world) = get_world_mut(main, world_slug) {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                if let Some(world) = get_world_mut(&mut worlds_manager, world_slug) {
                     let mut w = world.bind_mut();
                     w.get_chunk_map_mut().edit_block(position, new_block_info);
                 }

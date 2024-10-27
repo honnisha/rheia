@@ -110,7 +110,8 @@ impl ChunkColumn {
         texture_mapper: &TextureMapperRef,
     ) {
         let data = self.get_chunk_data().clone();
-        let bordered_chunk_data = format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y);
+        let bordered_chunk_data =
+            format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y).unwrap();
 
         let mut chunk_base = self.get_base();
         let mut c = chunk_base.bind_mut();
