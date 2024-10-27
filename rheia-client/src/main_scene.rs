@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::enums::controller_actions::ControllerActions;
@@ -82,7 +79,7 @@ impl INode for Main {
         Main {
             base,
             network: None,
-            resource_manager: Rc::new(RefCell::new(ResourceManager::new())),
+            resource_manager: ResourceManager::new(),
             worlds_manager: worlds_manager,
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
