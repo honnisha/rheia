@@ -15,7 +15,7 @@ dest_files=["res://.godot/imported/menu_background.png-c993529ad6cc338d4e4dee62c
 
 [params]
 
-compress/mode=3
+compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -23,7 +23,7 @@ compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=5
+roughness/mode=0
 roughness/src_normal=""
 process/fix_alpha_border=false
 process/premult_alpha=false
