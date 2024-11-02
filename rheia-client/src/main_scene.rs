@@ -8,6 +8,7 @@ use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
+use crate::text_screen::TextScreen;
 use crate::world::worlds_manager::WorldsManager;
 use godot::engine::input::MouseMode;
 use godot::engine::Engine;
@@ -28,12 +29,14 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
 pub struct Main {
     base: Base<Node>,
 
+    network_started: bool,
     network: Option<NetworkContainer>,
 
     resource_manager: ResourceManager,
     worlds_manager: Rc<RefCell<WorldsManager>>,
     console: Gd<Console>,
     debug_info: Gd<DebugInfo>,
+    text_screen: Gd<TextScreen>,
 }
 
 impl Main {
@@ -50,6 +53,10 @@ impl Main {
         network.send_message(message, message_type);
     }
 
+    pub fn get_text_screen_mut(&mut self) -> GdMut<'_, TextScreen> {
+        self.text_screen.bind_mut()
+    }
+
     pub fn get_resource_manager(&self) -> &ResourceManager {
         &self.resource_manager
     }
@@ -58,7 +65,7 @@ impl Main {
         &mut self.resource_manager
     }
 
-    pub fn get_worlds_manager(&self) -> std::cell::Ref<'_, WorldsManager> {
+    pub fn _get_worlds_manager(&self) -> std::cell::Ref<'_, WorldsManager> {
         self.worlds_manager.borrow()
     }
 
@@ -81,11 +88,13 @@ impl INode for Main {
         let worlds_manager = WorldsManager::create(base.to_gd().clone());
         Main {
             base,
+            network_started: false,
             network: None,
             resource_manager: ResourceManager::new(),
             worlds_manager: Rc::new(RefCell::new(worlds_manager)),
             console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
             debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
+            text_screen: load::<PackedScene>("res://scenes/text_screen.tscn").instantiate_as::<TextScreen>(),
         }
     }
 
@@ -112,21 +121,10 @@ impl INode for Main {
         let debug_info = self.debug_info.clone().upcast();
         self.base_mut().add_child(debug_info);
 
-        self.debug_info.bind_mut().toggle(true);
+        self.debug_info.bind_mut().toggle(false);
+        self.text_screen.bind_mut().toggle(true);
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
-
-        let ip_port = "127.0.0.1:19132".to_string();
-        let network = match NetworkContainer::new(ip_port) {
-            Ok(c) => c,
-            Err(e) => {
-                log::error!(target: "main", "Network connection error: {}", e);
-                Main::close();
-                return;
-            }
-        };
-
-        self.network = Some(network);
 
         Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
     }
@@ -135,11 +133,36 @@ impl INode for Main {
         #[cfg(feature = "trace")]
         let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
 
-        let network_info = handle_network_events(self);
+        let ip_port = "127.0.0.1:19132".to_string();
 
-        let wm = self.worlds_manager.clone();
-        let worlds_manager = wm.borrow();
-        self.debug_info.bind_mut().update_debug(&worlds_manager, network_info);
+        if !self.network_started {
+            self.text_screen
+                .bind_mut()
+                .set_text(format!("Connecting to {}...", ip_port));
+
+            let network = match NetworkContainer::new(ip_port) {
+                Ok(c) => c,
+                Err(e) => {
+                    log::error!(target: "main", "Network connection error: {}", e);
+                    Main::close();
+                    return;
+                }
+            };
+            self.text_screen
+                .bind_mut()
+                .set_text("Connecting successfully".to_string());
+            self.network = Some(network);
+
+            self.network_started = true;
+        }
+
+        if self.network.is_some() {
+            let network_info = handle_network_events(self);
+
+            let wm = self.worlds_manager.clone();
+            let worlds_manager = wm.borrow();
+            self.debug_info.bind_mut().update_debug(&worlds_manager, network_info);
+        }
 
         let input = Input::singleton();
         if input.is_action_just_pressed(ControllerActions::ToggleConsole.to_string().into()) {

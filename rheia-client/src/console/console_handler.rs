@@ -133,10 +133,7 @@ impl IMarginContainer for Console {
         log::info!(target: "console", "Start loading console;");
         match self.base().try_get_node_as::<RichTextLabel>(TEXT_PATH) {
             Some(e) => self.console_text = Some(e),
-            _ => {
-                godot_error!("console_text element not found");
-                return;
-            }
+            _ => panic!("console_text element not found"),
         };
         match self.base().try_get_node_as::<LineEdit>(INPUT_PATH) {
             Some(mut e) => {
@@ -146,10 +143,7 @@ impl IMarginContainer for Console {
                 );
                 self.console_input = Some(e);
             }
-            _ => {
-                godot_error!("console_input element not found");
-                return;
-            }
+            _ => panic!("console_input element not found"),
         };
         match self.base().try_get_node_as::<TextureButton>(BUTTON_PATH) {
             Some(mut e) => {
@@ -159,17 +153,11 @@ impl IMarginContainer for Console {
                 );
                 self.console_button = Some(e);
             }
-            _ => {
-                godot_error!("console_button element not found");
-                return;
-            }
+            _ => panic!("console_button element not found"),
         };
         match self.base().try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
             Some(e) => self.console_sugestions = Some(e),
-            _ => {
-                godot_error!("console_sugestions element not found");
-                return;
-            }
+            _ => panic!("console_sugestions element not found"),
         };
         self.base_mut().set_visible(false);
         log::info!(target: "console", "Console successfily loaded;");

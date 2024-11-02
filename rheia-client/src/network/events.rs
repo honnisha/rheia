@@ -61,7 +61,12 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
                 resource_manager.set_resource_scheme(list);
                 log::info!(target: "network", "Resources scheme loaded from network");
             }
-            ServerMessages::ResourcesPart { index, mut data, last } => {
+            ServerMessages::ResourcesPart {
+                index,
+                total,
+                mut data,
+                last,
+            } => {
                 let resource_manager = main.get_resource_manager_mut();
                 resource_manager.load_archive_chunk(&mut data);
 
@@ -72,6 +77,9 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
 
                 let msg = ClientMessages::ResourcesLoaded { last_index: index };
                 network.send_message(&msg, NetworkMessageType::ReliableOrdered);
+
+                main.get_text_screen_mut()
+                    .set_text(format!("Media downloaded {}/{}", index + 1, total));
             }
             ServerMessages::Settings { block_types } => {
                 log::info!(target: "network", "Recieved settings from the network");
@@ -98,6 +106,8 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
             } => {
                 main.get_worlds_manager_mut()
                     .teleport_player(world_slug, position.to_godot(), rotation);
+
+                main.get_text_screen_mut().toggle(false);
             }
             ServerMessages::ChunkSectionInfo {
                 world_slug,

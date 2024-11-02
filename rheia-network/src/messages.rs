@@ -63,6 +63,7 @@ pub enum ServerMessages {
     },
     ResourcesPart {
         index: u32,
+        total: u32,
         data: Vec<u8>,
         last: bool,
     },

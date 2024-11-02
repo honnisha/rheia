@@ -33,11 +33,13 @@ pub fn on_media_loaded(
     for event in events.read() {
         match event.last_index {
             Some(index) => {
-                let is_last = (index as usize) + 1 >= resources_manager.get_archive_parts_count(ARCHIVE_CHUNK_SIZE);
+                let total = resources_manager.get_archive_parts_count(ARCHIVE_CHUNK_SIZE);
+                let is_last = (index as usize) + 1 >= total;
                 if !is_last {
                     // Send new media part
                     let resources_part = ServerMessages::ResourcesPart {
                         index: index + 1,
+                        total: total as u32,
                         data: resources_manager.get_archive_part(index as usize + 1, ARCHIVE_CHUNK_SIZE),
                         last: is_last,
                     };

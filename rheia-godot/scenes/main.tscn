@@ -1,9 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=3 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://c7qoi2fie684w" path="res://scenes/cross.tscn" id="2_ihtux"]
-[ext_resource type="FontFile" uid="uid://na3ql58dwojd" path="res://assets/gui/fonts/Straight-pixel-gothic.ttf" id="3_cqbfk"]
-[ext_resource type="Texture2D" uid="uid://dinu7xww0bajh" path="res://assets/block/dirt.png" id="3_snpte"]
 
 [node name="Main" type="Main"]
 
@@ -17,29 +15,3 @@ wind_strength = 0.05
 
 [node name="Cross" parent="." instance=ExtResource("2_ihtux")]
 position = Vector2(0, 0)
-
-[node name="MarginContainer" type="MarginContainer" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-
-[node name="TextureRect" type="TextureRect" parent="MarginContainer"]
-layout_mode = 2
-texture = ExtResource("3_snpte")
-expand_mode = 2
-stretch_mode = 1
-
-[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer"]
-layout_mode = 2
-size_flags_vertical = 4
-theme_override_fonts/normal_font = ExtResource("3_cqbfk")
-theme_override_font_sizes/bold_italics_font_size = 100
-theme_override_font_sizes/normal_font_size = 25
-bbcode_enabled = true
-text = "[center]text[/center]"
-fit_content = true
-shortcut_keys_enabled = false

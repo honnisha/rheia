@@ -9,6 +9,7 @@ mod utils;
 mod world;
 mod debug;
 mod entities;
+mod text_screen;
 
 struct Rheia;
 
