@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://ha34myf86so5"]
+[gd_scene load_steps=5 format=3 uid="uid://ha34myf86so5"]
 
-[ext_resource type="FontFile" uid="uid://na3ql58dwojd" path="res://assets/gui/fonts/Straight-pixel-gothic.ttf" id="1_cudd8"]
+[ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="1_qrd16"]
+[ext_resource type="FontFile" uid="uid://dldpnw7khwbnk" path="res://assets/gui/fonts/Monocraft/Monocraft-Italic.otf" id="2_papxd"]
+[ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_ssvxi"]
+[ext_resource type="FontFile" uid="uid://dex64ol46xo2a" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold.otf" id="4_al1k3"]
 
 [node name="TextScreen" type="TextScreen"]
 anchors_preset = 15
@@ -18,10 +21,13 @@ color = Color(0.223103, 0.223103, 0.223103, 1)
 [node name="Text" type="RichTextLabel" parent="."]
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_fonts/normal_font = ExtResource("1_cudd8")
+theme_override_fonts/normal_font = ExtResource("1_qrd16")
+theme_override_fonts/italics_font = ExtResource("2_papxd")
+theme_override_fonts/bold_italics_font = ExtResource("3_ssvxi")
+theme_override_fonts/bold_font = ExtResource("4_al1k3")
 theme_override_font_sizes/bold_italics_font_size = 100
-theme_override_font_sizes/normal_font_size = 25
+theme_override_font_sizes/normal_font_size = 17
 bbcode_enabled = true
-text = "[center]...[/center]"
+text = "[center]text[/center]"
 fit_content = true
 shortcut_keys_enabled = false

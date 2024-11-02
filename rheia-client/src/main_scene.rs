@@ -29,7 +29,6 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
 pub struct Main {
     base: Base<Node>,
 
-    network_started: bool,
     network: Option<NetworkContainer>,
 
     resource_manager: ResourceManager,
@@ -80,6 +79,27 @@ impl Main {
             .cast::<SceneTree>()
             .quit();
     }
+
+    fn connect(&mut self) {
+        let ip_port = "127.0.0.1:19132".to_string();
+
+        self.text_screen
+            .bind_mut()
+            .set_text(format!("Connecting to {}...", ip_port));
+
+        let network = match NetworkContainer::new(ip_port) {
+            Ok(c) => c,
+            Err(e) => {
+                log::error!(target: "main", "Network connection error: {}", e);
+                Main::close();
+                return;
+            }
+        };
+        self.text_screen
+            .bind_mut()
+            .set_text("Connecting successfully".to_string());
+        self.network = Some(network);
+    }
 }
 
 #[godot_api]
@@ -88,7 +108,6 @@ impl INode for Main {
         let worlds_manager = WorldsManager::create(base.to_gd().clone());
         Main {
             base,
-            network_started: false,
             network: None,
             resource_manager: ResourceManager::new(),
             worlds_manager: Rc::new(RefCell::new(worlds_manager)),
@@ -122,39 +141,21 @@ impl INode for Main {
         self.base_mut().add_child(debug_info);
 
         self.debug_info.bind_mut().toggle(false);
+
+        let text_screen = self.text_screen.clone().upcast();
+        self.base_mut().add_child(text_screen);
         self.text_screen.bind_mut().toggle(true);
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
         Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+
+        self.connect();
     }
 
     fn process(&mut self, _delta: f64) {
         #[cfg(feature = "trace")]
         let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
-
-        let ip_port = "127.0.0.1:19132".to_string();
-
-        if !self.network_started {
-            self.text_screen
-                .bind_mut()
-                .set_text(format!("Connecting to {}...", ip_port));
-
-            let network = match NetworkContainer::new(ip_port) {
-                Ok(c) => c,
-                Err(e) => {
-                    log::error!(target: "main", "Network connection error: {}", e);
-                    Main::close();
-                    return;
-                }
-            };
-            self.text_screen
-                .bind_mut()
-                .set_text("Connecting successfully".to_string());
-            self.network = Some(network);
-
-            self.network_started = true;
-        }
 
         if self.network.is_some() {
             let network_info = handle_network_events(self);
