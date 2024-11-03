@@ -1,5 +1,5 @@
 use crate::{
-    main_scene::FloatType,
+    scenes::main_scene::FloatType,
     utils::textures::texture_mapper::TextureMapper,
     world::{
         block_storage::BlockStorage,

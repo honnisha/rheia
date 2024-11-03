@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://0jv33c5spadv"]
+
+[ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_n2v47"]
+
+[node name="MenuButton" type="HBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+
+[node name="Text" type="Button" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_override_fonts/font = ExtResource("1_n2v47")
+theme_override_font_sizes/font_size = 20
+text = "Example"

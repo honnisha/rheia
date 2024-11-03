@@ -5,7 +5,7 @@ use network::messages::NetworkMessageType;
 use network::messages::{ClientMessages, ServerMessages};
 
 use crate::console::console_handler::Console;
-use crate::main_scene::Main;
+use crate::scenes::main_scene::MainScene;
 use crate::utils::bridge::IntoGodotVector;
 use crate::world::world_manager::WorldManager;
 use crate::world::worlds_manager::WorldsManager;
@@ -25,7 +25,7 @@ fn get_world_mut(worlds_manager: &mut WorldsManager, world_slug: String) -> Opti
     Some(world)
 }
 
-pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
+pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String> {
     let lock = main.get_network_lock().expect("network is not set");
     let network = lock.read();
     let network_info = network.get_network_info().clone();
@@ -33,7 +33,7 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
     // Recieve errors from network thread
     for error in network.iter_errors() {
         log::error!(target: "network", "Network error: {}", error);
-        Main::close();
+        return Err(error);
     }
 
     for command in Console::iter_console_input() {
@@ -89,12 +89,14 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
 
                 {
                     let mut block_storage = worlds_manager.get_block_storage_mut();
-                    block_storage
-                        .load_blocks_types(block_types, &*resource_manager)
-                        .unwrap();
+                    if let Err(e) = block_storage.load_blocks_types(block_types, &*resource_manager) {
+                        return Err(e);
+                    }
                 }
 
-                worlds_manager.build_textures(&*resource_manager).unwrap();
+                if let Err(e) = worlds_manager.build_textures(&*resource_manager) {
+                    return Err(e);
+                }
 
                 network.send_message(&ClientMessages::SettingsLoaded, NetworkMessageType::ReliableOrdered);
             }
@@ -186,5 +188,5 @@ pub fn handle_network_events(main: &mut Main) -> NetworkInfo {
         network.send_message(&input, NetworkMessageType::WorldInfo);
     }
 
-    network_info
+    Ok(network_info)
 }

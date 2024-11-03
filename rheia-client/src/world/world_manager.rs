@@ -6,7 +6,7 @@ use super::{
 use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::entities_manager::EntitiesManager,
-    main_scene::Main,
+    scenes::main_scene::MainScene,
     utils::{bridge::IntoChunkPositionVector, primitives::generate_lines},
 };
 use godot::{engine::Material, prelude::*};
@@ -128,13 +128,13 @@ impl WorldManager {
         &mut self.player_controller
     }
 
-    pub fn get_main(&self) -> Gd<Main> {
+    pub fn get_main(&self) -> Gd<MainScene> {
         let main = self
             .base()
             .to_godot()
             .get_parent()
             .expect("main scene not found")
-            .cast::<Main>();
+            .cast::<MainScene>();
         main.clone()
     }
 }

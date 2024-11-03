@@ -15,5 +15,5 @@ godot --export-release windows_desktop ~/godot/windows-build-001/Rheia.exe
 ## Run game from the console
 
 ```shell
-godot --path ./ ./scenes/main.tscn
+godot --path ./ ./scenes/main_menu.tscn
 ```

@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://c7qoi2fie684w" path="res://scenes/cross.tscn" id="2_ihtux"]
 
-[node name="Main" type="Main"]
+[node name="MainScene" type="MainScene"]
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
 time_of_day_setup = 0.762

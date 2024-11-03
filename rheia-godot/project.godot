@@ -11,9 +11,9 @@ config_version=5
 [application]
 
 config/name="Rheia"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
-boot_splash/bg_color=Color(0.141176, 0.141176, 0.141176, 1)
+boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/image="res://assets/godot_logo.png"
 boot_splash/fullsize=false
 

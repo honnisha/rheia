@@ -8,13 +8,13 @@ use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
-use crate::text_screen::TextScreen;
 use crate::world::worlds_manager::WorldsManager;
 use godot::engine::input::MouseMode;
-use godot::engine::Engine;
 use godot::prelude::*;
 use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
+
+use crate::scenes::text_screen::TextScreen;
 
 pub type FloatType = f32;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -26,8 +26,9 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
 
 #[derive(GodotClass)]
 #[class(base=Node)]
-pub struct Main {
+pub struct MainScene {
     base: Base<Node>,
+    ip_port: Option<String>,
 
     network: Option<NetworkContainer>,
 
@@ -38,7 +39,11 @@ pub struct Main {
     text_screen: Gd<TextScreen>,
 }
 
-impl Main {
+impl MainScene {
+    pub fn set_ip(&mut self, ip_port: String) {
+        self.ip_port = Some(ip_port);
+    }
+
     pub fn get_network_lock(&self) -> Option<NetworkLockType> {
         match self.network.as_ref() {
             Some(n) => Some(n.get_network_lock()),
@@ -72,42 +77,41 @@ impl Main {
         self.worlds_manager.borrow_mut()
     }
 
-    pub fn close() {
-        Engine::singleton()
-            .get_main_loop()
-            .expect("main loop is not found")
-            .cast::<SceneTree>()
-            .quit();
-    }
-
     fn connect(&mut self) {
-        let ip_port = "127.0.0.1:19132".to_string();
-
         self.text_screen
             .bind_mut()
-            .set_text(format!("Connecting to {}...", ip_port));
+            .set_text(format!("Connecting to {}...", self.ip_port.as_ref().unwrap()));
 
-        let network = match NetworkContainer::new(ip_port) {
+        let network = match NetworkContainer::new(self.ip_port.as_ref().unwrap().clone()) {
             Ok(c) => c,
             Err(e) => {
-                log::error!(target: "main", "Network connection error: {}", e);
-                Main::close();
+                self.send_disconnect_event(format!("Connection error: {}", e));
                 return;
             }
         };
-        self.text_screen
-            .bind_mut()
-            .set_text("Connecting successfully".to_string());
         self.network = Some(network);
+    }
+
+    pub fn send_disconnect_event(&mut self, message: String) {
+        Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+        self.base_mut()
+            .emit_signal("disconnect".into(), &[message.to_variant()]);
     }
 }
 
 #[godot_api]
-impl INode for Main {
+impl MainScene {
+    #[signal]
+    fn disconnect();
+}
+
+#[godot_api]
+impl INode for MainScene {
     fn init(base: Base<Node>) -> Self {
         let worlds_manager = WorldsManager::create(base.to_gd().clone());
-        Main {
+        Self {
             base,
+            ip_port: None,
             network: None,
             resource_manager: ResourceManager::new(),
             worlds_manager: Rc::new(RefCell::new(worlds_manager)),
@@ -124,13 +128,9 @@ impl INode for Main {
         log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
-        match self.get_resource_manager_mut().load_local_resources() {
-            Ok(_) => (),
-            Err(e) => {
-                log::error!(target: "main", "Resources error: {}", e);
-                Main::close();
-                return;
-            }
+        if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
+            self.send_disconnect_event(format!("Internal resources error: {}", e));
+            return;
         }
         log::info!(target: "main", "Local resources loaded successfully ({})", self.get_resource_manager().get_resources_count());
 
@@ -158,7 +158,13 @@ impl INode for Main {
         let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
 
         if self.network.is_some() {
-            let network_info = handle_network_events(self);
+            let network_info = match handle_network_events(self) {
+                Ok(i) => i,
+                Err(e) => {
+                    self.send_disconnect_event(format!("Network error: {}", e));
+                    return;
+                }
+            };
 
             let wm = self.worlds_manager.clone();
             let worlds_manager = wm.borrow();
