@@ -1,3 +1,4 @@
+.godot/*
 console_history.txt
 .directory
 client/rust/target/*
