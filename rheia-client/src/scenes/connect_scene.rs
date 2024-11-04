@@ -38,6 +38,11 @@ impl ConnectScreen {
     }
 
     #[func]
+    fn input_text_submitted(&mut self, _input: GString) {
+        self.connected_pressed();
+    }
+
+    #[func]
     fn connected_pressed(&mut self) {
         let ip_port = self.input.get_text().to_string();
         if let Err(e) = ip_port.parse::<SocketAddr>() {
@@ -73,7 +78,7 @@ impl IControl for ConnectScreen {
         let mut input = self.base().get_node_as::<LineEdit>(INPUT_PATH);
         input.connect(
             "text_submitted".into(),
-            Callable::from_object_method(&self.base().to_godot(), "connected_pressed"),
+            Callable::from_object_method(&self.base().to_godot(), "input_text_submitted"),
         );
         self.input.init(input);
 

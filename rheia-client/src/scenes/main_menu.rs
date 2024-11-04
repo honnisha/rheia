@@ -83,6 +83,11 @@ impl MainMenu {
             .cast::<SceneTree>()
             .quit();
     }
+
+    #[func]
+    fn on_text_screen_closed(&mut self) {
+        self.text_screen.bind_mut().toggle(false);
+    }
 }
 
 #[godot_api]
@@ -99,8 +104,12 @@ impl INode for MainMenu {
     }
 
     fn ready(&mut self) {
-        let text_screen = self.text_screen.clone().upcast();
-        self.base_mut().add_child(text_screen);
+        let mut text_screen = self.text_screen.clone();
+        text_screen.connect(
+            "close_button_pressed".into(),
+            Callable::from_object_method(&self.base().to_godot(), "on_text_screen_closed"),
+        );
+        self.base_mut().add_child(text_screen.upcast());
         self.text_screen.bind_mut().toggle(false);
 
         self.gui.init(self.base().get_node_as::<Control>(GUI_PATH));

@@ -38,6 +38,18 @@ impl TextScreen {
 }
 
 #[godot_api]
+impl TextScreen {
+    #[func]
+    fn close_button_pressed(&mut self) {
+        self.base_mut()
+            .emit_signal("close_button_pressed".into(), &[]);
+    }
+
+    #[signal]
+    fn close_button_pressed();
+}
+
+#[godot_api]
 impl IMarginContainer for TextScreen {
     fn init(base: Base<MarginContainer>) -> Self {
         Self {
@@ -50,7 +62,12 @@ impl IMarginContainer for TextScreen {
     fn ready(&mut self) {
         self.text.init(self.base().get_node_as::<RichTextLabel>(TEXT_PATH));
 
-        self.close_button.init(self.base().get_node_as::<Button>(CLOSE_BUTTON_PATH));
+        let mut close_button = self.base().get_node_as::<Button>(CLOSE_BUTTON_PATH);
+        close_button.connect(
+            "pressed".into(),
+            Callable::from_object_method(&self.base().to_godot(), "close_button_pressed"),
+        );
+        self.close_button.init(close_button);
         self.toggle_close_button(None);
     }
 }
