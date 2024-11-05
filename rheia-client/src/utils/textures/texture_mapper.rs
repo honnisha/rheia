@@ -2,7 +2,7 @@ use common::blocks::block_type::{BlockContent, BlockType};
 use godot::{engine::Material, obj::Gd};
 use image::RgbaImage;
 
-use crate::{client_scripts::resource_manager::ResourceManager, world::block_storage::BlockStorage};
+use crate::{client_scripts::{resource_instance::MediaResource, resource_manager::ResourceManager}, world::block_storage::BlockStorage};
 
 use super::material_builder::build_blocks_material;
 
@@ -69,8 +69,13 @@ impl TextureMapper {
         let Some(media_data) = resource_manager.get_media(texture_path) else {
             return Err(format!("Texture media \"{}\" not found inside resources", texture_path));
         };
+        let texture_2d = match media_data {
+            MediaResource::Texture(t) => t,
+            _ => return Err("Textures only support png files".to_string()),
+        };
+        let b = texture_2d.get_image().unwrap().save_png_to_buffer();
 
-        let image_png = match image::load_from_memory(&media_data) {
+        let image_png = match image::load_from_memory(&b.to_vec()) {
             Ok(t) => t,
             Err(e) => {
                 return Err(format!("Can't load texture \"{}\"; error: {:?}", texture_path, e));

@@ -46,7 +46,6 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-text = "127.0.0.1:19132"
 placeholder_text = "Enter IP"
 alignment = 1
 

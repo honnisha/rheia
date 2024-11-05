@@ -8,7 +8,6 @@
 		"res://assets/block/grass_top.png",
 		"res://assets/block/stone.png",
 
-		"res://assets/models/generic/generic.glb",
-		"res://assets/models/generic/replace.glb"
+		"res://assets/models/generic/generic.glb"
 	],
 }

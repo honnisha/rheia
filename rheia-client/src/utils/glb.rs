@@ -3,7 +3,7 @@ use godot::{
     prelude::*,
 };
 
-pub fn glb_import(b: Vec<u8>) -> Gd<Node3D> {
+pub fn glb_import(b: Vec<u8>) -> Result<Gd<Node3D>, String> {
     let mut gltf = GltfDocument::new_gd();
 
     let mut pba = PackedByteArray::new();
@@ -11,7 +11,10 @@ pub fn glb_import(b: Vec<u8>) -> Gd<Node3D> {
 
     let gltf_state = GltfState::new_gd();
     gltf.append_from_buffer(pba, GString::from("base_path?"), gltf_state.clone());
-    let scene = gltf.generate_scene(gltf_state).unwrap();
+    let scene = match gltf.generate_scene(gltf_state) {
+        Some(s) => s,
+        None => return Err("gltf generate_scene None".to_string()),
+    };
     let scene = scene.cast::<Node3D>();
-    scene
+    Ok(scene)
 }

@@ -207,7 +207,7 @@ impl INode3D for GenericSkin {
         let mut b: Vec<u8> = Vec::new();
         let mut file = File::open(path).unwrap();
         let _bytes_read = file.read_to_end(&mut b);
-        let scene = glb_import(b);
+        let scene = glb_import(b).unwrap();
 
         if let Err(e) = self.replace(&scene, BodyPart::Chest) {
             log::error!(target: "controller", "Model \"{}\" error: {}", scene.get_name(), e);

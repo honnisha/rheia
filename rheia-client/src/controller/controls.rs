@@ -1,4 +1,4 @@
-use godot::builtin::Vector2;
+pub(crate) use godot::builtin::Vector2;
 use godot::engine::global::JoyAxis;
 use godot::engine::input::MouseMode;
 use godot::engine::{Input, InputEvent, InputEventJoypadMotion, InputEventMouseMotion};

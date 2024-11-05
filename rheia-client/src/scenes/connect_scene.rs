@@ -54,6 +54,10 @@ impl ConnectScreen {
         self.base_mut().set_visible(false);
     }
 
+    pub fn set_ip(&mut self, ip_port: &String) {
+        self.input.set_text(ip_port.into());
+    }
+
     #[signal]
     fn direct_ip_connect();
 }

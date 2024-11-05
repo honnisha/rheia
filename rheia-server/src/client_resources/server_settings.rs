@@ -38,7 +38,7 @@ impl ServerSettings {
                 blocks: Some(self.block_types.clone()),
             };
 
-            let file = File::create(path.clone()).expect("File should exist");
+            let file = File::create(path.clone()).expect("File must exists");
             serde_yaml::to_writer(file, &default_manifest).unwrap();
 
             log::info!(target: "server_settings", "Settings file is not exists; Default file was created");

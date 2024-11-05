@@ -54,6 +54,10 @@ impl ResourceManager {
         self.resources_scheme.as_ref().unwrap()
     }
 
+    pub fn get_archive_hash(&self) -> &u64 {
+        self.archive_hash.as_ref().unwrap()
+    }
+
     pub fn has_any_resources(&self) -> bool {
         for (_resource_slug, resource) in self.resources.iter() {
             if resource.get_scripts_count() > 0 {
@@ -162,8 +166,8 @@ impl ResourceManager {
         }
         writer.finish().unwrap();
 
+        self.archive_hash = Some(calculate_hash(&archive_data));
         self.archive_data = Some(archive_data);
-        self.archive_hash = Some(calculate_hash(&self.archive_data));
     }
     pub fn get_archive_len(&self) -> usize {
         self.archive_data.as_ref().unwrap().len()
@@ -200,8 +204,10 @@ pub(crate) fn rescan_resources(mut resource_manager: ResMut<ResourceManager>, la
 
 #[cfg(test)]
 mod tests {
+    use common::utils::calculate_hash;
+
     use super::ResourceManager;
-    use crate::client_resources::resource_instance::ResourceInstance;
+    use crate::client_resources::{resource_instance::ResourceInstance, resources_manager::ARCHIVE_CHUNK_SIZE};
 
     #[test]
     fn test_archive() {
@@ -212,7 +218,7 @@ mod tests {
         resource_manager.add_resource("test".to_string(), resource_instance);
 
         resource_manager.generate_archive();
-        assert_eq!(resource_manager.archive_hash.unwrap(), 1806442874970671100);
+        assert_eq!(resource_manager.archive_hash.unwrap(), 431488420107704094);
 
         let data = [
             80, 75, 3, 4, 10, 0, 0, 0, 0, 0, 0, 0, 33, 0, 169, 48, 197, 254, 7, 0, 0, 0, 7, 0, 0, 0, 19, 0, 0, 0, 52,
@@ -245,5 +251,8 @@ mod tests {
                 0, 0, 1, 0, 1, 0, 65, 0, 0, 0, 56, 0, 0, 0, 0, 0
             ]
         );
+
+        let chunk = resource_manager.get_archive_part(0, ARCHIVE_CHUNK_SIZE);
+        assert_eq!(*resource_manager.get_archive_hash(), calculate_hash(&chunk));
     }
 }

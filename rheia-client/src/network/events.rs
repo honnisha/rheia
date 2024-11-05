@@ -56,9 +56,9 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 log::info!(target: "network", "{}", message);
             }
 
-            ServerMessages::ResourcesScheme { list } => {
+            ServerMessages::ResourcesScheme { list, archive_hash } => {
                 let resource_manager = main.get_resource_manager_mut();
-                resource_manager.set_resource_scheme(list);
+                resource_manager.set_resource_scheme(list, archive_hash);
                 log::info!(target: "network", "Resources scheme loaded from network");
             }
             ServerMessages::ResourcesPart {
@@ -71,7 +71,9 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 resource_manager.load_archive_chunk(&mut data);
 
                 if last {
-                    resource_manager.load_archive().unwrap();
+                    if let Err(e) = resource_manager.load_archive() {
+                        return Err(format!("Network resources download error: {}", e));
+                    }
                     log::info!(target: "network", "Resources archive installed from network; index:{}", index);
                 }
 

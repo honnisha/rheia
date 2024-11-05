@@ -1,7 +1,14 @@
-## Godot client rust code
+# Godot client rust code
+
+## Tests
+```shell
+cargo test -p rheia-client
+```
+
+## Build for Linux
 ```shell
 cargo b -p rheia-client
-cargo test -p rheia-client
+godot --export-release linux_desktop ~/godot/Rheia.x86_64
 ```
 
 ## Build for Windows from Linux
@@ -9,7 +16,7 @@ cargo test -p rheia-client
 rustup target add x86_64-pc-windows-gn
 cargo b -p rheia-client --release --target x86_64-pc-windows-gnu
 
-godot --export-release windows_desktop ~/godot/windows-build-001/Rheia.exe
+godot --export-release windows_desktop ~/windows-build/Rheia.exe
 ```
 
 ## Run game from the console

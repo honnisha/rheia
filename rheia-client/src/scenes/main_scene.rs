@@ -5,7 +5,6 @@ use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::enums::controller_actions::ControllerActions;
 use crate::debug::debug_info::DebugInfo;
-use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
 use crate::world::worlds_manager::WorldsManager;
@@ -17,7 +16,6 @@ use network::messages::{ClientMessages, NetworkMessageType};
 use crate::scenes::text_screen::TextScreen;
 
 pub type FloatType = f32;
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg(feature = "trace")]
 #[global_allocator]
@@ -78,11 +76,11 @@ impl MainScene {
     }
 
     fn connect(&mut self) {
-        self.text_screen
-            .bind_mut()
-            .set_text(format!("Connecting to {}...", self.ip_port.as_ref().unwrap()));
+        let ip = self.ip_port.as_ref().expect("set_ip is not called");
 
-        let network = match NetworkContainer::new(self.ip_port.as_ref().unwrap().clone()) {
+        self.text_screen.bind_mut().set_text(format!("Connecting to {}...", ip));
+
+        let network = match NetworkContainer::new(ip.clone()) {
             Ok(c) => c,
             Err(e) => {
                 self.send_disconnect_event(format!("Connection error: {}", e));
@@ -122,11 +120,6 @@ impl INode for MainScene {
     }
 
     fn ready(&mut self) {
-        if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
-            log::error!(target: "main", "log::set_logger error: {}", e)
-        }
-        log::set_max_level(log::LevelFilter::Debug);
-
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));
@@ -145,8 +138,6 @@ impl INode for MainScene {
         let text_screen = self.text_screen.clone().upcast();
         self.base_mut().add_child(text_screen);
         self.text_screen.bind_mut().toggle(true);
-
-        log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
         Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
 

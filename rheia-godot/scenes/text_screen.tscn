@@ -17,7 +17,7 @@ size_flags_vertical = 4
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 2
-color = Color(0.223103, 0.223103, 0.223103, 1)
+color = Color(0.18359, 0.18359, 0.18359, 1)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
@@ -26,6 +26,7 @@ size_flags_vertical = 4
 [node name="Text" type="RichTextLabel" parent="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 4
+focus_mode = 2
 theme_override_fonts/normal_font = ExtResource("1_qrd16")
 theme_override_fonts/italics_font = ExtResource("2_papxd")
 theme_override_fonts/bold_italics_font = ExtResource("3_ssvxi")
@@ -36,6 +37,9 @@ bbcode_enabled = true
 text = "[center]text[/center]"
 fit_content = true
 shortcut_keys_enabled = false
+selection_enabled = true
+deselect_on_focus_loss_enabled = false
+drag_and_drop_selection_enabled = false
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
 layout_mode = 2

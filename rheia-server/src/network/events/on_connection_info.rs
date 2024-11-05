@@ -1,6 +1,7 @@
 use bevy::prelude::{Event, EventWriter};
 use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
+use common::utils::calculate_hash;
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::client_resources::resources_manager::ARCHIVE_CHUNK_SIZE;
@@ -47,6 +48,7 @@ pub fn on_connection_info(
 
             let scheme = ServerMessages::ResourcesScheme {
                 list: resources_manager.get_resources_scheme().clone(),
+                archive_hash: resources_manager.get_archive_hash().clone(),
             };
             client.send_message(NetworkMessageType::ReliableOrdered, scheme);
 

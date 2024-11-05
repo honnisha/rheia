@@ -60,6 +60,7 @@ pub enum ServerMessages {
     // Server settings and resources
     ResourcesScheme {
         list: Vec<ResurceScheme>,
+        archive_hash: u64,
     },
     ResourcesPart {
         index: u32,

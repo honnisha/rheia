@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use godot::engine::{file_access::ModeFlags, DirAccess, FileAccess};
+use godot::{
+    engine::{file_access::ModeFlags, DirAccess, FileAccess, Resource, ResourceLoader},
+    obj::Gd,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -13,7 +16,7 @@ pub struct LocalResourceManifest {
 pub(crate) struct LocalResource {
     pub slug: String,
     pub scripts: HashMap<String, String>,
-    pub media: HashMap<String, Vec<u8>>,
+    pub media: HashMap<String, Gd<Resource>>,
 }
 
 pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
@@ -39,23 +42,35 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
             media: Default::default(),
         };
 
+        let mut resource_loader = ResourceLoader::singleton();
         if let Some(client_scripts) = manifest.client_scripts {
             for script_path in client_scripts {
-                let Some(script_file) = FileAccess::open(script_path.clone().into(), ModeFlags::READ) else {
-                    return Err(format!("Manifest {} script {} file error", manifest_path, script_path));
+                let file_resource = match resource_loader.load(script_path.clone().into()) {
+                    Some(r) => r,
+                    None => {
+                        return Err(format!(
+                            "resource \"{}\" ResourceLoader cannot find {} file",
+                            resource.slug, script_path
+                        ))
+                    }
                 };
-                let script_text: String = script_file.get_as_text().into();
-                resource.scripts.insert(script_path.replace("res://", ""), script_text);
+                unimplemented!();
+                //resource.scripts.insert(script_path.replace("res://", ""), script_text);
             }
         }
 
         if let Some(media_list) = manifest.media {
             for media_path in media_list {
-                let Some(_media_file) = FileAccess::open(media_path.clone().into(), ModeFlags::READ) else {
-                    return Err(format!("Manifest {} media {} file error", manifest_path, media_path));
+                let file_resource = match resource_loader.load(media_path.clone().into()) {
+                    Some(r) => r,
+                    None => {
+                        return Err(format!(
+                            "resource \"{}\" ResourceLoader cannot find {} file",
+                            resource.slug, media_path
+                        ))
+                    }
                 };
-                let bytes = FileAccess::get_file_as_bytes(media_path.clone().into());
-                resource.media.insert(media_path.replace("res://", ""), bytes.to_vec());
+                resource.media.insert(media_path.replace("res://", ""), file_resource);
             }
         }
         result.push(resource);

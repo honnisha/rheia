@@ -1,3 +1,4 @@
+use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
 use rhai::exported_module;
@@ -10,6 +11,7 @@ use std::rc::Rc;
 
 use super::local_loader::get_local_resources;
 use super::modules::main_api;
+use super::resource_instance::MediaResource;
 use super::resource_instance::ResourceInstance;
 
 pub struct ResourceManager {
@@ -18,6 +20,7 @@ pub struct ResourceManager {
 
     resources_scheme: Option<Vec<ResurceScheme>>,
     archive_data: Option<Vec<u8>>,
+    archive_hash: Option<u64>,
 }
 
 impl ResourceManager {
@@ -31,12 +34,14 @@ impl ResourceManager {
             resources: HashMap::new(),
 
             resources_scheme: Default::default(),
+            archive_hash: Default::default(),
             archive_data: Default::default(),
         }
     }
 
-    pub fn set_resource_scheme(&mut self, list: Vec<ResurceScheme>) {
+    pub fn set_resource_scheme(&mut self, list: Vec<ResurceScheme>, archive_hash: u64) {
         self.resources_scheme = Some(list);
+        self.archive_hash = Some(archive_hash);
     }
 
     pub fn _get_resource(&self, slug: &String) -> Option<&ResourceInstance> {
@@ -52,12 +57,25 @@ impl ResourceManager {
             self.archive_data = Some(Default::default());
         }
 
-        self.archive_data.as_mut().unwrap().append(data);
+        self.archive_data
+            .as_mut()
+            .expect("archive_data is not set")
+            .append(data);
     }
 
     pub fn load_archive(&mut self) -> Result<(), String> {
-        let archive_data = self.archive_data.take().unwrap();
-        let resources_scheme = self.resources_scheme.take().unwrap();
+        let archive_data = self.archive_data.take().expect("archive_data is not set");
+
+        let archive_hash = calculate_hash(&archive_data);
+        let original_archive_hash = self.archive_hash.as_ref().expect("archive_hash is None");
+        if *original_archive_hash != archive_hash {
+            return Err(format!(
+                "archive_data hash {} != original {}",
+                archive_hash, original_archive_hash
+            ));
+        }
+
+        let resources_scheme = self.resources_scheme.take().expect("resources_scheme is not set");
 
         for resource_scheme in resources_scheme.iter() {
             let resource = ResourceInstance::new(resource_scheme.slug.clone(), true);
@@ -74,18 +92,40 @@ impl ResourceManager {
             for resource_scheme in resources_scheme.iter() {
                 let script_name = resource_scheme.scripts.get(file.name());
                 let media_name = resource_scheme.media.get(file.name());
+
+                // Load rhai scripts
                 if script_name.is_some() {
                     let resource = self.get_resource_mut(&resource_scheme.slug).unwrap();
 
                     let mut code = String::new();
                     file.read_to_string(&mut code).unwrap();
                     resource.add_script(&mut rhai_engine.borrow_mut(), script_name.unwrap().to_string(), code)?;
-                } else if media_name.is_some() {
+                }
+                // Load media
+                else if media_name.is_some() {
                     let resource = self.get_resource_mut(&resource_scheme.slug).unwrap();
 
                     let mut data = Vec::new();
                     file.read(&mut data).unwrap();
-                    resource.add_media(media_name.unwrap().to_string(), data);
+
+                    let hash = calculate_hash(&data);
+
+                    if hash.to_string() != file.name() {
+                        return Err(format!(
+                            "file \"{}\" network hash {} != original {}",
+                            media_name.unwrap().to_string(),
+                            hash.to_string(),
+                            file.name(),
+                        ));
+                    }
+
+                    if let Err(e) = resource.add_media_from_bytes(media_name.unwrap().to_string(), data) {
+                        return Err(format!(
+                            "file \"{}\" loading error: {}",
+                            media_name.unwrap().to_string(),
+                            e
+                        ));
+                    }
                 } else {
                     return Err(format!("File from archive \"{}\" is not found in schema", file.name()));
                 }
@@ -112,7 +152,9 @@ impl ResourceManager {
             }
 
             for (media_slug, media_data) in local_resource.media.drain() {
-                resource_instance.add_media(media_slug, media_data);
+                if let Err(e) = resource_instance.add_media_from_resource(media_slug, media_data) {
+                    return Err(e);
+                }
             }
 
             self.add_resource(resource_instance);
@@ -147,7 +189,7 @@ impl ResourceManager {
         return false;
     }
 
-    pub fn get_media(&self, path: &String) -> Option<&Vec<u8>> {
+    pub fn get_media(&self, path: &String) -> Option<&MediaResource> {
         let Some((res_slug, res_path)) = split_resource_path(path) else {
             return None;
         };
