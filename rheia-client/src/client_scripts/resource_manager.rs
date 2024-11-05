@@ -23,6 +23,12 @@ pub struct ResourceManager {
     archive_hash: Option<u64>,
 }
 
+enum ResourceType {
+    Script { resource_slug: String, name: String },
+    Media { resource_slug: String, name: String },
+    None,
+}
+
 impl ResourceManager {
     pub fn new() -> Self {
         let mut engine = Engine::new();
@@ -63,6 +69,28 @@ impl ResourceManager {
             .append(data);
     }
 
+    fn get_resource_type(resources_scheme: &Vec<ResurceScheme>, file_hash: &String) -> ResourceType {
+        for resource_scheme in resources_scheme.iter() {
+            let script_name = resource_scheme.scripts.get(file_hash);
+            let media_name = resource_scheme.media.get(file_hash);
+
+            if script_name.is_some() {
+                let name = *script_name.as_ref().unwrap();
+                return ResourceType::Script {
+                    name: name.clone(),
+                    resource_slug: resource_scheme.slug.clone(),
+                };
+            } else if media_name.is_some() {
+                let name = *media_name.as_ref().unwrap();
+                return ResourceType::Media {
+                    name: name.clone(),
+                    resource_slug: resource_scheme.slug.clone(),
+                };
+            }
+        }
+        ResourceType::None
+    }
+
     pub fn load_archive(&mut self) -> Result<(), String> {
         let archive_data = self.archive_data.take().expect("archive_data is not set");
 
@@ -87,47 +115,42 @@ impl ResourceManager {
         let file = std::io::Cursor::new(&archive_data);
         let mut zip = zip::ZipArchive::new(file).unwrap();
         for i in 0..zip.len() {
-            let mut file = zip.by_index(i).unwrap();
+            let mut archive_file = zip.by_index(i).unwrap();
+            let file_hash = archive_file.name().to_string();
 
-            for resource_scheme in resources_scheme.iter() {
-                let script_name = resource_scheme.scripts.get(file.name());
-                let media_name = resource_scheme.media.get(file.name());
-
-                // Load rhai scripts
-                if script_name.is_some() {
-                    let resource = self.get_resource_mut(&resource_scheme.slug).unwrap();
+            match ResourceManager::get_resource_type(&resources_scheme, &file_hash) {
+                ResourceType::Script { name, resource_slug } => {
+                    let resource = self.get_resource_mut(&resource_slug).unwrap();
 
                     let mut code = String::new();
-                    file.read_to_string(&mut code).unwrap();
-                    resource.add_script(&mut rhai_engine.borrow_mut(), script_name.unwrap().to_string(), code)?;
+                    archive_file.read_to_string(&mut code).unwrap();
+                    resource.add_script(&mut rhai_engine.borrow_mut(), name, code)?;
                 }
-                // Load media
-                else if media_name.is_some() {
-                    let resource = self.get_resource_mut(&resource_scheme.slug).unwrap();
+                ResourceType::Media { name, resource_slug } => {
+                    let resource = self.get_resource_mut(&resource_slug).unwrap();
 
-                    let mut data = Vec::new();
-                    file.read(&mut data).unwrap();
+                    let mut archive_file_data = Vec::new();
+                    for i in archive_file.bytes() {
+                        archive_file_data.push(i.unwrap());
+                    }
 
-                    let hash = calculate_hash(&data);
+                    let hash = calculate_hash(&archive_file_data);
 
-                    if hash.to_string() != file.name() {
+                    if hash.to_string() != file_hash {
                         return Err(format!(
                             "file \"{}\" network hash {} != original {}",
-                            media_name.unwrap().to_string(),
+                            name,
                             hash.to_string(),
-                            file.name(),
+                            file_hash,
                         ));
                     }
 
-                    if let Err(e) = resource.add_media_from_bytes(media_name.unwrap().to_string(), data) {
-                        return Err(format!(
-                            "file \"{}\" loading error: {}",
-                            media_name.unwrap().to_string(),
-                            e
-                        ));
+                    if let Err(e) = resource.add_media_from_bytes(name.clone(), archive_file_data) {
+                        return Err(format!("file \"{}\" loading error: {}", name, e));
                     }
-                } else {
-                    return Err(format!("File from archive \"{}\" is not found in schema", file.name()));
+                }
+                ResourceType::None => {
+                    return Err(format!("File from archive \"{}\" is not found in schema", file_hash));
                 }
             }
         }

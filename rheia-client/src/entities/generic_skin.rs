@@ -156,7 +156,7 @@ impl GenericSkin {
         self.play_animation(animation);
     }
 
-    fn replace(&mut self, source: &Node3D, part: BodyPart) -> Result<(), String> {
+    fn replace(&mut self, source_model: &Node3D, part: BodyPart) -> Result<(), String> {
         let parts = get_parts(&part);
         for (bone_path, mesh_prefix) in parts.iter() {
             // Get original bone
@@ -166,7 +166,7 @@ impl GenericSkin {
             };
 
             // Get target bone
-            let mut target_bone = match source.try_get_node_as::<Node3D>(*bone_path) {
+            let mut target_bone = match source_model.try_get_node_as::<Node3D>(*bone_path) {
                 Some(node) => node,
                 None => {
                     return Err(format!(
@@ -201,17 +201,6 @@ impl INode3D for GenericSkin {
     fn ready(&mut self) {
         let generic = self.generic.clone().upcast();
         self.base_mut().add_child(generic);
-
-        let path = "/home/honnisha/godot/rheia/rheia-godot/assets/models/generic/replace.glb";
-
-        let mut b: Vec<u8> = Vec::new();
-        let mut file = File::open(path).unwrap();
-        let _bytes_read = file.read_to_end(&mut b);
-        let scene = glb_import(b).unwrap();
-
-        if let Err(e) = self.replace(&scene, BodyPart::Chest) {
-            log::error!(target: "controller", "Model \"{}\" error: {}", scene.get_name(), e);
-        }
     }
 
     fn process(&mut self, _delta: f64) {}

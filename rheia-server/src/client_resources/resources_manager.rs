@@ -204,6 +204,8 @@ pub(crate) fn rescan_resources(mut resource_manager: ResMut<ResourceManager>, la
 
 #[cfg(test)]
 mod tests {
+    use std::io::Read;
+
     use common::utils::calculate_hash;
 
     use super::ResourceManager;
@@ -214,10 +216,14 @@ mod tests {
         let mut resource_manager = ResourceManager::default();
 
         let mut resource_instance = ResourceInstance::empty("test".to_string());
-        resource_instance.add_media("example.glb".to_string(), "content".to_string().into_bytes());
+
+        let file_content = "content".to_string().into_bytes();
+        resource_instance.add_media("example.glb".to_string(), file_content.clone());
         resource_manager.add_resource("test".to_string(), resource_instance);
 
         resource_manager.generate_archive();
+        resource_manager.generate_resources_scheme();
+
         assert_eq!(resource_manager.archive_hash.unwrap(), 431488420107704094);
 
         let data = [
@@ -254,5 +260,24 @@ mod tests {
 
         let chunk = resource_manager.get_archive_part(0, ARCHIVE_CHUNK_SIZE);
         assert_eq!(*resource_manager.get_archive_hash(), calculate_hash(&chunk));
+
+        let archive_data = resource_manager.archive_data.as_ref().unwrap();
+        let file = std::io::Cursor::new(&archive_data);
+
+        let mut zip = zip::ZipArchive::new(file).unwrap();
+        for i in 0..zip.len() {
+            let archive_file = zip.by_index(i).unwrap();
+            let file_hash = archive_file.name().to_string();
+
+            let mut archive_file_data = Vec::new();
+            for i in archive_file.bytes() {
+                archive_file_data.push(i.unwrap());
+            }
+
+            assert_eq!(archive_file_data, file_content);
+
+            let hash = calculate_hash(&archive_file_data);
+            assert_eq!(hash.to_string(), file_hash);
+        }
     }
 }
