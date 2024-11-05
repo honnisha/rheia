@@ -14,6 +14,9 @@ use strum_macros::Display;
 pub enum ClientMessages {
     ConnectionInfo {
         login: String,
+        version: String,
+        architecture: String,
+        rendering_device: String,
     },
     ConsoleInput {
         command: String,

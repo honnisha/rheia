@@ -1,10 +1,12 @@
 use common::chunks::chunk_position::ChunkPosition;
+use godot::engine::{Engine, RenderingServer};
 use godot::obj::Gd;
 use network::client::{IClientNetwork, NetworkInfo};
 use network::messages::NetworkMessageType;
 use network::messages::{ClientMessages, ServerMessages};
 
 use crate::console::console_handler::Console;
+use crate::scenes::main_menu::VERSION;
 use crate::scenes::main_scene::MainScene;
 use crate::utils::bridge::IntoGodotVector;
 use crate::world::world_manager::WorldManager;
@@ -49,6 +51,13 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
             ServerMessages::AllowConnection => {
                 let connection_info = ClientMessages::ConnectionInfo {
                     login: "Test_cl".to_string(),
+                    version: VERSION.to_string(),
+                    architecture: Engine::singleton().get_architecture_name().to_string(),
+                    rendering_device: RenderingServer::singleton()
+                        .get_rendering_device()
+                        .unwrap()
+                        .get_device_name()
+                        .to_string(),
                 };
                 network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
             }

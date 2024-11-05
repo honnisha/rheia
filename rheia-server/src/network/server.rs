@@ -170,8 +170,14 @@ fn receive_message_system(
                 let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
                 player_move_events.send(movement);
             }
-            ClientMessages::ConnectionInfo { login } => {
-                let info = PlayerConnectionInfoEvent::new(client.clone(), login);
+            ClientMessages::ConnectionInfo {
+                login,
+                version,
+                architecture,
+                rendering_device,
+            } => {
+                let info =
+                    PlayerConnectionInfoEvent::new(client.clone(), login, version, architecture, rendering_device);
                 connection_info_events.send(info);
             }
             ClientMessages::EditBlockRequest {

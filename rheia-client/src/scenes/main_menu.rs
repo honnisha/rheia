@@ -13,7 +13,7 @@ const BOTTOM_TEXT_PATH: &str = "GUI/VBoxContainer/BottomHalf/MarginContainer/Bot
 const TEXT_CONNECT: &str = "Connect";
 const TEXT_EXIT: &str = "Exit";
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(GodotClass)]
 #[class(base=Node)]

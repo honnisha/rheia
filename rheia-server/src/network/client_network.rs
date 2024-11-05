@@ -1,11 +1,8 @@
 use bevy::prelude::Entity;
-use common::{
-    chunks::chunk_position::ChunkPosition,
-    utils::vec_remove_item,
-};
-use network::messages::{NetworkMessageType, ServerMessages};
+use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
 use core::fmt;
 use flume::{Drain, Receiver, Sender};
+use network::messages::{NetworkMessageType, ServerMessages};
 use parking_lot::RwLock;
 use std::{any::Any, fmt::Display, sync::Arc};
 
@@ -14,7 +11,7 @@ use crate::{
     entities::entity::{Position, Rotation},
 };
 
-use super::server::{NetworkPlugin, SendClientMessageEvent};
+use super::{events::on_connection_info::PlayerConnectionInfoEvent, server::{NetworkPlugin, SendClientMessageEvent}};
 
 static SEND_CHUNK_QUEUE_LIMIT: usize = 64;
 
@@ -45,15 +42,31 @@ impl WorldEntity {
 #[derive(Clone)]
 pub struct ClientInfo {
     login: String,
+    version: String,
+    architecture: String,
+    rendering_device: String,
 }
 
 impl ClientInfo {
-    pub fn new(login: String) -> Self {
-        Self { login }
+    pub fn new(event: &PlayerConnectionInfoEvent) -> Self {
+        Self {
+            login: event.login.clone(),
+            version: event.version.clone(),
+            architecture: event.architecture.clone(),
+            rendering_device: event.rendering_device.clone(),
+        }
     }
 
     pub fn get_login(&self) -> &String {
         &self.login
+    }
+
+    pub fn get_version(&self) -> &String {
+        &self.version
+    }
+
+    pub fn get_architecture(&self) -> &String {
+        &self.architecture
     }
 }
 
