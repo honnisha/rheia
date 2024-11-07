@@ -145,6 +145,8 @@ impl INode for MainMenu {
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
+        Engine::singleton().set_max_fps(60);
+
         let mut text_screen = self.text_screen.clone();
         text_screen.connect(
             "close_button_pressed".into(),

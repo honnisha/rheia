@@ -16,7 +16,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use crate::client::IClientNetwork;
+use crate::client::{resolve_connect_domain, IClientNetwork};
 use crate::messages::ClientMessages;
 use crate::messages::NetworkMessageType;
 use crate::{client::NetworkInfo, messages::ServerMessages};
@@ -185,13 +185,11 @@ impl IClientNetwork for RenetClientNetwork {
         let client = RenetClient::new(connection_config());
 
         // Setup transport layer
-        let server_addr = ip_port.clone().parse().unwrap();
-        let socket = match UdpSocket::bind("127.0.0.1:0") {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(format!("IP {} error: {}", ip_port, e));
-            }
+        let server_addr = match resolve_connect_domain(&ip_port, 25565_u16) {
+            Ok(a) => a,
+            Err(e) => return Err(format!("Path {} error: {}", ip_port, e)),
         };
+
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         let client_id = current_time.as_millis() as u64;
         let authentication = ClientAuthentication::Unsecure {
@@ -201,6 +199,12 @@ impl IClientNetwork for RenetClientNetwork {
             protocol_id: PROTOCOL_ID,
         };
 
+        let socket = match UdpSocket::bind("127.0.0.1:0") {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(format!("Path {} error: {}", ip_port, e));
+            }
+        };
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
         let network = RenetClientNetwork {
             client: Arc::new(RwLock::new(client)),

@@ -19,6 +19,7 @@ log = { version = "0.4.22" }
 flume = "0.11.0"
 num = "0.4"
 rand = "0.8.5"
+trust-dns-resolver = { version = "*", features = ["dns-over-rustls"] }
 
 # Scripts
 rhai = { version = "1.19.0", features = ["internals", "serde"] }

@@ -4,6 +4,7 @@ use godot::{
     engine::{Button, Control, IControl, LineEdit, RichTextLabel},
     prelude::*,
 };
+use network::client::resolve_connect_domain;
 
 const ERROR_TEXT_PATH: &str = "VBoxContainer/VBoxContainer/Error";
 const INPUT_PATH: &str = "VBoxContainer/VBoxContainer/Input";
@@ -44,8 +45,10 @@ impl ConnectScreen {
 
     #[func]
     fn connected_pressed(&mut self) {
+        self.error_text.set_text("".into());
+
         let ip_port = self.input.get_text().to_string();
-        if let Err(e) = ip_port.parse::<SocketAddr>() {
+        if let Err(e) = resolve_connect_domain(&ip_port, 25565_u16) {
             self.set_error_text(e.to_string());
             return;
         }

@@ -86,10 +86,11 @@ texture = ExtResource("7_4or0o")
 
 [node name="ConsoleInput" type="LineEdit" parent="MarginContainer/VBoxContainer/HBoxContainer2/TextureRect"]
 custom_minimum_size = Vector2(1, 1)
-layout_mode = 2
-offset_left = 5.0
-offset_right = 629.0
-offset_bottom = 28.0
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 23.0
+grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("3_wkh3b")
 theme_override_font_sizes/font_size = 12

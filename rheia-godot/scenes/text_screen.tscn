@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://ha34myf86so5"]
+[gd_scene load_steps=7 format=3 uid="uid://ha34myf86so5"]
 
 [ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="1_qrd16"]
 [ext_resource type="FontFile" uid="uid://dldpnw7khwbnk" path="res://assets/gui/fonts/Monocraft/Monocraft-Italic.otf" id="2_papxd"]
 [ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_ssvxi"]
 [ext_resource type="FontFile" uid="uid://dex64ol46xo2a" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold.otf" id="4_al1k3"]
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="5_q8hs5"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g3xgf"]
 
 [node name="TextScreen" type="TextScreen"]
 anchors_preset = 15
@@ -33,10 +35,11 @@ theme_override_fonts/bold_italics_font = ExtResource("3_ssvxi")
 theme_override_fonts/bold_font = ExtResource("4_al1k3")
 theme_override_font_sizes/bold_italics_font_size = 100
 theme_override_font_sizes/normal_font_size = 17
+theme_override_styles/focus = SubResource("StyleBoxEmpty_g3xgf")
 bbcode_enabled = true
 text = "[center]text[/center]"
 fit_content = true
-shortcut_keys_enabled = false
+context_menu_enabled = true
 selection_enabled = true
 deselect_on_focus_loss_enabled = false
 drag_and_drop_selection_enabled = false

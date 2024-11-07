@@ -1,6 +1,6 @@
 use flume::{Receiver, Sender};
 use std::{
-    net::{SocketAddr, UdpSocket},
+    net::UdpSocket,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, SystemTime},
 };
@@ -62,15 +62,13 @@ impl IServerNetwork for RenetServerNetwork {
     fn new(ip_port: String) -> Self {
         let server = RenetServer::new(connection_config());
 
-        let server_addr: SocketAddr = ip_port.parse().unwrap();
-        let socket: UdpSocket = UdpSocket::bind(server_addr).unwrap();
-
+        let socket: UdpSocket = UdpSocket::bind(ip_port.as_str()).unwrap();
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         let server_config = ServerConfig {
             current_time,
             max_clients: 64,
             protocol_id: PROTOCOL_ID,
-            public_addresses: vec![server_addr],
+            public_addresses: vec![socket.local_addr().unwrap()],
             authentication: ServerAuthentication::Unsecure,
         };
 
