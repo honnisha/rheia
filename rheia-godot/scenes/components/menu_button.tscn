@@ -2,7 +2,8 @@
 
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_n2v47"]
 
-[node name="MenuButton" type="HBoxContainer"]
+[node name="MainMenuButton" type="MainMenuButton" node_paths=PackedStringArray("text")]
+text = NodePath("Text")
 custom_minimum_size = Vector2(300, 50)
 
 [node name="Text" type="Button" parent="."]

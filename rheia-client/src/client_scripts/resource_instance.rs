@@ -1,6 +1,6 @@
 use godot::{
     builtin::PackedByteArray,
-    engine::{
+    classes::{
         portable_compressed_texture_2d::CompressionMode, CompressedTexture2D, Image, Node3D, PackedScene,
         PortableCompressedTexture2D, Resource, Texture2D,
     },
@@ -51,10 +51,10 @@ impl ResourceInstance {
             pba.extend(data);
 
             let mut image = Image::new_gd();
-            image.load_png_from_buffer(pba);
+            image.load_png_from_buffer(&pba);
 
             let mut texture = PortableCompressedTexture2D::new_gd();
-            texture.create_from_image(image, CompressionMode::LOSSY);
+            texture.create_from_image(&image, CompressionMode::LOSSY);
             MediaResource::Texture(texture.upcast())
         } else if media_slug.ends_with(".glb") {
             let glb = match glb_import(data) {

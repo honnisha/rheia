@@ -8,7 +8,9 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g3xgf"]
 
-[node name="TextScreen" type="TextScreen"]
+[node name="TextScreen" type="TextScreen" node_paths=PackedStringArray("text", "close_button")]
+text = NodePath("VBoxContainer/Text")
+close_button = NodePath("VBoxContainer/MarginContainer/Back")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

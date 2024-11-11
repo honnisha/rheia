@@ -4,7 +4,7 @@ use common::{
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
-use godot::{engine::Material, prelude::*};
+use godot::{classes::Material, prelude::*};
 use network::messages::SectionsData;
 use parking_lot::RwLock;
 use std::sync::{
@@ -43,18 +43,18 @@ impl ChunkBase {
     }
 
     pub fn spawn_sections(&mut self, chunk_position: &ChunkPosition, material: Gd<Material>) {
-        let name = GString::from(format!("ChunkColumn {}", chunk_position));
-        self.base_mut().set_name(name);
+        let name = format!("ChunkColumn {}", chunk_position);
+        self.base_mut().set_name(&name);
 
         for y in 0..VERTICAL_SECTIONS {
             let mut section = Gd::<ChunkSection>::from_init_fn(|base| {
                 ChunkSection::create(base, material.clone(), y as u8, chunk_position.clone())
             });
 
-            let name = GString::from(format!("Section {}", y));
-            section.bind_mut().base_mut().set_name(name.clone());
+            let name = format!("Section {}", y);
+            section.bind_mut().base_mut().set_name(&name);
 
-            self.base_mut().add_child(section.clone().upcast());
+            self.base_mut().add_child(&section);
             let pos = section.bind().get_section_local_position();
             section.bind_mut().base_mut().set_position(pos);
 

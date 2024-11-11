@@ -9,7 +9,7 @@ use crate::{
     scenes::main_scene::MainScene,
     utils::{bridge::IntoChunkPositionVector, primitives::generate_lines},
 };
-use godot::{engine::Material, prelude::*};
+use godot::{classes::Material, prelude::*};
 use network::messages::NetworkMessageType;
 
 /// Godot world
@@ -49,8 +49,7 @@ impl WorldManager {
     ) -> Self {
         let mut physics = PhysicsProxy::default();
         let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base));
-        let container_name = GString::from("ChunkMap");
-        chunk_map.bind_mut().base_mut().set_name(container_name.clone());
+        chunk_map.bind_mut().base_mut().set_name("ChunkMap");
         let player_controller =
             Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics));
 
@@ -67,7 +66,7 @@ impl WorldManager {
             Vector3::new(-0.5, -0.5, -0.5),
         ];
         let mesh = generate_lines(positions, Color::from_rgb(0.0, 0.0, 0.0));
-        selection.add_child(mesh.clone().upcast());
+        selection.add_child(&mesh);
         selection.set_visible(false);
 
         Self {
@@ -158,24 +157,24 @@ impl WorldManager {
 #[godot_api]
 impl INode for WorldManager {
     fn ready(&mut self) {
-        let chunk_map = self.chunk_map.clone().upcast();
-        self.base_mut().add_child(chunk_map);
+        let chunk_map = self.chunk_map.clone();
+        self.base_mut().add_child(&chunk_map);
 
         // Bind world player move signal
         let obj = self.base().to_godot().clone();
         self.player_controller.bind_mut().base_mut().connect(
-            "on_player_move".into(),
-            Callable::from_object_method(&obj, "handler_player_move"),
+            "on_player_move",
+            &Callable::from_object_method(&obj, "handler_player_move"),
         );
 
-        let player_controller = self.player_controller.clone().upcast();
-        self.base_mut().add_child(player_controller);
+        let player_controller = self.player_controller.clone();
+        self.base_mut().add_child(&player_controller);
 
-        let entities_manager = self.entities_manager.clone().upcast();
-        self.base_mut().add_child(entities_manager);
+        let entities_manager = self.entities_manager.clone();
+        self.base_mut().add_child(&entities_manager);
 
-        let block_selection = self.block_selection.clone().upcast();
-        self.base_mut().add_child(block_selection);
+        let block_selection = self.block_selection.clone();
+        self.base_mut().add_child(&block_selection);
     }
 
     fn process(&mut self, delta: f64) {

@@ -137,7 +137,7 @@ impl ChunkMap {
             let mut chunk_column = l.write();
 
             let chunk_base = chunk_column.get_base();
-            base.add_child(chunk_base.clone().upcast());
+            base.add_child(&chunk_base);
             chunk_column.spawn_loaded_chunk();
             chunk_column.update_geometry(physics);
         }

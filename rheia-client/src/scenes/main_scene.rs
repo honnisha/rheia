@@ -8,7 +8,7 @@ use crate::debug::debug_info::DebugInfo;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
 use crate::world::worlds_manager::WorldsManager;
-use godot::engine::input::MouseMode;
+use godot::classes::input::MouseMode;
 use godot::prelude::*;
 use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
@@ -78,7 +78,7 @@ impl MainScene {
     fn connect(&mut self) {
         let ip = self.ip_port.as_ref().expect("set_ip is not called");
 
-        self.text_screen.bind_mut().set_text(format!("Connecting to {}...", ip));
+        self.text_screen.bind_mut().update_text(format!("Connecting to {}...", ip));
 
         let network = match NetworkContainer::new(ip.clone()) {
             Ok(c) => c,
@@ -92,8 +92,7 @@ impl MainScene {
 
     pub fn send_disconnect_event(&mut self, message: String) {
         Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
-        self.base_mut()
-            .emit_signal("disconnect".into(), &[message.to_variant()]);
+        self.base_mut().emit_signal("disconnect", &[message.to_variant()]);
     }
 }
 
@@ -127,16 +126,16 @@ impl INode for MainScene {
         }
         log::info!(target: "main", "Local resources loaded successfully ({})", self.get_resource_manager().get_resources_count());
 
-        let console = self.console.clone().upcast();
-        self.base_mut().add_child(console);
+        let console = self.console.clone();
+        self.base_mut().add_child(&console);
 
-        let debug_info = self.debug_info.clone().upcast();
-        self.base_mut().add_child(debug_info);
+        let debug_info = self.debug_info.clone();
+        self.base_mut().add_child(&debug_info);
 
         self.debug_info.bind_mut().toggle(false);
 
-        let text_screen = self.text_screen.clone().upcast();
-        self.base_mut().add_child(text_screen);
+        let text_screen = self.text_screen.clone();
+        self.base_mut().add_child(&text_screen);
         self.text_screen.bind_mut().toggle(true);
 
         Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
@@ -163,14 +162,14 @@ impl INode for MainScene {
         }
 
         let input = Input::singleton();
-        if input.is_action_just_pressed(ControllerActions::ToggleConsole.to_string().into()) {
+        if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
             self.console.bind_mut().toggle(!Console::is_active());
 
             if Console::is_active() {
                 self.debug_info.bind_mut().toggle(false);
             }
         }
-        if input.is_action_just_pressed(ControllerActions::ToggleDebug.to_string().into()) {
+        if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
             self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
 
             if DebugInfo::is_active() {

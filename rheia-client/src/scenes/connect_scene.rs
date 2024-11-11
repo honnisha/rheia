@@ -1,7 +1,5 @@
-use std::net::SocketAddr;
-
 use godot::{
-    engine::{Button, Control, IControl, LineEdit, RichTextLabel},
+    classes::{Button, Control, IControl, LineEdit, RichTextLabel},
     prelude::*,
 };
 use network::client::resolve_connect_domain;
@@ -30,7 +28,7 @@ impl ConnectScreen {
 
     fn set_error_text(&mut self, error: String) {
         let msg = format!("[center][color=#B72828]{}[/color][/center]", error);
-        self.error_text.set_text(msg.into());
+        self.error_text.set_text(&msg);
     }
 
     #[func]
@@ -45,7 +43,7 @@ impl ConnectScreen {
 
     #[func]
     fn connected_pressed(&mut self) {
-        self.error_text.set_text("".into());
+        self.error_text.set_text(&"".to_string());
 
         let ip_port = self.input.get_text().to_string();
         if let Err(e) = resolve_connect_domain(&ip_port, 25565_u16) {
@@ -53,12 +51,12 @@ impl ConnectScreen {
             return;
         }
         self.base_mut()
-            .emit_signal("direct_ip_connect".into(), &[ip_port.to_variant()]);
+            .emit_signal("direct_ip_connect", &[ip_port.to_variant()]);
         self.base_mut().set_visible(false);
     }
 
     pub fn set_ip(&mut self, ip_port: &String) {
-        self.input.set_text(ip_port.into());
+        self.input.set_text(ip_port);
     }
 
     #[signal]
@@ -84,22 +82,22 @@ impl IControl for ConnectScreen {
 
         let mut input = self.base().get_node_as::<LineEdit>(INPUT_PATH);
         input.connect(
-            "text_submitted".into(),
-            Callable::from_object_method(&self.base().to_godot(), "input_text_submitted"),
+            "text_submitted",
+            &Callable::from_object_method(&self.base().to_godot(), "input_text_submitted"),
         );
         self.input.init(input);
 
         let mut back = self.base().get_node_as::<Button>(BACK_BUTTON_PATH);
         back.connect(
-            "pressed".into(),
-            Callable::from_object_method(&self.base().to_godot(), "back_pressed"),
+            "pressed",
+            &Callable::from_object_method(&self.base().to_godot(), "back_pressed"),
         );
         self.back_button.init(back);
 
         let mut connect = self.base().get_node_as::<Button>(CONNECT_BUTTON_PATH);
         connect.connect(
-            "pressed".into(),
-            Callable::from_object_method(&self.base().to_godot(), "connected_pressed"),
+            "pressed",
+            &Callable::from_object_method(&self.base().to_godot(), "connected_pressed"),
         );
         self.connect_button.init(connect);
     }

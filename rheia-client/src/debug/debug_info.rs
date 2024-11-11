@@ -4,18 +4,16 @@ use std::sync::{
 };
 
 use crate::world::worlds_manager::WorldsManager;
-use common::{
-    chunks::block_position::{BlockPosition, BlockPositionTrait},
-};
-use network::client::NetworkInfo;
+use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::{
-    engine::{
+    classes::{
         rendering_server::RenderingInfo, Engine, HBoxContainer, IMarginContainer, MarginContainer, RenderingServer,
         RichTextLabel, VBoxContainer,
     },
     prelude::*,
 };
 use lazy_static::lazy_static;
+use network::client::NetworkInfo;
 
 lazy_static! {
     static ref DEBUG_ACTIVE: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -69,7 +67,7 @@ impl DebugInfo {
 
     pub fn change_text(row: &Gd<HBoxContainer>, new_text: String) {
         let mut text = row.get_node_as::<RichTextLabel>("PanelContainer/MarginContainer/RichTextLabel");
-        text.set_text(GString::from(new_text));
+        text.set_text(&new_text);
     }
 
     pub fn is_active() -> bool {
@@ -171,8 +169,8 @@ impl IMarginContainer for DebugInfo {
         let mut base = self
             .base()
             .get_node_as::<VBoxContainer>("MarginContainer/VBoxContainer");
-        base.add_child(self.first_row.clone().upcast());
-        base.add_child(self.world_row.clone().upcast());
-        base.add_child(self.network_row.clone().upcast());
+        base.add_child(&self.first_row);
+        base.add_child(&self.world_row);
+        base.add_child(&self.network_row);
     }
 }

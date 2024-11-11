@@ -1,5 +1,5 @@
 use common::chunks::rotation::Rotation;
-use godot::engine::Sprite2D;
+use godot::classes::Sprite2D;
 use godot::prelude::*;
 
 use super::{
@@ -80,18 +80,18 @@ impl CameraController {
 #[godot_api]
 impl INode3D for CameraController {
     fn ready(&mut self) {
-        let camera = self.camera.clone().upcast();
-        self.base_mut().add_child(camera);
+        let camera = self.camera.clone();
+        self.base_mut().add_child(&camera);
 
-        let cross = self.cross.clone().upcast();
-        self.base_mut().add_child(cross);
+        let cross = self.cross.clone();
+        self.base_mut().add_child(&cross);
 
         let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
         self.cross.set_position(screen * 0.5);
 
         self.base().get_tree().unwrap().get_root().unwrap().connect(
-            "size_changed".into(),
-            Callable::from_object_method(&self.base().to_godot(), "on_viewport_size_changed"),
+            "size_changed",
+            &Callable::from_object_method(&self.base().to_godot(), "on_viewport_size_changed"),
         );
 
         let mut t = self.camera.get_transform();

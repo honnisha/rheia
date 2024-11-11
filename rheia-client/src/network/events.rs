@@ -1,5 +1,5 @@
 use common::chunks::chunk_position::ChunkPosition;
-use godot::engine::{Engine, RenderingServer};
+use godot::classes::{Engine, RenderingServer};
 use godot::obj::Gd;
 use network::client::{IClientNetwork, NetworkInfo};
 use network::messages::NetworkMessageType;
@@ -90,7 +90,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 network.send_message(&msg, NetworkMessageType::ReliableOrdered);
 
                 main.get_text_screen_mut()
-                    .set_text(format!("Media downloaded {}/{}", index + 1, total));
+                    .update_text(format!("Media downloaded {}/{}", index + 1, total));
             }
             ServerMessages::Settings { block_types } => {
                 log::info!(target: "network", "Recieved settings from the network");

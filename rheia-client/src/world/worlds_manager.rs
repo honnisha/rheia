@@ -1,6 +1,6 @@
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
-use godot::{engine::Material, prelude::Gd};
+use godot::{classes::Material, prelude::Gd};
 use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use parking_lot::RwLock;
 use std::sync::Arc;
@@ -115,10 +115,9 @@ impl WorldsManager {
             )
         });
 
-        let world_name = GString::from("World");
-        world.bind_mut().base_mut().set_name(world_name.clone());
+        world.bind_mut().base_mut().set_name("World");
 
-        self.base.add_child(world.clone().upcast());
+        self.base.add_child(&world.clone());
         self.world = Some(world);
 
         log::info!(target: "world", "World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
@@ -126,7 +125,7 @@ impl WorldsManager {
 
     pub fn destroy_world(&mut self) {
         let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
-        self.base.remove_child(self.world.as_mut().unwrap().clone().upcast());
+        self.base.remove_child(&self.world.as_mut().unwrap().clone());
         self.world = None;
         log::info!(target: "world", "World \"{}\" destroyed;", slug);
     }

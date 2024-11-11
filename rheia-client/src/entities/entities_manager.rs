@@ -31,7 +31,7 @@ impl EntitiesManager {
         }
 
         let mut entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base));
-        self.base_mut().add_child(entity.clone().upcast());
+        self.base_mut().add_child(&entity);
 
         self.entities.insert(id, entity.clone());
 

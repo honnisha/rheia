@@ -1,14 +1,13 @@
-use super::{connect_scene::ConnectScreen, main_scene::MainScene, text_screen::TextScreen};
+use super::{
+    connect_scene::ConnectScreen, main_menu_button::MainMenuButton, main_scene::MainScene, text_screen::TextScreen,
+};
 use crate::{logger::CONSOLE_LOGGER, utils::settings::GameSettings};
 use godot::{
-    engine::{BoxContainer, Button, Control, Engine, RichTextLabel},
+    classes::{BoxContainer, Control, Engine, RichTextLabel},
+    meta::AsArg,
     prelude::*,
 };
 use std::{cell::RefCell, rc::Rc};
-
-const GUI_PATH: &str = "GUI";
-const BUTTONS_HOLDER_PATH: &str = "GUI/VBoxContainer/BottomHalf/ButtonsHolder";
-const BOTTOM_TEXT_PATH: &str = "GUI/VBoxContainer/BottomHalf/MarginContainer/BottomText";
 
 const TEXT_CONNECT: &str = "Connect";
 const TEXT_EXIT: &str = "Exit";
@@ -16,31 +15,54 @@ const TEXT_EXIT: &str = "Exit";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(GodotClass)]
-#[class(base=Node)]
+#[class(init, base=Node)]
 pub struct MainMenu {
     base: Base<Node>,
 
-    gui: OnReady<Gd<Control>>,
-    buttons_holder: OnReady<Gd<BoxContainer>>,
-    connect_screen: OnReady<Gd<ConnectScreen>>,
-    bottom_text: OnReady<Gd<RichTextLabel>>,
-    text_screen: Gd<TextScreen>,
-    main_scene: Option<Gd<MainScene>>,
+    #[export]
+    gui: Option<Gd<Control>>,
+
+    #[export]
+    buttons_holder: Option<Gd<BoxContainer>>,
+
+    #[export]
+    bottom_text: Option<Gd<RichTextLabel>>,
+
+    #[export]
+    text_screen_scene: Option<Gd<PackedScene>>,
+
+    #[export]
+    menu_button: Option<Gd<PackedScene>>,
+
+    text_screen: Option<Gd<TextScreen>>,
+
+    #[init(val = Rc::new(RefCell::new(GameSettings::default())))]
     game_settings: Rc<RefCell<GameSettings>>,
+
+    #[export]
+    connect_screen_scene: Option<Gd<PackedScene>>,
+
+    #[init(val = OnReady::manual())]
+    connect_screen: OnReady<Gd<ConnectScreen>>,
+
+    main_scene: Option<Gd<MainScene>>,
 }
 
 impl MainMenu {
-    fn add_button<S: Into<StringName>>(&mut self, label: &str, handler: S) {
-        let menu_button =
-            load::<PackedScene>("res://scenes/components/menu_button.tscn").instantiate_as::<BoxContainer>();
+    fn add_button<S: AsArg<StringName>>(&mut self, label: &str, handler: S) {
+        let mut menu_button = self.menu_button.as_ref().unwrap().instantiate_as::<MainMenuButton>();
 
-        let mut button_text = menu_button.find_child("Text".into()).unwrap().cast::<Button>();
-        button_text.set_text(label.into());
-        button_text.connect(
-            "pressed".into(),
-            Callable::from_object_method(&self.base().to_godot(), handler),
-        );
-        self.buttons_holder.add_child(menu_button.upcast());
+        {
+            let mut m = menu_button.bind_mut();
+            let button_text = m.text.as_mut().unwrap();
+            button_text.set_text(label);
+            button_text.connect(
+                "pressed",
+                &Callable::from_object_method(&self.base().to_godot(), handler),
+            );
+        }
+
+        self.buttons_holder.as_mut().unwrap().add_child(&menu_button);
     }
 }
 
@@ -63,16 +85,16 @@ impl MainMenu {
             game_settings.save().expect("Settings save error");
         }
 
-        self.gui.set_visible(false);
+        self.gui.as_mut().unwrap().set_visible(false);
 
         let mut main_scene = load::<PackedScene>("res://scenes/main_scene.tscn").instantiate_as::<MainScene>();
         main_scene.bind_mut().set_ip(ip_port.to_string());
         main_scene.connect(
-            "disconnect".into(),
-            Callable::from_object_method(&self.base().to_godot(), "on_disconnect"),
+            "disconnect",
+            &Callable::from_object_method(&self.base().to_godot(), "on_disconnect"),
         );
         self.main_scene = Some(main_scene.clone());
-        self.base_mut().add_child(main_scene.upcast());
+        self.base_mut().add_child(&main_scene);
     }
 
     #[func]
@@ -82,12 +104,12 @@ impl MainMenu {
         }
 
         if message.len() > 0 {
-            let mut text_screen = self.text_screen.bind_mut();
-            text_screen.set_text(message.to_string());
+            let mut text_screen = self.text_screen.as_mut().unwrap().bind_mut();
+            text_screen.update_text(message.to_string());
             text_screen.toggle(true);
         }
 
-        self.gui.set_visible(true);
+        self.gui.as_mut().unwrap().set_visible(true);
     }
 
     #[func]
@@ -101,7 +123,7 @@ impl MainMenu {
 
     #[func]
     fn on_text_screen_closed(&mut self) {
-        self.text_screen.bind_mut().toggle(false);
+        self.text_screen.as_mut().unwrap().bind_mut().toggle(false);
     }
 
     fn read_settings(&mut self) {
@@ -111,8 +133,8 @@ impl MainMenu {
                 *game_settings = s;
             }
             Err(e) => {
-                let mut text_screen = self.text_screen.bind_mut();
-                text_screen.set_text(format!(
+                let mut text_screen = self.text_screen.as_mut().unwrap().bind_mut();
+                text_screen.update_text(format!(
                     "Settings read error: {}\nThe default settings will be used.",
                     e
                 ));
@@ -124,19 +146,6 @@ impl MainMenu {
 
 #[godot_api]
 impl INode for MainMenu {
-    fn init(base: Base<Node>) -> Self {
-        Self {
-            base,
-            gui: OnReady::manual(),
-            buttons_holder: OnReady::manual(),
-            connect_screen: OnReady::manual(),
-            bottom_text: OnReady::manual(),
-            text_screen: load::<PackedScene>("res://scenes/text_screen.tscn").instantiate_as::<TextScreen>(),
-            main_scene: None,
-            game_settings: Rc::new(RefCell::new(GameSettings::default())),
-        }
-    }
-
     fn ready(&mut self) {
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
             log::error!(target: "main", "log::set_logger error: {}", e)
@@ -147,42 +156,45 @@ impl INode for MainMenu {
 
         Engine::singleton().set_max_fps(60);
 
-        let mut text_screen = self.text_screen.clone();
+        self.text_screen = Some(self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>());
+
+        let mut text_screen = self.text_screen.as_mut().unwrap().clone();
         text_screen.connect(
-            "close_button_pressed".into(),
-            Callable::from_object_method(&self.base().to_godot(), "on_text_screen_closed"),
+            "close_button_pressed",
+            &Callable::from_object_method(&self.base().to_godot(), "on_text_screen_closed"),
         );
-        self.base_mut().add_child(text_screen.upcast());
-        self.text_screen.bind_mut().toggle(false);
+        self.base_mut().add_child(&text_screen);
+        self.text_screen.as_mut().unwrap().bind_mut().toggle(false);
         self.text_screen
+            .as_mut()
+            .unwrap()
             .bind_mut()
             .toggle_close_button(Some("To main menu".to_string()));
 
-        self.gui.init(self.base().get_node_as::<Control>(GUI_PATH));
-
-        self.buttons_holder
-            .init(self.base().get_node_as::<BoxContainer>(BUTTONS_HOLDER_PATH));
-
-        for child in self.buttons_holder.get_children().iter_shared() {
+        for child in self.buttons_holder.as_mut().unwrap().get_children().iter_shared() {
             child.free();
         }
 
         self.add_button(TEXT_CONNECT, "connect_pressed");
         self.add_button(TEXT_EXIT, "exit_pressed");
 
-        let mut connect_screen =
-            load::<PackedScene>("res://scenes/connect_screen.tscn").instantiate_as::<ConnectScreen>();
+        let mut connect_screen = self
+            .connect_screen_scene
+            .as_ref()
+            .unwrap()
+            .instantiate_as::<ConnectScreen>();
         connect_screen.connect(
-            "direct_ip_connect".into(),
-            Callable::from_object_method(&self.base().to_godot(), "on_direct_ip_connect"),
+            "direct_ip_connect",
+            &Callable::from_object_method(&self.base().to_godot(), "on_direct_ip_connect"),
         );
         connect_screen.bind_mut().toggle(false);
         self.connect_screen.init(connect_screen.clone());
-        self.base_mut().add_child(connect_screen.upcast());
+        self.base_mut().add_child(&connect_screen);
 
         self.bottom_text
-            .init(self.base().get_node_as::<RichTextLabel>(BOTTOM_TEXT_PATH));
-        self.bottom_text.set_text(format!("Version: {}", VERSION).into());
+            .as_mut()
+            .unwrap()
+            .set_text(&format!("Version: {}", VERSION));
 
         self.read_settings();
     }

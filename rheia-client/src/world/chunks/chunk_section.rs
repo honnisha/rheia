@@ -2,7 +2,7 @@ use std::borrow::BorrowMut;
 
 use common::{blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
 use godot::{
-    engine::{Material, MeshInstance3D},
+    classes::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
@@ -41,8 +41,8 @@ pub struct ChunkSection {
 impl ChunkSection {
     pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8, chunk_position: ChunkPosition) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
-        mesh.set_name(GString::from(format!("ChunkMesh {}", y)));
-        mesh.set_material_overlay(material.clone());
+        mesh.set_name(&format!("ChunkMesh {}", y));
+        mesh.set_material_overlay(&material);
 
         // Disable while its empty
         mesh.set_process(false);
@@ -80,7 +80,7 @@ impl ChunkSection {
         // Set active only for sections that conatains vertices
         mesh.set_process(c > 0);
 
-        mesh.set_mesh(geometry.mesh_ist.upcast());
+        mesh.set_mesh(&geometry.mesh_ist);
 
         self.need_update_geometry = true;
         self.colider_builder = geometry.collider_builder
@@ -117,7 +117,7 @@ impl ChunkSection {
 #[godot_api]
 impl INode3D for ChunkSection {
     fn ready(&mut self) {
-        let mesh = self.mesh.clone().upcast();
-        self.base_mut().add_child(mesh);
+        let mesh = self.mesh.clone();
+        self.base_mut().add_child(&mesh);
     }
 }

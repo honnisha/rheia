@@ -1,5 +1,5 @@
 use common::blocks::block_type::{BlockContent, BlockType};
-use godot::{engine::Material, obj::Gd};
+use godot::{classes::Material, obj::Gd};
 use image::RgbaImage;
 
 use crate::{client_scripts::{resource_instance::MediaResource, resource_manager::ResourceManager}, world::block_storage::BlockStorage};

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use godot::{
-    engine::{file_access::ModeFlags, DirAccess, FileAccess, Resource, ResourceLoader},
+    classes::{file_access::ModeFlags, DirAccess, FileAccess, Resource, ResourceLoader},
     obj::Gd,
 };
 use serde::{Deserialize, Serialize};
@@ -22,9 +22,9 @@ pub(crate) struct LocalResource {
 pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
     let mut result: Vec<LocalResource> = Default::default();
 
-    for dir in DirAccess::get_directories_at("res://assets/resources".into()).as_slice() {
+    for dir in DirAccess::get_directories_at("res://assets/resources").as_slice() {
         let manifest_path = format!("res://assets/resources/{}/manifest.json", dir);
-        let Some(manifest_file) = FileAccess::open(manifest_path.clone().into(), ModeFlags::READ) else {
+        let Some(manifest_file) = FileAccess::open(&manifest_path, ModeFlags::READ) else {
             return Err(format!("Manifest {} file error", manifest_path));
         };
 
@@ -45,7 +45,7 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
         let mut resource_loader = ResourceLoader::singleton();
         if let Some(client_scripts) = manifest.client_scripts {
             for script_path in client_scripts {
-                let file_resource = match resource_loader.load(script_path.clone().into()) {
+                let _file_resource = match resource_loader.load(&script_path) {
                     Some(r) => r,
                     None => {
                         return Err(format!(
@@ -61,7 +61,7 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
 
         if let Some(media_list) = manifest.media {
             for media_path in media_list {
-                let file_resource = match resource_loader.load(media_path.clone().into()) {
+                let file_resource = match resource_loader.load(&media_path) {
                     Some(r) => r,
                     None => {
                         return Err(format!(

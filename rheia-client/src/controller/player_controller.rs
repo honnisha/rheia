@@ -252,14 +252,14 @@ impl PlayerController {
 #[godot_api]
 impl INode3D for PlayerController {
     fn ready(&mut self) {
-        let controller = self.entity.clone().upcast();
-        self.base_mut().add_child(controller);
+        let controller = self.entity.clone();
+        self.base_mut().add_child(&controller);
 
-        let camera_controller = self.camera_controller.clone().upcast();
-        self.base_mut().add_child(camera_controller);
+        let camera_controller = self.camera_controller.clone();
+        self.base_mut().add_child(&camera_controller);
 
-        let controls = self.controls.clone().upcast();
-        self.base_mut().add_child(controls);
+        let controls = self.controls.clone();
+        self.base_mut().add_child(&controls);
     }
 
     fn process(&mut self, delta: f64) {
@@ -323,10 +323,8 @@ impl INode3D for PlayerController {
             };
             self.entity.bind_mut().handle_movement(movement);
 
-            self.base_mut().emit_signal(
-                "on_player_move".into(),
-                &[new_movement.to_variant(), new_chunk.to_variant()],
-            );
+            self.base_mut()
+                .emit_signal("on_player_move", &[new_movement.to_variant(), new_chunk.to_variant()]);
             self.cache_movement = Some(new_movement);
         }
     }

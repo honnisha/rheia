@@ -1,10 +1,6 @@
-use std::{fs::File, io::Read};
-
 use ahash::HashMap;
-use godot::{engine::AnimationPlayer, prelude::*};
+use godot::{classes::AnimationPlayer, prelude::*};
 use lazy_static::lazy_static;
-
-use crate::utils::glb::glb_import;
 
 use super::enums::{generic_animations::GenericAnimations, generic_body_parts::BodyPart};
 
@@ -131,7 +127,7 @@ impl GenericSkin {
 
     fn play_animation(&mut self, animation: GenericAnimations) {
         self.animation_player
-            .call_deferred(StringName::from("play"), &[animation.to_string().to_variant()]);
+            .call_deferred(&StringName::from("play"), &[animation.to_string().to_variant()]);
     }
 
     pub fn get_current_animation(&self) -> String {
@@ -186,8 +182,8 @@ impl GenericSkin {
             // Append meshes from target bone
             for target_child in target_bone.get_children().iter_shared() {
                 if target_child.get_name().to_string().starts_with(mesh_prefix) {
-                    target_bone.remove_child(target_child.clone());
-                    bone.add_child(target_child);
+                    target_bone.remove_child(&target_child);
+                    bone.add_child(&target_child);
                     // target_child.reparent(bone.clone().upcast());
                 }
             }
@@ -199,8 +195,8 @@ impl GenericSkin {
 #[godot_api]
 impl INode3D for GenericSkin {
     fn ready(&mut self) {
-        let generic = self.generic.clone().upcast();
-        self.base_mut().add_child(generic);
+        let generic = self.generic.clone();
+        self.base_mut().add_child(&generic);
     }
 
     fn process(&mut self, _delta: f64) {}

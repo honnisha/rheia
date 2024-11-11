@@ -1,11 +1,11 @@
 use common::blocks::block_type::BlockContent;
 use godot::{
-    engine::{
+    classes::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
         Engine, Image, ImageTexture, StandardMaterial3D,
     },
     obj::NewGd,
-    prelude::{Gd, PackedByteArray, StringName, ToGodot},
+    prelude::{Gd, PackedByteArray, ToGodot},
 };
 use image::{ImageBuffer, ImageFormat, RgbaImage};
 use std::io::Cursor;
@@ -79,7 +79,7 @@ pub fn build_blocks_material(
 
     material.set_texture_filter(TextureFilter::NEAREST);
     material.set_ao_light_affect(1.0_f32);
-    material.set(StringName::from("ao_enabled"), true.to_variant());
+    material.set("ao_enabled", &true.to_variant());
     material.set_depth_draw_mode(DepthDrawMode::OPAQUE_ONLY);
     material.set_refraction(0.27_f32);
 
@@ -92,10 +92,10 @@ pub fn build_blocks_material(
     pba.extend(m);
 
     let mut image = Image::new_gd();
-    image.load_png_from_buffer(pba);
+    image.load_png_from_buffer(&pba);
     let mut texture = ImageTexture::new_gd();
-    texture.set_image(image);
-    material.set_texture(TextureParam::ALBEDO, texture.upcast());
+    texture.set_image(&image);
+    material.set_texture(TextureParam::ALBEDO, &texture);
 
     log::trace!("build_blocks_material completed");
     Ok(material)

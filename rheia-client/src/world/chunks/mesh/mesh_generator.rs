@@ -17,8 +17,10 @@ use common::{
     CHUNK_SIZE,
 };
 use godot::{
-    classes::mesh::PrimitiveType,
-    engine::{mesh::ArrayType, ArrayMesh},
+    classes::{
+        mesh::{ArrayType, PrimitiveType},
+        ArrayMesh,
+    },
     obj::{EngineEnum, NewGd},
     prelude::{Array, Gd, PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant, Vector2, Vector3},
 };
@@ -141,16 +143,16 @@ pub fn generate_chunk_geometry(
     }
 
     let len = indices.len();
-    arrays.set(ArrayType::INDEX.ord() as usize, Variant::from(indices));
-    arrays.set(ArrayType::VERTEX.ord() as usize, Variant::from(verts));
-    arrays.set(ArrayType::NORMAL.ord() as usize, Variant::from(normals));
-    arrays.set(ArrayType::TEX_UV.ord() as usize, Variant::from(uvs));
+    arrays.set(ArrayType::INDEX.ord() as usize, &Variant::from(indices));
+    arrays.set(ArrayType::VERTEX.ord() as usize, &Variant::from(verts));
+    arrays.set(ArrayType::NORMAL.ord() as usize, &Variant::from(normals));
+    arrays.set(ArrayType::TEX_UV.ord() as usize, &Variant::from(uvs));
 
     let mut collider_builder: Option<PhysicsColliderBuilder> = None;
 
     let mut mesh_ist = ArrayMesh::new_gd();
     if len > 0 {
-        mesh_ist.add_surface_from_arrays(PrimitiveType::TRIANGLES, arrays);
+        mesh_ist.add_surface_from_arrays(PrimitiveType::TRIANGLES, &arrays);
 
         collider_builder = Some(PhysicsColliderBuilder::trimesh(collider_verts, collider_indices));
     }

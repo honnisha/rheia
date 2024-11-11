@@ -1,6 +1,6 @@
 [package]
 name = "rheia-client"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 publish = false
 
@@ -17,7 +17,7 @@ common = { path = "../rheia-common" }
 network = { path = "../rheia-network" }
 physics = { path = "../rheia-physics" }
 
-godot = { version = "0.1.3", features = ["experimental-threads"] }
+godot = { git = "https://github.com/godot-rust/gdext.git", features = ["experimental-threads"] }
 
 rand = "0.8"
 lazy_static = "1.4.0"

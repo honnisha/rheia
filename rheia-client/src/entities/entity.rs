@@ -71,8 +71,8 @@ impl Entity {
 #[godot_api]
 impl INode3D for Entity {
     fn ready(&mut self) {
-        let skin = self.skin.clone().upcast();
-        self.base_mut().add_child(skin);
+        let skin = self.skin.clone();
+        self.base_mut().add_child(&skin);
     }
 
     fn process(&mut self, _delta: f64) {
@@ -85,9 +85,9 @@ impl INode3D for Entity {
             }
 
             let l = lerp(
-                current_position.to_variant(),
-                target_position.to_variant(),
-                (0.5).to_variant(),
+                &current_position.to_variant(),
+                &target_position.to_variant(),
+                &(0.5).to_variant(),
             );
             let new_position = Vector3::from_variant(&l);
             self.base_mut().set_position(new_position);
