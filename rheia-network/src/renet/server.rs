@@ -73,7 +73,7 @@ impl IServerNetwork for RenetServerNetwork {
         };
 
         let transport = NetcodeServerTransport::new(server_config, socket).unwrap();
-        let network = RenetServerNetwork {
+        let network = Self {
             server: Arc::new(RwLock::new(server)),
             transport: Arc::new(RwLock::new(transport)),
             channel_client_messages: flume::unbounded(),

@@ -55,6 +55,10 @@ impl RenetClientNetwork {
         self.network_lock.store(state, Ordering::Relaxed);
     }
 
+    fn get_client(&self) -> RwLockReadGuard<RenetClient> {
+        self.client.read()
+    }
+
     fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
         self.client.write()
     }
@@ -147,8 +151,10 @@ impl RenetClientNetwork {
             }
         }
 
-        for (channel, message) in self.network_client_sended.1.drain() {
-            client.send_message(channel, message);
+        if client.is_connected() {
+            for (channel, message) in self.network_client_sended.1.drain() {
+                client.send_message(channel, message);
+            }
         }
 
         if let Err(e) = transport.send_packets(&mut client) {
@@ -199,14 +205,14 @@ impl IClientNetwork for RenetClientNetwork {
             protocol_id: PROTOCOL_ID,
         };
 
-        let socket = match UdpSocket::bind("127.0.0.1:0") {
+        let socket = match UdpSocket::bind("0.0.0.0:0") {
             Ok(s) => s,
             Err(e) => {
                 return Err(format!("Path {} error: {}", ip_port, e));
             }
         };
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
-        let network = RenetClientNetwork {
+        let network = Self {
             client: Arc::new(RwLock::new(client)),
             transport: Arc::new(RwLock::new(transport)),
 
@@ -236,6 +242,9 @@ impl IClientNetwork for RenetClientNetwork {
     }
 
     fn send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
+        if !self.get_client().is_connected() {
+            panic!("send_message while network is not connected; message: {}", message);
+        }
         let encoded = bincode::serialize(message).unwrap();
         let msg = (RenetClientNetwork::map_type_channel(message_type).into(), encoded);
         self.network_client_sended.0.send(msg).unwrap();
