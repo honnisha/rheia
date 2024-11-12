@@ -23,7 +23,7 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
     tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
 
 #[derive(GodotClass)]
-#[class(base=Node)]
+#[class(init, base=Node)]
 pub struct MainScene {
     base: Base<Node>,
     ip_port: Option<String>,
@@ -31,10 +31,27 @@ pub struct MainScene {
     network: Option<NetworkContainer>,
 
     resource_manager: ResourceManager,
-    worlds_manager: Rc<RefCell<WorldsManager>>,
-    console: Gd<Console>,
-    debug_info: Gd<DebugInfo>,
-    text_screen: Gd<TextScreen>,
+
+    #[init(val = OnReady::manual())]
+    worlds_manager: OnReady<Rc<RefCell<WorldsManager>>>,
+
+    #[init(val = OnReady::manual())]
+    console: OnReady<Gd<Console>>,
+    #[export]
+    console_scene: Option<Gd<PackedScene>>,
+
+    #[init(val = OnReady::manual())]
+    text_screen: OnReady<Gd<TextScreen>>,
+    #[export]
+    text_screen_scene: Option<Gd<PackedScene>>,
+
+    #[init(val = OnReady::manual())]
+    debug_info: OnReady<Gd<DebugInfo>>,
+    #[export]
+    debug_info_scene: Option<Gd<PackedScene>>,
+
+    #[export]
+    block_icon_scene: Option<Gd<PackedScene>>,
 }
 
 impl MainScene {
@@ -104,21 +121,19 @@ impl MainScene {
 
 #[godot_api]
 impl INode for MainScene {
-    fn init(base: Base<Node>) -> Self {
-        let worlds_manager = WorldsManager::create(base.to_gd().clone());
-        Self {
-            base,
-            ip_port: None,
-            network: None,
-            resource_manager: ResourceManager::new(),
-            worlds_manager: Rc::new(RefCell::new(worlds_manager)),
-            console: load::<PackedScene>("res://scenes/console.tscn").instantiate_as::<Console>(),
-            debug_info: load::<PackedScene>("res://scenes/debug_info.tscn").instantiate_as::<DebugInfo>(),
-            text_screen: load::<PackedScene>("res://scenes/text_screen.tscn").instantiate_as::<TextScreen>(),
-        }
-    }
-
     fn ready(&mut self) {
+        let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
+        self.console.init(console);
+
+        let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
+        self.debug_info.init(debug_info);
+
+        let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
+        self.text_screen.init(text_screen);
+
+        let worlds_manager = WorldsManager::create(self.base.to_gd().clone());
+        self.worlds_manager.init(Rc::new(RefCell::new(worlds_manager)));
+
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));

@@ -29,8 +29,8 @@ enum ResourceType {
     None,
 }
 
-impl ResourceManager {
-    pub fn new() -> Self {
+impl Default for ResourceManager {
+    fn default() -> Self {
         let mut engine = Engine::new();
 
         engine.register_global_module(exported_module!(main_api).into());
@@ -44,7 +44,9 @@ impl ResourceManager {
             archive_data: Default::default(),
         }
     }
+}
 
+impl ResourceManager {
     pub fn set_resource_scheme(&mut self, list: Vec<ResurceScheme>, archive_hash: u64) {
         self.resources_scheme = Some(list);
         self.archive_hash = Some(archive_hash);

@@ -1,8 +1,16 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=6 format=3 uid="uid://c5l1r11gi0tet"]
 
+[ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
+[ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
 [ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
+[ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="2_xhcjx"]
+[ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
 
 [node name="MainScene" type="MainScene"]
+console_scene = ExtResource("1_rga66")
+text_screen_scene = ExtResource("2_773ro")
+debug_info_scene = ExtResource("3_qwjw3")
+block_icon_scene = ExtResource("2_xhcjx")
 
 [node name="Sky" parent="." instance=ExtResource("2_eyb06")]
 time_of_day_setup = 0.762
@@ -11,3 +19,5 @@ clouds_height = 0.4
 clouds_size = 0.52
 clouds_quality = 100
 wind_strength = 0.05
+
+[node name="BlockIcon" parent="." instance=ExtResource("2_xhcjx")]

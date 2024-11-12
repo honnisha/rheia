@@ -29,19 +29,18 @@ pub struct MainMenu {
     bottom_text: Option<Gd<RichTextLabel>>,
 
     #[export]
-    text_screen_scene: Option<Gd<PackedScene>>,
-
-    #[export]
     menu_button: Option<Gd<PackedScene>>,
 
-    text_screen: Option<Gd<TextScreen>>,
+    #[export]
+    text_screen_scene: Option<Gd<PackedScene>>,
+    #[init(val = OnReady::manual())]
+    text_screen: OnReady<Gd<TextScreen>>,
 
     #[init(val = Rc::new(RefCell::new(GameSettings::default())))]
     game_settings: Rc<RefCell<GameSettings>>,
 
     #[export]
     connect_screen_scene: Option<Gd<PackedScene>>,
-
     #[init(val = OnReady::manual())]
     connect_screen: OnReady<Gd<ConnectScreen>>,
 
@@ -104,7 +103,7 @@ impl MainMenu {
         }
 
         if message.len() > 0 {
-            let mut text_screen = self.text_screen.as_mut().unwrap().bind_mut();
+            let mut text_screen = self.text_screen.bind_mut();
             text_screen.update_text(message.to_string());
             text_screen.toggle(true);
         }
@@ -123,7 +122,7 @@ impl MainMenu {
 
     #[func]
     fn on_text_screen_closed(&mut self) {
-        self.text_screen.as_mut().unwrap().bind_mut().toggle(false);
+        self.text_screen.bind_mut().toggle(false);
     }
 
     fn read_settings(&mut self) {
@@ -133,7 +132,7 @@ impl MainMenu {
                 *game_settings = s;
             }
             Err(e) => {
-                let mut text_screen = self.text_screen.as_mut().unwrap().bind_mut();
+                let mut text_screen = self.text_screen.bind_mut();
                 text_screen.update_text(format!(
                     "Settings read error: {}\nThe default settings will be used.",
                     e
@@ -156,20 +155,17 @@ impl INode for MainMenu {
 
         Engine::singleton().set_max_fps(60);
 
-        self.text_screen = Some(self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>());
-
-        let mut text_screen = self.text_screen.as_mut().unwrap().clone();
+        let mut text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
         text_screen.connect(
             "close_button_pressed",
             &Callable::from_object_method(&self.base().to_godot(), "on_text_screen_closed"),
         );
         self.base_mut().add_child(&text_screen);
-        self.text_screen.as_mut().unwrap().bind_mut().toggle(false);
+        self.text_screen.bind_mut().toggle(false);
         self.text_screen
-            .as_mut()
-            .unwrap()
             .bind_mut()
             .toggle_close_button(Some("To main menu".to_string()));
+        self.text_screen.init(text_screen);
 
         for child in self.buttons_holder.as_mut().unwrap().get_children().iter_shared() {
             child.free();

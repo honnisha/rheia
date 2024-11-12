@@ -1,0 +1,54 @@
+[gd_scene load_steps=4 format=3 uid="uid://y4kca7bo7tc"]
+
+[ext_resource type="Texture2D" uid="uid://b5vcwpmsk25kr" path="res://assets/block/grass_top.png" id="1_hg8sq"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kme0x"]
+albedo_texture = ExtResource("1_hg8sq")
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_axew6"]
+
+[node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("block_anchor")]
+block_anchor = NodePath("SubViewportContainer/SubViewport/Anchor")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -952.0
+offset_bottom = -448.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+keep_aspect = 0
+projection = 1
+current = true
+size = 2.0
+far = 100.0
+
+[node name="Anchor" type="Node3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(0.707107, 0, 0.707107, 0.5, 0.707107, -0.5, -0.5, 0.707107, 0.5, 0, 0, 0)
+rotation_order = 0
+
+[node name="TestBlock" type="MeshInstance3D" parent="SubViewportContainer/SubViewport/Anchor"]
+material_override = SubResource("StandardMaterial3D_kme0x")
+mesh = SubResource("BoxMesh_axew6")
+skeleton = NodePath("../../../../..")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="SubViewportContainer/SubViewport"]
+transform = Transform3D(0.928486, 0, 0.371368, 0, 1, 0, -0.371368, 0, 0.928486, 0, 0, 1.36734)
