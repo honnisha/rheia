@@ -3,9 +3,6 @@ use godot::{
     prelude::*,
 };
 
-const TEXT_PATH: &str = "VBoxContainer/Text";
-const CLOSE_BUTTON_PATH: &str = "VBoxContainer/MarginContainer/Back";
-
 #[derive(GodotClass)]
 #[class(init, base=MarginContainer)]
 pub struct TextScreen {
