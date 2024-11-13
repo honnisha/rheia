@@ -69,9 +69,14 @@ pub fn _generate_buffer_greedy(chunk_collider_data: &ChunkColliderDataBordered) 
 pub struct Geometry {
     pub mesh_ist: Gd<ArrayMesh>,
     pub collider_builder: Option<PhysicsColliderBuilder>,
+    indices_len: usize,
 }
 
-impl Geometry {}
+impl Geometry {
+    pub fn is_empty(&self) -> bool {
+        self.indices_len == 0
+    }
+}
 
 unsafe impl Send for Geometry {}
 unsafe impl Sync for Geometry {}
@@ -160,5 +165,6 @@ pub fn generate_chunk_geometry(
     Geometry {
         mesh_ist,
         collider_builder,
+        indices_len: len,
     }
 }

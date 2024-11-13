@@ -12,15 +12,7 @@ use std::sync::{
     Arc,
 };
 
-use crate::world::{
-    physics::PhysicsProxy,
-    worlds_manager::{BlockStorageRef, TextureMapperRef},
-};
-
-use super::{
-    chunk_data_formatter::format_chunk_data_with_boundaries, chunk_section::ChunkSection,
-    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
-};
+use super::chunk_section::ChunkSection;
 
 type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 
@@ -93,6 +85,9 @@ impl ChunkColumn {
         base
     }
 
+    /// Spawning ChunkColumn
+    /// all 0..VERTICAL_SECTIONS from bottom to top
+    /// and add them as a childs to the base node of chunk column
     pub fn spawn_sections(&self, material_instance_id: &InstanceId) {
         assert!(!self.is_loaded(), "Chunk cannot spawn sections twice!");
 
@@ -102,24 +97,14 @@ impl ChunkColumn {
         chunk_base.bind_mut().spawn_sections(&self.chunk_position, material);
     }
 
-    pub fn generate_section_geometry(
-        &self,
-        chunks_near: &NearChunksData,
-        y: usize,
-        block_storage: &BlockStorageRef,
-        texture_mapper: &TextureMapperRef,
-    ) {
-        let data = self.get_chunk_data().clone();
-        let bordered_chunk_data =
-            format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y).unwrap();
-
+    pub fn get_chunk_section(&self, y: &usize) -> Gd<ChunkSection> {
+        assert!(
+            *y < VERTICAL_SECTIONS,
+            "get_chunk_section_mut y cannot be more than VERTICAL_SECTIONS"
+        );
         let mut chunk_base = self.get_base();
-        let mut c = chunk_base.bind_mut();
-
-        let geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data, &block_storage);
-        let mut section = c.sections[y].bind_mut();
-
-        section.set_new_geometry(geometry);
+        let c = chunk_base.bind_mut();
+        c.sections[*y].clone()
     }
 
     pub fn free(&mut self) {
@@ -157,17 +142,6 @@ impl ChunkColumn {
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
         c.base_mut().set_global_position(self.get_chunk_position());
         self.set_loaded();
-    }
-
-    pub fn update_geometry(&mut self, physics: &PhysicsProxy) {
-        let mut base = self.get_base();
-        let mut c = base.bind_mut();
-
-        for section in c.sections.iter_mut() {
-            if section.bind().need_update_geometry {
-                section.bind_mut().update_geometry(physics);
-            }
-        }
     }
 
     /// Deactivates chunks that are far away from the player

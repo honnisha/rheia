@@ -1,4 +1,7 @@
-use godot::{classes::{Control, IControl}, prelude::*};
+use godot::{
+    classes::{Control, IControl},
+    prelude::*,
+};
 
 #[derive(GodotClass)]
 #[class(init, base=Control)]
@@ -8,6 +11,8 @@ pub struct BlockIcon {
     #[export]
     pub block_anchor: Option<Gd<Node3D>>,
 }
+
+impl BlockIcon {}
 
 #[godot_api]
 impl IControl for BlockIcon {

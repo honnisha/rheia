@@ -7,7 +7,7 @@ use common::{
 use ndshape::ConstShape;
 use network::messages::ChunkDataType;
 
-use crate::world::worlds_manager::BlockStorageRef;
+use crate::world::block_storage::BlockStorage;
 
 use super::{
     chunk_column::ColumnDataLockType,
@@ -15,7 +15,7 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
-fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorageRef) -> Result<ChunkColliderInfo, String> {
+fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorage) -> Result<ChunkColliderInfo, String> {
     let collider = match info {
         Some(block_info) => {
             if block_info.get_id() == 0 {
@@ -35,12 +35,22 @@ fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorageRef) -> Re
     Ok(collider)
 }
 
+// pub fn generate_single_block(block_type: &BlockType, block_info: &BlockInfo) -> ChunkColliderDataBordered {
+//     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
+//     let collider = ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()));
+//     let b_chunk_pos = ChunkBordersShape::linearize([0, 0, 0]);
+//     b_chunk[b_chunk_pos as usize] = collider;
+//     b_chunk
+// }
+
+/// Generates collider data for mesh
+/// with size of CHUNK_SIZE + 2 boundary
 pub fn format_chunk_data_with_boundaries(
     chunks_near: Option<&NearChunksData>,
     chunk_data: &ColumnDataLockType,
-    block_storage: &BlockStorageRef,
+    block_storage: &BlockStorage,
     y: usize,
-) -> Result<ChunkColliderDataBordered, String> {
+) -> Result<(ChunkColliderDataBordered, usize), String> {
     // Fill with solid block by default
     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
 
@@ -73,13 +83,13 @@ pub fn format_chunk_data_with_boundaries(
 
     // fill boundaries
     if mesh_count == 0 {
-        return Ok(b_chunk);
+        return Ok((b_chunk, mesh_count));
     }
 
     let chunks_near = match chunks_near {
         Some(c) => c,
         None => {
-            return Ok(b_chunk);
+            return Ok((b_chunk, mesh_count));
         }
     };
     let boundary = get_boundaries_chunks(&chunks_near, &chunk_data, y);
@@ -116,7 +126,7 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
-    return Ok(b_chunk);
+    return Ok((b_chunk, mesh_count));
 }
 
 type BondaryType<'a> = ArrayVec<(i8, i32, Option<Box<ChunkDataType>>), 6>;

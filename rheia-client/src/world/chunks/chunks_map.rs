@@ -21,7 +21,9 @@ use crate::world::{
 
 use super::{
     chunk_column::{ChunkColumn, ColumnDataLockType},
+    chunk_data_formatter::format_chunk_data_with_boundaries,
     chunk_generator::generate_chunk,
+    mesh::mesh_generator::generate_chunk_geometry,
     near_chunk_data::NearChunksData,
 };
 use flume::{unbounded, Receiver, Sender};
@@ -139,7 +141,17 @@ impl ChunkMap {
             let chunk_base = chunk_column.get_base();
             base.add_child(&chunk_base);
             chunk_column.spawn_loaded_chunk();
-            chunk_column.update_geometry(physics);
+            {
+                let this = &mut chunk_column;
+                let mut base = this.get_base();
+                let mut c = base.bind_mut();
+
+                for section in c.sections.iter_mut() {
+                    if section.bind().is_geometry_update_needed() {
+                        section.bind_mut().update_geometry(physics);
+                    }
+                }
+            };
         }
     }
 
@@ -173,19 +185,29 @@ impl ChunkMap {
         texture_mapper: &TextureMapperRef,
     ) {
         self.chunks_to_update.borrow_mut().retain(|(chunk_position, y)| {
-            let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
+            let chunks_near = NearChunksData::new(&self.chunks, &chunk_position);
 
             // Load only if all chunks around are loaded
-            if !near_chunks_data.is_full() {
+            if !chunks_near.is_full() {
                 return true;
             }
 
             let chunk_column = self
                 .get_chunk(&chunk_position)
                 .expect("chunk from chunks_to_update is not found");
-            let mut c = chunk_column.write();
-            c.generate_section_geometry(&near_chunks_data, *y, &block_storage, &texture_mapper);
-            c.update_geometry(physics);
+            let c = chunk_column.read();
+
+            let data = c.get_chunk_data().clone();
+
+            let (bordered_chunk_data, _mesh_count) =
+                format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y.clone()).unwrap();
+
+            let geometry = generate_chunk_geometry(&texture_mapper, &bordered_chunk_data, &block_storage);
+
+            let mut chunk_section = c.get_chunk_section(y);
+            chunk_section.bind_mut().set_new_geometry(geometry);
+            chunk_section.bind_mut().update_geometry(&physics);
+
             return false;
         });
     }

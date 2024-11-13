@@ -161,11 +161,12 @@ impl INode for MainMenu {
             &Callable::from_object_method(&self.base().to_godot(), "on_text_screen_closed"),
         );
         self.base_mut().add_child(&text_screen);
+        self.text_screen.init(text_screen);
+
         self.text_screen.bind_mut().toggle(false);
         self.text_screen
             .bind_mut()
             .toggle_close_button(Some("To main menu".to_string()));
-        self.text_screen.init(text_screen);
 
         for child in self.buttons_holder.as_mut().unwrap().get_children().iter_shared() {
             child.free();

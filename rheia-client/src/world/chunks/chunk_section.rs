@@ -1,6 +1,9 @@
 use std::borrow::BorrowMut;
 
-use common::{blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE};
+use common::{
+    blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE,
+    CHUNK_SIZE_BOUNDARY,
+};
 use godot::{
     classes::{Material, MeshInstance3D},
     prelude::*,
@@ -16,8 +19,8 @@ use physics::PhysicsColliderBuilder;
 
 use super::mesh::mesh_generator::Geometry;
 
-//pub type ChunkShape = ConstShape3u32<16, 16, 16>;
-pub type ChunkBordersShape = ConstShape3u32<18, 18, 18>;
+//pub type ChunkShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
+pub type ChunkBordersShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
 
 //pub type ChunkData = [BlockInfo; ChunkShape::SIZE as usize];
 pub type ChunkColliderDataBordered = [ChunkColliderInfo; ChunkBordersShape::SIZE as usize];
@@ -32,7 +35,7 @@ pub struct ChunkSection {
     chunk_position: ChunkPosition,
     y: u8,
 
-    pub need_update_geometry: bool,
+    need_update_geometry: bool,
 
     collider: Option<PhysicsCollider>,
     colider_builder: Option<PhysicsColliderBuilder>,
@@ -72,6 +75,8 @@ impl ChunkSection {
     }
 
     /// Updates the mesh from a separate thread
+    ///
+    /// `update_geometry` must be called after
     pub fn set_new_geometry(&mut self, geometry: Geometry) {
         let mesh = self.mesh.borrow_mut();
 
@@ -84,6 +89,10 @@ impl ChunkSection {
 
         self.need_update_geometry = true;
         self.colider_builder = geometry.collider_builder
+    }
+
+    pub fn is_geometry_update_needed(&self) -> bool {
+        self.need_update_geometry
     }
 
     /// Causes an update in the main thread after the entire chunk has been loaded

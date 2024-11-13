@@ -1,6 +1,9 @@
 use crate::world::worlds_manager::{BlockStorageType, TextureMapperType};
 
-use super::{chunks_map::ChunkLock, near_chunk_data::NearChunksData};
+use super::{
+    chunk_data_formatter::format_chunk_data_with_boundaries, chunks_map::ChunkLock,
+    mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
+};
 use common::VERTICAL_SECTIONS;
 use godot::obj::InstanceId;
 
@@ -16,11 +19,20 @@ pub(crate) fn generate_chunk(
     block_storage: BlockStorageType,
 ) {
     rayon::spawn(move || {
-        let c = chunk_column.read();
+        let data = chunk_column.read().get_chunk_data().clone();
 
-        c.spawn_sections(&material_instance_id);
+        chunk_column.read().spawn_sections(&material_instance_id);
         for y in 0..VERTICAL_SECTIONS {
-            c.generate_section_geometry(&chunks_near, y, &block_storage.read(), &texture_mapper.read());
+
+            let (bordered_chunk_data, mesh_count) =
+                format_chunk_data_with_boundaries(Some(&chunks_near), &data, &*block_storage.read(), y).unwrap();
+
+            if mesh_count > 0 {
+                let geometry = generate_chunk_geometry(&texture_mapper.read(), &bordered_chunk_data, &block_storage.read());
+
+                let mut chunk_section = chunk_column.read().get_chunk_section(&y);
+                chunk_section.bind_mut().set_new_geometry(geometry);
+            }
         }
 
         chunks_loaded
