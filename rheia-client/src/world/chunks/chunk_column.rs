@@ -114,7 +114,7 @@ impl ChunkColumn {
         }
     }
 
-    pub fn get_chunk_data(&self) -> &ColumnDataLockType {
+    pub fn get_chunk_lock(&self) -> &ColumnDataLockType {
         &self.data
     }
 
@@ -134,7 +134,7 @@ impl ChunkColumn {
         )
     }
 
-    pub fn spawn_loaded_chunk(&mut self) {
+    pub fn spawn_loaded_chunk(&self) {
         let mut base = self.get_base();
         let mut c = base.bind_mut();
 
@@ -142,16 +142,6 @@ impl ChunkColumn {
         // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
         c.base_mut().set_global_position(self.get_chunk_position());
         self.set_loaded();
-    }
-
-    /// Deactivates chunks that are far away from the player
-    pub fn set_active(&mut self, state: bool) {
-        if self.is_loaded() {
-            let mut base = self.get_base();
-            for section in base.bind_mut().sections.as_mut() {
-                section.bind_mut().set_active(state);
-            }
-        }
     }
 
     pub fn change_block_info(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: BlockInfo) {

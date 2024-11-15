@@ -70,11 +70,12 @@ impl ChunkMap {
 
     pub fn _get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataLockType> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.read().get_chunk_data().clone()),
+            Some(c) => Some(c.read().get_chunk_lock().clone()),
             None => None,
         }
     }
 
+    /// Create chunk column and send it to render queue
     pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         if self.chunks.contains_key(&chunk_position) {
             log::error!(
@@ -89,17 +90,6 @@ impl ChunkMap {
         self.chunks
             .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
         self.sended_chunks.borrow_mut().insert(chunk_position);
-    }
-
-    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
-        let mut unloaded = false;
-        if let Some(chunk_column) = self.chunks.remove(&chunk_position) {
-            chunk_column.write().free();
-            unloaded = true;
-        }
-        if !unloaded {
-            log::error!(target: "chunk_map", "Unload chunk not found: {}", chunk_position);
-        }
     }
 
     /// Send new recieved chunks to load (render)
@@ -136,39 +126,43 @@ impl ChunkMap {
     pub fn spawn_loaded_chunks(&mut self, physics: &PhysicsProxy) {
         let mut base = self.base_mut().clone();
         for l in self.chunks_to_spawn.1.drain() {
-            let mut chunk_column = l.write();
+            let chunk_column = l.read();
 
             let chunk_base = chunk_column.get_base();
             base.add_child(&chunk_base);
             chunk_column.spawn_loaded_chunk();
-            {
-                let this = &mut chunk_column;
-                let mut base = this.get_base();
-                let mut c = base.bind_mut();
 
-                for section in c.sections.iter_mut() {
-                    if section.bind().is_geometry_update_needed() {
-                        section.bind_mut().update_geometry(physics);
-                    }
+            let mut base = chunk_column.get_base();
+            let mut c = base.bind_mut();
+
+            for section in c.sections.iter_mut() {
+                if section.bind().is_geometry_update_needed() {
+                    section.bind_mut().update_geometry(physics);
                 }
-            };
+            }
+
         }
     }
 
-    pub fn change_active_chunk(&mut self, active_chunk_position: &ChunkPosition) {
-        for (chunk_position, chunk_lock) in self.chunks.iter_mut() {
-            chunk_lock.write().set_active(chunk_position == active_chunk_position);
+    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
+        let mut unloaded = false;
+        if let Some(chunk_column) = self.chunks.remove(&chunk_position) {
+            chunk_column.write().free();
+            unloaded = true;
+        }
+        if !unloaded {
+            log::error!(target: "chunk_map", "Unload chunk not found: {}", chunk_position);
         }
     }
 
     pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
-            return;
+            panic!("edit_block chunk not found");
         };
 
         let (section, block_position) = position.get_block_position();
         if section > VERTICAL_SECTIONS as u32 {
-            return;
+            panic!("section y cannot be more than VERTICAL_SECTIONS");
         }
         chunk_column
             .write()
@@ -197,7 +191,7 @@ impl ChunkMap {
                 .expect("chunk from chunks_to_update is not found");
             let c = chunk_column.read();
 
-            let data = c.get_chunk_data().clone();
+            let data = c.get_chunk_lock().clone();
 
             let (bordered_chunk_data, _mesh_count) =
                 format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y.clone()).unwrap();

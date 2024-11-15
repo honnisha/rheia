@@ -7,6 +7,19 @@ use godot::{
 
 // https://github.com/Ryan-Mirch/Line-and-Sphere-Drawing/blob/main/Draw3D.gd
 
+pub fn get_face_vector() -> Vec<Vector3> {
+    vec![
+        Vector3::new(-0.5, -0.5, -0.5),
+        Vector3::new(0.5, -0.5, -0.5),
+        Vector3::new(0.5, -0.5, -0.5),
+        Vector3::new(0.5, 0.5, -0.5),
+        Vector3::new(0.5, 0.5, -0.5),
+        Vector3::new(-0.5, 0.5, -0.5),
+        Vector3::new(-0.5, 0.5, -0.5),
+        Vector3::new(-0.5, -0.5, -0.5),
+    ]
+}
+
 pub fn generate_lines(mut positions: Vec<Vector3>, color: Color) -> Gd<MeshInstance3D> {
     let mut mesh_instance = MeshInstance3D::new_alloc();
 

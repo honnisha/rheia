@@ -7,7 +7,7 @@ use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::entities_manager::EntitiesManager,
     scenes::main_scene::MainScene,
-    utils::{bridge::IntoChunkPositionVector, primitives::generate_lines},
+    utils::primitives::{generate_lines, get_face_vector},
 };
 use godot::{classes::Material, prelude::*};
 use network::messages::NetworkMessageType;
@@ -55,17 +55,7 @@ impl WorldManager {
 
         let mut selection = Node3D::new_alloc();
 
-        let positions = vec![
-            Vector3::new(-0.5, -0.5, -0.5),
-            Vector3::new(0.5, -0.5, -0.5),
-            Vector3::new(0.5, -0.5, -0.5),
-            Vector3::new(0.5, 0.5, -0.5),
-            Vector3::new(0.5, 0.5, -0.5),
-            Vector3::new(-0.5, 0.5, -0.5),
-            Vector3::new(-0.5, 0.5, -0.5),
-            Vector3::new(-0.5, -0.5, -0.5),
-        ];
-        let mesh = generate_lines(positions, Color::from_rgb(0.0, 0.0, 0.0));
+        let mesh = generate_lines(get_face_vector(), Color::from_rgb(0.0, 0.0, 0.0));
         selection.add_child(&mesh);
         selection.set_visible(false);
 
@@ -141,16 +131,10 @@ impl WorldManager {
 #[godot_api]
 impl WorldManager {
     #[func]
-    fn handler_player_move(&mut self, movement: Gd<EntityMovement>, new_chunk: bool) {
+    fn handler_player_move(&mut self, movement: Gd<EntityMovement>, _new_chunk: bool) {
         let main = self.get_main();
         main.bind()
             .network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
-
-        if new_chunk {
-            self.chunk_map
-                .bind_mut()
-                .change_active_chunk(&movement.bind().get_position().to_chunk_position());
-        }
     }
 }
 

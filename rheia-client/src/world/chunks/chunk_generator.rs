@@ -19,16 +19,19 @@ pub(crate) fn generate_chunk(
     block_storage: BlockStorageType,
 ) {
     rayon::spawn(move || {
-        let data = chunk_column.read().get_chunk_data().clone();
+        let now = std::time::Instant::now();
+        let data = chunk_column.read().get_chunk_lock().clone();
 
         chunk_column.read().spawn_sections(&material_instance_id);
         for y in 0..VERTICAL_SECTIONS {
-
             let (bordered_chunk_data, mesh_count) =
                 format_chunk_data_with_boundaries(Some(&chunks_near), &data, &*block_storage.read(), y).unwrap();
 
             if mesh_count > 0 {
-                let geometry = generate_chunk_geometry(&texture_mapper.read(), &bordered_chunk_data, &block_storage.read());
+                let generate_now = std::time::Instant::now();
+                let geometry =
+                    generate_chunk_geometry(&texture_mapper.read(), &bordered_chunk_data, &block_storage.read());
+                println!("generate_chunk_geometry:{:.2?}", generate_now.elapsed());
 
                 let mut chunk_section = chunk_column.read().get_chunk_section(&y);
                 chunk_section.bind_mut().set_new_geometry(geometry);
@@ -38,5 +41,6 @@ pub(crate) fn generate_chunk(
         chunks_loaded
             .send(chunk_column.clone())
             .expect("chunks_loaded channel poisoned");
+        println!("generate_chunk:{:.2?}", now.elapsed());
     });
 }
