@@ -1,7 +1,7 @@
 use common::chunks::{block_position::BlockPosition, position::Vector3};
 
 pub trait IQueryFilter<S: IPhysicsShape, C: IPhysicsCollider<S>>: Default {
-    fn exclude_exclude_collider(&mut self, collider: &C);
+    fn exclude_collider(&mut self, collider: &C);
 }
 
 pub trait IPhysicsShape {}

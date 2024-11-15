@@ -28,7 +28,7 @@ pub trait IClientNetwork: Sized {
 
     fn disconnect(&self);
 
-    fn send_message(&self, message: &ClientMessages, message_type: NetworkMessageType);
+    fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages);
 
     fn get_network_info(&self) -> RwLockReadGuard<NetworkInfo>;
 }

@@ -22,7 +22,7 @@ impl Default for PhysxQueryFilter {
 }
 
 impl IQueryFilter<PhysxPhysicsCollider> for PhysxQueryFilter {
-    fn exclude_exclude_collider(&mut self, collider: &PhysxPhysicsCollider) {
+    fn exclude_collider(&mut self, collider: &PhysxPhysicsCollider) {
         self.pre_filter_callback = Some(unsafe { create_raycast_filter_callback(collider.actor.as_ptr()) });
     }
 }

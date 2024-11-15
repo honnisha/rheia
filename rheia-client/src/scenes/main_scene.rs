@@ -69,7 +69,7 @@ impl MainScene {
     pub fn network_send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
         let lock = self.get_network_lock().expect("network is not set");
         let network = lock.read();
-        network.send_message(message, message_type);
+        network.send_message(message_type, message);
     }
 
     pub fn get_text_screen_mut(&mut self) -> GdMut<'_, TextScreen> {
@@ -110,6 +110,10 @@ impl MainScene {
     pub fn send_disconnect_event(&mut self, message: String) {
         Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
         self.base_mut().emit_signal("disconnect", &[message.to_variant()]);
+    }
+
+    pub fn on_server_connected(&mut self) {
+        self.debug_info.bind_mut().toggle(true);
     }
 }
 

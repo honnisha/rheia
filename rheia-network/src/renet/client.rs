@@ -241,7 +241,7 @@ impl IClientNetwork for RenetClientNetwork {
         self.get_transport().disconnect_reason().is_none()
     }
 
-    fn send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
+    fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages) {
         if !self.get_client().is_connected() {
             panic!("send_message while network is not connected; message: {}", message);
         }

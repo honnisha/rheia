@@ -6,6 +6,7 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::client_scripts::resource_manager::ResourceManager;
+use crate::network::client::NetworkLockType;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::block_storage::BlockStorage;
@@ -90,21 +91,27 @@ impl WorldsManager {
 
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, rotation: Rotation) {
+    pub fn teleport_player(
+        &mut self,
+        world_slug: String,
+        position: Vector3,
+        rotation: Rotation,
+        network_lock: NetworkLockType,
+    ) {
         if self.world.is_some() {
             if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
                 // Player moving to another world; old one must be destroyed
                 self.destroy_world();
-                self.create_world(world_slug);
+                self.create_world(world_slug, network_lock);
             }
         } else {
-            self.create_world(world_slug);
+            self.create_world(world_slug, network_lock);
         }
 
         self.teleport_player_controller(position, rotation)
     }
 
-    pub fn create_world(&mut self, world_slug: String) {
+    pub fn create_world(&mut self, world_slug: String, network_lock: NetworkLockType) {
         let mut world = Gd::<WorldManager>::from_init_fn(|base| {
             WorldManager::create(
                 base,
@@ -112,6 +119,7 @@ impl WorldsManager {
                 self.texture_mapper.clone(),
                 self.material.as_ref().unwrap().clone(),
                 self.block_storage.clone(),
+                network_lock,
             )
         });
 

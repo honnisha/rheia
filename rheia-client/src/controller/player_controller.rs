@@ -1,6 +1,8 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
+use crate::network::client::NetworkLockType;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
+use crate::utils::primitives::{generate_lines, get_face_vector};
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use crate::world::world_manager::WorldManager;
 use common::blocks::block_info::BlockInfo;
@@ -8,6 +10,7 @@ use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
+use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
 use physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
 use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
@@ -35,6 +38,7 @@ const CONTROLLER_MASS: f32 = 3.0;
 #[class(no_init, base=Node3D)]
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
+    network_lock: NetworkLockType,
 
     entity: Gd<Entity>,
 
@@ -52,10 +56,12 @@ pub struct PlayerController {
     grounded_timer: f32,
 
     look_at_message: String,
+
+    block_selection: Gd<Node3D>,
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node3D>, physics: &PhysicsProxy) -> Self {
+    pub fn create(base: Base<Node3D>, physics: &PhysicsProxy, network_lock: NetworkLockType) -> Self {
         let controls = Controls::new_alloc();
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
@@ -64,8 +70,15 @@ impl PlayerController {
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
         let collider = physics.create_collider(collider_builder, None);
 
+        let mut selection = Node3D::new_alloc();
+
+        let mesh = generate_lines(get_face_vector(), Color::from_rgb(0.0, 0.0, 0.0));
+        selection.add_child(&mesh);
+        selection.set_visible(false);
+
         Self {
             base,
+            network_lock,
 
             entity: Gd::<Entity>::from_init_fn(|base| Entity::create(base)),
             camera_controller,
@@ -81,6 +94,8 @@ impl PlayerController {
             grounded_timer: 0.0,
 
             look_at_message: Default::default(),
+
+            block_selection: selection,
         }
     }
 
@@ -120,8 +135,8 @@ impl PlayerController {
     }
 
     fn detect_is_grounded(&mut self, delta: f64) {
-        let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
-        let mut w = world.bind_mut();
+        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
+        let w = world.bind();
 
         let ray_direction = RayDirection {
             dir: Vector3::new(0.0, -1.0, 0.0),
@@ -129,9 +144,9 @@ impl PlayerController {
             max_toi: SNAP_TO_GROUND,
         };
         let mut filter = QueryFilter::default();
-        filter.exclude_exclude_collider(&self.collider);
+        filter.exclude_collider(&self.collider);
         self.is_grounded = w
-            .get_physics_mut()
+            .get_physics()
             .cast_shape(self.collider.get_shape(), ray_direction, filter)
             .is_some();
 
@@ -188,16 +203,16 @@ impl PlayerController {
 
     pub fn update_vision(&mut self) {
         let mut filter = QueryFilter::default();
-        filter.exclude_exclude_collider(&self.collider);
+        filter.exclude_collider(&self.collider);
 
-        let mut world = self.base().get_parent().unwrap().cast::<WorldManager>();
-        let mut w = world.bind_mut();
+        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
+        let world = world.bind();
 
-        w.get_block_selection_mut().set_visible(false);
+        self.block_selection.set_visible(false);
 
         let camera_controller = self.camera_controller.bind();
         let ray_direction = camera_controller.get_ray_from_center();
-        let Some((cast_result, physics_type)) = w.get_physics_mut().cast_ray(ray_direction, filter) else {
+        let Some((cast_result, physics_type)) = world.get_physics().cast_ray(ray_direction, filter) else {
             self.look_at_message = "-".to_string();
             return;
         };
@@ -207,29 +222,29 @@ impl PlayerController {
                 let selected_block = cast_result.get_selected_block();
                 if self.controls.bind().is_main_action() {
                     let msg = ClientMessages::EditBlockRequest {
-                        world_slug: w.get_slug().clone(),
+                        world_slug: world.get_slug().clone(),
                         position: cast_result.get_place_block(),
                         new_block_info: BlockInfo::create(1, None),
                     };
-                    w.get_main()
-                        .bind()
-                        .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
+                    self.network_lock
+                        .read()
+                        .send_message(NetworkMessageType::ReliableOrdered, &msg);
                 }
                 if self.controls.bind().is_second_action() {
                     let msg = ClientMessages::EditBlockRequest {
-                        world_slug: w.get_slug().clone(),
+                        world_slug: world.get_slug().clone(),
                         position: selected_block,
                         new_block_info: BlockInfo::create(0, None),
                     };
-                    w.get_main()
-                        .bind()
-                        .network_send_message(&msg, NetworkMessageType::ReliableOrdered);
+                    self.network_lock
+                        .read()
+                        .send_message(NetworkMessageType::ReliableOrdered, &msg);
                 }
-                let block_selection = w.get_block_selection_mut();
-                block_selection.set_visible(true);
-                block_selection
+                self.block_selection.set_visible(true);
+                self.block_selection
                     .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
-                block_selection.set_rotation_degrees(get_degrees_from_normal(cast_result.normal.to_godot()));
+                self.block_selection
+                    .set_rotation_degrees(get_degrees_from_normal(cast_result.normal.to_godot()));
                 format!("block:{selected_block:?}")
             }
             PhysicsType::EntityCollider(entity_id) => {
@@ -260,6 +275,9 @@ impl INode3D for PlayerController {
 
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
+
+        let block_selection = self.block_selection.clone();
+        self.base_mut().add_child(&block_selection);
     }
 
     fn process(&mut self, delta: f64) {
@@ -281,7 +299,7 @@ impl INode3D for PlayerController {
             let movement = self.get_movement(delta);
 
             let mut filter = QueryFilter::default();
-            filter.exclude_exclude_collider(&self.collider);
+            filter.exclude_collider(&self.collider);
 
             let translation =
                 self.character_controller
@@ -289,9 +307,9 @@ impl INode3D for PlayerController {
             self.collider.set_position(self.collider.get_position() + translation);
 
             self.update_vision();
-        }
 
-        self.detect_is_grounded(delta);
+            self.detect_is_grounded(delta);
+        }
 
         // Sync godot object position
         let physics_pos = self.collider.get_position();

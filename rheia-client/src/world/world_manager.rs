@@ -6,11 +6,17 @@ use super::{
 use crate::{
     controller::{entity_movement::EntityMovement, player_controller::PlayerController},
     entities::entities_manager::EntitiesManager,
-    scenes::main_scene::MainScene,
-    utils::primitives::{generate_lines, get_face_vector},
+    network::client::NetworkLockType,
+};
+use common::{
+    blocks::block_info::BlockInfo,
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
 };
 use godot::{classes::Material, prelude::*};
-use network::messages::NetworkMessageType;
+use network::{
+    client::IClientNetwork,
+    messages::{NetworkMessageType, SectionsData},
+};
 
 /// Godot world
 /// Contains all things inside world
@@ -32,11 +38,10 @@ pub struct WorldManager {
 
     entities_manager: Gd<EntitiesManager>,
 
-    block_selection: Gd<Node3D>,
-
     texture_mapper: TextureMapperType,
     material: Gd<Material>,
     block_storage: BlockStorageType,
+    network_lock: NetworkLockType,
 }
 
 impl WorldManager {
@@ -46,18 +51,14 @@ impl WorldManager {
         texture_mapper: TextureMapperType,
         material: Gd<Material>,
         block_storage: BlockStorageType,
+        network_lock: NetworkLockType,
     ) -> Self {
         let mut physics = PhysicsProxy::default();
         let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base));
         chunk_map.bind_mut().base_mut().set_name("ChunkMap");
-        let player_controller =
-            Gd::<PlayerController>::from_init_fn(|base| PlayerController::create(base, &mut physics));
-
-        let mut selection = Node3D::new_alloc();
-
-        let mesh = generate_lines(get_face_vector(), Color::from_rgb(0.0, 0.0, 0.0));
-        selection.add_child(&mesh);
-        selection.set_visible(false);
+        let player_controller = Gd::<PlayerController>::from_init_fn(|base| {
+            PlayerController::create(base, &mut physics, network_lock.clone())
+        });
 
         Self {
             base,
@@ -69,16 +70,11 @@ impl WorldManager {
 
             entities_manager: Gd::<EntitiesManager>::from_init_fn(|base| EntitiesManager::create(base)),
 
-            block_selection: selection,
-
             texture_mapper,
             material,
             block_storage,
+            network_lock,
         }
-    }
-
-    pub fn get_block_selection_mut(&mut self) -> &mut Gd<Node3D> {
-        &mut self.block_selection
     }
 
     pub fn _get_entities_manager(&self) -> GdRef<EntitiesManager> {
@@ -89,8 +85,8 @@ impl WorldManager {
         self.entities_manager.bind_mut()
     }
 
-    pub fn get_physics_mut(&mut self) -> &mut PhysicsProxy {
-        &mut self.physics
+    pub fn get_physics(&self) -> &PhysicsProxy {
+        &self.physics
     }
 
     pub fn get_slug(&self) -> &String {
@@ -105,8 +101,18 @@ impl WorldManager {
         self.chunk_map.bind()
     }
 
-    pub fn get_chunk_map_mut(&mut self) -> GdMut<ChunkMap> {
-        self.chunk_map.bind_mut()
+    /// Recieve chunk data from network
+    pub fn recieve_chunk(&mut self, chunk_position: ChunkPosition, data: SectionsData) {
+        self.chunk_map.bind_mut().create_chunk_column(chunk_position, data);
+    }
+
+    /// Recieve chunk unloaded from network
+    pub fn unload_chunk(&mut self, chunk_position: ChunkPosition) {
+        self.chunk_map.bind_mut().unload_chunk(chunk_position)
+    }
+
+    pub fn edit_block(&mut self, position: BlockPosition, new_block_info: BlockInfo) {
+        self.chunk_map.bind_mut().edit_block(position, new_block_info)
     }
 
     pub fn get_player_controller(&self) -> &Gd<PlayerController> {
@@ -116,36 +122,32 @@ impl WorldManager {
     pub fn get_player_controller_mut(&mut self) -> &mut Gd<PlayerController> {
         &mut self.player_controller
     }
-
-    pub fn get_main(&self) -> Gd<MainScene> {
-        let main = self
-            .base()
-            .to_godot()
-            .get_parent()
-            .expect("main scene not found")
-            .cast::<MainScene>();
-        main.clone()
-    }
 }
 
 #[godot_api]
 impl WorldManager {
     #[func]
     fn handler_player_move(&mut self, movement: Gd<EntityMovement>, _new_chunk: bool) {
-        let main = self.get_main();
-        main.bind()
-            .network_send_message(&movement.bind().into_network(), NetworkMessageType::Unreliable);
+        self.network_lock
+            .read()
+            .send_message(NetworkMessageType::Unreliable, &movement.bind().into_network());
+    }
+
+    #[func]
+    fn on_chunk_loaded(&mut self) {
+        unimplemented!()
     }
 }
 
 #[godot_api]
 impl INode for WorldManager {
     fn ready(&mut self) {
+        let obj = self.base().to_godot().clone();
+
         let chunk_map = self.chunk_map.clone();
         self.base_mut().add_child(&chunk_map);
 
         // Bind world player move signal
-        let obj = self.base().to_godot().clone();
         self.player_controller.bind_mut().base_mut().connect(
             "on_player_move",
             &Callable::from_object_method(&obj, "handler_player_move"),
@@ -156,9 +158,6 @@ impl INode for WorldManager {
 
         let entities_manager = self.entities_manager.clone();
         self.base_mut().add_child(&entities_manager);
-
-        let block_selection = self.block_selection.clone();
-        self.base_mut().add_child(&block_selection);
     }
 
     fn process(&mut self, delta: f64) {

@@ -46,6 +46,12 @@ pub struct ChunkMap {
     chunks_to_update: Rc<RefCell<HashSet<(ChunkPosition, usize)>>>,
 }
 
+#[godot_api]
+impl ChunkMap {
+    #[signal]
+    fn chunk_recieved();
+}
+
 impl ChunkMap {
     pub fn create(base: Base<Node>) -> Self {
         Self {
@@ -76,7 +82,7 @@ impl ChunkMap {
     }
 
     /// Create chunk column and send it to render queue
-    pub fn load_chunk(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+    pub fn create_chunk_column(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
         if self.chunks.contains_key(&chunk_position) {
             log::error!(
                 target: "chunk_map",
@@ -93,6 +99,8 @@ impl ChunkMap {
     }
 
     /// Send new recieved chunks to load (render)
+    ///
+    /// Can be sended only if all bordered chunks are loaded
     pub fn send_chunks_to_load(
         &mut self,
         material_instance_id: InstanceId,
