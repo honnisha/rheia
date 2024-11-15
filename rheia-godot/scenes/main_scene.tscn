@@ -1,10 +1,22 @@
-[gd_scene load_steps=6 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
-[ext_resource type="PackedScene" uid="uid://cs2fptc2k4veq" path="res://assets/sky/sky.tscn" id="2_eyb06"]
 [ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="2_xhcjx"]
 [ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
+
+[sub_resource type="Sky" id="Sky_7db6b"]
+
+[sub_resource type="Environment" id="Environment_8w0cv"]
+background_mode = 1
+background_color = Color(0.484863, 0.694348, 0.996564, 1)
+sky = SubResource("Sky_7db6b")
+ambient_light_source = 1
+reflected_light_source = 1
+
+[sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_bhmtq"]
 
 [node name="MainScene" type="MainScene"]
 console_scene = ExtResource("1_rga66")
@@ -12,12 +24,19 @@ text_screen_scene = ExtResource("2_773ro")
 debug_info_scene = ExtResource("3_qwjw3")
 block_icon_scene = ExtResource("2_xhcjx")
 
-[node name="Sky" parent="." instance=ExtResource("2_eyb06")]
-time_of_day_setup = 0.762
-clouds_coverage = 0.39
-clouds_height = 0.4
-clouds_size = 0.52
-clouds_quality = 100
-wind_strength = 0.05
-
 [node name="BlockIcon" parent="." instance=ExtResource("2_xhcjx")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_8w0cv")
+camera_attributes = SubResource("CameraAttributesPractical_cqqg4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
+mesh = SubResource("BoxMesh_bhmtq")
+skeleton = NodePath("../DirectionalLight3D")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
+light_angular_distance = 30.0
+directional_shadow_mode = 0
+sky_mode = 1

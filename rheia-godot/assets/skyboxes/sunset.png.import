@@ -2,31 +2,30 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://l3b78x3f7thl"
-path.s3tc="res://.godot/imported/moon.png-049ea1b4976859199f87e8acf155b80a.s3tc.ctex"
+uid="uid://c73v05uekugsd"
+path="res://.godot/imported/sunset.png-9e165249ebfa26033f866d39707b194c.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sky/moon.png"
-dest_files=["res://.godot/imported/moon.png-049ea1b4976859199f87e8acf155b80a.s3tc.ctex"]
+source_file="res://assets/skyboxes/sunset.png"
+dest_files=["res://.godot/imported/sunset.png-9e165249ebfa26033f866d39707b194c.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=3
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=0
+roughness/mode=5
 roughness/src_normal=""
-process/fix_alpha_border=true
+process/fix_alpha_border=false
 process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false

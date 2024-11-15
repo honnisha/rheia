@@ -84,6 +84,8 @@ action_second={
 
 [rendering]
 
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/use_taa=true
 occlusion_culling/use_occlusion_culling=true
 

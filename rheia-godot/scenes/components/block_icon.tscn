@@ -31,6 +31,7 @@ stretch = true
 own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
+size = Vector2i(200, 200)
 render_target_update_mode = 4
 
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport"]

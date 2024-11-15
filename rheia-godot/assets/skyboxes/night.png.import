@@ -2,31 +2,30 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cvsial8n2kljl"
-path.s3tc="res://.godot/imported/starfield.png-2c48ec2c2794091a866fc0a849bf17e9.s3tc.ctex"
+uid="uid://bhfbufg76eviq"
+path="res://.godot/imported/night.png-1387eb0ac47a2cee5e84bd3811fa6129.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
-"vram_texture": true
+"vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sky/starfield.png"
-dest_files=["res://.godot/imported/starfield.png-2c48ec2c2794091a866fc0a849bf17e9.s3tc.ctex"]
+source_file="res://assets/skyboxes/night.png"
+dest_files=["res://.godot/imported/night.png-1387eb0ac47a2cee5e84bd3811fa6129.ctex"]
 
 [params]
 
-compress/mode=2
+compress/mode=3
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=0
+roughness/mode=5
 roughness/src_normal=""
-process/fix_alpha_border=true
+process/fix_alpha_border=false
 process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false

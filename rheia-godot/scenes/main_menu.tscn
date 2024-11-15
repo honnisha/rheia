@@ -11,8 +11,8 @@
 gui = NodePath("GUI")
 buttons_holder = NodePath("GUI/VBoxContainer/BottomHalf/ButtonsHolder")
 bottom_text = NodePath("GUI/VBoxContainer/BottomHalf/MarginContainer/BottomText")
-text_screen_scene = ExtResource("1_bl486")
 menu_button = ExtResource("3_frrkb")
+text_screen_scene = ExtResource("1_bl486")
 connect_screen_scene = ExtResource("3_8ft6b")
 
 [node name="GUI" type="Control" parent="."]

@@ -48,15 +48,15 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
     for event in network.iter_server_messages() {
         match event {
             ServerMessages::AllowConnection => {
+                let device_name = match RenderingServer::singleton().get_rendering_device() {
+                    Some(d) => d.get_device_name().to_string(),
+                    None => String::from("-"),
+                };
                 let connection_info = ClientMessages::ConnectionInfo {
                     login: main.get_login().clone(),
                     version: VERSION.to_string(),
                     architecture: Engine::singleton().get_architecture_name().to_string(),
-                    rendering_device: RenderingServer::singleton()
-                        .get_rendering_device()
-                        .unwrap()
-                        .get_device_name()
-                        .to_string(),
+                    rendering_device: device_name,
                 };
                 network.send_message(NetworkMessageType::ReliableOrdered, &connection_info);
             }
