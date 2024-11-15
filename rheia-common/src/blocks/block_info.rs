@@ -10,18 +10,20 @@ pub enum BlockFace {
     West,
 }
 
+pub type BlockIndexType = u8;
+
 #[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize)]
 pub struct BlockInfo {
-    id: u32,
+    id: BlockIndexType,
     face: Option<BlockFace>,
 }
 
 impl BlockInfo {
-    pub fn create(id: u32, face: Option<BlockFace>) -> BlockInfo {
+    pub fn create(id: BlockIndexType, face: Option<BlockFace>) -> BlockInfo {
         BlockInfo { id, face }
     }
 
-    pub fn get_id(&self) -> u32 {
+    pub fn get_id(&self) -> BlockIndexType {
         self.id
     }
 }

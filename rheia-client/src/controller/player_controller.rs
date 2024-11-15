@@ -39,6 +39,7 @@ const CONTROLLER_MASS: f32 = 3.0;
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
     network_lock: NetworkLockType,
+    physics: PhysicsProxy,
 
     entity: Gd<Entity>,
 
@@ -61,14 +62,18 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn create(base: Base<Node3D>, physics: &PhysicsProxy, network_lock: NetworkLockType) -> Self {
+    pub fn create(
+        base: Base<Node3D>,
+        physics: PhysicsProxy,
+        network_lock: NetworkLockType,
+    ) -> Self {
         let controls = Controls::new_alloc();
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
         camera_controller.set_position(Vector3::new(0.0, CONTROLLER_CAMERA_OFFSET_VERTICAL, 0.0));
 
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
-        let collider = physics.create_collider(collider_builder, None);
+        let collider = physics.clone().create_collider(collider_builder, None);
 
         let mut selection = Node3D::new_alloc();
 
@@ -79,6 +84,7 @@ impl PlayerController {
         Self {
             base,
             network_lock,
+            physics,
 
             entity: Gd::<Entity>::from_init_fn(|base| Entity::create(base)),
             camera_controller,
@@ -135,9 +141,6 @@ impl PlayerController {
     }
 
     fn detect_is_grounded(&mut self, delta: f64) {
-        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
-        let w = world.bind();
-
         let ray_direction = RayDirection {
             dir: Vector3::new(0.0, -1.0, 0.0),
             from: self.collider.get_position().to_godot(),
@@ -145,8 +148,8 @@ impl PlayerController {
         };
         let mut filter = QueryFilter::default();
         filter.exclude_collider(&self.collider);
-        self.is_grounded = w
-            .get_physics()
+        self.is_grounded = self
+            .physics
             .cast_shape(self.collider.get_shape(), ray_direction, filter)
             .is_some();
 
@@ -205,20 +208,20 @@ impl PlayerController {
         let mut filter = QueryFilter::default();
         filter.exclude_collider(&self.collider);
 
-        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
-        let world = world.bind();
-
         self.block_selection.set_visible(false);
 
         let camera_controller = self.camera_controller.bind();
         let ray_direction = camera_controller.get_ray_from_center();
-        let Some((cast_result, physics_type)) = world.get_physics().cast_ray(ray_direction, filter) else {
+        let Some((cast_result, physics_type)) = self.physics.cast_ray(ray_direction, filter) else {
             self.look_at_message = "-".to_string();
             return;
         };
 
         self.look_at_message = match physics_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
+                let world = self.base().get_parent().unwrap().cast::<WorldManager>();
+                let world = world.bind();
+
                 let selected_block = cast_result.get_selected_block();
                 if self.controls.bind().is_main_action() {
                     let msg = ClientMessages::EditBlockRequest {

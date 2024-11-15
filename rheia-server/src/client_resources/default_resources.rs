@@ -1,4 +1,5 @@
 use common::blocks::{
+    block_info::BlockIndexType,
     block_type::{BlockContent, BlockType},
     voxel_visibility::VoxelVisibility,
 };
@@ -13,7 +14,7 @@ pub const DEFAULT_MEDIA: &'static [&'static str] = &[
 ];
 
 lazy_static! {
-    pub static ref DEFAULT_BLOCKS: HashMap<u32, BlockType> = {
+    pub static ref DEFAULT_BLOCKS: HashMap<BlockIndexType, BlockType> = {
         let mut m = HashMap::new();
         m.insert(
             1,

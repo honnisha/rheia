@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::BlockType;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
@@ -72,7 +73,7 @@ pub enum ServerMessages {
         last: bool,
     },
     Settings {
-        block_types: HashMap<u32, BlockType>,
+        block_types: HashMap<BlockIndexType, BlockType>,
     },
 
     // Used to teleport the player's client controller.

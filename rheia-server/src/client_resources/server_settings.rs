@@ -1,7 +1,10 @@
 use std::{collections::HashMap, fs::File, path::PathBuf};
 
 use bevy::prelude::{Res, ResMut, Resource};
-use common::blocks::block_type::{BlockContent, BlockType};
+use common::blocks::{
+    block_info::BlockIndexType,
+    block_type::{BlockContent, BlockType},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -13,17 +16,17 @@ use super::resources_manager::ResourceManager;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ServerSettingsManifest {
-    pub blocks: Option<HashMap<u32, BlockType>>,
+    pub blocks: Option<HashMap<BlockIndexType, BlockType>>,
 }
 
 #[derive(Resource, Default)]
 pub struct ServerSettings {
-    block_types: HashMap<u32, BlockType>,
+    block_types: HashMap<BlockIndexType, BlockType>,
     loaded: bool,
 }
 
 impl ServerSettings {
-    pub fn get_block_types(&self) -> &HashMap<u32, BlockType> {
+    pub fn get_block_types(&self) -> &HashMap<BlockIndexType, BlockType> {
         assert!(self.loaded, "server settings is not loaded");
         &self.block_types
     }
@@ -56,7 +59,11 @@ impl ServerSettings {
         let manifest_info = match manifest_result {
             Ok(m) => m,
             Err(e) => {
-                return Err(format!("Settings file &e{}&r yaml parse error: &c{}", path.display(), e));
+                return Err(format!(
+                    "Settings file &e{}&r yaml parse error: &c{}",
+                    path.display(),
+                    e
+                ));
             }
         };
 

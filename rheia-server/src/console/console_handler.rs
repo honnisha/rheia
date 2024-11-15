@@ -82,7 +82,7 @@ impl ConsoleHandler {
                     break;
                 }
                 Err(e) => {
-                    println!("Error: {:?}", e);
+                    log::error!("Error: {:?}", e);
                 }
             }
         });

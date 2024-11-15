@@ -1,3 +1,4 @@
+use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::{BlockContent, BlockType};
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
@@ -6,22 +7,22 @@ use crate::client_scripts::resource_manager::ResourceManager;
 
 #[derive(Default)]
 pub struct BlockStorage {
-    blocks: HashMap<u32, BlockType>,
+    blocks: HashMap<BlockIndexType, BlockType>,
 }
 
 impl BlockStorage {
-    pub fn get(&self, k: &u32) -> Option<&BlockType> {
+    pub fn get(&self, k: &BlockIndexType) -> Option<&BlockType> {
         self.blocks.get(k)
     }
 
-    pub fn iter(&self) -> Iter<'_, u32, BlockType> {
+    pub fn iter(&self) -> Iter<'_, BlockIndexType, BlockType> {
         self.blocks.iter()
     }
 
     /// Saves the server-side block scheme
     pub fn load_blocks_types(
         &mut self,
-        block_types: HashMap<u32, BlockType>,
+        block_types: HashMap<BlockIndexType, BlockType>,
         resource_manager: &ResourceManager,
     ) -> Result<(), String> {
         self.blocks.clear();

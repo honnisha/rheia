@@ -53,11 +53,11 @@ impl WorldManager {
         block_storage: BlockStorageType,
         network_lock: NetworkLockType,
     ) -> Self {
-        let mut physics = PhysicsProxy::default();
+        let physics = PhysicsProxy::default();
         let mut chunk_map = Gd::<ChunkMap>::from_init_fn(|base| ChunkMap::create(base));
         chunk_map.bind_mut().base_mut().set_name("ChunkMap");
         let player_controller = Gd::<PlayerController>::from_init_fn(|base| {
-            PlayerController::create(base, &mut physics, network_lock.clone())
+            PlayerController::create(base, physics.clone(), network_lock.clone())
         });
 
         Self {

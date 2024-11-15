@@ -30,7 +30,6 @@ fn get_world_mut(worlds_manager: &mut WorldsManager, world_slug: String) -> Opti
 pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String> {
     let lock = main.get_network_lock().expect("network is not set");
     let network = lock.read();
-    let network_info = network.get_network_info().clone();
 
     // Recieve errors from network thread
     for error in network.iter_errors() {
@@ -50,7 +49,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
         match event {
             ServerMessages::AllowConnection => {
                 let connection_info = ClientMessages::ConnectionInfo {
-                    login: "Test_cl".to_string(),
+                    login: main.get_login().clone(),
                     version: VERSION.to_string(),
                     architecture: Engine::singleton().get_architecture_name().to_string(),
                     rendering_device: RenderingServer::singleton()
@@ -135,13 +134,12 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 chunk_position,
                 sections,
             } => {
-                //let mut worlds_manager = main.get_worlds_manager_mut();
-                //let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
-                //    continue;
-                //};
-                //world.bind_mut().recieve_chunk(chunk_position, sections);
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
+                    continue;
+                };
+                world.bind_mut().recieve_chunk(chunk_position, sections);
                 chunks.push(chunk_position);
-                //println!("ChunkSectionInfo: {}", chunk_position);
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
@@ -210,5 +208,6 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
         network.send_message(NetworkMessageType::WorldInfo, &input);
     }
 
+    let network_info = network.get_network_info().clone();
     Ok(network_info)
 }

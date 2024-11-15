@@ -44,8 +44,6 @@ pub fn format_chunk_data_with_boundaries(
         }
     }
 
-    // println!("mesh_count: {}", mesh_count);
-
     // fill boundaries
     if mesh_count == 0 {
         return b_chunk;

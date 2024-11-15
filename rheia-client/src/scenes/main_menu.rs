@@ -87,7 +87,7 @@ impl MainMenu {
         self.gui.as_mut().unwrap().set_visible(false);
 
         let mut main_scene = load::<PackedScene>("res://scenes/main_scene.tscn").instantiate_as::<MainScene>();
-        main_scene.bind_mut().set_ip(ip_port.to_string());
+        main_scene.bind_mut().init_data(ip_port.to_string(), "test_login".to_string());
         main_scene.connect(
             "disconnect",
             &Callable::from_object_method(&self.base().to_godot(), "on_disconnect"),

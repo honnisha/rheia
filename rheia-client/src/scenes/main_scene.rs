@@ -10,8 +10,6 @@ use crate::network::events::handle_network_events;
 use crate::world::worlds_manager::WorldsManager;
 use godot::classes::input::MouseMode;
 use godot::prelude::*;
-use network::client::IClientNetwork;
-use network::messages::{ClientMessages, NetworkMessageType};
 
 use crate::scenes::text_screen::TextScreen;
 
@@ -27,6 +25,7 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
 pub struct MainScene {
     base: Base<Node>,
     ip_port: Option<String>,
+    login: Option<String>,
 
     network: Option<NetworkContainer>,
 
@@ -55,8 +54,9 @@ pub struct MainScene {
 }
 
 impl MainScene {
-    pub fn set_ip(&mut self, ip_port: String) {
+    pub fn init_data(&mut self, ip_port: String, login: String) {
         self.ip_port = Some(ip_port);
+        self.login = Some(login);
     }
 
     pub fn get_network_lock(&self) -> Option<NetworkLockType> {
@@ -66,10 +66,8 @@ impl MainScene {
         }
     }
 
-    pub fn network_send_message(&self, message: &ClientMessages, message_type: NetworkMessageType) {
-        let lock = self.get_network_lock().expect("network is not set");
-        let network = lock.read();
-        network.send_message(message_type, message);
+    pub fn get_login(&self) -> &String {
+        self.login.as_ref().expect("init_data is not called")
     }
 
     pub fn get_text_screen_mut(&mut self) -> GdMut<'_, TextScreen> {
@@ -93,9 +91,11 @@ impl MainScene {
     }
 
     fn connect(&mut self) {
-        let ip = self.ip_port.as_ref().expect("set_ip is not called");
+        let ip = self.ip_port.as_ref().expect("init_data is not called");
 
-        self.text_screen.bind_mut().update_text(format!("Connecting to {}...", ip));
+        self.text_screen
+            .bind_mut()
+            .update_text(format!("Connecting to {}...", ip));
 
         let network = match NetworkContainer::new(ip.clone()) {
             Ok(c) => c,

@@ -174,8 +174,7 @@ impl RenetClientNetwork {
                 }
                 container.set_network_lock(true);
 
-                let delta_time = container.get_delta_time();
-                let success = container.step(delta_time);
+                let success = container.step(container.get_delta_time());
                 if !success {
                     break;
                 }
@@ -242,9 +241,6 @@ impl IClientNetwork for RenetClientNetwork {
     }
 
     fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages) {
-        if !self.get_client().is_connected() {
-            panic!("send_message while network is not connected; message: {}", message);
-        }
         let encoded = bincode::serialize(message).unwrap();
         let msg = (RenetClientNetwork::map_type_channel(message_type).into(), encoded);
         self.network_client_sended.0.send(msg).unwrap();
