@@ -31,12 +31,13 @@ environment = SubResource("Environment_8w0cv")
 camera_attributes = SubResource("CameraAttributesPractical_cqqg4")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 mesh = SubResource("BoxMesh_bhmtq")
 skeleton = NodePath("../DirectionalLight3D")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
-light_angular_distance = 30.0
+light_energy = 0.9
+light_angular_distance = 70.0
 directional_shadow_mode = 0
 sky_mode = 1
