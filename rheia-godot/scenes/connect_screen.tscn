@@ -4,7 +4,12 @@
 [ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="2_icyol"]
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="3_4so0s"]
 
-[node name="ConnectScreen" type="ConnectScreen"]
+[node name="ConnectScreen" type="ConnectScreen" node_paths=PackedStringArray("error_text", "input", "username_input", "back_button", "connect_button")]
+error_text = NodePath("VBoxContainer/VBoxContainer/Error")
+input = NodePath("VBoxContainer/VBoxContainer/Input")
+username_input = NodePath("VBoxContainer/VBoxContainer/InputUsername")
+back_button = NodePath("VBoxContainer/VBoxContainer/HBoxContainer/Back")
+connect_button = NodePath("VBoxContainer/VBoxContainer/HBoxContainer/Connect")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -47,6 +52,14 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 placeholder_text = "Enter IP"
+alignment = 1
+
+[node name="InputUsername" type="LineEdit" parent="VBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+placeholder_text = "Username"
 alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/VBoxContainer"]

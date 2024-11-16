@@ -39,3 +39,8 @@ pub fn split_resource_path(path: &String) -> Option<(String, String)> {
     let res_path = s[1..s.len()].join("/");
     return Some((s.get(0).unwrap().to_string(), res_path));
 }
+
+pub fn validate_username(username: &String) -> bool {
+    let re = regex::Regex::new(r"^[a-zA-Z0-9_]{2,16}$").unwrap();
+    re.is_match(username)
+}

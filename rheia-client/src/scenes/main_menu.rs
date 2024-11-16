@@ -44,6 +44,8 @@ pub struct MainMenu {
     #[init(val = OnReady::manual())]
     connect_screen: OnReady<Gd<ConnectScreen>>,
 
+    #[export]
+    main_scene_scene: Option<Gd<PackedScene>>,
     main_scene: Option<Gd<MainScene>>,
 }
 
@@ -77,17 +79,20 @@ impl MainMenu {
     }
 
     #[func]
-    fn on_direct_ip_connect(&mut self, ip_port: GString) {
+    fn on_direct_ip_connect(&mut self, ip_port: GString, username: GString) {
         {
             let mut game_settings = self.game_settings.borrow_mut();
             game_settings.ip_port_direct_connect = Some(ip_port.to_string());
+            game_settings.username = Some(username.to_string());
             game_settings.save().expect("Settings save error");
         }
 
         self.gui.as_mut().unwrap().set_visible(false);
 
-        let mut main_scene = load::<PackedScene>("res://scenes/main_scene.tscn").instantiate_as::<MainScene>();
-        main_scene.bind_mut().init_data(ip_port.to_string(), "test_login".to_string());
+        let mut main_scene = self.main_scene_scene.as_mut().unwrap().instantiate_as::<MainScene>();
+        main_scene
+            .bind_mut()
+            .init_data(ip_port.to_string(), username.to_string());
         main_scene.connect(
             "disconnect",
             &Callable::from_object_method(&self.base().to_godot(), "on_disconnect"),

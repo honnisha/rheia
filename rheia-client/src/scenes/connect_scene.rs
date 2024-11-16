@@ -1,34 +1,35 @@
+use common::utils::validate_username;
 use godot::{
     classes::{Button, Control, IControl, LineEdit, RichTextLabel},
     prelude::*,
 };
 use network::client::resolve_connect_domain;
 
-const ERROR_TEXT_PATH: &str = "VBoxContainer/VBoxContainer/Error";
-const INPUT_PATH: &str = "VBoxContainer/VBoxContainer/Input";
-const BACK_BUTTON_PATH: &str = "VBoxContainer/VBoxContainer/HBoxContainer/Back";
-const CONNECT_BUTTON_PATH: &str = "VBoxContainer/VBoxContainer/HBoxContainer/Connect";
-
 #[derive(GodotClass)]
-#[class(base=Control)]
+#[class(init, base=Control)]
 pub struct ConnectScreen {
     base: Base<Control>,
 
-    error_text: OnReady<Gd<RichTextLabel>>,
-    input: OnReady<Gd<LineEdit>>,
-    back_button: OnReady<Gd<Button>>,
-    connect_button: OnReady<Gd<Button>>,
+    #[export]
+    error_text: Option<Gd<RichTextLabel>>,
+
+    #[export]
+    input: Option<Gd<LineEdit>>,
+
+    #[export]
+    username_input: Option<Gd<LineEdit>>,
+
+    #[export]
+    back_button: Option<Gd<Button>>,
+
+    #[export]
+    connect_button: Option<Gd<Button>>,
 }
 
 #[godot_api]
 impl ConnectScreen {
     pub fn toggle(&mut self, state: bool) {
         self.base_mut().set_visible(state);
-    }
-
-    fn set_error_text(&mut self, error: String) {
-        let msg = format!("[center][color=#B72828]{}[/color][/center]", error);
-        self.error_text.set_text(&msg);
     }
 
     #[func]
@@ -41,22 +42,34 @@ impl ConnectScreen {
         self.connected_pressed();
     }
 
+    fn set_error_msg(&mut self, error: String) {
+        let msg = format!("[center][color=#B72828]{}[/color][/center]", error);
+        self.error_text.as_mut().unwrap().set_text(&msg);
+    }
+
     #[func]
     fn connected_pressed(&mut self) {
-        self.error_text.set_text(&"".to_string());
+        self.error_text.as_mut().unwrap().set_text(&"".to_string());
 
-        let ip_port = self.input.get_text().to_string();
+        let ip_port = self.input.as_mut().unwrap().get_text().to_string();
         if let Err(e) = resolve_connect_domain(&ip_port, 25565_u16) {
-            self.set_error_text(e.to_string());
+            self.set_error_msg(e.to_string());
             return;
         }
+
+        let username = self.username_input.as_mut().unwrap().get_text().to_string();
+        if !validate_username(&username) {
+            self.set_error_msg("Bad username".to_string());
+            return;
+        }
+
         self.base_mut()
-            .emit_signal("direct_ip_connect", &[ip_port.to_variant()]);
+            .emit_signal("direct_ip_connect", &[ip_port.to_variant(), username.to_variant()]);
         self.base_mut().set_visible(false);
     }
 
     pub fn set_ip(&mut self, ip_port: &String) {
-        self.input.set_text(ip_port);
+        self.input.as_mut().unwrap().set_text(ip_port);
     }
 
     #[signal]
@@ -65,40 +78,25 @@ impl ConnectScreen {
 
 #[godot_api]
 impl IControl for ConnectScreen {
-    fn init(base: Base<Control>) -> Self {
-        Self {
-            base,
-            error_text: OnReady::manual(),
-            input: OnReady::manual(),
-            back_button: OnReady::manual(),
-            connect_button: OnReady::manual(),
-        }
-    }
-
     fn ready(&mut self) {
-        self.error_text
-            .init(self.base().get_node_as::<RichTextLabel>(ERROR_TEXT_PATH));
-        self.set_error_text("".to_string());
+        self.set_error_msg("".to_string());
 
-        let mut input = self.base().get_node_as::<LineEdit>(INPUT_PATH);
+        let mut input = self.input.as_mut().unwrap().clone();
         input.connect(
             "text_submitted",
             &Callable::from_object_method(&self.base().to_godot(), "input_text_submitted"),
         );
-        self.input.init(input);
 
-        let mut back = self.base().get_node_as::<Button>(BACK_BUTTON_PATH);
-        back.connect(
+        let mut back_button = self.back_button.as_mut().unwrap().clone();
+        back_button.connect(
             "pressed",
             &Callable::from_object_method(&self.base().to_godot(), "back_pressed"),
         );
-        self.back_button.init(back);
 
-        let mut connect = self.base().get_node_as::<Button>(CONNECT_BUTTON_PATH);
-        connect.connect(
+        let mut connect_button = self.connect_button.as_mut().unwrap().clone();
+        connect_button.connect(
             "pressed",
             &Callable::from_object_method(&self.base().to_godot(), "connected_pressed"),
         );
-        self.connect_button.init(connect);
     }
 }

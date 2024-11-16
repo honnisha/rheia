@@ -7,12 +7,14 @@ use std::{
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct GameSettings {
     pub ip_port_direct_connect: Option<String>,
+    pub username: Option<String>,
 }
 
 impl Default for GameSettings {
     fn default() -> Self {
         Self {
             ip_port_direct_connect: None,
+            username: None,
         }
     }
 }

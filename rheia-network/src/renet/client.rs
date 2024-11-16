@@ -55,10 +55,6 @@ impl RenetClientNetwork {
         self.network_lock.store(state, Ordering::Relaxed);
     }
 
-    fn get_client(&self) -> RwLockReadGuard<RenetClient> {
-        self.client.read()
-    }
-
     fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
         self.client.write()
     }
