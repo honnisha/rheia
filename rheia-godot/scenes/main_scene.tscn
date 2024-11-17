@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=8 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
@@ -16,8 +16,6 @@ reflected_light_source = 1
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_bhmtq"]
-
 [node name="MainScene" type="MainScene" node_paths=PackedStringArray("worlds_manager")]
 worlds_manager = NodePath("WorldsManager")
 console_scene = ExtResource("1_rga66")
@@ -30,10 +28,6 @@ block_icon_scene = ExtResource("2_xhcjx")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_8w0cv")
 camera_attributes = SubResource("CameraAttributesPractical_cqqg4")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_bhmtq")
-skeleton = NodePath("../DirectionalLight3D")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
