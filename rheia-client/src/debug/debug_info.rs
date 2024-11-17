@@ -80,7 +80,7 @@ impl DebugInfo {
         self.base_mut().set_visible(DebugInfo::is_active());
     }
 
-    pub fn update_debug(&mut self, worlds_manager: &WorldsManager, network_info: NetworkInfo) {
+    pub fn update_debug(&mut self, worlds_manager: &Gd<WorldsManager>, network_info: NetworkInfo) {
         if !DebugInfo::is_active() {
             return;
         }
@@ -96,10 +96,11 @@ impl DebugInfo {
         );
         DebugInfo::change_text(&self.first_row, first_text);
 
-        let world_text = match worlds_manager.get_world() {
+        let wm = worlds_manager.bind();
+        let world_text = match wm.get_world() {
             Some(w) => {
+                let player_controller = wm.get_player_controller().as_ref().unwrap().bind();
                 let world = w.bind();
-                let player_controller = world.get_player_controller().bind();
                 let controller_pos = player_controller.get_position();
                 let controller_positioin = format!(
                     "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",

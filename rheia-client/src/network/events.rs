@@ -95,17 +95,18 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 log::info!(target: "network", "Recieved settings from the network");
 
                 {
-                    let mut worlds_manager = main.get_worlds_manager_mut();
+                    let mut worlds_manager = main.get_wm().clone();
                     let resource_manager = main.get_resource_manager();
 
                     {
-                        let mut block_storage = worlds_manager.get_block_storage_mut();
+                        let wm = worlds_manager.bind();
+                        let mut block_storage = wm.get_block_storage_mut();
                         if let Err(e) = block_storage.load_blocks_types(block_types, &*resource_manager) {
                             return Err(e);
                         }
                     }
 
-                    if let Err(e) = worlds_manager.build_textures(&*resource_manager) {
+                    if let Err(e) = worlds_manager.bind_mut().build_textures(&*resource_manager) {
                         return Err(e);
                     }
 
@@ -120,13 +121,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 position,
                 rotation,
             } => {
-                main.get_worlds_manager_mut().teleport_player(
-                    world_slug,
-                    position.to_godot(),
-                    rotation,
-                    main.get_network_lock().unwrap(),
-                );
-
+                main.teleport_player(world_slug, position.to_godot(), rotation);
                 main.get_text_screen_mut().toggle(false);
             }
             ServerMessages::ChunkSectionInfo {

@@ -14,10 +14,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::world::{
-    physics::PhysicsProxy,
-    worlds_manager::{BlockStorageRef, BlockStorageType, TextureMapperRef, TextureMapperType},
-};
+use crate::{utils::textures::texture_mapper::TextureMapper, world::{
+    block_storage::BlockStorage, physics::PhysicsProxy, worlds_manager::{BlockStorageType, TextureMapperType}
+}};
 
 use super::{
     chunk_column::{ChunkColumn, ColumnDataLockType},
@@ -183,8 +182,8 @@ impl ChunkMap {
     pub fn update_chunks(
         &self,
         physics: &PhysicsProxy,
-        block_storage: &BlockStorageRef,
-        texture_mapper: &TextureMapperRef,
+        block_storage: &BlockStorage,
+        texture_mapper: &TextureMapper,
     ) {
         self.chunks_to_update.borrow_mut().retain(|(chunk_position, y)| {
             let chunks_near = NearChunksData::new(&self.chunks, &chunk_position);

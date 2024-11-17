@@ -1,6 +1,5 @@
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
-use crate::network::client::NetworkLockType;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::utils::primitives::{generate_lines, get_face_vector};
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
@@ -10,14 +9,16 @@ use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
-use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
-use physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
+use physics::physics::{
+    IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
+};
 use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 
 use super::camera_controller::{CameraController, RayDirection};
 use super::controls::Controls;
 use super::entity_movement::EntityMovement;
+use super::player_action::{PlayerAction, PlayerActionType};
 
 const TURN_SPEED: f64 = 6.0;
 const MOVEMENT_SPEED: f32 = 4.0;
@@ -38,7 +39,6 @@ const CONTROLLER_MASS: f32 = 3.0;
 #[class(no_init, base=Node3D)]
 pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
-    network_lock: NetworkLockType,
     physics: PhysicsProxy,
 
     entity: Gd<Entity>,
@@ -62,11 +62,7 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn create(
-        base: Base<Node3D>,
-        physics: PhysicsProxy,
-        network_lock: NetworkLockType,
-    ) -> Self {
+    pub fn create(base: Base<Node3D>, physics: PhysicsProxy) -> Self {
         let controls = Controls::new_alloc();
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
@@ -83,7 +79,6 @@ impl PlayerController {
 
         Self {
             base,
-            network_lock,
             physics,
 
             entity: Gd::<Entity>::from_init_fn(|base| Entity::create(base)),
@@ -204,7 +199,7 @@ impl PlayerController {
         movement
     }
 
-    pub fn update_vision(&mut self) {
+    pub fn update_vision(&mut self) -> Option<(RayCastResultNormal, PhysicsType)> {
         let mut filter = QueryFilter::default();
         filter.exclude_collider(&self.collider);
 
@@ -214,35 +209,12 @@ impl PlayerController {
         let ray_direction = camera_controller.get_ray_from_center();
         let Some((cast_result, physics_type)) = self.physics.cast_ray(ray_direction, filter) else {
             self.look_at_message = "-".to_string();
-            return;
+            return None;
         };
 
         self.look_at_message = match physics_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
-                let world = self.base().get_parent().unwrap().cast::<WorldManager>();
-                let world = world.bind();
-
                 let selected_block = cast_result.get_selected_block();
-                if self.controls.bind().is_main_action() {
-                    let msg = ClientMessages::EditBlockRequest {
-                        world_slug: world.get_slug().clone(),
-                        position: cast_result.get_place_block(),
-                        new_block_info: BlockInfo::create(1, None),
-                    };
-                    self.network_lock
-                        .read()
-                        .send_message(NetworkMessageType::ReliableOrdered, &msg);
-                }
-                if self.controls.bind().is_second_action() {
-                    let msg = ClientMessages::EditBlockRequest {
-                        world_slug: world.get_slug().clone(),
-                        position: selected_block,
-                        new_block_info: BlockInfo::create(0, None),
-                    };
-                    self.network_lock
-                        .read()
-                        .send_message(NetworkMessageType::ReliableOrdered, &msg);
-                }
                 self.block_selection.set_visible(true);
                 self.block_selection
                     .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
@@ -254,6 +226,7 @@ impl PlayerController {
                 format!("entity_id:{entity_id}")
             }
         };
+        return Some((cast_result, physics_type));
     }
 
     pub fn get_look_at_message(&self) -> &String {
@@ -265,6 +238,9 @@ impl PlayerController {
 impl PlayerController {
     #[signal]
     fn on_player_move();
+
+    #[signal]
+    fn on_player_action();
 }
 
 #[godot_api]
@@ -309,7 +285,20 @@ impl INode3D for PlayerController {
                     .move_shape(&self.collider, filter, delta, movement.to_network());
             self.collider.set_position(self.collider.get_position() + translation);
 
-            self.update_vision();
+            let hit = self.update_vision();
+
+            let action_type = if self.controls.bind().is_main_action() {
+                Some(PlayerActionType::Main)
+            } else if self.controls.bind().is_main_action() {
+                Some(PlayerActionType::Second)
+            } else {
+                None
+            };
+
+            if let Some(action_type) = action_type {
+                let action = Gd::<PlayerAction>::from_init_fn(|_base| PlayerAction::create(hit, action_type));
+                self.base_mut().emit_signal("on_player_action", &[action.to_variant()]);
+            }
 
             self.detect_is_grounded(delta);
         }

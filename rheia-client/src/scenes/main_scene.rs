@@ -1,15 +1,19 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
+use crate::controller::entity_movement::EntityMovement;
 use crate::controller::enums::controller_actions::ControllerActions;
+use crate::controller::player_action::{PlayerAction, PlayerActionType};
 use crate::debug::debug_info::DebugInfo;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
+use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
+use common::blocks::block_info::BlockInfo;
+use common::chunks::rotation::Rotation;
 use godot::classes::input::MouseMode;
 use godot::prelude::*;
+use network::client::IClientNetwork;
+use network::messages::{ClientMessages, NetworkMessageType};
 
 use crate::scenes::text_screen::TextScreen;
 
@@ -31,8 +35,8 @@ pub struct MainScene {
 
     resource_manager: ResourceManager,
 
-    #[init(val = OnReady::manual())]
-    worlds_manager: OnReady<Rc<RefCell<WorldsManager>>>,
+    #[export]
+    worlds_manager: Option<Gd<WorldsManager>>,
 
     #[init(val = OnReady::manual())]
     console: OnReady<Gd<Console>>,
@@ -82,12 +86,12 @@ impl MainScene {
         &mut self.resource_manager
     }
 
-    pub fn _get_worlds_manager(&self) -> std::cell::Ref<'_, WorldsManager> {
-        self.worlds_manager.borrow()
+    pub fn get_wm(&self) -> &Gd<WorldsManager> {
+        self.worlds_manager.as_ref().unwrap()
     }
 
-    pub fn get_worlds_manager_mut(&self) -> std::cell::RefMut<'_, WorldsManager> {
-        self.worlds_manager.borrow_mut()
+    pub fn get_worlds_manager_mut(&mut self) -> GdMut<'_, WorldsManager> {
+        self.worlds_manager.as_mut().unwrap().bind_mut()
     }
 
     fn connect(&mut self) {
@@ -115,12 +119,84 @@ impl MainScene {
     pub fn on_server_connected(&mut self) {
         self.debug_info.bind_mut().toggle(true);
     }
+
+    /// Player can teleport in new world, between worlds or in exsting world
+    /// so worlds can be created and destroyed
+    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, rotation: Rotation) {
+        let base = self.to_gd().clone();
+        let mut worlds_manager = self.get_worlds_manager_mut();
+
+        let created_controller = if let Some(world) = worlds_manager.get_world() {
+            if world.bind().get_slug() != &world_slug {
+                // Player moving to another world; old one must be destroyed
+                worlds_manager.destroy_world();
+                let world = worlds_manager.create_world(world_slug);
+                Some(worlds_manager.create_player(&world))
+            } else {
+                None
+            }
+        } else {
+            let world = worlds_manager.create_world(world_slug);
+            Some(worlds_manager.create_player(&world))
+        };
+
+        if let Some(mut player_controller) = created_controller {
+            player_controller.bind_mut().base_mut().connect(
+                "on_player_move",
+                &Callable::from_object_method(&base, "handler_player_move"),
+            );
+            player_controller.bind_mut().base_mut().connect(
+                "on_player_action",
+                &Callable::from_object_method(&base, "handler_player_action"),
+            );
+        }
+
+        worlds_manager.teleport_player_controller(position, rotation)
+    }
 }
 
 #[godot_api]
 impl MainScene {
     #[signal]
     fn disconnect();
+
+    #[func]
+    fn handler_player_move(&mut self, movement: Gd<EntityMovement>, _new_chunk: bool) {
+        let network_lock = self.get_network_lock().unwrap();
+        network_lock
+            .read()
+            .send_message(NetworkMessageType::Unreliable, &movement.bind().into_network());
+    }
+
+    #[func]
+    fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
+        let network_lock = self.get_network_lock().unwrap();
+        if let Some((cast_result, physics_type)) = action.bind().get_hit() {
+            match physics_type {
+                PhysicsType::ChunkMeshCollider(_chunk_position) => {
+                    let wm = self.get_wm().bind();
+                    let world = wm.get_world().unwrap();
+                    let world = world.bind();
+
+                    let selected_block = cast_result.get_selected_block();
+                    let msg = match action.bind().get_action_type() {
+                        PlayerActionType::Main => ClientMessages::EditBlockRequest {
+                            world_slug: world.get_slug().clone(),
+                            position: cast_result.get_place_block(),
+                            new_block_info: BlockInfo::create(1, None),
+                        },
+                        PlayerActionType::Second => ClientMessages::EditBlockRequest {
+                            world_slug: world.get_slug().clone(),
+                            position: selected_block,
+                            new_block_info: BlockInfo::create(0, None),
+                        },
+                    };
+                    network_lock.read().send_message(NetworkMessageType::Unreliable, &msg);
+                }
+                PhysicsType::EntityCollider(_entity_id) => {}
+            }
+        }
+    }
 }
 
 #[godot_api]
@@ -134,9 +210,6 @@ impl INode for MainScene {
 
         let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
         self.text_screen.init(text_screen);
-
-        let worlds_manager = WorldsManager::create(self.base.to_gd().clone());
-        self.worlds_manager.init(Rc::new(RefCell::new(worlds_manager)));
 
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
@@ -175,9 +248,8 @@ impl INode for MainScene {
                 }
             };
 
-            let wm = self.worlds_manager.clone();
-            let worlds_manager = wm.borrow();
-            self.debug_info.bind_mut().update_debug(&worlds_manager, network_info);
+            let wm = self.worlds_manager.as_ref().unwrap();
+            self.debug_info.bind_mut().update_debug(wm, network_info);
         }
 
         let input = Input::singleton();

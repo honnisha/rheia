@@ -6,42 +6,33 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 
 use crate::client_scripts::resource_manager::ResourceManager;
-use crate::network::client::NetworkLockType;
+use crate::controller::player_controller::PlayerController;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::block_storage::BlockStorage;
 use super::world_manager::WorldManager;
 
 pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
-pub type TextureMapperRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, TextureMapper>;
-
 pub type BlockStorageType = Arc<RwLock<BlockStorage>>;
-pub type BlockStorageRef<'a> = RwLockReadGuard<'a, parking_lot::RawRwLock, BlockStorage>;
-pub type BlockStorageRefMut<'a> = RwLockWriteGuard<'a, parking_lot::RawRwLock, BlockStorage>;
 
+#[derive(GodotClass)]
+#[class(init, base=Node)]
 pub struct WorldsManager {
-    base: Gd<Node>,
+    base: Base<Node>,
+
     world: Option<Gd<WorldManager>>,
+    player_controller: Option<Gd<PlayerController>>,
 
+    #[init(val = Arc::new(RwLock::new(Default::default())))]
     texture_mapper: TextureMapperType,
-    material: Option<Gd<Material>>,
 
+    #[init(val = Arc::new(RwLock::new(Default::default())))]
     block_storage: BlockStorageType,
+
+    material: Option<Gd<Material>>,
 }
 
 impl WorldsManager {
-    pub fn create(base: Gd<Node>) -> Self {
-        Self {
-            base,
-            world: None,
-
-            material: None,
-            texture_mapper: Arc::new(RwLock::new(Default::default())),
-
-            block_storage: Arc::new(RwLock::new(Default::default())),
-        }
-    }
-
     pub fn build_textures(&mut self, resource_manager: &ResourceManager) -> Result<(), String> {
         let mut texture_mapper = self.texture_mapper.write();
         let block_storage = self.block_storage.read();
@@ -54,15 +45,15 @@ impl WorldsManager {
         return Ok(());
     }
 
-    pub fn _get_block_storage(&self) -> BlockStorageRef {
+    pub fn _get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {
         self.block_storage.read()
     }
 
-    pub fn get_block_storage_mut(&self) -> BlockStorageRefMut {
+    pub fn get_block_storage_mut(&self) -> RwLockWriteGuard<'_, parking_lot::RawRwLock, BlockStorage> {
         self.block_storage.write()
     }
 
-    pub fn _get_texture_mapper(&self) -> TextureMapperRef {
+    pub fn _get_texture_mapper(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, TextureMapper> {
         self.texture_mapper.read()
     }
 
@@ -80,61 +71,62 @@ impl WorldsManager {
         }
     }
 
+    pub fn get_player_controller(&self) -> &Option<Gd<PlayerController>> {
+        &self.player_controller
+    }
+
     /// Raise exception if there is no world
-    fn teleport_player_controller(&mut self, position: Vector3, rotation: Rotation) {
-        let mut world = self.world.as_mut().unwrap().bind_mut();
-        let mut player_controller = world.get_player_controller_mut().bind_mut();
+    pub fn teleport_player_controller(&mut self, position: Vector3, rotation: Rotation) {
+        let player_controller = self.player_controller.as_mut().unwrap();
 
-        player_controller.set_position(position);
-        player_controller.set_rotation(rotation);
+        player_controller.bind_mut().set_position(position);
+        player_controller.bind_mut().set_rotation(rotation);
     }
 
-    /// Player can teleport in new world, between worlds or in exsting world
-    /// so worlds can be created and destroyed
-    pub fn teleport_player(
-        &mut self,
-        world_slug: String,
-        position: Vector3,
-        rotation: Rotation,
-        network_lock: NetworkLockType,
-    ) {
-        if self.world.is_some() {
-            if self.world.as_ref().unwrap().bind().get_slug() != &world_slug {
-                // Player moving to another world; old one must be destroyed
-                self.destroy_world();
-                self.create_world(world_slug, network_lock);
-            }
-        } else {
-            self.create_world(world_slug, network_lock);
-        }
+    pub fn create_player(&mut self, world: &Gd<WorldManager>) -> Gd<PlayerController> {
+        let player_controller = Gd::<PlayerController>::from_init_fn(|base| {
+            PlayerController::create(base, world.bind().get_physics().clone())
+        });
 
-        self.teleport_player_controller(position, rotation)
+        self.base_mut().add_child(&player_controller.clone());
+
+        self.player_controller = Some(player_controller.clone());
+        player_controller
     }
 
-    pub fn create_world(&mut self, world_slug: String, network_lock: NetworkLockType) {
+    pub fn create_world(&mut self, world_slug: String) -> Gd<WorldManager> {
         let mut world = Gd::<WorldManager>::from_init_fn(|base| {
             WorldManager::create(
                 base,
-                world_slug,
+                world_slug.clone(),
                 self.texture_mapper.clone(),
                 self.material.as_ref().unwrap().clone(),
                 self.block_storage.clone(),
-                network_lock,
             )
         });
 
-        world.bind_mut().base_mut().set_name("World");
+        world
+            .bind_mut()
+            .base_mut()
+            .set_name(&format!("World \"{}\"", world_slug));
 
-        self.base.add_child(&world.clone());
-        self.world = Some(world);
+        self.base_mut().add_child(&world.clone());
+        self.world = Some(world.clone());
 
         log::info!(target: "world", "World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
+
+        world
     }
 
     pub fn destroy_world(&mut self) {
-        let slug = self.world.as_ref().unwrap().bind().get_slug().clone();
-        self.base.remove_child(&self.world.as_mut().unwrap().clone());
-        self.world = None;
-        log::info!(target: "world", "World \"{}\" destroyed;", slug);
+        let mut base = self.to_gd().clone();
+
+        if let Some(player_controller) = self.player_controller.as_mut().take() {
+            base.remove_child(&player_controller.clone());
+        }
+
+        if let Some(world) = self.world.as_mut().take() {
+            base.remove_child(&world.clone());
+        }
     }
 }
