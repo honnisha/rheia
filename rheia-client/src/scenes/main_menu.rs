@@ -75,6 +75,10 @@ impl MainMenu {
             self.connect_screen.bind_mut().set_ip(ip_port);
         }
 
+        if let Some(username) = self.game_settings.borrow().username.as_ref() {
+            self.connect_screen.bind_mut().set_username(username);
+        }
+
         self.connect_screen.bind_mut().toggle(true);
     }
 

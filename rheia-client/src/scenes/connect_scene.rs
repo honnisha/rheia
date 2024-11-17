@@ -72,6 +72,10 @@ impl ConnectScreen {
         self.input.as_mut().unwrap().set_text(ip_port);
     }
 
+    pub fn set_username(&mut self, username: &String) {
+        self.username_input.as_mut().unwrap().set_text(username);
+    }
+
     #[signal]
     fn direct_ip_connect();
 }

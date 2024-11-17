@@ -1,3 +1,4 @@
+use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
 use godot::{classes::Material, prelude::Gd};
@@ -119,7 +120,7 @@ impl WorldsManager {
     }
 
     pub fn destroy_world(&mut self) {
-        let mut base = self.to_gd().clone();
+        let mut base = self.base_mut().clone();
 
         if let Some(player_controller) = self.player_controller.as_mut().take() {
             base.remove_child(&player_controller.clone());
@@ -127,6 +128,26 @@ impl WorldsManager {
 
         if let Some(world) = self.world.as_mut().take() {
             base.remove_child(&world.clone());
+        }
+    }
+}
+
+#[godot_api]
+impl INode for WorldsManager {
+    fn process(&mut self, delta: f64) {
+        if self.get_world().is_some() {
+            let world = self.get_world().unwrap().clone();
+
+            let player_controller = self.player_controller.as_mut().unwrap();
+            let mut player_controller = player_controller.bind_mut();
+
+            let pos = player_controller.get_position();
+            let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
+            let chunk_loaded = match world.bind().get_chunk_map().get_chunk(&chunk_pos) {
+                Some(c) => c.read().is_loaded(),
+                None => false,
+            };
+            player_controller.custom_process(delta, chunk_loaded, world.bind().get_slug());
         }
     }
 }

@@ -3,13 +3,9 @@ use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::utils::primitives::{generate_lines, get_face_vector};
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
-use crate::world::world_manager::WorldManager;
-use common::blocks::block_info::BlockInfo;
-use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
-use network::messages::{ClientMessages, NetworkMessageType};
 use physics::physics::{
     IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
 };
@@ -232,44 +228,10 @@ impl PlayerController {
     pub fn get_look_at_message(&self) -> &String {
         &self.look_at_message
     }
-}
 
-#[godot_api]
-impl PlayerController {
-    #[signal]
-    fn on_player_move();
-
-    #[signal]
-    fn on_player_action();
-}
-
-#[godot_api]
-impl INode3D for PlayerController {
-    fn ready(&mut self) {
-        let controller = self.entity.clone();
-        self.base_mut().add_child(&controller);
-
-        let camera_controller = self.camera_controller.clone();
-        self.base_mut().add_child(&camera_controller);
-
-        let controls = self.controls.clone();
-        self.base_mut().add_child(&controls);
-
-        let block_selection = self.block_selection.clone();
-        self.base_mut().add_child(&block_selection);
-    }
-
-    fn process(&mut self, delta: f64) {
+    pub fn custom_process(&mut self, delta: f64, chunk_loaded: bool, world_slug: &String) {
         #[cfg(feature = "trace")]
         let _span = tracing::span!(tracing::Level::INFO, "player_controller").entered();
-
-        let world = self.base().get_parent().unwrap().cast::<WorldManager>();
-        let pos = self.get_position();
-        let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
-        let chunk_loaded = match world.bind().get_chunk_map().get_chunk(&chunk_pos) {
-            Some(c) => c.read().is_loaded(),
-            None => false,
-        };
 
         // Set lock if chunk is in loading
         self.collider.set_enabled(chunk_loaded);
@@ -289,14 +251,16 @@ impl INode3D for PlayerController {
 
             let action_type = if self.controls.bind().is_main_action() {
                 Some(PlayerActionType::Main)
-            } else if self.controls.bind().is_main_action() {
+            } else if self.controls.bind().is_second_action() {
                 Some(PlayerActionType::Second)
             } else {
                 None
             };
 
             if let Some(action_type) = action_type {
-                let action = Gd::<PlayerAction>::from_init_fn(|_base| PlayerAction::create(hit, action_type));
+                let action = Gd::<PlayerAction>::from_init_fn(|_base| {
+                    PlayerAction::create(hit, action_type, world_slug.clone())
+                });
                 self.base_mut().emit_signal("on_player_action", &[action.to_variant()]);
             }
 
@@ -337,5 +301,31 @@ impl INode3D for PlayerController {
                 .emit_signal("on_player_move", &[new_movement.to_variant(), new_chunk.to_variant()]);
             self.cache_movement = Some(new_movement);
         }
+    }
+}
+
+#[godot_api]
+impl PlayerController {
+    #[signal]
+    fn on_player_move();
+
+    #[signal]
+    fn on_player_action();
+}
+
+#[godot_api]
+impl INode3D for PlayerController {
+    fn ready(&mut self) {
+        let controller = self.entity.clone();
+        self.base_mut().add_child(&controller);
+
+        let camera_controller = self.camera_controller.clone();
+        self.base_mut().add_child(&camera_controller);
+
+        let controls = self.controls.clone();
+        self.base_mut().add_child(&controls);
+
+        let block_selection = self.block_selection.clone();
+        self.base_mut().add_child(&block_selection);
     }
 }

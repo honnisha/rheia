@@ -123,7 +123,7 @@ impl MainScene {
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
     pub fn teleport_player(&mut self, world_slug: String, position: Vector3, rotation: Rotation) {
-        let base = self.to_gd().clone();
+        let base = self.base().clone();
         let mut worlds_manager = self.get_worlds_manager_mut();
 
         let created_controller = if let Some(world) = worlds_manager.get_world() {
@@ -170,23 +170,20 @@ impl MainScene {
 
     #[func]
     fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
+        let a = action.bind();
         let network_lock = self.get_network_lock().unwrap();
-        if let Some((cast_result, physics_type)) = action.bind().get_hit() {
+        if let Some((cast_result, physics_type)) = a.get_hit() {
             match physics_type {
                 PhysicsType::ChunkMeshCollider(_chunk_position) => {
-                    let wm = self.get_wm().bind();
-                    let world = wm.get_world().unwrap();
-                    let world = world.bind();
-
                     let selected_block = cast_result.get_selected_block();
-                    let msg = match action.bind().get_action_type() {
+                    let msg = match a.get_action_type() {
                         PlayerActionType::Main => ClientMessages::EditBlockRequest {
-                            world_slug: world.get_slug().clone(),
+                            world_slug: a.get_world_slug().clone(),
                             position: cast_result.get_place_block(),
                             new_block_info: BlockInfo::create(1, None),
                         },
                         PlayerActionType::Second => ClientMessages::EditBlockRequest {
-                            world_slug: world.get_slug().clone(),
+                            world_slug: a.get_world_slug().clone(),
                             position: selected_block,
                             new_block_info: BlockInfo::create(0, None),
                         },
