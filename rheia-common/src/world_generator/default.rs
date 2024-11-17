@@ -1,11 +1,14 @@
-use bracket_lib::random::RandomNumberGenerator;
-use bracket_noise::prelude::*;
-use common::{
-    blocks::{block_info::BlockInfo},
+use std::collections::HashMap;
+
+use crate::{
+    blocks::block_info::BlockInfo,
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE,
 };
-use network::messages::ChunkDataType;
+use bracket_lib::random::RandomNumberGenerator;
+use bracket_noise::prelude::*;
+
+use super::ChunkDataType;
 
 pub struct WorldGenerator {
     noise: FastNoise,
@@ -32,13 +35,9 @@ impl WorldGenerator {
         WorldGenerator { noise: noise }
     }
 
-    pub fn generate_chunk_data(
-        &self,
-        chunk_data: &mut ChunkDataType,
-        chunk_position: &ChunkPosition,
-        vertical_index: usize,
-    ) -> bool {
-        let mut has_any_block = false;
+    pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkDataType {
+        let mut chunk_data: ChunkDataType = HashMap::new();
+
         for x in 0_u8..(CHUNK_SIZE as u8) {
             for z in 0_u8..(CHUNK_SIZE as u8) {
                 let x_map = (x as f32 + (chunk_position.x as f32 * CHUNK_SIZE as f32)) / 150.0;
@@ -52,7 +51,6 @@ impl WorldGenerator {
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
-                        has_any_block = true;
                         chunk_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
                     }
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
@@ -61,6 +59,6 @@ impl WorldGenerator {
                 }
             }
         }
-        return has_any_block;
+        return chunk_data;
     }
 }

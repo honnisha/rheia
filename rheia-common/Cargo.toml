@@ -10,6 +10,7 @@ flume = "0.11.0"
 num = "0.4"
 rand = "0.8.5"
 regex = "1.10.6"
+lazy_static = "1.4.0"
 
 # Scripts
 rhai = { version = "1.19.0", features = ["internals", "serde"] }
@@ -31,3 +32,8 @@ miniz_oxide = "0.8.0"
 ilattice = "0.4.0"
 ndshape = "0.3.0"
 ndcopy = "0.3.0"
+
+# Noise world gen
+bracket-lib = "0.8.7"
+bracket-noise = "0.8.7"
+bracket-random = "0.8.7"

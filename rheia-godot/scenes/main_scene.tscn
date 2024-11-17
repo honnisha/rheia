@@ -27,8 +27,6 @@ block_icon_scene = ExtResource("2_xhcjx")
 
 [node name="WorldsManager" type="WorldsManager" parent="."]
 
-[node name="BlockIcon" parent="." instance=ExtResource("2_xhcjx")]
-
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_8w0cv")
 camera_attributes = SubResource("CameraAttributesPractical_cqqg4")

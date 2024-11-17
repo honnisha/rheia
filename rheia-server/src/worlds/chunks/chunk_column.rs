@@ -1,14 +1,14 @@
-use crate::worlds::world_generator::default::WorldGenerator;
 use arrayvec::ArrayVec;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
+use common::world_generator::default::WorldGenerator;
 use common::VERTICAL_SECTIONS;
 use core::fmt;
 use network::messages::{ChunkDataType, ServerMessages};
 use parking_lot::RwLock;
 use std::fmt::Display;
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 pub struct ChunkColumn {
     chunk_position: ChunkPosition,
@@ -92,16 +92,17 @@ pub(crate) fn load_chunk(
         let mut chunk_column = chunk_column.write();
 
         for y in 0..VERTICAL_SECTIONS {
-            let mut chunk_section: ChunkDataType = HashMap::new();
-            world_generator
+            let chunk_section = world_generator
                 .read()
-                .generate_chunk_data(&mut chunk_section, &chunk_column.chunk_position, y);
+                .generate_chunk_data(&chunk_column.chunk_position, y);
             chunk_column.sections.push(Box::new(chunk_section));
         }
         chunk_column.loaded = true;
 
         if !cfg!(test) {
-            loaded_chunks.send(chunk_column.chunk_position.clone()).expect("channel poisoned");
+            loaded_chunks
+                .send(chunk_column.chunk_position.clone())
+                .expect("channel poisoned");
         }
     })
 }

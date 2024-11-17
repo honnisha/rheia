@@ -2,7 +2,7 @@ use common::blocks::block_type::BlockContent;
 use godot::{
     classes::{
         base_material_3d::{AlphaAntiAliasing, DepthDrawMode, ShadingMode, TextureFilter, TextureParam},
-        Engine, Image, ImageTexture, StandardMaterial3D,
+        Image, ImageTexture, StandardMaterial3D,
     },
     obj::NewGd,
     prelude::{Gd, PackedByteArray, ToGodot},
@@ -62,9 +62,6 @@ pub fn build_blocks_material(
 ) -> Result<Gd<StandardMaterial3D>, String> {
     log::trace!("build_blocks_material started");
     let mut material = StandardMaterial3D::new_gd();
-    if Engine::singleton().is_editor_hint() {
-        return Ok(material);
-    }
 
     material.set_alpha_scissor_threshold(0_f32);
     material.set_alpha_antialiasing(AlphaAntiAliasing::OFF);

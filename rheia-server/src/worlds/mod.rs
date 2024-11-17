@@ -15,7 +15,6 @@ use self::{
 pub mod chunks;
 pub mod commands;
 pub mod on_chunk_loaded;
-pub mod world_generator;
 pub mod world_manager;
 pub mod worlds_manager;
 pub mod ecs;

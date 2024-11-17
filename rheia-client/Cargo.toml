@@ -59,11 +59,6 @@ send_wrapper = "0.6.0"
 # Scripts
 rhai = { version = "1.16.3", features = ["internals", "serde"] }
 
-# Noise
-bracket-lib = "0.8.7"
-bracket-noise = "0.8.7"
-bracket-random = "0.8.7"
-
 # Schematics
 flate2 = "1.0"
 fastnbt = "2"

@@ -1,9 +1,12 @@
-use common::{
+use std::collections::HashMap;
+
+use crate::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
     CHUNK_SIZE,
 };
-use network::messages::ChunkDataType;
+
+use super::ChunkDataType;
 
 #[derive(Default)]
 pub struct SphereWorldGenerator {}
@@ -13,12 +16,9 @@ impl SphereWorldGenerator {
         Self {}
     }
 
-    pub fn generate_chunk_data(
-        &self,
-        chunk_data: &mut ChunkDataType,
-        _chunk_position: &ChunkPosition,
-        _vertical_index: usize,
-    ) -> bool {
+    pub fn generate_chunk_data(&self, _chunk_position: &ChunkPosition, _vertical_index: usize) -> ChunkDataType {
+        let mut chunk_data: ChunkDataType = HashMap::new();
+
         let center = CHUNK_SIZE as f32 / 2.0;
 
         for x in 0_u8..(CHUNK_SIZE as u8) {
@@ -36,6 +36,6 @@ impl SphereWorldGenerator {
                 }
             }
         }
-        return true;
+        chunk_data
     }
 }

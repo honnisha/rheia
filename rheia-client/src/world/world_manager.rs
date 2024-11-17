@@ -3,13 +3,13 @@ use super::{
     physics::PhysicsProxy,
     worlds_manager::{BlockStorageType, TextureMapperType},
 };
-use crate::{controller::entity_movement::EntityMovement, entities::entities_manager::EntitiesManager};
+use crate::entities::entities_manager::EntitiesManager;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
 };
 use godot::{classes::Material, prelude::*};
-use network::messages::{NetworkMessageType, SectionsData};
+use network::messages::SectionsData;
 
 /// Godot world
 /// Contains all things inside world
@@ -20,7 +20,7 @@ use network::messages::{NetworkMessageType, SectionsData};
 ///  ║
 ///  ╚ChunkSection
 #[derive(GodotClass)]
-#[class(no_init, base=Node)]
+#[class(no_init, tool, base=Node)]
 pub struct WorldManager {
     base: Base<Node>,
     slug: String,
@@ -102,8 +102,7 @@ impl WorldManager {
 }
 
 #[godot_api]
-impl WorldManager {
-}
+impl WorldManager {}
 
 #[godot_api]
 impl INode for WorldManager {

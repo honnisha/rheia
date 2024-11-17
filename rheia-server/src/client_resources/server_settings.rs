@@ -3,12 +3,12 @@ use std::{collections::HashMap, fs::File, path::PathBuf};
 use bevy::prelude::{Res, ResMut, Resource};
 use common::blocks::{
     block_info::BlockIndexType,
-    block_type::{BlockContent, BlockType},
+    block_type::{BlockContent, BlockType}, default_blocks::DEFAULT_BLOCKS,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    client_resources::default_resources::DEFAULT_BLOCKS, launch_settings::LaunchSettings,
+    launch_settings::LaunchSettings,
     network::runtime_plugin::RuntimePlugin,
 };
 

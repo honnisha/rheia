@@ -19,7 +19,7 @@ type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
 pub type ColumnDataLockType = Arc<RwLock<SectionsData>>;
 
 #[derive(GodotClass)]
-#[class(no_init, base=Node3D)]
+#[class(no_init, tool, base=Node3D)]
 pub struct ChunkBase {
     pub base: Base<Node3D>,
 

@@ -32,7 +32,7 @@ pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
 
 /// Container of all chunk sections
 #[derive(GodotClass)]
-#[class(no_init, base=Node)]
+#[class(no_init, tool, base=Node)]
 pub struct ChunkMap {
     pub(crate) base: Base<Node>,
 

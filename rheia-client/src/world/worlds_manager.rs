@@ -17,7 +17,7 @@ pub type TextureMapperType = Arc<RwLock<TextureMapper>>;
 pub type BlockStorageType = Arc<RwLock<BlockStorage>>;
 
 #[derive(GodotClass)]
-#[class(init, base=Node)]
+#[class(init, tool, base=Node)]
 pub struct WorldsManager {
     base: Base<Node>,
 
@@ -43,6 +43,7 @@ impl WorldsManager {
             Err(e) => return Err(e),
         };
         self.material = Some(texture);
+        log::info!(target: "main", "Textures builded successfily; texture blocks:{} textures loaded:{}", block_storage.textures_blocks_count(), texture_mapper.len());
         return Ok(());
     }
 
@@ -101,7 +102,7 @@ impl WorldsManager {
                 base,
                 world_slug.clone(),
                 self.texture_mapper.clone(),
-                self.material.as_ref().unwrap().clone(),
+                self.material.as_ref().expect("material must be builded").clone(),
                 self.block_storage.clone(),
             )
         });
@@ -134,20 +135,23 @@ impl WorldsManager {
 
 #[godot_api]
 impl INode for WorldsManager {
+    fn ready(&mut self) {}
+
     fn process(&mut self, delta: f64) {
         if self.get_world().is_some() {
             let world = self.get_world().unwrap().clone();
 
-            let player_controller = self.player_controller.as_mut().unwrap();
-            let mut player_controller = player_controller.bind_mut();
+            if let Some(player_controller) = self.player_controller.as_mut() {
+                let mut player_controller = player_controller.bind_mut();
 
-            let pos = player_controller.get_position();
-            let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
-            let chunk_loaded = match world.bind().get_chunk_map().get_chunk(&chunk_pos) {
-                Some(c) => c.read().is_loaded(),
-                None => false,
-            };
-            player_controller.custom_process(delta, chunk_loaded, world.bind().get_slug());
+                let pos = player_controller.get_position();
+                let chunk_pos = BlockPosition::new(pos.x as i64, pos.y as i64, pos.z as i64).get_chunk_position();
+                let chunk_loaded = match world.bind().get_chunk_map().get_chunk(&chunk_pos) {
+                    Some(c) => c.read().is_loaded(),
+                    None => false,
+                };
+                player_controller.custom_process(delta, chunk_loaded, world.bind().get_slug());
+            }
         }
     }
 }

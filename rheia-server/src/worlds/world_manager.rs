@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
+use common::world_generator::default::WorldGenerator;
 use network::messages::ServerMessages;
 use parking_lot::RwLock;
 
@@ -14,7 +15,6 @@ use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
 
 use super::ecs::Ecs;
-use super::world_generator::default::WorldGenerator;
 
 pub struct ChunkChanged {
     pub old_chunk: ChunkPosition,

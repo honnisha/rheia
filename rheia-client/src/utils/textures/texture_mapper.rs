@@ -56,6 +56,10 @@ impl TextureMapper {
         self.textures_map.iter().position(|t| t == texture)
     }
 
+    pub fn len(&self) -> usize {
+        self.textures_map.len()
+    }
+
     pub fn load_image(
         &mut self,
         img: &mut RgbaImage,

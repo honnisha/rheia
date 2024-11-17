@@ -1,12 +1,17 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
-use common::{blocks::block_info::BlockInfo, chunks::{block_position::{BlockPosition, BlockPositionTrait}, chunk_position::ChunkPosition}, utils::vec_remove_item, VERTICAL_SECTIONS};
+use common::{
+    blocks::block_info::BlockInfo, chunks::{
+        block_position::{BlockPosition, BlockPositionTrait},
+        chunk_position::ChunkPosition,
+    }, utils::vec_remove_item, world_generator::default::WorldGenerator, VERTICAL_SECTIONS
+};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
-    worlds::{chunks::chunk_column::load_chunk, world_generator::default::WorldGenerator, world_manager::ChunkChanged},
+    worlds::{chunks::chunk_column::load_chunk, world_manager::ChunkChanged},
     CHUNKS_DESPAWN_TIMER,
 };
 
@@ -230,7 +235,9 @@ impl ChunkMap {
         if section > VERTICAL_SECTIONS as u32 {
             return false;
         }
-        chunk_column.write().change_block(section, block_position, new_block_info);
+        chunk_column
+            .write()
+            .change_block(section, block_position, new_block_info);
         return true;
     }
 }
@@ -240,10 +247,11 @@ mod tests {
     use std::sync::Arc;
 
     use bevy::prelude::Entity;
+    use common::world_generator::default::WorldGenerator;
     use parking_lot::RwLock;
     use std::time::Duration;
 
-    use crate::{worlds::world_generator::default::WorldGenerator, CHUNKS_DESPAWN_TIMER};
+    use crate::CHUNKS_DESPAWN_TIMER;
 
     use super::{ChunkMap, ChunkPosition};
 

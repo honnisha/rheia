@@ -28,7 +28,7 @@ pub type ChunkColliderDataBordered = [ChunkColliderInfo; ChunkBordersShape::SIZE
 /// One chunk section
 /// Contains mesh and data of the chunk section blocks
 #[derive(GodotClass)]
-#[class(no_init, base=Node3D)]
+#[class(no_init, tool, base=Node3D)]
 pub struct ChunkSection {
     pub(crate) base: Base<Node3D>,
     mesh: Gd<MeshInstance3D>,

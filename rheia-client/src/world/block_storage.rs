@@ -1,13 +1,23 @@
 use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::{BlockContent, BlockType};
+use common::blocks::default_blocks::DEFAULT_BLOCKS;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
 use crate::client_scripts::resource_manager::ResourceManager;
 
-#[derive(Default)]
 pub struct BlockStorage {
     blocks: HashMap<BlockIndexType, BlockType>,
+}
+
+impl Default for BlockStorage {
+    fn default() -> Self {
+        let mut block_storage = Self {
+            blocks: Default::default()
+        };
+        block_storage.blocks = DEFAULT_BLOCKS.clone();
+        block_storage
+    }
 }
 
 impl BlockStorage {
@@ -17,6 +27,16 @@ impl BlockStorage {
 
     pub fn iter(&self) -> Iter<'_, BlockIndexType, BlockType> {
         self.blocks.iter()
+    }
+
+    pub fn textures_blocks_count(&self) -> i32 {
+        let mut result = 0;
+        for b in self.blocks.values() {
+            if b.get_block_content().is_texture() {
+                result += 1;
+            }
+        }
+        result
     }
 
     /// Saves the server-side block scheme

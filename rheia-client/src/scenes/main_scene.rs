@@ -4,13 +4,16 @@ use crate::controller::entity_movement::EntityMovement;
 use crate::controller::enums::controller_actions::ControllerActions;
 use crate::controller::player_action::{PlayerAction, PlayerActionType};
 use crate::debug::debug_info::DebugInfo;
+use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::{NetworkContainer, NetworkLockType};
 use crate::network::events::handle_network_events;
+use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::rotation::Rotation;
 use godot::classes::input::MouseMode;
+use godot::classes::Engine;
 use godot::prelude::*;
 use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
@@ -25,7 +28,7 @@ static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
     tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
 
 #[derive(GodotClass)]
-#[class(init, base=Node)]
+#[class(init, tool, base=Node)]
 pub struct MainScene {
     base: Base<Node>,
     ip_port: Option<String>,
@@ -199,37 +202,56 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
-        let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
-        self.console.init(console);
-
-        let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
-        self.debug_info.init(debug_info);
-
-        let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
-        self.text_screen.init(text_screen);
+        if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
+            log::error!(target: "main", "log::set_logger error: {}", e)
+        }
+        log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));
             return;
         }
-        log::info!(target: "main", "Local resources loaded successfully ({})", self.get_resource_manager().get_resources_count());
+        log::info!(target: "main", "Local resources loaded successfully (count: {})", self.get_resource_manager().get_resources_count());
 
-        let console = self.console.clone();
-        self.base_mut().add_child(&console);
+        if Engine::singleton().is_editor_hint() {
+            let mut wm = self
+                .worlds_manager
+                .as_mut()
+                .expect("worlds_manager is not init")
+                .clone();
 
-        let debug_info = self.debug_info.clone();
-        self.base_mut().add_child(&debug_info);
+            wm.bind_mut().build_textures(&self.resource_manager).unwrap();
+            let mut world = wm.bind_mut().create_world(String::from("TestWorld"));
 
-        self.debug_info.bind_mut().toggle(false);
+            log::info!(target: "main", "Generate chunks");
+            generate_chunks(&mut world, 0, 0, 12);
+        } else {
+            let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
+            self.console.init(console);
 
-        let text_screen = self.text_screen.clone();
-        self.base_mut().add_child(&text_screen);
-        self.text_screen.bind_mut().toggle(true);
+            let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
+            self.debug_info.init(debug_info);
 
-        Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+            let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
+            self.text_screen.init(text_screen);
 
-        self.connect();
+            let console = self.console.clone();
+            self.base_mut().add_child(&console);
+
+            let debug_info = self.debug_info.clone();
+            self.base_mut().add_child(&debug_info);
+
+            self.debug_info.bind_mut().toggle(false);
+
+            let text_screen = self.text_screen.clone();
+            self.base_mut().add_child(&text_screen);
+            self.text_screen.bind_mut().toggle(true);
+
+            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+
+            self.connect();
+        }
     }
 
     fn process(&mut self, _delta: f64) {
@@ -249,19 +271,21 @@ impl INode for MainScene {
             self.debug_info.bind_mut().update_debug(wm, network_info);
         }
 
-        let input = Input::singleton();
-        if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
-            self.console.bind_mut().toggle(!Console::is_active());
+        if !Engine::singleton().is_editor_hint() {
+            let input = Input::singleton();
+            if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
+                self.console.bind_mut().toggle(!Console::is_active());
 
-            if Console::is_active() {
-                self.debug_info.bind_mut().toggle(false);
+                if Console::is_active() {
+                    self.debug_info.bind_mut().toggle(false);
+                }
             }
-        }
-        if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
-            self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
+            if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
+                self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
 
-            if DebugInfo::is_active() {
-                self.console.bind_mut().toggle(false);
+                if DebugInfo::is_active() {
+                    self.console.bind_mut().toggle(false);
+                }
             }
         }
     }
