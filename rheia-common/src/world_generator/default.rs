@@ -7,32 +7,42 @@ use crate::{
 };
 use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use super::ChunkDataType;
 
-pub struct WorldGenerator {
-    noise: FastNoise,
+#[derive(Serialize, Deserialize)]
+struct WorldGeneratorSettings {
+    fractal_type: Option<i32>,
+    fractal_gain: Option<f32>,
+    fractal_lacunarity: Option<f32>,
+    frequency: Option<f32>,
 }
 
-impl Default for WorldGenerator {
-    fn default() -> Self {
-        let mut rng = RandomNumberGenerator::new();
-        let seed = rng.next_u64();
-        Self::new(seed)
-    }
+pub struct WorldGenerator {
+    noise: FastNoise,
+    settings: WorldGeneratorSettings,
 }
 
 impl WorldGenerator {
-    pub fn new(seed: u64) -> Self {
+    pub fn create(settings_value: serde_json::Value) -> Result<Self, String> {
+        let mut rng = RandomNumberGenerator::new();
+
+        let settings: WorldGeneratorSettings = match serde_json::from_value(settings_value) {
+            Ok(s) => s,
+            Err(e) => return Err(format!("Settings json error: {}", e)),
+        };
+        let seed = rng.next_u64();
+
         let mut noise = FastNoise::seeded(seed);
         noise.set_noise_type(NoiseType::PerlinFractal);
         noise.set_fractal_type(FractalType::FBM);
-        noise.set_fractal_octaves(1);
-        noise.set_fractal_gain(0.6);
-        noise.set_fractal_lacunarity(1.5);
-        noise.set_frequency(2.0);
+        noise.set_fractal_octaves(settings.fractal_type.unwrap_or(1));
+        noise.set_fractal_gain(settings.fractal_gain.unwrap_or(0.6));
+        noise.set_fractal_lacunarity(settings.fractal_lacunarity.unwrap_or(1.5));
+        noise.set_frequency(settings.frequency.unwrap_or(2.0));
 
-        WorldGenerator { noise: noise }
+        Ok(Self { noise, settings })
     }
 
     pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkDataType {

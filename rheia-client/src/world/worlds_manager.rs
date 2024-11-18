@@ -1,5 +1,6 @@
 use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use common::chunks::rotation::Rotation;
+use godot::classes::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{classes::Material, prelude::Gd};
 use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
@@ -30,7 +31,8 @@ pub struct WorldsManager {
     #[init(val = Arc::new(RwLock::new(Default::default())))]
     block_storage: BlockStorageType,
 
-    material: Option<Gd<Material>>,
+    #[export]
+    terrain_material: Option<Gd<StandardMaterial3D>>,
 }
 
 impl WorldsManager {
@@ -38,11 +40,16 @@ impl WorldsManager {
         let mut texture_mapper = self.texture_mapper.write();
         let block_storage = self.block_storage.read();
 
-        let texture = match texture_mapper.build(&*block_storage, resource_manager) {
+        texture_mapper.clear();
+
+        let mut material_3d = self
+            .terrain_material
+            .as_mut()
+            .expect("Terrain StandardMaterial3D is not set");
+        match texture_mapper.build(&*block_storage, resource_manager, &mut material_3d) {
             Ok(i) => i,
             Err(e) => return Err(e),
         };
-        self.material = Some(texture);
         log::info!(target: "main", "Textures builded successfily; texture blocks:{} textures loaded:{}", block_storage.textures_blocks_count(), texture_mapper.len());
         return Ok(());
     }
@@ -96,13 +103,24 @@ impl WorldsManager {
         player_controller
     }
 
+    pub fn get_material(&self) -> Gd<Material> {
+        let material_3d = self
+            .terrain_material
+            .as_ref()
+            .expect("Terrain StandardMaterial3D is not set")
+            .clone();
+        material_3d.upcast::<Material>()
+    }
+
     pub fn create_world(&mut self, world_slug: String) -> Gd<WorldManager> {
+        let now = std::time::Instant::now();
+
         let mut world = Gd::<WorldManager>::from_init_fn(|base| {
             WorldManager::create(
                 base,
                 world_slug.clone(),
                 self.texture_mapper.clone(),
-                self.material.as_ref().expect("material must be builded").clone(),
+                self.get_material(),
                 self.block_storage.clone(),
             )
         });
@@ -115,21 +133,28 @@ impl WorldsManager {
         self.base_mut().add_child(&world.clone());
         self.world = Some(world.clone());
 
-        log::info!(target: "world", "World \"{}\" created;", self.world.as_ref().unwrap().bind().get_slug());
+        log::info!(target: "world", "World \"{}\" created; (executed:{:.2?})", self.world.as_ref().unwrap().bind().get_slug(), now.elapsed());
 
         world
     }
 
     pub fn destroy_world(&mut self) {
+        let now = std::time::Instant::now();
+
         let mut base = self.base_mut().clone();
+
+        let world_slug;
+        if let Some(world) = self.world.as_mut().take() {
+            world_slug = world.bind().get_slug().clone();
+            base.remove_child(&world.clone());
+        } else {
+            panic!("destroy_world: world is not exists");
+        }
 
         if let Some(player_controller) = self.player_controller.as_mut().take() {
             base.remove_child(&player_controller.clone());
         }
-
-        if let Some(world) = self.world.as_mut().take() {
-            base.remove_child(&world.clone());
-        }
+        log::info!(target: "world", "World \"{}\" destroyed; (executed:{:.2?})", world_slug, now.elapsed());
     }
 }
 

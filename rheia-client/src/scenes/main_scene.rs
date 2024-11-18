@@ -12,8 +12,9 @@ use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::rotation::Rotation;
+use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
-use godot::classes::Engine;
+use godot::classes::{Engine, FileAccess};
 use godot::prelude::*;
 use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
@@ -58,6 +59,20 @@ pub struct MainScene {
 
     #[export]
     block_icon_scene: Option<Gd<PackedScene>>,
+
+    #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
+    debug_world: u32,
+
+    #[var(get, set = regenerate_debug_world)]
+    #[export]
+    regenerate_map_button: bool,
+
+    #[init(val = 12)]
+    #[export]
+    debug_render_distance: u16,
+
+    #[export(file = "*.json")]
+    debug_world_settings: GString,
 }
 
 impl MainScene {
@@ -172,6 +187,23 @@ impl MainScene {
     }
 
     #[func]
+    fn regenerate_debug_world(&mut self, _value: bool) {
+        let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
+
+        wm.bind_mut().build_textures(&self.resource_manager).unwrap();
+
+        if wm.bind().get_world().is_some() {
+            wm.bind_mut().destroy_world();
+        }
+
+        let mut world = wm.bind_mut().create_world(String::from("TestWorld"));
+
+        let settings_file = FileAccess::open(&self.debug_world_settings.to_string(), ModeFlags::READ).unwrap();
+        let settings: serde_json::Value = serde_json::from_str(&settings_file.get_as_text().to_string()).unwrap();
+        generate_chunks(&mut world, 0, 0, self.debug_render_distance, settings);
+    }
+
+    #[func]
     fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
         let a = action.bind();
         let network_lock = self.get_network_lock().unwrap();
@@ -221,11 +253,7 @@ impl INode for MainScene {
                 .expect("worlds_manager is not init")
                 .clone();
 
-            wm.bind_mut().build_textures(&self.resource_manager).unwrap();
-            let mut world = wm.bind_mut().create_world(String::from("TestWorld"));
-
-            log::info!(target: "main", "Generate chunks");
-            generate_chunks(&mut world, 0, 0, 12);
+            self.regenerate_debug_world(false);
         } else {
             let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
             self.console.init(console);

@@ -1,10 +1,16 @@
 use common::blocks::block_type::{BlockContent, BlockType};
-use godot::{classes::Material, obj::Gd};
+use godot::{
+    builtin::PackedByteArray,
+    classes::{base_material_3d::TextureParam, Image, ImageTexture, StandardMaterial3D},
+    obj::{Gd, NewGd},
+};
 use image::RgbaImage;
 
-use crate::{client_scripts::{resource_instance::MediaResource, resource_manager::ResourceManager}, world::block_storage::BlockStorage};
-
-use super::material_builder::build_blocks_material;
+use crate::{
+    client_scripts::{resource_instance::MediaResource, resource_manager::ResourceManager},
+    utils::textures::material_builder::generate_texture,
+    world::block_storage::BlockStorage,
+};
 
 #[derive(Debug, Default)]
 pub struct TextureMapper {
@@ -16,15 +22,32 @@ impl TextureMapper {
         &mut self,
         block_storage: &BlockStorage,
         resource_manager: &ResourceManager,
-    ) -> Result<Gd<Material>, String> {
-        let texture = build_blocks_material(self, block_storage, resource_manager).unwrap();
-        Ok(texture.duplicate().unwrap().cast::<Material>())
+        material_3d: &mut Gd<StandardMaterial3D>,
+    ) -> Result<(), String> {
+        let mut pba = PackedByteArray::new();
+
+        let m = match generate_texture(self, block_storage, resource_manager) {
+            Ok(m) => m,
+            Err(e) => return Err(e),
+        };
+        pba.extend(m);
+
+        let mut image = Image::new_gd();
+        image.load_png_from_buffer(&pba);
+        let mut image_texture = ImageTexture::new_gd();
+        image_texture.set_image(&image);
+        material_3d.set_texture(TextureParam::ALBEDO, &image_texture);
+        Ok(())
     }
 
     pub fn add_texture(&mut self, texture_name: String) -> i64 {
         assert!(!self.textures_map.contains(&texture_name), "texture already exists");
         self.textures_map.push(texture_name);
         self.textures_map.len() as i64 - 1_i64
+    }
+
+    pub fn clear(&mut self) {
+        self.textures_map.clear();
     }
 
     #[allow(unused_variables)]

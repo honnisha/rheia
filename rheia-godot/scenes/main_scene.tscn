@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
 [ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="2_xhcjx"]
 [ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
+[ext_resource type="Material" uid="uid://8t3qd3k1d8od" path="res://assets/terrain_material.tres" id="5_tt6yv"]
 
 [sub_resource type="Sky" id="Sky_7db6b"]
 
@@ -22,8 +23,11 @@ console_scene = ExtResource("1_rga66")
 text_screen_scene = ExtResource("2_773ro")
 debug_info_scene = ExtResource("3_qwjw3")
 block_icon_scene = ExtResource("2_xhcjx")
+debug_render_distance = 14
+debug_world_settings = "res://assets/world_settings.json"
 
 [node name="WorldsManager" type="WorldsManager" parent="."]
+terrain_material = ExtResource("5_tt6yv")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_8w0cv")
@@ -31,7 +35,7 @@ camera_attributes = SubResource("CameraAttributesPractical_cqqg4")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
-light_energy = 0.9
-light_angular_distance = 70.0
+light_angular_distance = 80.0
+light_bake_mode = 0
 directional_shadow_mode = 0
 sky_mode = 1
