@@ -88,7 +88,10 @@ impl ConsoleHandler {
         });
 
         thread::spawn(move || loop {
-            ConsoleHandler::update(&mut printer);
+            for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
+                printer.print(parse_to_terminal_colors(&message)).unwrap();
+                thread::sleep(Duration::from_millis(1));
+            }
             thread::sleep(Duration::from_millis(50));
         });
     }
@@ -98,13 +101,6 @@ impl ConsoleHandler {
         let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
 
         CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
-    }
-
-    pub fn update(printer: &mut dyn ExternalPrinter) {
-        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
-            printer.print(parse_to_terminal_colors(&message)).unwrap();
-            thread::sleep(Duration::from_millis(1));
-        }
     }
 
     pub fn iter_commands() -> Drain<'static, String> {

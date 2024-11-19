@@ -3,7 +3,7 @@ use godot::{
     classes::{Button, Control, IControl, LineEdit, RichTextLabel},
     prelude::*,
 };
-use network::client::resolve_connect_domain;
+use network::client::resolve_connect_domain_sync;
 
 #[derive(GodotClass)]
 #[class(init, base=Control)]
@@ -52,7 +52,7 @@ impl ConnectScreen {
         self.error_text.as_mut().unwrap().set_text(&"".to_string());
 
         let ip_port = self.input.as_mut().unwrap().get_text().to_string();
-        if let Err(e) = resolve_connect_domain(&ip_port, 25565_u16) {
+        if let Err(e) = resolve_connect_domain_sync(&ip_port, 25565_u16) {
             self.set_error_msg(e.to_string());
             return;
         }

@@ -6,5 +6,6 @@ members = [
     "rheia-common",
     "rheia-physics",
     "rheia-network",
+    "rheia-network/examples/connection",
 ]
 resolver = "2"

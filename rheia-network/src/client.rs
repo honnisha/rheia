@@ -1,11 +1,12 @@
-use std::net::SocketAddr;
+#![allow(opaque_hidden_inferred_bound)]
 
 use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use flume::Drain;
 use parking_lot::RwLockReadGuard;
+use std::{future::Future, net::SocketAddr};
 use trust_dns_resolver::{
     config::{ResolverConfig, ResolverOpts},
-    Resolver,
+    TokioAsyncResolver,
 };
 
 #[derive(Default, Clone)]
@@ -18,7 +19,7 @@ pub struct NetworkInfo {
 }
 
 pub trait IClientNetwork: Sized {
-    fn new(ip_port: String) -> Result<Self, String>;
+    fn new(ip_port: String) -> impl Future<Output = Result<Self, String>>;
     // fn step(&self, delta: Duration) -> bool;
 
     fn iter_server_messages(&self) -> Drain<ServerMessages>;
@@ -33,7 +34,7 @@ pub trait IClientNetwork: Sized {
     fn get_network_info(&self) -> RwLockReadGuard<NetworkInfo>;
 }
 
-pub fn resolve_connect_domain(input: &String, default_port: u16) -> Result<SocketAddr, String> {
+pub async fn resolve_connect_domain(input: &String, default_port: u16) -> Result<SocketAddr, String> {
     let collection: Vec<&str> = input.split(":").collect();
     let (domain, port) = if collection.len() == 2 {
         (
@@ -47,12 +48,22 @@ pub fn resolve_connect_domain(input: &String, default_port: u16) -> Result<Socke
         (input.clone(), default_port)
     };
 
-    let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
-    let response = resolver.lookup_ip(domain).unwrap();
+    let resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+    let response = resolver.lookup_ip(domain).await.unwrap();
+
+    // let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
+    // resolver.lookup_ip(domain).unwrap()
+
     let address = response.iter().next().expect("no addresses returned!");
     if address.is_ipv6() {
         return Err("ipv6 is not supported".to_string());
     }
 
     Ok(SocketAddr::new(address, port))
+}
+
+pub async fn resolve_connect_domain_sync(input: &String, default_port: u16) -> Result<SocketAddr, String> {
+    let io_loop = tokio::runtime::Runtime::new().unwrap();
+    let result = io_loop.block_on(async { resolve_connect_domain(input, default_port)});
+    io_loop.block_on(result)
 }

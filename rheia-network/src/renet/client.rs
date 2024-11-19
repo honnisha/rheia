@@ -6,7 +6,6 @@ use renet::{
     Bytes, RenetClient,
 };
 use rhai::Instant;
-use std::thread;
 use std::{
     net::UdpSocket,
     sync::{
@@ -160,10 +159,11 @@ impl RenetClientNetwork {
         return true;
     }
 
-    fn spawn_network_thread(&self) {
+    async fn spawn_network_thread(&self) {
         let container = self.clone();
-        thread::spawn(move || loop {
-            {
+        log::info!(target: "network", "Spawning network thread");
+        tokio::spawn(async move {
+            loop {
                 // Network will be processed only when there is no lock
                 if container.is_network_locked() {
                     continue;
@@ -174,19 +174,19 @@ impl RenetClientNetwork {
                 if !success {
                     break;
                 }
+                tokio::time::sleep(Duration::from_millis(10)).await;
             }
-            thread::sleep(Duration::from_millis(10));
         });
         log::info!(target: "renet", "Network thread spawned");
     }
 }
 
 impl IClientNetwork for RenetClientNetwork {
-    fn new(ip_port: String) -> Result<Self, String> {
+    async fn new(ip_port: String) -> Result<Self, String> {
         let client = RenetClient::new(connection_config());
 
         // Setup transport layer
-        let server_addr = match resolve_connect_domain(&ip_port, 25565_u16) {
+        let server_addr = match resolve_connect_domain(&ip_port, 25565_u16).await {
             Ok(a) => a,
             Err(e) => return Err(format!("Path {} error: {}", ip_port, e)),
         };
@@ -218,7 +218,7 @@ impl IClientNetwork for RenetClientNetwork {
             network_lock: Arc::new(AtomicBool::new(false)),
             network_client_sended: flume::unbounded(),
         };
-        network.spawn_network_thread();
+        network.spawn_network_thread().await;
         Ok(network)
     }
 

@@ -32,6 +32,28 @@ lazy_static! {
                 },
             ),
         );
+        m.insert(
+            3,
+            BlockType::new(
+                VoxelVisibility::Opaque,
+                BlockContent::Texture {
+                    texture: "default://assets/block/sand.png".to_string(),
+                    side_texture: None,
+                    bottom_texture: None,
+                },
+            ),
+        );
+        m.insert(
+            4,
+            BlockType::new(
+                VoxelVisibility::Translucent,
+                BlockContent::Texture {
+                    texture: "default://assets/block/water_still.png".to_string(),
+                    side_texture: None,
+                    bottom_texture: None,
+                },
+            ),
+        );
         m
     };
 }

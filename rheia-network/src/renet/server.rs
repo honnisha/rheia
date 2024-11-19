@@ -59,7 +59,7 @@ impl RenetServerNetwork {
 }
 
 impl IServerNetwork for RenetServerNetwork {
-    fn new(ip_port: String) -> Self {
+    async fn new(ip_port: String) -> Self {
         let server = RenetServer::new(connection_config());
 
         let socket: UdpSocket = UdpSocket::bind(ip_port.as_str()).unwrap();
@@ -83,7 +83,7 @@ impl IServerNetwork for RenetServerNetwork {
         network
     }
 
-    fn step(&self, delta: Duration) -> bool {
+    async fn step(&self, delta: Duration) -> bool {
         let mut server = self.get_server_mut();
         let mut transport = self.get_transport_mut();
         server.update(delta);
@@ -156,7 +156,7 @@ impl IServerNetwork for RenetServerNetwork {
         self.get_server().is_connected(ClientId::from_raw(client_id))
     }
 
-    fn send_message(&self, client_id: u64, message: &ServerMessages, message_type: NetworkMessageType) {
+    fn send_message(&self, client_id: u64, message_type: NetworkMessageType, message: &ServerMessages) {
         let encoded = bincode::serialize(message).unwrap();
         self.get_server_mut().send_message(
             ClientId::from_raw(client_id),
