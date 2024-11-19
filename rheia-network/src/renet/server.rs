@@ -83,7 +83,7 @@ impl IServerNetwork for RenetServerNetwork {
         network
     }
 
-    async fn step(&self, delta: Duration) -> bool {
+    async fn step(&self, delta: Duration) {
         let mut server = self.get_server_mut();
         let mut transport = self.get_transport_mut();
         server.update(delta);
@@ -137,7 +137,6 @@ impl IServerNetwork for RenetServerNetwork {
         }
 
         transport.send_packets(&mut server);
-        return true;
     }
 
     fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)> {

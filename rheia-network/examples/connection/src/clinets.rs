@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use network::{
     client::IClientNetwork,
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
@@ -21,6 +23,8 @@ impl Client {
 
     pub async fn run(&mut self) {
         loop {
+            let delta = Duration::from_secs_f32(0.1);
+            self.client.step(delta.clone()).await;
             // Recieve errors from network thread
             for error in self.client.iter_errors() {
                 log::info!("Network error: {}", error);
@@ -52,6 +56,8 @@ impl Client {
                 let msg = ClientMessages::ConsoleInput { command: input };
                 self.client.send_message(NetworkMessageType::ReliableOrdered, &msg);
             }
+
+            tokio::time::sleep(delta).await;
         }
     }
 }

@@ -6,7 +6,7 @@ use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
 pub trait IServerNetwork {
     fn new(ip_port: String) -> impl Future<Output = Self>;
-    fn step(&self, delta: Duration) -> impl Future<Output = bool>;
+    fn step(&self, delta: Duration) -> impl Future<Output = ()>;
 
     fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)>;
     fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages>;

@@ -25,7 +25,7 @@ impl Server {
 
     pub async fn run(&mut self) {
         loop {
-            let delta = Duration::from_secs_f32(1.0);
+            let delta = Duration::from_secs_f32(0.1);
             self.server.step(delta.clone()).await;
 
             for message in self.server.drain_errors() {
@@ -35,12 +35,11 @@ impl Server {
             for (client_id, decoded) in self.server.drain_client_messages() {
                 match decoded {
                     ClientMessages::ConsoleInput { command } => {
-                        log::info!("- client_id:{} input: {}", client_id, command);
-
                         let Some(login) = self.connections.get(&client_id) else {
                             continue;
                         };
-                        self.send_for_all(format!("{}: {}", login, login));
+                        log::info!("- {}: {}", login, command);
+                        self.send_for_all(format!("{}: {}", login, command));
                     }
                     ClientMessages::ConnectionInfo {
                         login,

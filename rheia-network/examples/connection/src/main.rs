@@ -1,6 +1,7 @@
 use clap::Parser;
 use clinets::Client;
 use console::Console;
+use log::LevelFilter;
 use logger::CONSOLE_LOGGER;
 use server::Server;
 use std::error::Error;
@@ -27,6 +28,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    log::set_max_level(LevelFilter::Info);
     log::set_logger(&CONSOLE_LOGGER).unwrap();
 
     Console::create();

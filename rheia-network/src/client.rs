@@ -3,7 +3,7 @@
 use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use flume::Drain;
 use parking_lot::RwLockReadGuard;
-use std::{future::Future, net::SocketAddr};
+use std::{future::Future, net::SocketAddr, time::Duration};
 use trust_dns_resolver::{
     config::{ResolverConfig, ResolverOpts},
     TokioAsyncResolver,
@@ -20,7 +20,7 @@ pub struct NetworkInfo {
 
 pub trait IClientNetwork: Sized {
     fn new(ip_port: String) -> impl Future<Output = Result<Self, String>>;
-    // fn step(&self, delta: Duration) -> bool;
+    fn step(&self, delta: Duration) -> impl Future<Output = ()>;
 
     fn iter_server_messages(&self) -> Drain<ServerMessages>;
     fn iter_errors(&self) -> Drain<String>;

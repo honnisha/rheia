@@ -14,9 +14,8 @@ impl log::Log for ConsoleLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             let msg = format!(
-                "&8{} {}{}&r: {}",
+                "{} {}: {}",
                 record.metadata().target(),
-                record.level(),
                 record.level(),
                 record.args().to_string()
             );

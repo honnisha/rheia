@@ -5,15 +5,7 @@ use renet::{
     transport::{ClientAuthentication, NetcodeClientTransport},
     Bytes, RenetClient,
 };
-use rhai::Instant;
-use std::{
-    net::UdpSocket,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    time::{Duration, SystemTime},
-};
+use std::{net::UdpSocket, sync::Arc, time::SystemTime};
 
 use crate::client::{resolve_connect_domain, IClientNetwork};
 use crate::messages::ClientMessages;
@@ -33,12 +25,10 @@ pub struct RenetClientNetwork {
     client: ClientLock,
     transport: TransferLock,
 
-    timer: Arc<RwLock<Instant>>,
     network_info: Arc<RwLock<NetworkInfo>>,
 
     network_decoder_out: (Sender<ServerMessages>, Receiver<ServerMessages>),
     network_errors_out: (Sender<String>, Receiver<String>),
-    network_lock: Arc<AtomicBool>,
 
     // Messages was sended by the client
     // must be sended to the server
@@ -46,14 +36,6 @@ pub struct RenetClientNetwork {
 }
 
 impl RenetClientNetwork {
-    pub fn is_network_locked(&self) -> bool {
-        self.network_lock.load(Ordering::Relaxed)
-    }
-
-    pub fn set_network_lock(&self, state: bool) {
-        self.network_lock.store(state, Ordering::Relaxed);
-    }
-
     fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
         self.client.write()
     }
@@ -64,13 +46,6 @@ impl RenetClientNetwork {
 
     fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
         self.transport.write()
-    }
-
-    fn get_delta_time(&self) -> Duration {
-        let mut t = self.timer.write();
-        let delta_time = t.elapsed();
-        *t = Instant::now();
-        delta_time
     }
 
     /// Send decoded message to thread server messages channel
@@ -101,83 +76,6 @@ impl RenetClientNetwork {
             NetworkMessageType::Unreliable => ServerChannel::Unreliable,
             NetworkMessageType::WorldInfo => ServerChannel::ReliableOrdered,
         }
-    }
-
-    fn step(&self, delta: std::time::Duration) -> bool {
-        let mut client = self.get_client_mut();
-
-        if client.is_disconnected() {
-            return false;
-        }
-
-        {
-            let info = client.network_info();
-            let mut network_info = self.network_info.write();
-            network_info.is_disconnected = client.is_disconnected();
-            network_info.bytes_received_per_second = info.bytes_received_per_second;
-            network_info.bytes_received_per_sec = client.bytes_received_per_sec();
-            network_info.bytes_sent_per_sec = client.bytes_sent_per_sec();
-            network_info.packet_loss = client.packet_loss();
-        }
-
-        client.update(delta);
-        let mut transport = self.get_transport_mut();
-        if let Err(e) = transport.update(delta, &mut client) {
-            self.send_network_error(e.to_string());
-            return false;
-        }
-
-        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
-            }
-        }
-        while let Some(server_message) = client.receive_message(ServerChannel::ReliableUnordered) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
-            }
-        }
-        while let Some(server_message) = client.receive_message(ServerChannel::Unreliable) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
-            }
-        }
-
-        if client.is_connected() {
-            for (channel, message) in self.network_client_sended.1.drain() {
-                client.send_message(channel, message);
-            }
-        }
-
-        if let Err(e) = transport.send_packets(&mut client) {
-            self.send_network_error(e.to_string());
-            return false;
-        }
-        return true;
-    }
-
-    async fn spawn_network_thread(&self) {
-        let container = self.clone();
-        log::info!(target: "network", "Spawning network thread");
-        tokio::spawn(async move {
-            loop {
-                // Network will be processed only when there is no lock
-                if container.is_network_locked() {
-                    continue;
-                }
-                container.set_network_lock(true);
-
-                let success = container.step(container.get_delta_time());
-                if !success {
-                    break;
-                }
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-        });
-        log::info!(target: "renet", "Network thread spawned");
     }
 }
 
@@ -212,20 +110,69 @@ impl IClientNetwork for RenetClientNetwork {
             transport: Arc::new(RwLock::new(transport)),
 
             network_info: Arc::new(RwLock::new(Default::default())),
-            timer: Arc::new(RwLock::new(Instant::now())),
             network_decoder_out: flume::unbounded(),
             network_errors_out: flume::unbounded(),
-            network_lock: Arc::new(AtomicBool::new(false)),
             network_client_sended: flume::unbounded(),
         };
-        network.spawn_network_thread().await;
         Ok(network)
     }
 
+    async fn step(&self, delta: std::time::Duration) {
+        let mut client = self.get_client_mut();
+
+        if client.is_disconnected() {
+            return;
+        }
+
+        {
+            let info = client.network_info();
+            let mut network_info = self.network_info.write();
+            network_info.is_disconnected = client.is_disconnected();
+            network_info.bytes_received_per_second = info.bytes_received_per_second;
+            network_info.bytes_received_per_sec = client.bytes_received_per_sec();
+            network_info.bytes_sent_per_sec = client.bytes_sent_per_sec();
+            network_info.packet_loss = client.packet_loss();
+        }
+
+        client.update(delta);
+        let mut transport = self.get_transport_mut();
+        if let Err(e) = transport.update(delta, &mut client) {
+            self.send_network_error(e.to_string());
+            return;
+        }
+
+        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
+            let decoded = RenetClientNetwork::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                self.send_server_message(d);
+            }
+        }
+        while let Some(server_message) = client.receive_message(ServerChannel::ReliableUnordered) {
+            let decoded = RenetClientNetwork::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                self.send_server_message(d);
+            }
+        }
+        while let Some(server_message) = client.receive_message(ServerChannel::Unreliable) {
+            let decoded = RenetClientNetwork::decode_server_message(&server_message);
+            if let Some(d) = decoded {
+                self.send_server_message(d);
+            }
+        }
+
+        if client.is_connected() {
+            for (channel, message) in self.network_client_sended.1.drain() {
+                client.send_message(channel, message);
+            }
+        }
+
+        if let Err(e) = transport.send_packets(&mut client) {
+            self.send_network_error(e.to_string());
+        }
+    }
+
     fn iter_server_messages(&self) -> Drain<ServerMessages> {
-        let drain = self.network_decoder_out.1.drain();
-        self.set_network_lock(false);
-        drain
+        self.network_decoder_out.1.drain()
     }
 
     fn iter_errors(&self) -> Drain<String> {
