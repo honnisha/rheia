@@ -25,7 +25,7 @@ impl Server {
 
     pub async fn run(&mut self) {
         loop {
-            let delta = Duration::from_secs_f32(0.1);
+            let delta = Duration::from_millis(10);
             self.server.step(delta.clone()).await;
 
             for message in self.server.drain_errors() {
@@ -70,6 +70,7 @@ impl Server {
             }
 
             for input in Console::get_input() {
+                log::info!("- Console: {}", input);
                 self.send_for_all(format!("Console: {}", input));
             }
 

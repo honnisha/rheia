@@ -1,7 +1,7 @@
-use std::time::Duration;
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
-use rustyline::ExternalPrinter;
+use rustyline::{history::MemHistory, Editor, ExternalPrinter};
+use std::time::Duration;
 
 lazy_static! {
     // To handle output log from entire server and draw it on console
@@ -15,10 +15,17 @@ pub struct Console {}
 
 impl Console {
     pub fn create() {
-        let mut rl = rustyline::DefaultEditor::new().unwrap();
-        let mut printer = rl.create_external_printer().unwrap();
+        // let mut editor = rustyline::DefaultEditor::new().unwrap();
+        let editor_config = rustyline::config::Config::builder()
+            .behavior(rustyline::config::Behavior::PreferTerm)
+            .keyseq_timeout(Some(0))
+            .build();
+
+        let mut editor = Editor::<(), MemHistory>::with_history(editor_config, MemHistory::default()).unwrap();
+
+        let mut printer = editor.create_external_printer().unwrap();
         std::thread::spawn(move || loop {
-            let readline = rl.readline("");
+            let readline = editor.readline("> ");
             match readline {
                 Ok(input) => {
                     if input.len() > 0 {

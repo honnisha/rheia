@@ -23,7 +23,7 @@ impl Client {
 
     pub async fn run(&mut self) {
         loop {
-            let delta = Duration::from_secs_f32(0.1);
+            let delta = Duration::from_millis(10);
             self.client.step(delta.clone()).await;
             // Recieve errors from network thread
             for error in self.client.iter_errors() {

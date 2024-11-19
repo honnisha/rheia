@@ -63,7 +63,7 @@ impl ConsoleHandler {
         let mut printer = rl.create_external_printer().unwrap();
 
         thread::spawn(move || loop {
-            let readline = rl.readline("");
+            let readline = rl.readline("> ");
             match readline {
                 Ok(input) => {
                     if input.len() > 0 {
