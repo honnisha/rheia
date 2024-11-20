@@ -133,7 +133,6 @@ impl IServerNetwork for RenetServerNetwork {
                     self.channel_connections.0.send(connect).unwrap();
                 }
             }
-            //server_events.send(event);
         }
 
         transport.send_packets(&mut server);

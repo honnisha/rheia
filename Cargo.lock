@@ -5889,6 +5889,7 @@ dependencies = [
  "serde_yaml",
  "shellexpand",
  "spiral 0.2.1",
+ "tokio",
  "uuid",
  "zip",
 ]

@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 
 use super::ChunkDataType;
 
-#[derive(Serialize, Deserialize)]
-struct WorldGeneratorSettings {
+#[derive(Default, Serialize, Deserialize)]
+pub struct WorldGeneratorSettings {
     fractal_type: Option<i32>,
     fractal_gain: Option<f32>,
     fractal_lacunarity: Option<f32>,
@@ -25,14 +25,14 @@ pub struct WorldGenerator {
 }
 
 impl WorldGenerator {
-    pub fn create(settings_value: serde_json::Value) -> Result<Self, String> {
-        let mut rng = RandomNumberGenerator::new();
-
-        let settings: WorldGeneratorSettings = match serde_json::from_value(settings_value) {
-            Ok(s) => s,
-            Err(e) => return Err(format!("Settings json error: {}", e)),
+    pub fn create(seed: Option<u64>, settings: WorldGeneratorSettings) -> Result<Self, String> {
+        let seed = match seed {
+            Some(s) => s,
+            None => {
+                let mut rng = RandomNumberGenerator::new();
+                rng.next_u64()
+            },
         };
-        let seed = rng.next_u64();
 
         let mut noise = FastNoise::seeded(seed);
         noise.set_noise_type(NoiseType::PerlinFractal);

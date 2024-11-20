@@ -1,5 +1,9 @@
 use arrayvec::ArrayVec;
-use common::{chunks::chunk_position::ChunkPosition, world_generator::default::WorldGenerator, VERTICAL_SECTIONS};
+use common::{
+    chunks::chunk_position::ChunkPosition,
+    world_generator::default::{WorldGenerator, WorldGeneratorSettings},
+    VERTICAL_SECTIONS,
+};
 use godot::obj::Gd;
 use network::messages::{ChunkDataType, SectionsData};
 use spiral::ManhattanIterator;
@@ -11,13 +15,13 @@ pub fn generate_chunks(
     x: i32,
     z: i32,
     chunks_distance: u16,
-    settings: serde_json::Value,
+    settings: WorldGeneratorSettings,
 ) {
     let now = std::time::Instant::now();
 
     let mut durations: Vec<std::time::Duration> = Default::default();
 
-    let world_generator = WorldGenerator::create(settings).unwrap();
+    let world_generator = WorldGenerator::create(None, settings).unwrap();
 
     let iter = ManhattanIterator::new(x, z, chunks_distance);
     for (x, z) in iter {

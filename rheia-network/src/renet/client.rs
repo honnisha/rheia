@@ -117,11 +117,11 @@ impl IClientNetwork for RenetClientNetwork {
         Ok(network)
     }
 
-    async fn step(&self, delta: std::time::Duration) {
+    async fn step(&self, delta: std::time::Duration) -> bool {
         let mut client = self.get_client_mut();
 
         if client.is_disconnected() {
-            return;
+            return false;
         }
 
         {
@@ -138,7 +138,7 @@ impl IClientNetwork for RenetClientNetwork {
         let mut transport = self.get_transport_mut();
         if let Err(e) = transport.update(delta, &mut client) {
             self.send_network_error(e.to_string());
-            return;
+            return false;
         }
 
         while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
@@ -169,6 +169,7 @@ impl IClientNetwork for RenetClientNetwork {
         if let Err(e) = transport.send_packets(&mut client) {
             self.send_network_error(e.to_string());
         }
+        true
     }
 
     fn iter_server_messages(&self) -> Drain<ServerMessages> {

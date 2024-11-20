@@ -5,18 +5,18 @@ use crate::controller::enums::controller_actions::ControllerActions;
 use crate::controller::player_action::{PlayerAction, PlayerActionType};
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
-use crate::network::client::{NetworkContainer, NetworkLockType};
+use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::rotation::Rotation;
+use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
 use godot::classes::{Engine, FileAccess};
 use godot::prelude::*;
-use network::client::IClientNetwork;
 use network::messages::{ClientMessages, NetworkMessageType};
 
 use crate::scenes::text_screen::TextScreen;
@@ -81,11 +81,8 @@ impl MainScene {
         self.login = Some(login);
     }
 
-    pub fn get_network_lock(&self) -> Option<NetworkLockType> {
-        match self.network.as_ref() {
-            Some(n) => Some(n.get_network_lock()),
-            None => None,
-        }
+    pub fn get_network(&self) -> Option<&NetworkContainer> {
+        self.network.as_ref()
     }
 
     pub fn get_login(&self) -> &String {
@@ -126,6 +123,7 @@ impl MainScene {
                 return;
             }
         };
+        network.spawn_network_thread();
         self.network = Some(network);
     }
 
@@ -180,10 +178,8 @@ impl MainScene {
 
     #[func]
     fn handler_player_move(&mut self, movement: Gd<EntityMovement>, _new_chunk: bool) {
-        let network_lock = self.get_network_lock().unwrap();
-        network_lock
-            .read()
-            .send_message(NetworkMessageType::Unreliable, &movement.bind().into_network());
+        let network = self.get_network().unwrap();
+        network.send_message(NetworkMessageType::Unreliable, &movement.bind().into_network());
     }
 
     #[func]
@@ -201,14 +197,20 @@ impl MainScene {
         let mut world = wm.bind_mut().create_world(String::from("TestWorld"));
 
         let settings_file = FileAccess::open(&self.debug_world_settings.to_string(), ModeFlags::READ).unwrap();
-        let settings: serde_json::Value = serde_json::from_str(&settings_file.get_as_text().to_string()).unwrap();
+        let settings_value: serde_json::Value = serde_json::from_str(&settings_file.get_as_text().to_string()).unwrap();
+
+        let settings: WorldGeneratorSettings = match serde_json::from_value(settings_value) {
+            Ok(s) => s,
+            Err(e) => panic!("Settings json error: {}", e),
+        };
+
         generate_chunks(&mut world, 0, 0, self.debug_render_distance, settings);
     }
 
     #[func]
     fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
         let a = action.bind();
-        let network_lock = self.get_network_lock().unwrap();
+        let network = self.get_network().unwrap();
         if let Some((cast_result, physics_type)) = a.get_hit() {
             match physics_type {
                 PhysicsType::ChunkMeshCollider(_chunk_position) => {
@@ -225,7 +227,7 @@ impl MainScene {
                             new_block_info: BlockInfo::create(0, None),
                         },
                     };
-                    network_lock.read().send_message(NetworkMessageType::Unreliable, &msg);
+                    network.send_message(NetworkMessageType::Unreliable, &msg);
                 }
                 PhysicsType::EntityCollider(_entity_id) => {}
             }
@@ -249,12 +251,6 @@ impl INode for MainScene {
         log::info!(target: "main", "Local resources loaded successfully (count: {})", self.get_resource_manager().get_resources_count());
 
         if Engine::singleton().is_editor_hint() {
-            let mut wm = self
-                .worlds_manager
-                .as_mut()
-                .expect("worlds_manager is not init")
-                .clone();
-
             self.regenerate_debug_world(false);
         } else {
             let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();

@@ -28,8 +28,10 @@ fn get_world_mut(worlds_manager: &mut WorldsManager, world_slug: String) -> Opti
 }
 
 pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String> {
-    let lock = main.get_network_lock().expect("network is not set");
-    let network = lock.read();
+    let container = main.get_network().expect("network is not set").clone();
+    container.set_network_lock(false);
+
+    let network = container.get_client();
 
     // Recieve errors from network thread
     for error in network.iter_errors() {
@@ -58,6 +60,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     architecture: Engine::singleton().get_architecture_name().to_string(),
                     rendering_device: device_name,
                 };
+                log::info!(target: "network", "Server allowed connection");
                 network.send_message(NetworkMessageType::ReliableOrdered, &connection_info);
             }
             ServerMessages::ConsoleOutput { message } => {

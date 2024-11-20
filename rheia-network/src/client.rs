@@ -20,7 +20,7 @@ pub struct NetworkInfo {
 
 pub trait IClientNetwork: Sized {
     fn new(ip_port: String) -> impl Future<Output = Result<Self, String>>;
-    fn step(&self, delta: Duration) -> impl Future<Output = ()>;
+    fn step(&self, delta: Duration) -> impl Future<Output = bool> + Send;
 
     fn iter_server_messages(&self) -> Drain<ServerMessages>;
     fn iter_errors(&self) -> Drain<String>;

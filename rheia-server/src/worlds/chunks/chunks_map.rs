@@ -1,12 +1,16 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
 use common::{
-    blocks::block_info::BlockInfo, chunks::{
+    blocks::block_info::BlockInfo,
+    chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_position::ChunkPosition,
-    }, utils::vec_remove_item, world_generator::default::WorldGenerator, VERTICAL_SECTIONS
+    },
+    utils::vec_remove_item,
+    world_generator::default::WorldGenerator,
+    VERTICAL_SECTIONS,
 };
-use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use parking_lot::{RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
@@ -65,13 +69,6 @@ impl ChunkMap {
     pub fn get_chunk_column(&self, chunk_position: &ChunkPosition) -> Option<ChunkSectionType> {
         match self.chunks.get(chunk_position) {
             Some(c) => Some(c.read()),
-            None => None,
-        }
-    }
-
-    pub fn get_chunk_column_mut(&self, chunk_position: &ChunkPosition) -> Option<RwLockWriteGuard<ChunkColumn>> {
-        match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.write()),
             None => None,
         }
     }
@@ -247,7 +244,7 @@ mod tests {
     use std::sync::Arc;
 
     use bevy::prelude::Entity;
-    use common::world_generator::default::WorldGenerator;
+    use common::world_generator::default::{WorldGenerator, WorldGeneratorSettings};
     use parking_lot::RwLock;
     use std::time::Duration;
 
@@ -299,7 +296,8 @@ mod tests {
     #[test]
     fn test_update_chunks() {
         let mut chunk_map = ChunkMap::new();
-        let world_generator = Arc::new(RwLock::new(WorldGenerator::default()));
+        let settings = WorldGeneratorSettings::default();
+        let world_generator = Arc::new(RwLock::new(WorldGenerator::create(None, settings).unwrap()));
         let world_slug = "default".to_string();
         let entity = Entity::from_raw(0);
         let pos = ChunkPosition::new(0, 0);

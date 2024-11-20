@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
-use common::world_generator::default::WorldGenerator;
+use common::world_generator::default::{WorldGenerator, WorldGeneratorSettings};
 use network::messages::ServerMessages;
 use parking_lot::RwLock;
 
@@ -36,7 +36,9 @@ impl WorldManager {
             slug: slug,
             ecs: Ecs::new(),
             chunks_map: ChunkMap::new(),
-            world_generator: Arc::new(RwLock::new(WorldGenerator::new(seed))),
+            world_generator: Arc::new(RwLock::new(
+                WorldGenerator::create(Some(seed), WorldGeneratorSettings::default()).unwrap(),
+            )),
         }
     }
 

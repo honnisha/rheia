@@ -63,8 +63,10 @@ pub struct NetworkContainer {
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Self {
+        let io_loop = tokio::runtime::Runtime::new().unwrap();
+        let network = io_loop.block_on(async { NetworkServer::new(ip_port).await });
         Self {
-            server_network: Box::new(NetworkServer::new(ip_port)),
+            server_network: Box::new(network),
         }
     }
 
@@ -143,7 +145,9 @@ fn receive_message_system(
     }
 
     let network = network_container.server_network.as_ref();
-    network.step(time.delta());
+
+    let io_loop = tokio::runtime::Runtime::new().unwrap();
+    io_loop.block_on(async { network.step(time.delta()).await });
 
     for message in network.drain_errors() {
         log::error!(target: "network", "Network error: {}", message);
@@ -236,7 +240,7 @@ fn send_client_messages(network_container: Res<NetworkContainer>, clients: Res<C
 
         let client = client_lock.read();
         for message in client.drain_client_messages() {
-            network.send_message(message.client_id, &message.message, message.message_type);
+            network.send_message(message.client_id, message.message_type, &message.message);
         }
     }
 }
