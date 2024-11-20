@@ -1,7 +1,7 @@
+use network::client::IClientNetwork;
 use network::NetworkClient;
 use parking_lot::RwLock;
 use std::sync::Arc;
-use network::client::IClientNetwork;
 
 pub type NetworkLockType = Arc<RwLock<NetworkClient>>;
 
@@ -12,7 +12,11 @@ pub struct NetworkContainer {
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
         log::info!(target: "network", "Connecting to the server at {}", ip_port);
-        let network = match NetworkClient::new(ip_port) {
+
+        let io_loop = tokio::runtime::Runtime::new().unwrap();
+        let result = io_loop.block_on(async { NetworkClient::new(ip_port) });
+
+        let network = match io_loop.block_on(result) {
             Ok(n) => n,
             Err(e) => return Err(e),
         };

@@ -13,6 +13,8 @@ pub fn generate_chunks(
     chunks_distance: u16,
     settings: serde_json::Value,
 ) {
+    let now = std::time::Instant::now();
+
     let mut durations: Vec<std::time::Duration> = Default::default();
 
     let world_generator = WorldGenerator::create(settings).unwrap();
@@ -35,10 +37,11 @@ pub fn generate_chunks(
     avg = std::time::Duration::from_millis((avg.as_millis() as f32 / durations.len() as f32) as u64);
 
     log::info!(
-        "Chunks generated: {}; avg:{:.2?} max:{:.2?}",
+        "Chunks generated: {}; avg:{:.2?} max:{:.2?} (executed:{:.2?})",
         durations.len(),
         avg,
         durations.iter().max().unwrap(),
+        now.elapsed(),
     );
 }
 

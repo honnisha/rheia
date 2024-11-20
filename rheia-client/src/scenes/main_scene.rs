@@ -188,6 +188,8 @@ impl MainScene {
 
     #[func]
     fn regenerate_debug_world(&mut self, _value: bool) {
+        log::info!("Regenerate debug world");
+
         let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
 
         wm.bind_mut().build_textures(&self.resource_manager).unwrap();

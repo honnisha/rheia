@@ -15,7 +15,7 @@ pub struct TokioServer {
 }
 
 impl IServerNetwork for TokioServer {
-    fn create(ip_port: String) -> Self {
+    async fn new(_ip_port: String) -> Self {
         let result = Self {
             channel_client_messages: flume::unbounded(),
             channel_connections: flume::unbounded(),
@@ -24,7 +24,7 @@ impl IServerNetwork for TokioServer {
         return result
     }
 
-    fn step(&self, _delta: Duration) -> bool {
+    async fn step(&self, _delta: Duration) {
         todo!()
     }
 
@@ -44,7 +44,7 @@ impl IServerNetwork for TokioServer {
         todo!()
     }
 
-    fn send_message(&self, _client_id: u64, _message: &ServerMessages, _message_type: NetworkMessageType) {
+    fn send_message(&self, _client_id: u64, _message_type: NetworkMessageType, _message: &ServerMessages) {
         todo!()
     }
 }

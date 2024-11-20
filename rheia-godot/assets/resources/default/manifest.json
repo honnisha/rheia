@@ -7,6 +7,8 @@
 		"res://assets/block/grass_block_side.png",
 		"res://assets/block/grass_top.png",
 		"res://assets/block/stone.png",
+		"res://assets/block/sand.png",
+		"res://assets/block/water_still.png",
 
 		"res://assets/models/generic/generic.glb"
 	],

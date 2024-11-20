@@ -37,6 +37,8 @@ pub struct WorldsManager {
 
 impl WorldsManager {
     pub fn build_textures(&mut self, resource_manager: &ResourceManager) -> Result<(), String> {
+        let now = std::time::Instant::now();
+
         let mut texture_mapper = self.texture_mapper.write();
         let block_storage = self.block_storage.read();
 
@@ -50,7 +52,7 @@ impl WorldsManager {
             Ok(i) => i,
             Err(e) => return Err(e),
         };
-        log::info!(target: "main", "Textures builded successfily; texture blocks:{} textures loaded:{}", block_storage.textures_blocks_count(), texture_mapper.len());
+        log::info!(target: "main", "Textures builded successfily; texture blocks:{} textures loaded:{} (executed:{:.2?})", block_storage.textures_blocks_count(), texture_mapper.len(), now.elapsed());
         return Ok(());
     }
 

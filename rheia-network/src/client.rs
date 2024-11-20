@@ -62,8 +62,8 @@ pub async fn resolve_connect_domain(input: &String, default_port: u16) -> Result
     Ok(SocketAddr::new(address, port))
 }
 
-pub async fn resolve_connect_domain_sync(input: &String, default_port: u16) -> Result<SocketAddr, String> {
+pub fn resolve_connect_domain_sync(input: &String, default_port: u16) -> Result<SocketAddr, String> {
     let io_loop = tokio::runtime::Runtime::new().unwrap();
-    let result = io_loop.block_on(async { resolve_connect_domain(input, default_port)});
+    let result = io_loop.block_on(async { resolve_connect_domain(input, default_port) });
     io_loop.block_on(result)
 }

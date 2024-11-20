@@ -6,7 +6,11 @@ use crate::{
 pub struct TokioClient {}
 
 impl IClientNetwork for TokioClient {
-    fn new(_ip_port: String) -> Result<Self, String> {
+    async fn new(_ip_port: String) -> Result<Self, String> {
+        todo!()
+    }
+
+    async fn step(&self, _delta: std::time::Duration) {
         todo!()
     }
 
@@ -26,7 +30,7 @@ impl IClientNetwork for TokioClient {
         todo!()
     }
 
-    fn send_message(&self, _message: &ClientMessages, _message_type: NetworkMessageType) {
+    fn send_message(&self, _message_type: NetworkMessageType, _message: &ClientMessages) {
         todo!()
     }
 
