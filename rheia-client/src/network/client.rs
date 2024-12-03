@@ -58,7 +58,7 @@ impl NetworkContainer {
 
     pub fn spawn_network_thread(&self) {
         let container = self.clone();
-        log::info!(target: "network", "Spawning network thread");
+        log::info!(target: "network", "Spawning network thread...");
 
         std::thread::spawn(move || {
             let io_loop = tokio::runtime::Runtime::new().unwrap();

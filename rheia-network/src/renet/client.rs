@@ -5,7 +5,9 @@ use renet::{
     transport::{ClientAuthentication, NetcodeClientTransport},
     Bytes, RenetClient,
 };
+use rhai::Variant;
 use std::{net::UdpSocket, sync::Arc, time::SystemTime};
+use strum::IntoEnumIterator;
 
 use crate::client::{resolve_connect_domain, IClientNetwork};
 use crate::messages::ClientMessages;
@@ -48,25 +50,9 @@ impl RenetClientNetwork {
         self.transport.write()
     }
 
-    /// Send decoded message to thread server messages channel
-    fn send_server_message(&self, decoded: ServerMessages) {
-        self.network_decoder_out.0.send(decoded).unwrap();
-    }
-
     /// Send error message to thread server messages channel
     fn send_network_error(&self, message: String) {
         self.network_errors_out.0.send(message).unwrap();
-    }
-
-    fn decode_server_message(encoded: &Bytes) -> Option<ServerMessages> {
-        let decoded: ServerMessages = match bincode::deserialize(encoded) {
-            Ok(d) => d,
-            Err(e) => {
-                log::error!(target: "renet", "Decode server heavy message error: {}", e);
-                return None;
-            }
-        };
-        Some(decoded)
     }
 
     fn map_type_channel(message_type: NetworkMessageType) -> ServerChannel {
@@ -141,22 +127,16 @@ impl IClientNetwork for RenetClientNetwork {
             return false;
         }
 
-        while let Some(server_message) = client.receive_message(ServerChannel::ReliableOrdered) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
-            }
-        }
-        while let Some(server_message) = client.receive_message(ServerChannel::ReliableUnordered) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
-            }
-        }
-        while let Some(server_message) = client.receive_message(ServerChannel::Unreliable) {
-            let decoded = RenetClientNetwork::decode_server_message(&server_message);
-            if let Some(d) = decoded {
-                self.send_server_message(d);
+        for channel_type in ServerChannel::iter() {
+            while let Some(server_message) = client.receive_message(channel_type) {
+                let decoded: ServerMessages = match bincode::deserialize(&server_message) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        log::error!(target: "renet", "Decode server {} error: {}", channel_type, e);
+                        continue;
+                    }
+                };
+                self.network_decoder_out.0.send(decoded).unwrap();
             }
         }
 
@@ -185,6 +165,7 @@ impl IClientNetwork for RenetClientNetwork {
     }
 
     fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages) {
+        // log::info!(target: "network", "client send_message message:{}", message);
         let encoded = bincode::serialize(message).unwrap();
         let msg = (RenetClientNetwork::map_type_channel(message_type).into(), encoded);
         self.network_client_sended.0.send(msg).unwrap();

@@ -238,9 +238,6 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
-        if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
-            log::error!(target: "main", "log::set_logger error: {}", e)
-        }
         log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
@@ -251,6 +248,10 @@ impl INode for MainScene {
         log::info!(target: "main", "Local resources loaded successfully (count: {})", self.get_resource_manager().get_resources_count());
 
         if Engine::singleton().is_editor_hint() {
+            if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
+                log::error!(target: "main", "log::set_logger error: {}", e)
+            }
+
             self.regenerate_debug_world(false);
         } else {
             let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
@@ -317,9 +318,9 @@ impl INode for MainScene {
     }
 
     fn exit_tree(&mut self) {
+        log::info!(target: "main", "Exiting the game");
         if let Some(n) = self.network.as_ref() {
             n.disconnect();
         }
-        log::info!(target: "main", "Exiting the game");
     }
 }

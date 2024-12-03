@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, SystemTime},
 };
+use strum::IntoEnumIterator;
 
 use renet::{
     transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
@@ -90,28 +91,22 @@ impl IServerNetwork for RenetServerNetwork {
 
         if let Err(e) = transport.update(delta, &mut server) {
             self.channel_errors.0.send(e.to_string()).unwrap();
+            return;
         }
 
         for client_id in server.clients_id().into_iter() {
-            while let Some(client_message) = server.receive_message(client_id, ClientChannel::ReliableOrdered) {
-                let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        log::error!(target: "renet", "Decode client reliable message error: {}", e);
-                        continue;
-                    }
-                };
-                self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
-            }
-            while let Some(client_message) = server.receive_message(client_id, ClientChannel::Unreliable) {
-                let decoded: ClientMessages = match bincode::deserialize(&client_message) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        log::error!(target: "renet", "Decode client unreliable message error: {}", e);
-                        continue;
-                    }
-                };
-                self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
+            for channel_type in ClientChannel::iter() {
+                while let Some(client_message) = server.receive_message(client_id, channel_type) {
+                    let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+                        Ok(d) => d,
+                        Err(e) => {
+                            log::error!(target: "renet", "Decode client {} message error: {}", channel_type, e);
+                            continue;
+                        }
+                    };
+                    // log::info!(target: "network", "server receive message:{}", decoded);
+                    self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
+                }
             }
         }
 

@@ -5,6 +5,7 @@ use super::{
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
 use common::VERTICAL_SECTIONS;
+use flume::Sender;
 use godot::obj::InstanceId;
 
 /// Generate chunk data in separate thread
@@ -12,7 +13,7 @@ use godot::obj::InstanceId;
 pub(crate) fn generate_chunk(
     chunk_column: ChunkLock,
     chunks_near: NearChunksData,
-    chunks_loaded: flume::Sender<ChunkLock>,
+    chunks_loaded: Sender<ChunkLock>,
     material_instance_id: InstanceId,
 
     texture_mapper: TextureMapperType,

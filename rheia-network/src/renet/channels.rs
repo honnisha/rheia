@@ -1,11 +1,14 @@
 use std::time::Duration;
 
 use renet::{ChannelConfig, SendType};
+use strum_macros::{Display, EnumIter};
 
+#[derive(Display, EnumIter, Clone, Copy)]
 pub enum ClientChannel {
     ReliableOrdered,
     ReliableUnordered,
     Unreliable,
+    World,
 }
 
 impl From<ClientChannel> for u8 {
@@ -14,6 +17,7 @@ impl From<ClientChannel> for u8 {
             ClientChannel::ReliableOrdered => 0,
             ClientChannel::ReliableUnordered => 1,
             ClientChannel::Unreliable => 2,
+            ClientChannel::World => 3,
         }
     }
 }
@@ -39,13 +43,22 @@ pub fn get_client_channels_config() -> Vec<ChannelConfig> {
             max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::Unreliable,
         },
+        ChannelConfig {
+            channel_id: ClientChannel::World.into(),
+            max_memory_usage_bytes: 1024 * 1024 * 5,
+            send_type: SendType::ReliableOrdered {
+                resend_time: Duration::from_secs_f32(0.5_f32),
+            },
+        },
     ]
 }
 
+#[derive(Display, EnumIter, Clone, Copy)]
 pub enum ServerChannel {
     ReliableOrdered,
     ReliableUnordered,
     Unreliable,
+    World,
 }
 
 impl From<ServerChannel> for u8 {
@@ -54,6 +67,7 @@ impl From<ServerChannel> for u8 {
             ServerChannel::ReliableOrdered => 0,
             ServerChannel::ReliableUnordered => 1,
             ServerChannel::Unreliable => 2,
+            ServerChannel::World => 3,
         }
     }
 }
@@ -78,6 +92,13 @@ pub fn get_server_channels_config() -> Vec<ChannelConfig> {
             channel_id: ServerChannel::Unreliable.into(),
             max_memory_usage_bytes: 1024 * 256,
             send_type: SendType::Unreliable,
+        },
+        ChannelConfig {
+            channel_id: ServerChannel::World.into(),
+            max_memory_usage_bytes: 1024 * 1024 * 5,
+            send_type: SendType::ReliableOrdered {
+                resend_time: Duration::from_secs_f32(0.5_f32),
+            },
         },
     ]
 }
