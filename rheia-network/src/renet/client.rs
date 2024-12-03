@@ -3,9 +3,8 @@ use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
 use renet::{
     transport::{ClientAuthentication, NetcodeClientTransport},
-    Bytes, RenetClient,
+    RenetClient,
 };
-use rhai::Variant;
 use std::{net::UdpSocket, sync::Arc, time::SystemTime};
 use strum::IntoEnumIterator;
 
@@ -140,16 +139,15 @@ impl IClientNetwork for RenetClientNetwork {
             }
         }
 
-        if client.is_connected() {
-            for (channel, message) in self.network_client_sended.1.drain() {
-                client.send_message(channel, message);
-            }
+        for (channel, message) in self.network_client_sended.1.drain() {
+            client.send_message(channel, message);
         }
 
         if let Err(e) = transport.send_packets(&mut client) {
             self.send_network_error(e.to_string());
         }
-        true
+        log::trace!(target: "network", "network step (executed:{:.2?})", delta);
+        return true;
     }
 
     fn iter_server_messages(&self) -> Drain<ServerMessages> {

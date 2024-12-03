@@ -62,7 +62,7 @@ impl NetworkContainer {
 
         std::thread::spawn(move || {
             let io_loop = tokio::runtime::Runtime::new().unwrap();
-            io_loop.spawn(async move {
+            io_loop.block_on(async move {
                 let network = container.client_network.read().await;
                 loop {
                     // Network will be processed only when there is no lock

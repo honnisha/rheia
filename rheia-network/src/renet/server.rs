@@ -131,6 +131,7 @@ impl IServerNetwork for RenetServerNetwork {
         }
 
         transport.send_packets(&mut server);
+        log::info!(target: "network", "network step (executed:{:.2?})", delta);
     }
 
     fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)> {
