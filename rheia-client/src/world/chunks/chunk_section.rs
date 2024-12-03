@@ -116,6 +116,7 @@ impl ChunkSection {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_active(&mut self, state: bool) {
         if let Some(c) = self.collider.as_mut() {
             c.set_enabled(state);

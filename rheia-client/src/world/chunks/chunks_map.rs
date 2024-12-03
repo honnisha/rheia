@@ -162,6 +162,7 @@ impl ChunkMap {
         }
     }
 
+    /// Changes block info and place updated chunk into the queue for an update
     pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             panic!("edit_block chunk not found");
@@ -179,6 +180,7 @@ impl ChunkMap {
             .insert((position.get_chunk_position(), section as usize));
     }
 
+    /// Every frame job to update edited chunks
     pub fn update_chunks(
         &self,
         physics: &PhysicsProxy,

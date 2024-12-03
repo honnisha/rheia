@@ -44,7 +44,7 @@ pub struct ClientInfo {
     login: String,
     version: String,
     architecture: String,
-    rendering_device: String,
+    _rendering_device: String,
 }
 
 impl ClientInfo {
@@ -53,7 +53,7 @@ impl ClientInfo {
             login: event.login.clone(),
             version: event.version.clone(),
             architecture: event.architecture.clone(),
-            rendering_device: event.rendering_device.clone(),
+            _rendering_device: event.rendering_device.clone(),
         }
     }
 
