@@ -56,7 +56,7 @@ impl WorldsManager {
         return Ok(());
     }
 
-    pub fn _get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {
+    pub fn get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {
         self.block_storage.read()
     }
 

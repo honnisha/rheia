@@ -20,7 +20,7 @@ pub(crate) fn generate_chunk(
     block_storage: BlockStorageType,
 ) {
     rayon::spawn(move || {
-        let data = chunk_column.read().get_chunk_lock().clone();
+        let data = chunk_column.read().get_data_lock().clone();
 
         chunk_column.read().spawn_sections(&material_instance_id);
         for y in 0..VERTICAL_SECTIONS {
@@ -33,6 +33,13 @@ pub(crate) fn generate_chunk(
 
                 let mut chunk_section = chunk_column.read().get_chunk_section(&y);
                 chunk_section.bind_mut().set_new_geometry(geometry);
+
+                let mut cs = chunk_section.bind_mut();
+                let objects_container = cs.get_objects_container_mut();
+
+                let d = data.read();
+                let section_data = d.get(y).unwrap();
+                objects_container.bind_mut().setup(section_data, &*block_storage.read());
             }
         }
 

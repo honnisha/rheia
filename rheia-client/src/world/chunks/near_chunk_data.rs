@@ -26,7 +26,7 @@ impl NearChunksData {
 
     fn get_data(chunks: &ChunksType, pos: &ChunkPosition) -> Option<ColumnDataLockType> {
         match chunks.get(pos) {
-            Some(c) => Some(c.read().get_chunk_lock().clone()),
+            Some(c) => Some(c.read().get_data_lock().clone()),
             None => None,
         }
     }

@@ -223,19 +223,19 @@ impl ChunkMap {
         }
     }
 
-    pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) -> bool {
+    pub fn edit_block(&self, position: BlockPosition, new_block_info: Option<BlockInfo>) -> Result<(), String> {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
-            return false;
+            return Err(format!("edit_block chunk {} is not found", position.get_chunk_position()));
         };
 
         let (section, block_position) = position.get_block_position();
         if section > VERTICAL_SECTIONS as u32 {
-            return false;
+            return Err(format!("edit_block section {} is more than", VERTICAL_SECTIONS));
         }
         chunk_column
             .write()
             .change_block(section, block_position, new_block_info);
-        return true;
+        return Ok(());
     }
 }
 

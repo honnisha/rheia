@@ -47,12 +47,19 @@ impl ChunkColumn {
         self.loaded
     }
 
-    pub fn change_block(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: BlockInfo) {
+    pub fn change_block(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: Option<BlockInfo>) {
         if section > VERTICAL_SECTIONS as u32 {
             panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
         }
         let s = self.sections.get_mut(section as usize).unwrap();
-        s.insert(chunk_block, new_block_info);
+        match new_block_info {
+            Some(i) => {
+                s.insert(chunk_block, i);
+            },
+            None => {
+                s.remove(&chunk_block);
+            },
+        }
     }
 
     pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {

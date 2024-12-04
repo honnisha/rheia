@@ -1,7 +1,10 @@
 use arrayvec::ArrayVec;
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
+    chunks::{
+        block_position::{BlockPosition, ChunkBlockPosition},
+        chunk_position::ChunkPosition,
+    },
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{classes::Material, prelude::*};
@@ -114,7 +117,7 @@ impl ChunkColumn {
         }
     }
 
-    pub fn get_chunk_lock(&self) -> &ColumnDataLockType {
+    pub fn get_data_lock(&self) -> &ColumnDataLockType {
         &self.data
     }
 
@@ -144,12 +147,34 @@ impl ChunkColumn {
         self.set_loaded();
     }
 
-    pub fn change_block_info(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: BlockInfo) {
+    pub fn change_block_info(
+        &mut self,
+        section: u32,
+        chunk_block: ChunkBlockPosition,
+        new_block_info: Option<BlockInfo>,
+    ) {
         if section > VERTICAL_SECTIONS as u32 {
             panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
         }
 
         let mut d = self.data.write();
-        d[section as usize].insert(chunk_block, new_block_info);
+
+        match new_block_info {
+            Some(i) => {
+                d[section as usize].insert(chunk_block, i);
+            }
+            None => {
+                d[section as usize].remove(&chunk_block);
+            }
+        }
+    }
+
+    pub fn get_block_info(&self, block_position: &BlockPosition) -> Option<BlockInfo> {
+        let (section, block_position) = block_position.get_block_position();
+        let d = self.data.read();
+        match d[section as usize].get(&block_position) {
+            Some(b) => Some(b.clone()),
+            None => None,
+        }
     }
 }

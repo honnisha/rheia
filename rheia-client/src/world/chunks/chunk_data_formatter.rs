@@ -18,16 +18,16 @@ use super::{
 fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorage) -> Result<ChunkColliderInfo, String> {
     let collider = match info {
         Some(block_info) => {
-            if block_info.get_id() == 0 {
-                ChunkColliderInfo::create(VoxelVisibility::Empty, None)
-            } else {
-                let block_type = match block_storage.get(&block_info.get_id()) {
-                    Some(b) => b,
-                    None => {
-                        return Err(format!("Block type #{} not found", block_info.get_id()));
-                    }
-                };
+            let block_type = match block_storage.get(&block_info.get_id()) {
+                Some(b) => b,
+                None => {
+                    return Err(format!("Block type #{} not found", block_info.get_id()));
+                }
+            };
+            if block_type.get_block_content().is_texture() {
                 ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()))
+            } else {
+                ChunkColliderInfo::create(VoxelVisibility::Empty, None)
             }
         }
         None => ChunkColliderInfo::create(VoxelVisibility::Empty, None),

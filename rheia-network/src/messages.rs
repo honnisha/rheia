@@ -32,7 +32,7 @@ pub enum ClientMessages {
     EditBlockRequest {
         world_slug: String,
         position: BlockPosition,
-        new_block_info: BlockInfo,
+        new_block_info: Option<BlockInfo>,
     },
     ResourcesLoaded {
         last_index: u32,
@@ -112,7 +112,7 @@ pub enum ServerMessages {
     EditBlock {
         world_slug: String,
         position: BlockPosition,
-        new_block_info: BlockInfo,
+        new_block_info: Option<BlockInfo>,
     },
 }
 

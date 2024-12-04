@@ -6,7 +6,7 @@ use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{entities::entity::NetworkComponent, worlds::world_manager::WorldManager};
 
-pub fn sync_world_block_change(world_manager: &WorldManager, position: BlockPosition, new_block_info: BlockInfo) {
+pub fn sync_world_block_change(world_manager: &WorldManager, position: BlockPosition, new_block_info: Option<BlockInfo>) {
     let ecs = world_manager.get_ecs();
 
     if let Some(entities) = world_manager

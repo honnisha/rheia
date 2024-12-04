@@ -17,7 +17,7 @@ use crate::{
 };
 use physics::PhysicsColliderBuilder;
 
-use super::mesh::mesh_generator::Geometry;
+use super::{mesh::mesh_generator::Geometry, objects_container::ObjectsContainer};
 
 //pub type ChunkShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
 pub type ChunkBordersShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
@@ -31,7 +31,10 @@ pub type ChunkColliderDataBordered = [ChunkColliderInfo; ChunkBordersShape::SIZE
 #[class(no_init, tool, base=Node3D)]
 pub struct ChunkSection {
     pub(crate) base: Base<Node3D>,
+
     mesh: Gd<MeshInstance3D>,
+    objects_container: Gd<ObjectsContainer>,
+
     chunk_position: ChunkPosition,
     y: u8,
 
@@ -59,6 +62,8 @@ impl ChunkSection {
             need_update_geometry: false,
             collider: None,
             colider_builder: None,
+
+            objects_container: ObjectsContainer::new_alloc(),
         }
     }
 
@@ -72,6 +77,10 @@ impl ChunkSection {
             GodotPositionConverter::get_chunk_y_local(self.y) - 1_f32,
             self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
         )
+    }
+
+    pub fn get_objects_container_mut(&mut self) -> &mut Gd<ObjectsContainer> {
+        &mut self.objects_container
     }
 
     /// Updates the mesh from a separate thread

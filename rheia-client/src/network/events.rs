@@ -12,6 +12,21 @@ use crate::utils::bridge::IntoGodotVector;
 use crate::world::world_manager::WorldManager;
 use crate::world::worlds_manager::WorldsManager;
 
+fn get_world(worlds_manager: &WorldsManager, world_slug: String) -> Option<&Gd<WorldManager>> {
+    let world = match worlds_manager.get_world() {
+        Some(w) => w,
+        None => {
+            log::error!(target: "network", "Network message for non existed world");
+            return None;
+        }
+    };
+    if world_slug != *world.bind().get_slug() {
+        log::error!(target: "network", "Network message for non wrong world {} != {}", world_slug, world.bind().get_slug());
+        return None;
+    }
+    Some(world)
+}
+
 fn get_world_mut(worlds_manager: &mut WorldsManager, world_slug: String) -> Option<&mut Gd<WorldManager>> {
     let world = match worlds_manager.get_world_mut() {
         Some(w) => w,
@@ -190,11 +205,12 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 position,
                 new_block_info,
             } => {
-                let mut worlds_manager = main.get_worlds_manager_mut();
-                let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
+                let worlds_manager = main.get_wm().bind();
+                let Some(world) = get_world(&worlds_manager, world_slug) else {
                     continue;
                 };
-                world.bind_mut().edit_block(position, new_block_info);
+                let block_storage = worlds_manager.get_block_storage();
+                world.bind().edit_block(position, &block_storage, new_block_info).unwrap();
             }
         }
     }

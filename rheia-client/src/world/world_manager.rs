@@ -1,4 +1,5 @@
 use super::{
+    block_storage::BlockStorage,
     chunks::chunks_map::ChunkMap,
     physics::PhysicsProxy,
     worlds_manager::{BlockStorageType, TextureMapperType},
@@ -96,8 +97,15 @@ impl WorldManager {
         self.chunk_map.bind_mut().unload_chunk(chunk_position)
     }
 
-    pub fn edit_block(&mut self, position: BlockPosition, new_block_info: BlockInfo) {
-        self.chunk_map.bind_mut().edit_block(position, new_block_info)
+    pub fn edit_block(
+        &self,
+        position: BlockPosition,
+        block_storage: &BlockStorage,
+        new_block_info: Option<BlockInfo>,
+    ) -> Result<(), String> {
+        self.chunk_map
+            .bind()
+            .edit_block(position, block_storage, new_block_info)
     }
 }
 
@@ -130,6 +138,6 @@ impl INode for WorldManager {
 
         let bs = self.block_storage.read();
         let tm = self.texture_mapper.read();
-        map.update_chunks(&self.physics, &bs, &tm);
+        map.update_chunks_geometry(&self.physics, &bs, &tm);
     }
 }

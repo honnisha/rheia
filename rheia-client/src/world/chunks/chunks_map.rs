@@ -1,6 +1,6 @@
 use ahash::{AHashMap, HashSet};
 use common::{
-    blocks::block_info::BlockInfo,
+    blocks::{block_info::BlockInfo, block_type::BlockContent},
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_position::ChunkPosition,
@@ -14,9 +14,14 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::{utils::textures::texture_mapper::TextureMapper, world::{
-    block_storage::BlockStorage, physics::PhysicsProxy, worlds_manager::{BlockStorageType, TextureMapperType}
-}};
+use crate::{
+    utils::textures::texture_mapper::TextureMapper,
+    world::{
+        block_storage::BlockStorage,
+        physics::PhysicsProxy,
+        worlds_manager::{BlockStorageType, TextureMapperType},
+    },
+};
 
 use super::{
     chunk_column::{ChunkColumn, ColumnDataLockType},
@@ -75,7 +80,7 @@ impl ChunkMap {
 
     pub fn _get_chunk_column_data(&self, chunk_position: &ChunkPosition) -> Option<ColumnDataLockType> {
         match self.chunks.get(chunk_position) {
-            Some(c) => Some(c.read().get_chunk_lock().clone()),
+            Some(c) => Some(c.read().get_data_lock().clone()),
             None => None,
         }
     }
@@ -147,7 +152,6 @@ impl ChunkMap {
                     section.bind_mut().update_geometry(physics);
                 }
             }
-
         }
     }
 
@@ -163,7 +167,12 @@ impl ChunkMap {
     }
 
     /// Changes block info and place updated chunk into the queue for an update
-    pub fn edit_block(&self, position: BlockPosition, new_block_info: BlockInfo) {
+    pub fn edit_block(
+        &self,
+        position: BlockPosition,
+        block_storage: &BlockStorage,
+        new_block_info: Option<BlockInfo>,
+    ) -> Result<(), String> {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             panic!("edit_block chunk not found");
         };
@@ -172,16 +181,80 @@ impl ChunkMap {
         if section > VERTICAL_SECTIONS as u32 {
             panic!("section y cannot be more than VERTICAL_SECTIONS");
         }
+
+        if let Some(old_block_info) = chunk_column.read().get_block_info(&position) {
+            let old_block_type = block_storage.get(&old_block_info.get_id()).unwrap();
+
+            match old_block_type.get_block_content() {
+                BlockContent::Texture {
+                    texture: _,
+                    side_texture: _,
+                    bottom_texture: _,
+                } => {
+                    // Sent to the update queue
+                    self.chunks_to_update
+                        .borrow_mut()
+                        .insert((position.get_chunk_position(), section as usize));
+                }
+                BlockContent::ModelCube { model: _ } => {
+                    let chunk_column = self
+                        .get_chunk(&position.get_chunk_position())
+                        .expect("chunk from chunks_to_update is not found");
+
+                    let c = chunk_column.read();
+                    let mut chunk_section = c.get_chunk_section(&(section as usize));
+
+                    let mut cs = chunk_section.bind_mut();
+                    let objects_container = cs.get_objects_container_mut();
+                    objects_container
+                        .bind_mut()
+                        .remove(block_position);
+                }
+            }
+        }
+
         chunk_column
             .write()
-            .change_block_info(section, block_position, new_block_info);
-        self.chunks_to_update
-            .borrow_mut()
-            .insert((position.get_chunk_position(), section as usize));
+            .change_block_info(section, block_position, new_block_info.clone());
+
+        if let Some(new_block_info) = new_block_info {
+            let Some(new_block_type) = block_storage.get(&new_block_info.get_id()) else {
+                return Err(format!("edit block id #{} not found", new_block_info.get_id()));
+            };
+
+            match new_block_type.get_block_content() {
+                BlockContent::Texture {
+                    texture: _,
+                    side_texture: _,
+                    bottom_texture: _,
+                } => {
+                    // Sent to the update queue
+                    self.chunks_to_update
+                        .borrow_mut()
+                        .insert((position.get_chunk_position(), section as usize));
+                }
+                BlockContent::ModelCube { model: _ } => {
+                    let chunk_column = self
+                        .get_chunk(&position.get_chunk_position())
+                        .expect("chunk from chunks_to_update is not found");
+
+                    let c = chunk_column.read();
+                    let mut chunk_section = c.get_chunk_section(&(section as usize));
+
+                    let mut cs = chunk_section.bind_mut();
+                    let objects_container = cs.get_objects_container_mut();
+                    objects_container
+                        .bind_mut()
+                        .update_block_model(block_position, new_block_type);
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Every frame job to update edited chunks
-    pub fn update_chunks(
+    pub fn update_chunks_geometry(
         &self,
         physics: &PhysicsProxy,
         block_storage: &BlockStorage,
@@ -200,7 +273,7 @@ impl ChunkMap {
                 .expect("chunk from chunks_to_update is not found");
             let c = chunk_column.read();
 
-            let data = c.get_chunk_lock().clone();
+            let data = c.get_data_lock().clone();
 
             let (bordered_chunk_data, _mesh_count) =
                 format_chunk_data_with_boundaries(Some(&chunks_near), &data, &block_storage, y.clone()).unwrap();

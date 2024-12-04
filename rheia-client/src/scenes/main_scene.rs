@@ -219,12 +219,12 @@ impl MainScene {
                         PlayerActionType::Main => ClientMessages::EditBlockRequest {
                             world_slug: a.get_world_slug().clone(),
                             position: cast_result.get_place_block(),
-                            new_block_info: BlockInfo::create(1, None),
+                            new_block_info: Some(BlockInfo::create(100, None)),
                         },
                         PlayerActionType::Second => ClientMessages::EditBlockRequest {
                             world_slug: a.get_world_slug().clone(),
                             position: selected_block,
-                            new_block_info: BlockInfo::create(0, None),
+                            new_block_info: None,
                         },
                     };
                     network.send_message(NetworkMessageType::Unreliable, &msg);
