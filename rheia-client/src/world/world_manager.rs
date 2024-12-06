@@ -4,7 +4,10 @@ use super::{
     physics::PhysicsProxy,
     worlds_manager::{BlockStorageType, TextureMapperType},
 };
-use crate::entities::entities_manager::EntitiesManager;
+use crate::{
+    client_scripts::resource_manager::{ResourceManager, ResourceStorage},
+    entities::entities_manager::EntitiesManager,
+};
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
@@ -102,10 +105,32 @@ impl WorldManager {
         position: BlockPosition,
         block_storage: &BlockStorage,
         new_block_info: Option<BlockInfo>,
+        resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
         self.chunk_map
             .bind()
-            .edit_block(position, block_storage, new_block_info)
+            .edit_block(position, block_storage, new_block_info, &self.physics, resource_storage)
+    }
+
+    pub fn custom_process(&mut self, delta: f64, resource_manager: &ResourceManager) {
+        #[cfg(feature = "trace")]
+        let _span = tracing::span!(tracing::Level::INFO, "world_manager").entered();
+
+        self.physics.step(delta as f32);
+
+        let mut map = self.chunk_map.bind_mut();
+        map.send_chunks_to_load(
+            self.material.instance_id(),
+            self.texture_mapper.clone(),
+            self.block_storage.clone(),
+            &self.physics,
+            resource_manager,
+        );
+        map.spawn_loaded_chunks(&self.physics);
+
+        let bs = self.block_storage.read();
+        let tm = self.texture_mapper.read();
+        map.update_chunks_geometry(&self.physics, &bs, &tm);
     }
 }
 
@@ -120,24 +145,5 @@ impl INode for WorldManager {
 
         let entities_manager = self.entities_manager.clone();
         self.base_mut().add_child(&entities_manager);
-    }
-
-    fn process(&mut self, delta: f64) {
-        #[cfg(feature = "trace")]
-        let _span = tracing::span!(tracing::Level::INFO, "world_manager").entered();
-
-        self.physics.step(delta as f32);
-
-        let mut map = self.chunk_map.bind_mut();
-        map.send_chunks_to_load(
-            self.material.instance_id(),
-            self.texture_mapper.clone(),
-            self.block_storage.clone(),
-        );
-        map.spawn_loaded_chunks(&self.physics);
-
-        let bs = self.block_storage.read();
-        let tm = self.texture_mapper.read();
-        map.update_chunks_geometry(&self.physics, &bs, &tm);
     }
 }

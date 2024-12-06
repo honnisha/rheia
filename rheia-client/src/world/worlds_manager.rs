@@ -7,8 +7,9 @@ use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use parking_lot::RwLock;
 use std::sync::Arc;
 
-use crate::client_scripts::resource_manager::ResourceManager;
+use crate::client_scripts::resource_manager::ResourceStorage;
 use crate::controller::player_controller::PlayerController;
+use crate::scenes::main_scene::ResourceManagerType;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
 use super::block_storage::BlockStorage;
@@ -25,6 +26,8 @@ pub struct WorldsManager {
     world: Option<Gd<WorldManager>>,
     player_controller: Option<Gd<PlayerController>>,
 
+    resource_manager: Option<ResourceManagerType>,
+
     #[init(val = Arc::new(RwLock::new(Default::default())))]
     texture_mapper: TextureMapperType,
 
@@ -36,7 +39,7 @@ pub struct WorldsManager {
 }
 
 impl WorldsManager {
-    pub fn build_textures(&mut self, resource_manager: &ResourceManager) -> Result<(), String> {
+    pub fn build_textures(&mut self, resources_storage: &ResourceStorage) -> Result<(), String> {
         let now = std::time::Instant::now();
 
         let mut texture_mapper = self.texture_mapper.write();
@@ -48,7 +51,7 @@ impl WorldsManager {
             .terrain_material
             .as_mut()
             .expect("Terrain StandardMaterial3D is not set");
-        match texture_mapper.build(&*block_storage, resource_manager, &mut material_3d) {
+        match texture_mapper.build(&*block_storage, resources_storage, &mut material_3d) {
             Ok(i) => i,
             Err(e) => return Err(e),
         };
@@ -58,6 +61,10 @@ impl WorldsManager {
 
     pub fn get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {
         self.block_storage.read()
+    }
+
+    pub fn set_resource_manager(&mut self, resource_manager: ResourceManagerType) {
+        self.resource_manager = Some(resource_manager);
     }
 
     pub fn get_block_storage_mut(&self) -> RwLockWriteGuard<'_, parking_lot::RawRwLock, BlockStorage> {
@@ -166,7 +173,7 @@ impl INode for WorldsManager {
 
     fn process(&mut self, delta: f64) {
         if self.get_world().is_some() {
-            let world = self.get_world().unwrap().clone();
+            let mut world = self.get_world_mut().unwrap().clone();
 
             if let Some(player_controller) = self.player_controller.as_mut() {
                 let mut player_controller = player_controller.bind_mut();
@@ -178,6 +185,10 @@ impl INode for WorldsManager {
                     None => false,
                 };
                 player_controller.custom_process(delta, chunk_loaded, world.bind().get_slug());
+            }
+
+            if let Some(resource_manager) = self.resource_manager.as_ref() {
+                world.bind_mut().custom_process(delta, &*resource_manager.borrow());
             }
         }
     }

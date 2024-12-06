@@ -4,7 +4,7 @@ use common::blocks::default_blocks::DEFAULT_BLOCKS;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
-use crate::client_scripts::resource_manager::ResourceManager;
+use crate::client_scripts::resource_manager::ResourceStorage;
 
 pub struct BlockStorage {
     blocks: HashMap<BlockIndexType, BlockType>,
@@ -13,7 +13,7 @@ pub struct BlockStorage {
 impl Default for BlockStorage {
     fn default() -> Self {
         let mut block_storage = Self {
-            blocks: Default::default()
+            blocks: Default::default(),
         };
         block_storage.blocks = DEFAULT_BLOCKS.clone();
         block_storage
@@ -43,7 +43,7 @@ impl BlockStorage {
     pub fn load_blocks_types(
         &mut self,
         block_types: HashMap<BlockIndexType, BlockType>,
-        resource_manager: &ResourceManager,
+        resources_storage: &ResourceStorage,
     ) -> Result<(), String> {
         self.blocks.clear();
         for (i, block_type) in block_types.iter() {
@@ -53,18 +53,18 @@ impl BlockStorage {
                     side_texture,
                     bottom_texture,
                 } => {
-                    if !resource_manager.has_media(texture) {
+                    if !resources_storage.has_media(texture) {
                         return Err(format!("texture not found: {}", texture));
                     }
-                    if side_texture.is_some() && !resource_manager.has_media(&side_texture.as_ref().unwrap()) {
+                    if side_texture.is_some() && !resources_storage.has_media(&side_texture.as_ref().unwrap()) {
                         return Err(format!("texture not found: {}", side_texture.as_ref().unwrap()));
                     }
-                    if bottom_texture.is_some() && !resource_manager.has_media(&bottom_texture.as_ref().unwrap()) {
+                    if bottom_texture.is_some() && !resources_storage.has_media(&bottom_texture.as_ref().unwrap()) {
                         return Err(format!("texture not found: {}", bottom_texture.as_ref().unwrap()));
                     }
                 }
                 BlockContent::ModelCube { model } => {
-                    if !resource_manager.has_media(model) {
+                    if !resources_storage.has_media(model) {
                         return Err(format!("model not found: {}", model));
                     }
                 }

@@ -1,6 +1,9 @@
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
+use parking_lot::lock_api::RwLockReadGuard;
+use parking_lot::lock_api::RwLockWriteGuard;
+use parking_lot::RwLock;
 use rhai::exported_module;
 use rhai::Dynamic;
 use rhai::Engine;
@@ -8,15 +11,81 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::Read;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use super::local_loader::get_local_resources;
 use super::modules::main_api;
 use super::resource_instance::MediaResource;
 use super::resource_instance::ResourceInstance;
 
+pub struct ResourceStorage {
+    resources: HashMap<String, ResourceInstance>,
+}
+
+unsafe impl Send for ResourceStorage {}
+unsafe impl Sync for ResourceStorage {}
+
+impl Default for ResourceStorage {
+    fn default() -> Self {
+        Self {
+            resources: Default::default(),
+        }
+    }
+}
+
+impl ResourceStorage {
+    pub fn _get_resource(&self, slug: &String) -> Option<&ResourceInstance> {
+        self.resources.get(slug)
+    }
+
+    pub fn get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
+        self.resources.get_mut(slug)
+    }
+
+    pub fn add_resource(&mut self, resource: ResourceInstance) {
+        self.resources.insert(resource.get_slug().clone(), resource);
+    }
+
+    pub fn get_resources_count(&self) -> usize {
+        self.resources.len()
+    }
+
+    pub fn has_media(&self, path: &String) -> bool {
+        let Some((res_slug, res_path)) = split_resource_path(path) else {
+            return false;
+        };
+
+        for (resource_path, resource) in self.resources.iter() {
+            if *resource_path == res_slug && resource.has_media(&res_path) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    pub fn get_media(&self, path: &String) -> Option<&MediaResource> {
+        let Some((res_slug, res_path)) = split_resource_path(path) else {
+            return None;
+        };
+
+        for (resource_path, resource) in self.resources.iter() {
+            if *resource_path == res_slug {
+                return resource.get_media(&res_path);
+            }
+        }
+        return None;
+    }
+
+    pub fn iter_mut(&mut self) -> std::collections::hash_map::IterMut<'_, String, ResourceInstance> {
+        self.resources.iter_mut()
+    }
+}
+
+pub type ResourceStorageType = Arc<RwLock<ResourceStorage>>;
+
 pub struct ResourceManager {
     rhai_engine: Rc<RefCell<Engine>>,
-    resources: HashMap<String, ResourceInstance>,
+    resources_storage: ResourceStorageType,
 
     resources_scheme: Option<Vec<ResurceScheme>>,
     archive_data: Option<Vec<u8>>,
@@ -35,9 +104,9 @@ impl Default for ResourceManager {
 
         engine.register_global_module(exported_module!(main_api).into());
 
-        ResourceManager {
+        Self {
             rhai_engine: Rc::new(RefCell::new(engine)),
-            resources: HashMap::new(),
+            resources_storage: Arc::new(RwLock::new(ResourceStorage::default())),
 
             resources_scheme: Default::default(),
             archive_hash: Default::default(),
@@ -47,17 +116,21 @@ impl Default for ResourceManager {
 }
 
 impl ResourceManager {
+    pub fn get_resources_storage_lock(&self) -> ResourceStorageType {
+        self.resources_storage.clone()
+    }
+
+    pub fn get_resources_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, ResourceStorage> {
+        self.resources_storage.read()
+    }
+
+    pub fn get_resources_storage_mut(&self) -> RwLockWriteGuard<'_, parking_lot::RawRwLock, ResourceStorage> {
+        self.resources_storage.write()
+    }
+
     pub fn set_resource_scheme(&mut self, list: Vec<ResurceScheme>, archive_hash: u64) {
         self.resources_scheme = Some(list);
         self.archive_hash = Some(archive_hash);
-    }
-
-    pub fn _get_resource(&self, slug: &String) -> Option<&ResourceInstance> {
-        self.resources.get(slug)
-    }
-
-    pub fn get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
-        self.resources.get_mut(slug)
     }
 
     pub fn load_archive_chunk(&mut self, data: &mut Vec<u8>) {
@@ -109,10 +182,12 @@ impl ResourceManager {
 
         for resource_scheme in resources_scheme.iter() {
             let resource = ResourceInstance::new(resource_scheme.slug.clone(), true);
-            self.add_resource(resource);
+            self.get_resources_storage_mut().add_resource(resource);
         }
 
         let rhai_engine = self.rhai_engine.clone();
+
+        let mut resources_storage = self.get_resources_storage_mut();
 
         let file = std::io::Cursor::new(&archive_data);
         let mut zip = zip::ZipArchive::new(file).unwrap();
@@ -122,14 +197,14 @@ impl ResourceManager {
 
             match ResourceManager::get_resource_type(&resources_scheme, &file_hash) {
                 ResourceType::Script { name, resource_slug } => {
-                    let resource = self.get_resource_mut(&resource_slug).unwrap();
+                    let resource = resources_storage.get_resource_mut(&resource_slug).unwrap();
 
                     let mut code = String::new();
                     archive_file.read_to_string(&mut code).unwrap();
                     resource.add_script(&mut rhai_engine.borrow_mut(), name, code)?;
                 }
                 ResourceType::Media { name, resource_slug } => {
-                    let resource = self.get_resource_mut(&resource_slug).unwrap();
+                    let resource = resources_storage.get_resource_mut(&resource_slug).unwrap();
 
                     let mut archive_file_data = Vec::new();
                     for i in archive_file.bytes() {
@@ -160,10 +235,6 @@ impl ResourceManager {
         Ok(())
     }
 
-    pub fn add_resource(&mut self, resource: ResourceInstance) {
-        self.resources.insert(resource.get_slug().clone(), resource);
-    }
-
     pub fn load_local_resources(&mut self) -> Result<(), String> {
         let local_resources = match get_local_resources() {
             Ok(m) => m,
@@ -182,54 +253,16 @@ impl ResourceManager {
                 }
             }
 
-            self.add_resource(resource_instance);
+            self.get_resources_storage_mut().add_resource(resource_instance);
         }
         Ok(())
     }
 
-    pub fn get_resources_count(&self) -> usize {
-        self.resources.len()
-    }
-
-    pub fn _get_media_count(&self, only_network: bool) -> u32 {
-        let mut count: u32 = 0;
-        for (_slug, resource) in self.resources.iter() {
-            if !only_network || resource.is_network() {
-                count += resource.get_media_count() as u32;
-            }
-        }
-        return count;
-    }
-
-    pub fn has_media(&self, path: &String) -> bool {
-        let Some((res_slug, res_path)) = split_resource_path(path) else {
-            return false;
-        };
-
-        for (resource_path, resource) in self.resources.iter() {
-            if *resource_path == res_slug && resource.has_media(&res_path) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    pub fn get_media(&self, path: &String) -> Option<&MediaResource> {
-        let Some((res_slug, res_path)) = split_resource_path(path) else {
-            return None;
-        };
-
-        for (resource_path, resource) in self.resources.iter() {
-            if *resource_path == res_slug {
-                return resource.get_media(&res_path);
-            }
-        }
-        return None;
-    }
-
     pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {
-        for (_slug, resource) in self.resources.iter_mut() {
-            resource._run_event(&mut self.rhai_engine.borrow_mut(), callback_name, args);
+        let rc = self.rhai_engine.clone();
+        let mut rhai_engine = rc.borrow_mut();
+        for (_slug, resource) in self.get_resources_storage_mut().iter_mut() {
+            resource._run_event(&mut rhai_engine, callback_name, args);
         }
     }
 }

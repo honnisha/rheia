@@ -18,6 +18,8 @@ use godot::classes::input::MouseMode;
 use godot::classes::{Engine, FileAccess};
 use godot::prelude::*;
 use network::messages::{ClientMessages, NetworkMessageType};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::scenes::text_screen::TextScreen;
 
@@ -28,6 +30,8 @@ pub type FloatType = f32;
 static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
     tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
 
+pub type ResourceManagerType = Rc<RefCell<ResourceManager>>;
+
 #[derive(GodotClass)]
 #[class(init, tool, base=Node)]
 pub struct MainScene {
@@ -37,7 +41,7 @@ pub struct MainScene {
 
     network: Option<NetworkContainer>,
 
-    resource_manager: ResourceManager,
+    resource_manager: ResourceManagerType,
 
     #[export]
     worlds_manager: Option<Gd<WorldsManager>>,
@@ -93,12 +97,12 @@ impl MainScene {
         self.text_screen.bind_mut()
     }
 
-    pub fn get_resource_manager(&self) -> &ResourceManager {
-        &self.resource_manager
+    pub fn get_resource_manager(&self) -> std::cell::Ref<'_, ResourceManager> {
+        self.resource_manager.borrow()
     }
 
-    pub fn get_resource_manager_mut(&mut self) -> &mut ResourceManager {
-        &mut self.resource_manager
+    pub fn get_resource_manager_mut(&self) -> std::cell::RefMut<'_, ResourceManager> {
+        self.resource_manager.borrow_mut()
     }
 
     pub fn get_wm(&self) -> &Gd<WorldsManager> {
@@ -188,7 +192,9 @@ impl MainScene {
 
         let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
 
-        wm.bind_mut().build_textures(&self.resource_manager).unwrap();
+        let rm = self.resource_manager.borrow();
+        let resources_storage = rm.get_resources_storage();
+        wm.bind_mut().build_textures(&*resources_storage).unwrap();
 
         if wm.bind().get_world().is_some() {
             wm.bind_mut().destroy_world();
@@ -241,11 +247,11 @@ impl INode for MainScene {
         log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
-        if let Err(e) = self.get_resource_manager_mut().load_local_resources() {
+        if let Err(e) = self.resource_manager.clone().borrow_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));
             return;
         }
-        log::info!(target: "main", "Local resources loaded successfully (count: {})", self.get_resource_manager().get_resources_count());
+        log::info!(target: "main", "Local resources loaded successfully (count: {})", self.get_resource_manager().get_resources_storage().get_resources_count());
 
         if Engine::singleton().is_editor_hint() {
             if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
@@ -278,6 +284,10 @@ impl INode for MainScene {
             Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
 
             self.connect();
+        }
+
+        if let Some(worlds_manager) = self.worlds_manager.as_mut() {
+            worlds_manager.bind_mut().set_resource_manager(self.resource_manager.clone());
         }
     }
 

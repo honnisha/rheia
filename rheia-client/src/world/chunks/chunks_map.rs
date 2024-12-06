@@ -1,3 +1,12 @@
+use crate::{
+    client_scripts::resource_manager::{ResourceManager, ResourceStorage},
+    utils::textures::texture_mapper::TextureMapper,
+    world::{
+        block_storage::BlockStorage,
+        physics::PhysicsProxy,
+        worlds_manager::{BlockStorageType, TextureMapperType},
+    },
+};
 use ahash::{AHashMap, HashSet};
 use common::{
     blocks::{block_info::BlockInfo, block_type::BlockContent},
@@ -13,15 +22,6 @@ use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
-
-use crate::{
-    utils::textures::texture_mapper::TextureMapper,
-    world::{
-        block_storage::BlockStorage,
-        physics::PhysicsProxy,
-        worlds_manager::{BlockStorageType, TextureMapperType},
-    },
-};
 
 use super::{
     chunk_column::{ChunkColumn, ColumnDataLockType},
@@ -110,6 +110,8 @@ impl ChunkMap {
         material_instance_id: InstanceId,
         texture_mapper: TextureMapperType,
         block_storage: BlockStorageType,
+        physics: &PhysicsProxy,
+        resource_manager: &ResourceManager,
     ) {
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
@@ -129,6 +131,8 @@ impl ChunkMap {
                 material_instance_id,
                 texture_mapper.clone(),
                 block_storage.clone(),
+                physics.clone(),
+                resource_manager,
             );
             return false;
         });
@@ -172,6 +176,8 @@ impl ChunkMap {
         position: BlockPosition,
         block_storage: &BlockStorage,
         new_block_info: Option<BlockInfo>,
+        physics: &PhysicsProxy,
+        resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             panic!("edit_block chunk not found");
@@ -206,9 +212,7 @@ impl ChunkMap {
 
                     let mut cs = chunk_section.bind_mut();
                     let objects_container = cs.get_objects_container_mut();
-                    objects_container
-                        .bind_mut()
-                        .remove(block_position);
+                    objects_container.bind_mut().remove(block_position, physics);
                 }
             }
         }
@@ -243,9 +247,12 @@ impl ChunkMap {
 
                     let mut cs = chunk_section.bind_mut();
                     let objects_container = cs.get_objects_container_mut();
-                    objects_container
-                        .bind_mut()
-                        .update_block_model(block_position, new_block_type);
+                    objects_container.bind_mut().create_block_model(
+                        &block_position,
+                        new_block_type,
+                        physics,
+                        resource_storage,
+                    );
                 }
             }
         }

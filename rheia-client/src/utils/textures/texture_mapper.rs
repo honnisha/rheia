@@ -7,7 +7,7 @@ use godot::{
 use image::RgbaImage;
 
 use crate::{
-    client_scripts::{resource_instance::MediaResource, resource_manager::ResourceManager},
+    client_scripts::{resource_instance::MediaResource, resource_manager::ResourceStorage},
     utils::textures::material_builder::generate_texture,
     world::block_storage::BlockStorage,
 };
@@ -21,12 +21,12 @@ impl TextureMapper {
     pub fn build(
         &mut self,
         block_storage: &BlockStorage,
-        resource_manager: &ResourceManager,
+        resource_storage: &ResourceStorage,
         material_3d: &mut Gd<StandardMaterial3D>,
     ) -> Result<(), String> {
         let mut pba = PackedByteArray::new();
 
-        let m = match generate_texture(self, block_storage, resource_manager) {
+        let m = match generate_texture(self, block_storage, resource_storage) {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
@@ -87,13 +87,13 @@ impl TextureMapper {
         &mut self,
         img: &mut RgbaImage,
         texture_path: &String,
-        resource_manager: &ResourceManager,
+        resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
         if self.textures_map.contains(&texture_path) {
             return Ok(());
         };
 
-        let Some(media_data) = resource_manager.get_media(texture_path) else {
+        let Some(media_data) = resource_storage.get_media(texture_path) else {
             return Err(format!("Texture media \"{}\" not found inside resources", texture_path));
         };
         let texture_2d = match media_data {

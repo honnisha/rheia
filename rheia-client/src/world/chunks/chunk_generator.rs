@@ -1,4 +1,10 @@
-use crate::world::worlds_manager::{BlockStorageType, TextureMapperType};
+use crate::{
+    client_scripts::resource_manager::ResourceManager,
+    world::{
+        physics::PhysicsProxy,
+        worlds_manager::{BlockStorageType, TextureMapperType},
+    },
+};
 
 use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries, chunks_map::ChunkLock,
@@ -18,7 +24,11 @@ pub(crate) fn generate_chunk(
 
     texture_mapper: TextureMapperType,
     block_storage: BlockStorageType,
+
+    physics: PhysicsProxy,
+    resource_manager: &ResourceManager,
 ) {
+    let resources_storage_lock = resource_manager.get_resources_storage_lock();
     rayon::spawn(move || {
         let data = chunk_column.read().get_data_lock().clone();
 
@@ -39,7 +49,9 @@ pub(crate) fn generate_chunk(
 
                 let d = data.read();
                 let section_data = d.get(y).unwrap();
-                objects_container.bind_mut().setup(section_data, &*block_storage.read());
+                objects_container
+                    .bind_mut()
+                    .setup(section_data, &*block_storage.read(), &physics, &*resources_storage_lock.read());
             }
         }
 

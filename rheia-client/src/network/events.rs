@@ -83,7 +83,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
             }
 
             ServerMessages::ResourcesScheme { list, archive_hash } => {
-                let resource_manager = main.get_resource_manager_mut();
+                let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list, archive_hash);
                 log::info!(target: "network", "Resources scheme loaded from network");
             }
@@ -93,14 +93,16 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 mut data,
                 last,
             } => {
-                let resource_manager = main.get_resource_manager_mut();
-                resource_manager.load_archive_chunk(&mut data);
+                {
+                    let mut resource_manager = main.get_resource_manager_mut();
+                    resource_manager.load_archive_chunk(&mut data);
 
-                if last {
-                    if let Err(e) = resource_manager.load_archive() {
-                        return Err(format!("Network resources download error: {}", e));
+                    if last {
+                        if let Err(e) = resource_manager.load_archive() {
+                            return Err(format!("Network resources download error: {}", e));
+                        }
+                        log::info!(target: "network", "Resources archive installed from network; index:{}", index);
                     }
-                    log::info!(target: "network", "Resources archive installed from network; index:{}", index);
                 }
 
                 let msg = ClientMessages::ResourcesLoaded { last_index: index };
@@ -119,12 +121,17 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     {
                         let wm = worlds_manager.bind();
                         let mut block_storage = wm.get_block_storage_mut();
-                        if let Err(e) = block_storage.load_blocks_types(block_types, &*resource_manager) {
+                        if let Err(e) =
+                            block_storage.load_blocks_types(block_types, &*resource_manager.get_resources_storage())
+                        {
                             return Err(e);
                         }
                     }
 
-                    if let Err(e) = worlds_manager.bind_mut().build_textures(&*resource_manager) {
+                    if let Err(e) = worlds_manager
+                        .bind_mut()
+                        .build_textures(&*&resource_manager.get_resources_storage())
+                    {
                         return Err(e);
                     }
 
@@ -210,7 +217,12 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     continue;
                 };
                 let block_storage = worlds_manager.get_block_storage();
-                world.bind().edit_block(position, &block_storage, new_block_info).unwrap();
+                let resource_manager = main.get_resource_manager();
+                let resources_storage = resource_manager.get_resources_storage();
+                world
+                    .bind()
+                    .edit_block(position, &block_storage, new_block_info, &*resources_storage)
+                    .unwrap();
             }
         }
     }
