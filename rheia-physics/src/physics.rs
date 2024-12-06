@@ -22,6 +22,7 @@ pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, 
 }
 
 pub trait IPhysicsColliderBuilder {
+    fn cuboid(hx: f32, hy: f32, hz: f32) -> Self;
     fn cylinder(half_height: f32, radius: f32) -> Self;
     fn trimesh(verts: Vec<Vector3>, indices: Vec<[u32; 3]>) -> Self;
 }

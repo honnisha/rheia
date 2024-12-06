@@ -67,6 +67,10 @@ impl ChunkSection {
         }
     }
 
+    pub fn get_chunk_position(&self) -> &ChunkPosition {
+        &self.chunk_position
+    }
+
     pub fn get_section_local_position(&self) -> Vector3 {
         Vector3::new(0.0, GodotPositionConverter::get_chunk_y_local(self.y), 0.0)
     }
@@ -138,5 +142,8 @@ impl INode3D for ChunkSection {
     fn ready(&mut self) {
         let mesh = self.mesh.clone();
         self.base_mut().add_child(&mesh);
+
+        let objects_container = self.objects_container.clone();
+        self.base_mut().add_child(&objects_container);
     }
 }

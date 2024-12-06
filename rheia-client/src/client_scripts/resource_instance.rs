@@ -18,6 +18,15 @@ pub enum MediaResource {
     GLB(Gd<Node3D>),
 }
 
+impl MediaResource {
+    pub fn get_glb(&self) -> Option<&Gd<Node3D>> {
+        match self {
+            MediaResource::GLB(g) => Some(g),
+            _ => return None,
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct ResourceInstance {
     slug: String,

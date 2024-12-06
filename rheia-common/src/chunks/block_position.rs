@@ -10,9 +10,9 @@ pub trait BlockPositionTrait {
 /// Uses as block position inside chunk section CHUNK_SIZExCHUNK_SIZE
 #[derive(Clone, Copy, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct ChunkBlockPosition {
-    x: u8,
-    y: u8,
-    z: u8,
+    pub x: u8,
+    pub y: u8,
+    pub z: u8,
 }
 
 impl std::fmt::Debug for ChunkBlockPosition {
@@ -38,6 +38,14 @@ pub struct BlockPosition {
 impl BlockPosition {
     pub fn new(x: i64, y: i64, z: i64) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn from_chunk_position(chunk_position: &ChunkPosition, y: &u32, block_position: &ChunkBlockPosition) -> Self {
+        Self {
+            x: (chunk_position.x as f32 * CHUNK_SIZE as f32) as i64 + block_position.x as i64,
+            y: (*y as f32 * CHUNK_SIZE as f32) as i64 + block_position.y as i64,
+            z: (chunk_position.z as f32 * CHUNK_SIZE as f32) as i64 + block_position.z as i64,
+        }
     }
 
     pub fn from_position(position: &Vector3) -> Self {

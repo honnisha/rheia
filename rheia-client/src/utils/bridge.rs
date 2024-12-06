@@ -1,5 +1,5 @@
 use common::{
-    chunks::chunk_position::ChunkPosition, chunks::position::Vector3 as NetworkVector3, utils::fix_chunk_loc_pos,
+    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition, position::Vector3 as NetworkVector3}, utils::fix_chunk_loc_pos,
     CHUNK_SIZE,
 };
 use godot::prelude::Vector3 as GDVector3;
@@ -19,6 +19,12 @@ pub trait IntoChunkPositionVector {
 impl IntoGodotVector for NetworkVector3 {
     fn to_godot(&self) -> GDVector3 {
         GDVector3::new(self.x, self.y, self.z)
+    }
+}
+
+impl IntoGodotVector for ChunkBlockPosition {
+    fn to_godot(&self) -> GDVector3 {
+        GDVector3::new(self.x as f32, self.y as f32, self.z as f32)
     }
 }
 

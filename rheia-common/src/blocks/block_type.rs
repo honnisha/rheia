@@ -49,4 +49,13 @@ impl BlockType {
     pub fn get_block_content(&self) -> &BlockContent {
         &self.block_content
     }
+
+    pub fn get_model(&self) -> Option<&String> {
+        match &self.block_content {
+            BlockContent::ModelCube { model } => {
+                return Some(model);
+            }
+            _ => None,
+        }
+    }
 }

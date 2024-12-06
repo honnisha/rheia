@@ -121,9 +121,11 @@ impl ChunkMap {
                 return true;
             }
 
-            let chunk_column = self
-                .get_chunk(&chunk_position)
-                .expect("chunk from sended_chunks is not found");
+            let Some(chunk_column) = self.get_chunk(&chunk_position) else {
+                // Remove if chunk is not existing for some reason
+                return false;
+            };
+
             generate_chunk(
                 chunk_column.clone(),
                 near_chunks_data,
@@ -212,7 +214,7 @@ impl ChunkMap {
 
                     let mut cs = chunk_section.bind_mut();
                     let objects_container = cs.get_objects_container_mut();
-                    objects_container.bind_mut().remove(block_position, physics);
+                    objects_container.bind_mut().remove(&block_position);
                 }
             }
         }
@@ -248,11 +250,11 @@ impl ChunkMap {
                     let mut cs = chunk_section.bind_mut();
                     let objects_container = cs.get_objects_container_mut();
                     objects_container.bind_mut().create_block_model(
-                        &block_position,
+                        &position,
                         new_block_type,
                         physics,
                         resource_storage,
-                    );
+                    ).unwrap();
                 }
             }
         }

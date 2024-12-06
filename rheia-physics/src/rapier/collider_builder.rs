@@ -8,6 +8,12 @@ pub struct RapierPhysicsColliderBuilder {
 }
 
 impl IPhysicsColliderBuilder for RapierPhysicsColliderBuilder {
+    fn cuboid(hx: f32, hy: f32, hz: f32) -> Self {
+        Self {
+            builder: ColliderBuilder::cuboid(hx * 0.5, hy * 0.5, hz * 0.5),
+        }
+    }
+
     fn cylinder(half_height: f32, radius: f32) -> Self {
         Self {
             builder: ColliderBuilder::cylinder(half_height, radius),

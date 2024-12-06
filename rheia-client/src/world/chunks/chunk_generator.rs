@@ -45,13 +45,19 @@ pub(crate) fn generate_chunk(
                 chunk_section.bind_mut().set_new_geometry(geometry);
 
                 let mut cs = chunk_section.bind_mut();
+                let chunk_position = cs.get_chunk_position().clone();
                 let objects_container = cs.get_objects_container_mut();
 
                 let d = data.read();
                 let section_data = d.get(y).unwrap();
-                objects_container
-                    .bind_mut()
-                    .setup(section_data, &*block_storage.read(), &physics, &*resources_storage_lock.read());
+                objects_container.bind_mut().setup(
+                    y as u32,
+                    &chunk_position,
+                    section_data,
+                    &*block_storage.read(),
+                    &physics,
+                    &*resources_storage_lock.read(),
+                ).unwrap();
             }
         }
 
