@@ -1,4 +1,3 @@
-use common::chunks::position::Vector3 as NetworkVector3;
 use crate::{
     client_scripts::resource_manager::ResourceStorage,
     utils::bridge::IntoGodotVector,
@@ -8,6 +7,7 @@ use crate::{
     },
 };
 use ahash::AHashMap;
+use common::chunks::position::Vector3 as NetworkVector3;
 use common::{
     blocks::block_type::{BlockContent, BlockType},
     chunks::{
@@ -15,7 +15,10 @@ use common::{
         chunk_position::ChunkPosition,
     },
 };
-use godot::{classes::{BoxMesh, Mesh, MeshInstance3D}, prelude::*};
+use godot::{
+    classes::{BoxMesh, Mesh, MeshInstance3D},
+    prelude::*,
+};
 use network::messages::ChunkDataType;
 use physics::{
     physics::{IPhysicsCollider, IPhysicsColliderBuilder},
@@ -91,6 +94,13 @@ impl ObjectsContainer {
             return Some(());
         }
         return None;
+    }
+
+    pub fn destory(&mut self) {
+        for (_position, mut object) in self.blocks.drain() {
+            object.bind_mut().remove();
+            object.queue_free();
+        }
     }
 
     pub fn create_block_model(

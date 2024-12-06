@@ -111,6 +111,12 @@ impl ChunkColumn {
     }
 
     pub fn free(&mut self) {
+        let mut chunk_base = self.get_base();
+        let mut c = chunk_base.bind_mut();
+        for section in c.sections.iter_mut() {
+            section.bind_mut().destory();
+        }
+
         if self.is_loaded() {
             let mut base = self.get_base();
             base.bind_mut().base_mut().queue_free();

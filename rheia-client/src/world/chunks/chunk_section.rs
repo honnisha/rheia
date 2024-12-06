@@ -135,6 +135,10 @@ impl ChunkSection {
             c.set_enabled(state);
         }
     }
+
+    pub fn destory(&mut self) {
+        self.objects_container.bind_mut().destory();
+    }
 }
 
 #[godot_api]
