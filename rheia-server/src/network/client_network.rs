@@ -122,7 +122,7 @@ impl ClientNetwork {
         .ok()
     }
 
-    pub fn set_client_info(&mut self, info: ClientInfo) {
+    pub fn set_client_info(&self, info: ClientInfo) {
         let mut client_info = self.client_info.write();
         *client_info = Some(info);
     }

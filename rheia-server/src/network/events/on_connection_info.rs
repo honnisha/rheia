@@ -1,5 +1,5 @@
 use bevy::prelude::{Event, EventWriter};
-use bevy::prelude::{Events, ResMut};
+use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::Res;
 use network::messages::{NetworkMessageType, ServerMessages};
 
@@ -37,11 +37,11 @@ impl PlayerConnectionInfoEvent {
 }
 
 pub fn on_connection_info(
-    mut connection_info_events: ResMut<Events<PlayerConnectionInfoEvent>>,
+    mut connection_info_events: EventReader<PlayerConnectionInfoEvent>,
     resources_manager: Res<ResourceManager>,
     mut player_media_loaded_events: EventWriter<PlayerMediaLoadedEvent>,
 ) {
-    for mut event in connection_info_events.drain() {
+    for event in connection_info_events.read() {
         event.client.set_client_info(ClientInfo::new(&event));
 
         let client_info = event.client.get_client_info().unwrap();
@@ -72,9 +72,7 @@ pub fn on_connection_info(
                 data: resources_manager.get_archive_part(0, ARCHIVE_CHUNK_SIZE),
                 last: is_last,
             };
-            event
-                .client
-                .send_message(NetworkMessageType::ReliableUnordered, &resources_part);
+            event.client.send_message(NetworkMessageType::ReliableUnordered, &resources_part);
         } else {
             // Or send player as loaded
 
