@@ -6,7 +6,7 @@ use network::{
     server::IServerConnection,
     NetworkServerConnection,
 };
-use parking_lot::RwLock;
+use parking_lot::{lock_api::MappedRwLockReadGuard, RwLock, RwLockReadGuard};
 use std::{any::Any, fmt::Display, sync::Arc};
 
 use crate::{
@@ -77,7 +77,7 @@ impl ClientInfo {
 pub struct ClientNetwork {
     connection: NetworkServerConnection,
 
-    client_info: Option<ClientInfo>,
+    client_info: Arc<RwLock<Option<ClientInfo>>>,
 
     // For fast finding player current world slug
     world_entity: Arc<RwLock<Option<WorldEntity>>>,
@@ -95,8 +95,8 @@ impl ClientNetwork {
     pub fn new(connection: NetworkServerConnection) -> Self {
         ClientNetwork {
             connection,
-            client_info: None,
-            world_entity: Arc::new(RwLock::new(None)),
+            client_info: Default::default(),
+            world_entity: Default::default(),
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
         }
@@ -114,15 +114,17 @@ impl ClientNetwork {
         self.send_message(NetworkMessageType::ReliableOrdered, &ServerMessages::AllowConnection {});
     }
 
-    pub fn get_client_info(&self) -> Option<&ClientInfo> {
-        match self.client_info.as_ref() {
-            Some(i) => Some(&i),
+    pub fn get_client_info(&self) -> Option<MappedRwLockReadGuard<'_, parking_lot::RawRwLock, ClientInfo>> {
+        RwLockReadGuard::try_map(self.client_info.read(), |p| match p {
+            Some(c) => Some(c),
             None => None,
-        }
+        })
+        .ok()
     }
 
     pub fn set_client_info(&mut self, info: ClientInfo) {
-        self.client_info = Some(info);
+        let mut client_info = self.client_info.write();
+        *client_info = Some(info);
     }
 
     pub fn get_client_ip(&self) -> &String {
@@ -214,7 +216,7 @@ impl ClientNetwork {
 
 impl Display for ClientNetwork {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let login = match self.client_info.as_ref() {
+        let login = match self.get_client_info() {
             Some(i) => i.get_login().clone(),
             None => "-".to_string(),
         };
