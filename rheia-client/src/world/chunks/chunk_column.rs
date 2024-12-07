@@ -74,16 +74,20 @@ impl ChunkColumn {
     pub fn create(chunk_position: ChunkPosition, data: SectionsData) -> Self {
         let chunk_base = Gd::<ChunkBase>::from_init_fn(|base| ChunkBase::create(base));
 
-        Self {
+        let chunk_column = Self {
             base_id: chunk_base.instance_id(),
 
             chunk_position,
             data: Arc::new(RwLock::new(data)),
             loaded: Arc::new(AtomicBool::new(false)),
-        }
+        };
+
+        chunk_column.get_base().set_position(chunk_column.get_chunk_position());
+
+        chunk_column
     }
 
-    pub fn get_base(&self) -> Gd<ChunkBase> {
+    pub(crate) fn get_base(&self) -> Gd<ChunkBase> {
         let base: Gd<ChunkBase> = Gd::from_instance_id(self.base_id);
         base
     }
@@ -105,8 +109,8 @@ impl ChunkColumn {
             *y < VERTICAL_SECTIONS,
             "get_chunk_section_mut y cannot be more than VERTICAL_SECTIONS"
         );
-        let mut chunk_base = self.get_base();
-        let c = chunk_base.bind_mut();
+        let chunk_base = self.get_base();
+        let c = chunk_base.bind();
         c.sections[*y].clone()
     }
 
@@ -118,8 +122,7 @@ impl ChunkColumn {
         }
 
         if self.is_loaded() {
-            let mut base = self.get_base();
-            base.bind_mut().base_mut().queue_free();
+            c.base_mut().queue_free();
         }
     }
 
@@ -141,16 +144,6 @@ impl ChunkColumn {
             -1_f32,
             self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
         )
-    }
-
-    pub fn spawn_loaded_chunk(&self) {
-        let mut base = self.get_base();
-        let mut c = base.bind_mut();
-
-        // It must be updated in main thread because of
-        // ERROR: Condition "!is_inside_tree()" is true. Returning: Transform3D()
-        c.base_mut().set_global_position(self.get_chunk_position());
-        self.set_loaded();
     }
 
     pub fn change_block_info(

@@ -146,12 +146,11 @@ impl ChunkMap {
         for l in self.chunks_to_spawn.1.drain() {
             let chunk_column = l.read();
 
-            let chunk_base = chunk_column.get_base();
+            let mut chunk_base = chunk_column.get_base();
             base.add_child(&chunk_base);
-            chunk_column.spawn_loaded_chunk();
+            chunk_column.set_loaded();
 
-            let mut base = chunk_column.get_base();
-            let mut c = base.bind_mut();
+            let mut c = chunk_base.bind_mut();
 
             for section in c.sections.iter_mut() {
                 if section.bind().is_geometry_update_needed() {
