@@ -14,7 +14,7 @@ use common::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_position::ChunkPosition,
     },
-    VERTICAL_SECTIONS,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::prelude::*;
 use network::messages::SectionsData;
@@ -198,10 +198,7 @@ impl ChunkMap {
                     side_texture: _,
                     bottom_texture: _,
                 } => {
-                    // Sent to the update queue
-                    self.chunks_to_update
-                        .borrow_mut()
-                        .insert((position.get_chunk_position(), section as usize));
+                    self.send_to_update_chunk_mesh(&position);
                 }
                 BlockContent::ModelCube { model: _ } => {
                     let chunk_column = self
@@ -233,10 +230,7 @@ impl ChunkMap {
                     side_texture: _,
                     bottom_texture: _,
                 } => {
-                    // Sent to the update queue
-                    self.chunks_to_update
-                        .borrow_mut()
-                        .insert((position.get_chunk_position(), section as usize));
+                    self.send_to_update_chunk_mesh(&position);
                 }
                 BlockContent::ModelCube { model: _ } => {
                     let chunk_column = self
@@ -248,17 +242,65 @@ impl ChunkMap {
 
                     let mut cs = chunk_section.bind_mut();
                     let objects_container = cs.get_objects_container_mut();
-                    objects_container.bind_mut().create_block_model(
-                        &position,
-                        new_block_type,
-                        physics,
-                        resource_storage,
-                    ).unwrap();
+                    objects_container
+                        .bind_mut()
+                        .create_block_model(&position, new_block_type, physics, resource_storage)
+                        .unwrap();
                 }
             }
         }
 
         Ok(())
+    }
+
+    /// Sent to the update queue
+    fn send_to_update_chunk_mesh(&self, position: &BlockPosition) {
+        let (section, block_position) = position.get_block_position();
+        println!("block_position:{:?} chunk_position:{:?}", block_position, position.get_chunk_position());
+
+        self.chunks_to_update
+            .borrow_mut()
+            .insert((position.get_chunk_position(), section as usize));
+
+        if block_position.y == 0 && section > 0 {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((position.get_chunk_position(), section as usize - 1));
+        }
+
+        if block_position.y == CHUNK_SIZE - 1 && section < VERTICAL_SECTIONS as u32 - 1 {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((position.get_chunk_position(), section as usize + 1));
+        }
+
+        let x = position.get_chunk_position() + ChunkPosition::new(-1, 0);
+        if block_position.x == 0 && self.get_chunk(&x).is_some() {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((x, section as usize));
+        }
+
+        let x = position.get_chunk_position() + ChunkPosition::new(1, 0);
+        if block_position.x == CHUNK_SIZE - 1 && self.get_chunk(&x).is_some() {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((x, section as usize));
+        }
+
+        let z = position.get_chunk_position() + ChunkPosition::new(0, -1);
+        if block_position.z == 0 && self.get_chunk(&z).is_some() {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((z, section as usize));
+        }
+
+        let z = position.get_chunk_position() + ChunkPosition::new(0, 1);
+        if block_position.z == CHUNK_SIZE - 1 && self.get_chunk(&z).is_some() {
+            self.chunks_to_update
+                .borrow_mut()
+                .insert((z, section as usize));
+        }
     }
 
     /// Every frame job to update edited chunks
@@ -276,9 +318,11 @@ impl ChunkMap {
                 return true;
             }
 
-            let chunk_column = self
-                .get_chunk(&chunk_position)
-                .expect("chunk from chunks_to_update is not found");
+            let Some(chunk_column) = self.get_chunk(&chunk_position) else {
+                // Remove if chunk is not existing for some reason
+                return false;
+            };
+
             let c = chunk_column.read();
 
             let data = c.get_data_lock().clone();

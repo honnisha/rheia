@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::fmt::{self, Display, Formatter};
+use std::{fmt::{self, Display, Formatter}, ops::Add};
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, Hash)]
 pub struct ChunkPosition {
@@ -27,6 +27,17 @@ impl Eq for ChunkPosition {}
 impl Display for ChunkPosition {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         write!(f, "(x:{}, z:{})", self.x, self.z)
+    }
+}
+
+impl Add for ChunkPosition {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            z: self.z + other.z,
+        }
     }
 }
 
