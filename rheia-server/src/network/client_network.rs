@@ -1,8 +1,11 @@
-use bevy::prelude::Entity;
+use bevy::prelude::{Component, Entity};
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
 use core::fmt;
-use flume::{Drain, Receiver, Sender};
-use network::messages::{NetworkMessageType, ServerMessages};
+use network::{
+    messages::{NetworkMessageType, ServerMessages},
+    server::IServerConnection,
+    NetworkServerConnection,
+};
 use parking_lot::RwLock;
 use std::{any::Any, fmt::Display, sync::Arc};
 
@@ -11,7 +14,7 @@ use crate::{
     entities::entity::{Position, Rotation},
 };
 
-use super::{events::on_connection_info::PlayerConnectionInfoEvent, server::{NetworkPlugin, SendClientMessageEvent}};
+use super::{events::on_connection_info::PlayerConnectionInfoEvent, server::NetworkPlugin};
 
 static SEND_CHUNK_QUEUE_LIMIT: usize = 64;
 
@@ -70,10 +73,9 @@ impl ClientInfo {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Component)]
 pub struct ClientNetwork {
-    client_id: u64,
-    ip: String,
+    connection: NetworkServerConnection,
 
     client_info: Option<ClientInfo>,
 
@@ -87,29 +89,29 @@ pub struct ClientNetwork {
     // Chunks was sended by network
     // but not yet recieved by the player
     send_chunk_queue: Arc<RwLock<Vec<ChunkPosition>>>,
-
-    client_messages_output: (Sender<SendClientMessageEvent>, Receiver<SendClientMessageEvent>),
 }
 
 impl ClientNetwork {
-    pub fn new(client_id: u64, ip: String) -> Self {
+    pub fn new(connection: NetworkServerConnection) -> Self {
         ClientNetwork {
-            client_id,
-            ip,
+            connection,
             client_info: None,
             world_entity: Arc::new(RwLock::new(None)),
             already_sended: Default::default(),
             send_chunk_queue: Default::default(),
-            client_messages_output: flume::unbounded(),
         }
     }
 
-    pub fn get_client_id(&self) -> u64 {
-        self.client_id
+    pub(crate) fn get_connection(&self) -> &NetworkServerConnection {
+        &self.connection
+    }
+
+    pub(crate) fn get_client_id(&self) -> u64 {
+        self.connection.get_client_id()
     }
 
     pub fn send_allow_connection(&self) {
-        self.send_message(NetworkMessageType::ReliableOrdered, ServerMessages::AllowConnection {});
+        self.send_message(NetworkMessageType::ReliableOrdered, &ServerMessages::AllowConnection {});
     }
 
     pub fn get_client_info(&self) -> Option<&ClientInfo> {
@@ -124,7 +126,7 @@ impl ClientNetwork {
     }
 
     pub fn get_client_ip(&self) -> &String {
-        &self.ip
+        self.connection.get_ip()
     }
 
     /// Stores the player's information about which world he is in
@@ -146,7 +148,7 @@ impl ClientNetwork {
             position: position.to_network(),
             rotation: rotation.to_network(),
         };
-        self.send_message(NetworkMessageType::ReliableOrdered, input);
+        self.send_message(NetworkMessageType::ReliableOrdered, &input);
     }
 
     pub fn is_already_sended(&self, chunk_position: &ChunkPosition) -> bool {
@@ -176,7 +178,7 @@ impl ClientNetwork {
         if self.already_sended.read().contains(&chunk_position) {
             panic!("Tried to send already sended chunk! {}", chunk_position);
         }
-        self.send_message(NetworkMessageType::WorldInfo, message);
+        self.send_message(NetworkMessageType::WorldInfo, &message);
 
         // Watch chunk
         self.already_sended.write().push(chunk_position.clone());
@@ -202,16 +204,11 @@ impl ClientNetwork {
             world_slug: world_slug.clone(),
             chunks: unload_chunks,
         };
-        self.send_message(NetworkMessageType::ReliableOrdered, input);
+        self.send_message(NetworkMessageType::ReliableOrdered, &input);
     }
 
-    pub fn send_message(&self, message_type: NetworkMessageType, message: ServerMessages) {
-        let msg = SendClientMessageEvent::new(self.get_client_id().clone(), message_type, message);
-        self.client_messages_output.0.send(msg).unwrap()
-    }
-
-    pub fn drain_client_messages(&self) -> Drain<SendClientMessageEvent> {
-        self.client_messages_output.1.drain()
+    pub fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages) {
+        self.connection.send_message(message_type, message);
     }
 }
 

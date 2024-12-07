@@ -1,9 +1,9 @@
-use crate::{entities::entity::NetworkComponent, worlds::worlds_manager::WorldsManager};
+use crate::worlds::worlds_manager::WorldsManager;
 use ahash::HashMap;
 use bevy_ecs::system::Res;
 use common::chunks::chunk_position::ChunkPosition;
 
-use super::{clients_container::ClientRef, server::NetworkContainer};
+use super::{client_network::ClientNetwork, server::NetworkContainer};
 
 pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<NetworkContainer>) {
     #[cfg(feature = "trace")]
@@ -14,7 +14,7 @@ pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<Ne
         let world = world_lock.read();
 
         // A set of chunks and players that require them to be sent
-        let mut queue: HashMap<ChunkPosition, Vec<ClientRef>> = Default::default();
+        let mut queue: HashMap<ChunkPosition, Vec<&ClientNetwork>> = Default::default();
 
         let chunks_map = world.get_chunks_map();
 
@@ -35,25 +35,24 @@ pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<Ne
             'entity_loop: for entity in watch_entities {
                 let ecs = world.get_ecs();
                 let entity_ref = ecs.get_entity(*entity).unwrap();
-                let network = entity_ref.get::<NetworkComponent>().unwrap();
-                let client = network.get_client();
+                let network = entity_ref.get::<ClientNetwork>().unwrap();
 
-                let connected = network_container.is_connected(network.get_client_id());
+                let connected = network_container.is_connected(&network);
                 if !connected {
                     continue 'entity_loop;
                 }
 
-                if client.is_queue_limit() {
+                if network.is_queue_limit() {
                     continue 'entity_loop;
                 }
 
-                if client.is_already_sended(&chunk_position) {
+                if network.is_already_sended(&chunk_position) {
                     continue 'entity_loop;
                 }
 
                 let clients_queue = queue.entry(chunk_position.clone()).or_insert(Default::default());
-                client.send_chunk_to_queue(&chunk_position);
-                clients_queue.push(client);
+                network.send_chunk_to_queue(&chunk_position);
+                clients_queue.push(&network);
             }
         }
 

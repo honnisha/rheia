@@ -1,6 +1,6 @@
 use std::thread;
 
-use bevy::prelude::{Event, IntoSystemConfigs};
+use bevy::prelude::IntoSystemConfigs;
 use bevy::time::Time;
 use bevy_app::{App, Update};
 use bevy_ecs::change_detection::Mut;
@@ -12,7 +12,7 @@ use bevy_ecs::{
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use network::server::{ConnectionMessages, IServerNetwork};
+use network::server::{ConnectionMessages, IServerConnection, IServerNetwork};
 use network::NetworkServer;
 
 use super::events::{
@@ -35,23 +35,6 @@ const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
 
 pub struct NetworkPlugin;
 
-#[derive(Event)]
-pub struct SendClientMessageEvent {
-    client_id: u64,
-    message_type: NetworkMessageType,
-    message: ServerMessages,
-}
-
-impl SendClientMessageEvent {
-    pub fn new(client_id: u64, message_type: NetworkMessageType, message: ServerMessages) -> Self {
-        Self {
-            client_id,
-            message_type,
-            message,
-        }
-    }
-}
-
 lazy_static! {
     static ref CONSOLE_INPUT: (Sender<(u64, String)>, Receiver<(u64, String)>) = flume::unbounded();
 }
@@ -70,9 +53,9 @@ impl NetworkContainer {
         }
     }
 
-    pub fn is_connected(&self, client_id: &u64) -> bool {
+    pub fn is_connected(&self, client: &ClientNetwork) -> bool {
         let network = self.server_network.as_ref();
-        network.is_connected(*client_id)
+        network.is_connected(client.get_connection())
     }
 }
 
@@ -113,16 +96,13 @@ impl NetworkPlugin {
         app.add_event::<PlayerSettingsLoadedEvent>();
         app.add_systems(Update, on_settings_loaded.after(handle_events_system));
 
-        app.add_event::<SendClientMessageEvent>();
-        app.add_systems(Update, send_client_messages.after(on_disconnect));
-
         app.add_event::<PlayerSpawnEvent>();
         app.add_systems(Update, sync_player_spawn);
     }
 
     pub(crate) fn send_console_output(client: &ClientNetwork, message: String) {
         let input = ServerMessages::ConsoleOutput { message: message };
-        client.send_message(NetworkMessageType::ReliableOrdered, input);
+        client.send_message(NetworkMessageType::ReliableOrdered, &input);
     }
 }
 
@@ -168,7 +148,7 @@ fn receive_message_system(
                 CONSOLE_INPUT.0.send((client_id, command)).unwrap();
             }
             ClientMessages::ChunkRecieved { chunk_positions } => {
-                client.read().mark_chunks_as_recieved(chunk_positions);
+                client.mark_chunks_as_recieved(chunk_positions);
             }
             ClientMessages::PlayerMove { position, rotation } => {
                 let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
@@ -200,7 +180,7 @@ fn receive_message_system(
 fn console_client_command_event(world: &mut World) {
     world.resource_scope(|world, mut clients: Mut<ClientsContainer>| {
         for (client_id, command) in CONSOLE_INPUT.1.try_iter() {
-            let client = clients.get(&client_id).unwrap().read();
+            let client = clients.get(&client_id).unwrap();
             CommandsHandler::execute_command(world, Box::new(client.clone()), &command);
         }
     });
@@ -217,30 +197,15 @@ fn handle_events_system(
 
     for connection in network.drain_connections() {
         match connection {
-            ConnectionMessages::Connect { client_id, ip } => {
-                clients.add(client_id.clone(), ip.clone());
-                let client = clients.get(&client_id).unwrap();
+            ConnectionMessages::Connect { connection } => {
+                clients.add(connection.clone());
+                let client = clients.get(&connection.get_client_id()).unwrap();
                 connection_events.send(PlayerConnectionEvent::new(client.clone()));
             }
             ConnectionMessages::Disconnect { client_id, reason } => {
                 let client = clients.get(&client_id).unwrap();
                 disconnection_events.send(PlayerDisconnectEvent::new(client.clone(), reason));
             }
-        }
-    }
-}
-
-fn send_client_messages(network_container: Res<NetworkContainer>, clients: Res<ClientsContainer>) {
-    let network = network_container.server_network.as_ref();
-
-    for (client_id, client_lock) in clients.iter() {
-        if !network_container.is_connected(&client_id) {
-            continue;
-        }
-
-        let client = client_lock.read();
-        for message in client.drain_client_messages() {
-            network.send_message(message.client_id, message.message_type, &message.message);
         }
     }
 }

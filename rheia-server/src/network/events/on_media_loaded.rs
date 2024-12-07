@@ -7,12 +7,12 @@ use crate::{
         resources_manager::{ResourceManager, ARCHIVE_CHUNK_SIZE},
         server_settings::ServerSettings,
     },
-    network::clients_container::ClientCell,
+    network::client_network::ClientNetwork,
 };
 
 #[derive(Event)]
 pub struct PlayerMediaLoadedEvent {
-    client: ClientCell,
+    client: ClientNetwork,
     last_index: Option<u32>,
 }
 
@@ -20,7 +20,7 @@ pub struct PlayerMediaLoadedEvent {
 ///
 /// last_index is last downloaded index part
 impl PlayerMediaLoadedEvent {
-    pub fn new(client: ClientCell, last_index: Option<u32>) -> Self {
+    pub fn new(client: ClientNetwork, last_index: Option<u32>) -> Self {
         Self { client, last_index }
     }
 }
@@ -44,8 +44,9 @@ pub fn on_media_loaded(
                         last: is_last,
                     };
 
-                    let client = event.client.read();
-                    client.send_message(NetworkMessageType::ReliableUnordered, resources_part);
+                    event
+                        .client
+                        .send_message(NetworkMessageType::ReliableUnordered, &resources_part);
                     return;
                 }
             }
@@ -53,10 +54,9 @@ pub fn on_media_loaded(
         }
 
         // Send server settings
-        let client = event.client.read();
         let msg = ServerMessages::Settings {
             block_types: server_settings.get_block_types().clone(),
         };
-        client.send_message(NetworkMessageType::ReliableOrdered, msg);
+        event.client.send_message(NetworkMessageType::ReliableOrdered, &msg);
     }
 }

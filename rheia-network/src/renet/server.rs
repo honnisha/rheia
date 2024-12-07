@@ -13,7 +13,7 @@ use renet::{
 
 use crate::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, IServerNetwork},
+    server::{ConnectionMessages, IServerConnection, IServerNetwork},
 };
 
 use super::{
@@ -28,7 +28,10 @@ pub struct RenetServerNetwork {
     server: ServerLock,
     transport: TransferLock,
     channel_client_messages: (Sender<(u64, ClientMessages)>, Receiver<(u64, ClientMessages)>),
-    channel_connections: (Sender<ConnectionMessages>, Receiver<ConnectionMessages>),
+    channel_connections: (
+        Sender<ConnectionMessages<RenetServerConnection>>,
+        Receiver<ConnectionMessages<RenetServerConnection>>,
+    ),
     channel_errors: (Sender<String>, Receiver<String>),
 }
 
@@ -59,7 +62,7 @@ impl RenetServerNetwork {
     }
 }
 
-impl IServerNetwork for RenetServerNetwork {
+impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
     async fn new(ip_port: String) -> Self {
         let server = RenetServer::new(connection_config());
 
@@ -115,8 +118,11 @@ impl IServerNetwork for RenetServerNetwork {
                 ServerEvent::ClientConnected { client_id } => {
                     let addr = transport.client_addr(client_id.clone()).unwrap();
                     let connect = ConnectionMessages::Connect {
-                        client_id: client_id.raw(),
-                        ip: addr.to_string(),
+                        connection: RenetServerConnection::create(
+                            self.server.clone(),
+                            client_id.raw(),
+                            addr.to_string(),
+                        ),
                     };
                     self.channel_connections.0.send(connect).unwrap();
                 }
@@ -138,7 +144,7 @@ impl IServerNetwork for RenetServerNetwork {
         self.channel_client_messages.1.drain()
     }
 
-    fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages> {
+    fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages<RenetServerConnection>> {
         self.channel_connections.1.drain()
     }
 
@@ -146,14 +152,39 @@ impl IServerNetwork for RenetServerNetwork {
         self.channel_errors.1.drain()
     }
 
-    fn is_connected(&self, client_id: u64) -> bool {
-        self.get_server().is_connected(ClientId::from_raw(client_id))
+    fn is_connected(&self, connection: &RenetServerConnection) -> bool {
+        self.get_server()
+            .is_connected(ClientId::from_raw(connection.get_client_id()))
+    }
+}
+
+#[derive(Clone)]
+pub struct RenetServerConnection {
+    server: ServerLock,
+    client_id: u64,
+    ip: String,
+}
+
+impl RenetServerConnection {
+    fn create(server: ServerLock, client_id: u64, ip: String) -> Self {
+        Self { server, client_id, ip }
+    }
+}
+
+impl IServerConnection for RenetServerConnection {
+    fn get_ip(&self) -> &String {
+        &self.ip
     }
 
-    fn send_message(&self, client_id: u64, message_type: NetworkMessageType, message: &ServerMessages) {
+    fn get_client_id(&self) -> u64 {
+        self.client_id
+    }
+
+    fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages) {
         let encoded = bincode::serialize(message).unwrap();
-        self.get_server_mut().send_message(
-            ClientId::from_raw(client_id),
+        let mut server = self.server.as_ref().write().expect("poisoned");
+        server.send_message(
+            ClientId::from_raw(self.client_id),
             RenetServerNetwork::map_type_channel(message_type),
             encoded,
         );

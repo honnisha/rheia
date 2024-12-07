@@ -5,21 +5,18 @@ use bevy_ecs::{
 };
 
 use crate::{
-    network::{
-        clients_container::{ClientCell, ClientsContainer},
-        sync_entities::sync_entity_despawn,
-    },
+    network::{client_network::ClientNetwork, clients_container::ClientsContainer, sync_entities::sync_entity_despawn},
     worlds::worlds_manager::WorldsManager,
 };
 
 #[derive(Event)]
 pub struct PlayerDisconnectEvent {
-    client: ClientCell,
+    client: ClientNetwork,
     reason: String,
 }
 
 impl PlayerDisconnectEvent {
-    pub fn new(client: ClientCell, reason: String) -> Self {
+    pub fn new(client: ClientNetwork, reason: String) -> Self {
         Self { client, reason }
     }
 }
@@ -30,19 +27,18 @@ pub fn on_disconnect(
     worlds_manager: Res<WorldsManager>,
 ) {
     for event in disconnection_events.read() {
-        let client = event.client.read();
-        if let Some(i) = client.get_client_info() {
+        if let Some(i) = event.client.get_client_info() {
             log::info!(
                 target: "network",
                 "Disconnected ip:{} login:{} reason:{}",
-                client.get_client_ip(),
+                event.client.get_client_ip(),
                 i.get_login(),
                 event.reason
             );
         }
 
         // Check if player was in the world, despawn if so
-        let world_entity = client.get_world_entity();
+        let world_entity = event.client.get_world_entity();
         match world_entity {
             Some(c) => {
                 let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
@@ -51,6 +47,6 @@ pub fn on_disconnect(
             }
             None => return,
         };
-        clients.remove(&client.get_client_id());
+        clients.remove(&event.client.get_client_id());
     }
 }

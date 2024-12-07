@@ -11,6 +11,8 @@ pub type NetworkClient = renet::client::RenetClientNetwork;
 #[cfg(feature = "network-renet")]
 pub type NetworkServer = renet::server::RenetServerNetwork;
 
+#[cfg(feature = "network-renet")]
+pub type NetworkServerConnection = renet::server::RenetServerConnection;
 
 #[cfg(feature = "network-rak-rs")]
 pub mod rak_rs;

@@ -3,22 +3,21 @@ use bevy_ecs::prelude::EventReader;
 use bevy_ecs::system::ResMut;
 use common::chunks::block_position::BlockPositionTrait;
 
-use crate::entities::entity::{NetworkComponent, Rotation};
-use crate::network::client_network::WorldEntity;
-use crate::network::clients_container::ClientCell;
+use crate::entities::entity::Rotation;
+use crate::network::client_network::{ClientNetwork, WorldEntity};
 use crate::network::sync_entities::sync_player_move;
 use crate::worlds::world_manager::WorldManager;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
 #[derive(Event)]
 pub struct PlayerMoveEvent {
-    client: ClientCell,
+    client: ClientNetwork,
     position: Position,
     rotation: Rotation,
 }
 
 impl PlayerMoveEvent {
-    pub fn new(client: ClientCell, position: Position, rotation: Rotation) -> Self {
+    pub fn new(client: ClientNetwork, position: Position, rotation: Rotation) -> Self {
         Self {
             client,
             position,
@@ -29,16 +28,15 @@ impl PlayerMoveEvent {
 
 pub fn on_player_move(mut player_move_events: EventReader<PlayerMoveEvent>, worlds_manager: ResMut<WorldsManager>) {
     for event in player_move_events.read() {
-        let client = event.client.read();
 
-        let world_entity = client.get_world_entity();
+        let world_entity = event.client.get_world_entity();
         let world_entity = match world_entity.as_ref() {
             Some(w) => w,
             None => {
                 log::error!(
                     target: "network",
                     "Client ip:{} tries to send move packets but he is not in the world!",
-                    client
+                    event.client.get_client_ip()
                 );
                 continue;
             }
@@ -55,7 +53,7 @@ pub fn on_player_move(mut player_move_events: EventReader<PlayerMoveEvent>, worl
             log::warn!(
                 target: "network",
                 "Client ip:{} tries to move inside loading chunk {}",
-                client, event.position.get_chunk_position()
+                event.client.get_client_ip(), event.position.get_chunk_position()
             );
             continue;
         }
@@ -76,9 +74,8 @@ pub fn move_player(
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.get_entity(world_entity.get_entity()).unwrap();
 
-        let network = entity_ref.get::<NetworkComponent>().unwrap();
-        let client = network.get_client();
-        client.send_unload_chunks(world_entity.get_world_slug(), change.abandoned_chunks.clone());
+        let network = entity_ref.get::<ClientNetwork>().unwrap();
+        network.send_unload_chunks(world_entity.get_world_slug(), change.abandoned_chunks.clone());
     }
 
     sync_player_move(world_manager, world_entity, &chunks_changed);

@@ -1,22 +1,21 @@
 use bevy::prelude::Event;
 use bevy_ecs::prelude::EventReader;
 
-use crate::network::clients_container::ClientCell;
+use crate::network::client_network::ClientNetwork;
 
 #[derive(Event)]
 pub struct PlayerConnectionEvent {
-    client: ClientCell,
+    client: ClientNetwork,
 }
 
 impl PlayerConnectionEvent {
-    pub fn new(client: ClientCell) -> Self {
+    pub fn new(client: ClientNetwork) -> Self {
         Self { client }
     }
 }
 
 pub fn on_connection(mut connection_events: EventReader<PlayerConnectionEvent>) {
     for event in connection_events.read() {
-        let client = event.client.read();
-        client.send_allow_connection();
+        event.client.send_allow_connection();
     }
 }

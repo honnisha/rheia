@@ -6,8 +6,6 @@ use common::{
     utils::fix_chunk_loc_pos,
 };
 
-use crate::network::clients_container::{ClientCell, ClientRef};
-
 pub type PositionFloatType = f32;
 
 #[derive(Component, Clone, Copy, Default)]
@@ -80,25 +78,5 @@ pub trait IntoServerRotation {
 impl IntoServerRotation for NetworkRotation {
     fn to_server(&self) -> Rotation {
         Rotation::new(self.yaw, self.pitch)
-    }
-}
-
-#[derive(Component)]
-pub struct NetworkComponent {
-    client_id: u64,
-    client: ClientCell,
-}
-
-impl NetworkComponent {
-    pub fn new(client: ClientCell, client_id: u64) -> Self {
-        Self { client, client_id }
-    }
-
-    pub fn get_client_id(&self) -> &u64 {
-        &self.client_id
-    }
-
-    pub fn get_client(&self) -> ClientRef {
-        self.client.read()
     }
 }

@@ -1,12 +1,10 @@
 use bevy::prelude::{Entity, EntityRef, Event, EventReader};
 use bevy_ecs::system::Res;
-use common::{
-    chunks::block_position::BlockPositionTrait,
-};
+use common::chunks::block_position::BlockPositionTrait;
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
-    entities::entity::{NetworkComponent, Position, Rotation},
+    entities::entity::{Position, Rotation},
     worlds::{
         world_manager::{ChunkChanged, WorldManager},
         worlds_manager::WorldsManager,
@@ -25,7 +23,7 @@ fn send_start_streaming_entity(target_client: &ClientNetwork, entity_ref: Entity
         position: position.to_network(),
         rotation: rotation.to_network(),
     };
-    target_client.send_message(NetworkMessageType::ReliableOrdered, msg);
+    target_client.send_message(NetworkMessageType::ReliableOrdered, &msg);
 }
 
 /// Отправка всем наблюдателям чанка StartStreamingEntity
@@ -46,10 +44,9 @@ pub fn sync_entity_spawn(world_manager: &WorldManager, entity: Entity) {
             }
 
             let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
-            let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
-            let watcher_client = watcher_network.get_client();
+            let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
 
-            send_start_streaming_entity(&*watcher_client, entity_ref, world_manager.get_slug().clone());
+            send_start_streaming_entity(&watcher_client, entity_ref, world_manager.get_slug().clone());
         }
     }
 }
@@ -91,9 +88,8 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                     }
 
                     let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
-                    let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
-                    let watcher_client = watcher_network.get_client();
-                    watcher_client.send_message(NetworkMessageType::Unreliable, move_msg.clone());
+                    let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
+                    watcher_client.send_message(NetworkMessageType::Unreliable, &move_msg);
                 }
             }
         }
@@ -114,16 +110,15 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                 }
 
                 let watcher_entity_ref = ecs.get_entity(*old_watcher).unwrap();
-                let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
-                let watcher_client = watcher_network.get_client();
+                let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
 
                 // If watcher can see old and new chunk
                 if new_watchers.contains(&old_watcher) {
-                    watcher_client.send_message(NetworkMessageType::Unreliable, move_msg.clone());
+                    watcher_client.send_message(NetworkMessageType::Unreliable, &move_msg);
                 }
                 // Player no longer can see entity
                 else {
-                    watcher_client.send_message(NetworkMessageType::ReliableOrdered, stop_msg.clone());
+                    watcher_client.send_message(NetworkMessageType::ReliableOrdered, &stop_msg);
                 }
             }
 
@@ -135,8 +130,7 @@ pub fn sync_entity_move(world_manager: &WorldManager, entity: Entity, chunks_cha
                 // New entity in range
                 if !old_watchers.contains(&new_watcher) {
                     let watcher_entity_ref = ecs.get_entity(*new_watcher).unwrap();
-                    let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
-                    let watcher_client = watcher_network.get_client();
+                    let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
 
                     send_start_streaming_entity(&*watcher_client, entity_ref, world_manager.get_slug().clone());
                 }
@@ -166,10 +160,9 @@ pub fn sync_entity_despawn(world_manager: &WorldManager, entity: Entity) {
             }
 
             let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
-            let watcher_network = watcher_entity_ref.get::<NetworkComponent>().unwrap();
-            let watcher_client = watcher_network.get_client();
+            let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
 
-            watcher_client.send_message(NetworkMessageType::ReliableOrdered, stop_msg.clone());
+            watcher_client.send_message(NetworkMessageType::ReliableOrdered, &stop_msg);
         }
     }
 }
@@ -204,8 +197,7 @@ pub fn sync_player_spawn(worlds_manager: Res<WorldsManager>, mut connection_even
 
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.get_entity(event.world_entity.get_entity()).unwrap();
-        let network = entity_ref.get::<NetworkComponent>().unwrap();
-        let client = network.get_client();
+        let client = entity_ref.get::<ClientNetwork>().unwrap();
 
         // Sends all existing entities from the player's line of sight
         if let Some(player_chunks) = world_manager
@@ -250,8 +242,7 @@ pub fn sync_player_move(
     if let Some(change) = chunks_changed {
         let ecs = world_manager.get_ecs();
         let entity_ref = ecs.get_entity(world_entity.get_entity()).unwrap();
-        let network = entity_ref.get::<NetworkComponent>().unwrap();
-        let client = network.get_client();
+        let client = entity_ref.get::<ClientNetwork>().unwrap();
 
         // Stop streaming entities from unseen chunks
         let mut ids: Vec<u32> = Default::default();
@@ -265,7 +256,7 @@ pub fn sync_player_move(
                 world_slug: world_entity.get_world_slug().clone(),
                 ids: Default::default(),
             };
-            client.send_message(NetworkMessageType::ReliableOrdered, msg);
+            client.send_message(NetworkMessageType::ReliableOrdered, &msg);
         }
 
         // Start streaming entities from new chunks

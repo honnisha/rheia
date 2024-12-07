@@ -1,19 +1,19 @@
-use crate::entities::entity::{Position, Rotation};
+use crate::{
+    entities::entity::{Position, Rotation},
+    network::client_network::ClientNetwork,
+};
 use bevy::prelude::{Commands, Event, Res};
 use bevy_ecs::prelude::EventReader;
 
-use crate::{
-    network::clients_container::ClientCell,
-    worlds::{bevy_commands::SpawnPlayer, worlds_manager::WorldsManager},
-};
+use crate::worlds::{bevy_commands::SpawnPlayer, worlds_manager::WorldsManager};
 
 #[derive(Event)]
 pub struct PlayerSettingsLoadedEvent {
-    client: ClientCell,
+    client: ClientNetwork,
 }
 
 impl PlayerSettingsLoadedEvent {
-    pub fn new(client: ClientCell) -> Self {
+    pub fn new(client: ClientNetwork) -> Self {
         Self { client }
     }
 }
