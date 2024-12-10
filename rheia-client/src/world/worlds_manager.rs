@@ -71,7 +71,7 @@ impl WorldsManager {
         self.block_storage.write()
     }
 
-    pub fn _get_texture_mapper(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, TextureMapper> {
+    pub fn get_texture_mapper(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, TextureMapper> {
         self.texture_mapper.read()
     }
 

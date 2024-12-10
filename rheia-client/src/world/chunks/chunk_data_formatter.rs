@@ -1,6 +1,9 @@
 use arrayvec::ArrayVec;
 use common::{
-    blocks::{block_info::BlockInfo, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
+    blocks::{
+        block_info::BlockInfo, block_type::BlockType, chunk_collider_info::ChunkColliderInfo,
+        voxel_visibility::VoxelVisibility,
+    },
     chunks::block_position::ChunkBlockPosition,
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
@@ -35,13 +38,14 @@ fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorage) -> Resul
     Ok(collider)
 }
 
-// pub fn generate_single_block(block_type: &BlockType, block_info: &BlockInfo) -> ChunkColliderDataBordered {
-//     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
-//     let collider = ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()));
-//     let b_chunk_pos = ChunkBordersShape::linearize([0, 0, 0]);
-//     b_chunk[b_chunk_pos as usize] = collider;
-//     b_chunk
-// }
+pub fn generate_single_block(block_type: &BlockType, block_info: &BlockInfo) -> ChunkColliderDataBordered {
+    let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Empty, None); ChunkBordersShape::SIZE as usize];
+
+    let collider = ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()));
+    let b_chunk_pos = ChunkBordersShape::linearize([1, 1, 1]);
+    b_chunk[b_chunk_pos as usize] = collider;
+    b_chunk
+}
 
 /// Generates collider data for mesh
 /// with size of CHUNK_SIZE + 2 boundary

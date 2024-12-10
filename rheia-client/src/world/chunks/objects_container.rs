@@ -15,10 +15,7 @@ use common::{
         chunk_position::ChunkPosition,
     },
 };
-use godot::{
-    classes::{BoxMesh, Mesh, MeshInstance3D},
-    prelude::*,
-};
+use godot::prelude::*;
 use network::messages::ChunkDataType;
 use physics::{
     physics::{IPhysicsCollider, IPhysicsColliderBuilder},
@@ -29,17 +26,12 @@ use physics::{
 #[class(no_init, base=Node3D)]
 pub struct CustomObject {
     base: Base<Node3D>,
-    collider: PhysicsCollider,
+    collider: Option<PhysicsCollider>,
 }
 
 impl CustomObject {
-    pub fn create(base: Base<Node3D>, position: &BlockPosition, physics: &PhysicsProxy) -> Self {
-        let physics_type = PhysicsType::ChunkMeshCollider(position.get_chunk_position());
-        let collider_builder = PhysicsColliderBuilder::cuboid(1.0, 1.0, 1.0);
-        let mut collider = physics.create_collider(collider_builder, Some(physics_type));
-        collider.set_position(position.get_position() + NetworkVector3::new(0.5, 0.5, 0.5));
-
-        Self { base, collider }
+    pub fn create(base: Base<Node3D>) -> Self {
+        Self { base, collider: None }
     }
 
     pub fn attach_glb(&mut self, glb: &Gd<Node3D>) {
@@ -48,8 +40,19 @@ impl CustomObject {
         self.base_mut().add_child(&glb);
     }
 
+    pub fn create_collider(&mut self, position: &BlockPosition, physics: &PhysicsProxy) {
+        let physics_type = PhysicsType::ChunkMeshCollider(position.get_chunk_position());
+        let collider_builder = PhysicsColliderBuilder::cuboid(1.0, 1.0, 1.0);
+        let mut collider = physics.create_collider(collider_builder, Some(physics_type));
+        collider.set_position(position.get_position() + NetworkVector3::new(0.5, 0.5, 0.5));
+
+        self.collider = Some(collider);
+    }
+
     pub fn remove(&mut self) {
-        self.collider.remove();
+        if let Some(collider) = self.collider.as_mut() {
+            collider.remove();
+        }
     }
 }
 
@@ -79,7 +82,7 @@ impl ObjectsContainer {
             let position = BlockPosition::from_chunk_position(chunk_position, &y, chunk_block_position);
             match block_type.get_block_content() {
                 BlockContent::ModelCube { model: _ } => {
-                    self.create_block_model(&position, &block_type, physics, resource_storage)?;
+                    self.create_block_model(&position, &block_type, Some(physics), resource_storage)?;
                 }
                 _ => continue,
             }
@@ -107,7 +110,7 @@ impl ObjectsContainer {
         &mut self,
         position: &BlockPosition,
         block_type: &BlockType,
-        physics: &PhysicsProxy,
+        physics: Option<&PhysicsProxy>,
         resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
         let Some(model) = block_type.get_model() else {
@@ -119,7 +122,12 @@ impl ObjectsContainer {
         let Some(glb) = media.get_glb() else {
             return Err(format!("model:{} is not glb", model));
         };
-        let mut object = Gd::<CustomObject>::from_init_fn(|base| CustomObject::create(base, &position, physics));
+        let mut object = Gd::<CustomObject>::from_init_fn(|base| CustomObject::create(base));
+
+        if let Some(physics) = physics {
+            object.bind_mut().create_collider(&position, physics);
+        }
+
         object.bind_mut().attach_glb(glb);
         let (_section, block_position) = position.get_block_position();
         object.set_position(block_position.to_godot());

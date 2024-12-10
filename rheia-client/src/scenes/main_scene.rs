@@ -152,10 +152,11 @@ impl MainScene {
         let worlds_manager = worlds_manager.bind();
         let block_storage = worlds_manager.get_block_storage();
 
+        let texture_mapper = worlds_manager.get_texture_mapper();
         let mut block_selection = self.block_selection.clone();
         block_selection
             .bind_mut()
-            .init_blocks(&*block_storage, &*resource_manager);
+            .init_blocks(&*block_storage, &worlds_manager.get_material(), &*resource_manager, &*texture_mapper);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world

@@ -244,7 +244,7 @@ impl ChunkMap {
                     let objects_container = cs.get_objects_container_mut();
                     objects_container
                         .bind_mut()
-                        .create_block_model(&position, new_block_type, physics, resource_storage)
+                        .create_block_model(&position, new_block_type, Some(physics), resource_storage)
                         .unwrap();
                 }
             }
