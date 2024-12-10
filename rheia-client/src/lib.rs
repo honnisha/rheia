@@ -10,6 +10,7 @@ mod utils;
 mod world;
 mod debug;
 mod entities;
+mod ui;
 
 struct Rheia;
 

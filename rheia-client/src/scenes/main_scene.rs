@@ -7,6 +7,7 @@ use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
+use crate::ui::block_selection::BlockSelection;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
@@ -63,6 +64,11 @@ pub struct MainScene {
 
     #[export]
     block_icon_scene: Option<Gd<PackedScene>>,
+
+    #[init(val = OnReady::manual())]
+    block_selection: OnReady<Gd<BlockSelection>>,
+    #[export]
+    block_selection_scene: Option<Gd<PackedScene>>,
 
     #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
     debug_world: u32,
@@ -136,8 +142,20 @@ impl MainScene {
         self.base_mut().emit_signal("disconnect", &[message.to_variant()]);
     }
 
+    /// Signaling that everything is loaded from the server
     pub fn on_server_connected(&mut self) {
         self.debug_info.bind_mut().toggle(true);
+
+        let resource_manager = self.get_resource_manager();
+
+        let worlds_manager = self.get_wm().clone();
+        let worlds_manager = worlds_manager.bind();
+        let block_storage = worlds_manager.get_block_storage();
+
+        let mut block_selection = self.block_selection.clone();
+        block_selection
+            .bind_mut()
+            .init_blocks(&*block_storage, &*resource_manager);
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -260,22 +278,36 @@ impl INode for MainScene {
 
             self.regenerate_debug_world(false);
         } else {
+            // Console
             let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
             self.console.init(console);
 
-            let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
-            self.debug_info.init(debug_info);
-
-            let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
-            self.text_screen.init(text_screen);
-
             let console = self.console.clone();
             self.base_mut().add_child(&console);
+
+            // Debug
+            let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
+            self.debug_info.init(debug_info);
 
             let debug_info = self.debug_info.clone();
             self.base_mut().add_child(&debug_info);
 
             self.debug_info.bind_mut().toggle(false);
+
+            // Selection meny
+            let block_selection = self
+                .block_selection_scene
+                .as_mut()
+                .unwrap()
+                .instantiate_as::<BlockSelection>();
+            self.block_selection.init(block_selection);
+
+            let block_selection = self.block_selection.clone();
+            self.base_mut().add_child(&block_selection);
+
+            // Text splash screen
+            let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
+            self.text_screen.init(text_screen);
 
             let text_screen = self.text_screen.clone();
             self.base_mut().add_child(&text_screen);
@@ -287,7 +319,9 @@ impl INode for MainScene {
         }
 
         if let Some(worlds_manager) = self.worlds_manager.as_mut() {
-            worlds_manager.bind_mut().set_resource_manager(self.resource_manager.clone());
+            worlds_manager
+                .bind_mut()
+                .set_resource_manager(self.resource_manager.clone());
         }
     }
 

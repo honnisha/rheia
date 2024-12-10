@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=10 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
 [ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="2_xhcjx"]
 [ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
 [ext_resource type="Material" uid="uid://8t3qd3k1d8od" path="res://assets/terrain_material.tres" id="5_tt6yv"]
+[ext_resource type="PackedScene" uid="uid://b205afj08rdbg" path="res://scenes/block_selection.tscn" id="5_vkj3s"]
 
 [sub_resource type="Sky" id="Sky_7db6b"]
 
@@ -23,6 +24,7 @@ console_scene = ExtResource("1_rga66")
 text_screen_scene = ExtResource("2_773ro")
 debug_info_scene = ExtResource("3_qwjw3")
 block_icon_scene = ExtResource("2_xhcjx")
+block_selection_scene = ExtResource("5_vkj3s")
 debug_render_distance = 14
 debug_world_settings = "res://assets/world_settings.json"
 

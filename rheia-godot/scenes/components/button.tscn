@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://cm5xtx5fy4aop"]
+
+[node name="Button" type="CustomButton"]
+offset_right = 41.0
+offset_bottom = 31.0
+size_flags_vertical = 2
+text = "Test"
+alignment = 0

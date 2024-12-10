@@ -256,7 +256,6 @@ impl ChunkMap {
     /// Sent to the update queue
     fn send_to_update_chunk_mesh(&self, position: &BlockPosition) {
         let (section, block_position) = position.get_block_position();
-        println!("block_position:{:?} chunk_position:{:?}", block_position, position.get_chunk_position());
 
         self.chunks_to_update
             .borrow_mut()
