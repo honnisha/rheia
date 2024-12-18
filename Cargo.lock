@@ -5787,7 +5787,7 @@ dependencies = [
 
 [[package]]
 name = "rheia-client"
-version = "0.1.14"
+version = "0.1.15"
 dependencies = [
  "ahash",
  "arrayvec 0.7.4",

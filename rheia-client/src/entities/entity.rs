@@ -64,6 +64,8 @@ impl Entity {
 
     /// Handler responsible for movememt
     ///
+    /// movement: new position - old position
+    ///
     /// Can be called from player controller or network sync
     pub fn handle_movement(&mut self, movement: Vector3) {
         // let movement = position - e.get_position();
@@ -79,6 +81,7 @@ impl INode3D for Entity {
     }
 
     fn process(&mut self, _delta: f64) {
+        // target_position is onlt for network sync
         if let Some(target_position) = self.target_position {
             let current_position = self.base().get_position();
 
@@ -93,6 +96,8 @@ impl INode3D for Entity {
                 &(0.5).to_variant(),
             );
             let new_position = Vector3::from_variant(&l);
+            let old_position = self.base_mut().get_position();
+            self.handle_movement(new_position - old_position);
             self.base_mut().set_position(new_position);
 
             if new_position == target_position {
