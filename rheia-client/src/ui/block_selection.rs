@@ -1,6 +1,6 @@
 use common::blocks::block_type::BlockCategory;
 use godot::{
-    classes::{Control, FlowContainer, IControl, Material, VBoxContainer},
+    classes::{input::MouseMode, Control, FlowContainer, IControl, Material, VBoxContainer},
     prelude::*,
 };
 
@@ -33,6 +33,16 @@ pub struct BlockSelection {
 impl BlockSelection {
     pub fn toggle(&mut self, state: bool) {
         self.base_mut().set_visible(state);
+
+        if state {
+            Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+        } else {
+            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+        }
+    }
+
+    pub fn is_active(&self) -> bool {
+        self.base().is_visible()
     }
 
     pub fn init_blocks(
@@ -66,6 +76,8 @@ impl BlockSelection {
 #[godot_api]
 impl IControl for BlockSelection {
     fn ready(&mut self) {
+        self.base_mut().set_visible(false);
+
         let categories_holder = self.categories_holder.as_mut().unwrap();
         for child in categories_holder.get_children().iter_shared() {
             child.free();

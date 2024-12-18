@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use arrayvec::ArrayVec;
 use common::{
     chunks::chunk_position::ChunkPosition,
@@ -6,6 +8,7 @@ use common::{
 };
 use godot::obj::Gd;
 use network::messages::{ChunkDataType, SectionsData};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use spiral::ManhattanIterator;
 
 use crate::world::world_manager::WorldManager;
@@ -19,34 +22,25 @@ pub fn generate_chunks(
 ) {
     let now = std::time::Instant::now();
 
-    let mut durations: Vec<std::time::Duration> = Default::default();
-
     let world_generator = WorldGenerator::create(None, settings).unwrap();
 
+    let mut chunks: HashMap<ChunkPosition, Option<SectionsData>> = Default::default();
     let iter = ManhattanIterator::new(x, z, chunks_distance);
     for (x, z) in iter {
-        let now = std::time::Instant::now();
-
         let chunk_pos = ChunkPosition::new(x as i64, z as i64);
-
-        let data = generate_chunk(&world_generator, &chunk_pos);
-        world.bind_mut().recieve_chunk(chunk_pos, data);
-        durations.push(now.elapsed());
+        chunks.insert(chunk_pos, None);
     }
 
-    let mut avg = std::time::Duration::from_secs_f32(0.0);
-    for i in durations.iter() {
-        avg += *i;
-    }
-    avg = std::time::Duration::from_millis((avg.as_millis() as f32 / durations.len() as f32) as u64);
+    // Generate chunks using rayon paralelism
+    chunks.par_iter_mut().for_each(|(chunk_pos, data)| {
+        *data = Some(generate_chunk(&world_generator, &chunk_pos));
+    });
 
-    log::info!(
-        "Chunks generated: {}; avg:{:.2?} max:{:.2?} (executed:{:.2?})",
-        durations.len(),
-        avg,
-        durations.iter().max().unwrap(),
-        now.elapsed(),
-    );
+    for (chunk_pos, data) in chunks {
+        world.bind_mut().recieve_chunk(chunk_pos, data.unwrap());
+    }
+
+    log::info!(target: "world_generator", "Chunks generated (executed:{:.2?})", now.elapsed());
 }
 
 fn generate_chunk(world_generator: &WorldGenerator, chunk_position: &ChunkPosition) -> SectionsData {

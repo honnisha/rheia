@@ -346,18 +346,29 @@ impl INode for MainScene {
         if !Engine::singleton().is_editor_hint() {
             let input = Input::singleton();
             if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
-                self.console.bind_mut().toggle(!Console::is_active());
+                if !Console::is_active() {
+                    self.debug_info.bind_mut().toggle(false);
+                    self.block_selection.bind_mut().toggle(false);
+                }
 
-                if Console::is_active() {
+                self.console.bind_mut().toggle(!Console::is_active());
+            }
+            if input.is_action_just_pressed(&ControllerActions::ToggleBlockSelection.to_string()) {
+                let is_active = self.block_selection.bind().is_active();
+                if !is_active {
+                    self.console.bind_mut().toggle(false);
                     self.debug_info.bind_mut().toggle(false);
                 }
+
+                self.block_selection.bind_mut().toggle(!is_active);
             }
             if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
-                self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
-
-                if DebugInfo::is_active() {
+                if !DebugInfo::is_active() {
                     self.console.bind_mut().toggle(false);
+                    self.block_selection.bind_mut().toggle(false);
                 }
+
+                self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
             }
         }
     }

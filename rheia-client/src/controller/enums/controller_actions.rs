@@ -9,6 +9,7 @@ pub enum ControllerActions {
 
     ToggleDebug,
     ToggleConsole,
+    ToggleBlockSelection,
     Jump,
 }
 
@@ -25,6 +26,7 @@ impl ToString for ControllerActions {
 
             Self::ToggleDebug => "toggle_debug",
             Self::ToggleConsole => "toggle_console",
+            Self::ToggleBlockSelection => "toggle_block_selection",
             Self::Jump => "jump",
         };
         s.to_string()

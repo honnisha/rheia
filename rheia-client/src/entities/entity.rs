@@ -62,6 +62,9 @@ impl Entity {
         self.skin.bind_mut().trigger_animation(animation)
     }
 
+    /// Handler responsible for movememt
+    ///
+    /// Can be called from player controller or network sync
     pub fn handle_movement(&mut self, movement: Vector3) {
         // let movement = position - e.get_position();
         self.skin.bind_mut().handle_movement(movement)

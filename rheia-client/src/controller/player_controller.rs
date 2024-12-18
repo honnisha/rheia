@@ -4,6 +4,7 @@ use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetwork
 use crate::utils::primitives::{generate_lines, get_face_vector};
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use common::chunks::rotation::Rotation;
+use godot::classes::input::MouseMode;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 use physics::physics::{
@@ -249,7 +250,8 @@ impl PlayerController {
 
             let hit = self.update_vision();
 
-            let action_type = if self.controls.bind().is_main_action() {
+            let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+            let action_type = if self.controls.bind().is_main_action() && captured{
                 Some(PlayerActionType::Main)
             } else if self.controls.bind().is_second_action() {
                 Some(PlayerActionType::Second)
