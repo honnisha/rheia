@@ -1,13 +1,12 @@
 use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::{BlockContent, BlockType};
 use common::blocks::default_blocks::DEFAULT_BLOCKS;
-use std::collections::hash_map::Iter;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::client_scripts::resource_manager::ResourceStorage;
 
 pub struct BlockStorage {
-    blocks: HashMap<BlockIndexType, BlockType>,
+    blocks: BTreeMap<BlockIndexType, BlockType>,
 }
 
 impl Default for BlockStorage {
@@ -15,7 +14,9 @@ impl Default for BlockStorage {
         let mut block_storage = Self {
             blocks: Default::default(),
         };
-        block_storage.blocks = DEFAULT_BLOCKS.clone();
+        for (i, block_type) in DEFAULT_BLOCKS.iter() {
+            block_storage.blocks.insert(i.clone(), block_type.clone());
+        }
         block_storage
     }
 }
@@ -25,7 +26,7 @@ impl BlockStorage {
         self.blocks.get(k)
     }
 
-    pub fn iter(&self) -> Iter<'_, BlockIndexType, BlockType> {
+    pub fn iter(&self) -> std::collections::btree_map::Iter<'_, u8, BlockType> {
         self.blocks.iter()
     }
 

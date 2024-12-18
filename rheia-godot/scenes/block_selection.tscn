@@ -5,7 +5,7 @@
 
 [node name="BlockSelection" type="BlockSelection" node_paths=PackedStringArray("categories_holder", "icons_grid")]
 categories_holder = NodePath("Panel/SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder")
-icons_grid = NodePath("Panel/SplitContainer/HSplitContainer2/IconsGrid")
+icons_grid = NodePath("Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid")
 button_scene = ExtResource("1_wr0x4")
 block_icon_scene = ExtResource("1_g1jwp")
 anchors_preset = -1
@@ -53,13 +53,18 @@ alignment = 0
 [node name="HSplitContainer2" type="HSplitContainer" parent="Panel/SplitContainer"]
 layout_mode = 2
 
-[node name="IconsGrid" type="FlowContainer" parent="Panel/SplitContainer/HSplitContainer2"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/SplitContainer/HSplitContainer2"]
 layout_mode = 2
 
-[node name="BlockIcon" parent="Panel/SplitContainer/HSplitContainer2/IconsGrid" instance=ExtResource("1_g1jwp")]
+[node name="IconsGrid" type="FlowContainer" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BlockIcon" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
 
-[node name="BlockIcon2" parent="Panel/SplitContainer/HSplitContainer2/IconsGrid" instance=ExtResource("1_g1jwp")]
+[node name="BlockIcon2" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
