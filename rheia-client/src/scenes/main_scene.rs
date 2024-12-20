@@ -241,10 +241,16 @@ impl MainScene {
                 PhysicsType::ChunkMeshCollider(_chunk_position) => {
                     let selected_block = cast_result.get_selected_block();
                     let msg = match a.get_action_type() {
-                        PlayerActionType::Main => ClientMessages::EditBlockRequest {
-                            world_slug: a.get_world_slug().clone(),
-                            position: cast_result.get_place_block(),
-                            new_block_info: Some(BlockInfo::create(100, None)),
+                        PlayerActionType::Main => {
+                            let bs = self.block_selection.bind();
+                            let Some(block_id) = bs.get_selected_block_id() else {
+                                return;
+                            };
+                            ClientMessages::EditBlockRequest {
+                                world_slug: a.get_world_slug().clone(),
+                                position: cast_result.get_place_block(),
+                                new_block_info: Some(BlockInfo::create(*block_id, None)),
+                            }
                         },
                         PlayerActionType::Second => ClientMessages::EditBlockRequest {
                             world_slug: a.get_world_slug().clone(),

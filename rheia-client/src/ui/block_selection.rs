@@ -1,4 +1,4 @@
-use common::blocks::block_type::BlockCategory;
+use common::blocks::{block_info::BlockIndexType, block_type::BlockCategory};
 use godot::{
     classes::{input::MouseMode, Control, FlowContainer, IControl, Material, VBoxContainer},
     prelude::*,
@@ -6,7 +6,10 @@ use godot::{
 
 use crate::{
     client_scripts::resource_manager::ResourceManager,
-    scenes::components::{block_icon::BlockIcon, button::CustomButton},
+    scenes::components::{
+        block_icon::{BlockIcon, BlockIconSelect},
+        button::CustomButton,
+    },
     utils::textures::texture_mapper::TextureMapper,
     world::block_storage::BlockStorage,
 };
@@ -27,6 +30,8 @@ pub struct BlockSelection {
 
     #[export]
     block_icon_scene: Option<Gd<PackedScene>>,
+
+    selected_block_id: Option<BlockIndexType>,
 }
 
 #[godot_api]
@@ -45,6 +50,10 @@ impl BlockSelection {
         self.base().is_visible()
     }
 
+    pub fn get_selected_block_id(&self) -> &Option<BlockIndexType> {
+        &self.selected_block_id
+    }
+
     pub fn init_blocks(
         &mut self,
         block_storage: &BlockStorage,
@@ -52,12 +61,16 @@ impl BlockSelection {
         resource_manager: &ResourceManager,
         texture_mapper: &TextureMapper,
     ) {
-        let icons_grid = self.icons_grid.as_mut().unwrap();
+        let mut icons_grid = self.icons_grid.as_mut().unwrap().clone();
 
         for (block_id, block_type) in block_storage.iter() {
+            if self.selected_block_id.is_none() {
+                self.selected_block_id = Some(*block_id);
+            }
+
             let mut icon = self.block_icon_scene.as_ref().unwrap().instantiate_as::<BlockIcon>();
             icon.set_custom_minimum_size(Vector2::new(75.0, 75.0));
-            icon.bind_mut().setup_icons(
+            icon.bind_mut().setup_icon(
                 *block_id,
                 block_type,
                 material,
@@ -65,12 +78,20 @@ impl BlockSelection {
                 block_storage,
                 &*resource_manager.get_resources_storage(),
             );
+
+            icon.connect(
+                "icon_clicked",
+                &Callable::from_object_method(&self.base().to_godot(), "on_icon_clicked"),
+            );
             icons_grid.add_child(&icon);
         }
     }
 
-    #[signal]
-    fn block_selected();
+    #[func]
+    fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
+        self.selected_block_id = Some(*block.bind().get_block_id());
+        self.toggle(false);
+    }
 }
 
 #[godot_api]

@@ -6,7 +6,8 @@ use common::{
     chunks::block_position::BlockPosition,
 };
 use godot::{
-    classes::{Control, IControl, Material, MeshInstance3D},
+    classes::{Control, IControl, InputEvent, InputEventMouseButton, Material, MeshInstance3D},
+    global::MouseButton,
     prelude::*,
 };
 
@@ -22,10 +23,28 @@ use crate::{
     },
 };
 
+#[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
+#[class(init)]
+pub struct BlockIconSelect {
+    block_id: BlockIndexType,
+}
+
+impl BlockIconSelect {
+    pub fn create(block_id: BlockIndexType) -> Self {
+        Self { block_id }
+    }
+
+    pub fn get_block_id(&self) -> &BlockIndexType {
+        &self.block_id
+    }
+}
+
 #[derive(GodotClass)]
 #[class(init, base=Control)]
 pub struct BlockIcon {
     base: Base<Control>,
+
+    block_id: Option<BlockIndexType>,
 
     #[export]
     pub block_anchor: Option<Gd<Node3D>>,
@@ -34,8 +53,44 @@ pub struct BlockIcon {
     camera: Option<Gd<Camera3D>>,
 }
 
+#[godot_api]
 impl BlockIcon {
-    pub fn setup_icons(
+    #[func]
+    fn on_gui_input(&mut self, event: Gd<InputEvent>) {
+        let Some(block_id) = self.block_id.as_ref() else {
+            return;
+        };
+
+        if let Ok(mut event) = event.clone().try_cast::<InputEventMouseButton>() {
+            if event.get_button_index() == MouseButton::LEFT && event.is_pressed() {
+                let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
+                self.base_mut().emit_signal("icon_clicked", &[icon.to_variant()]);
+            }
+        }
+    }
+
+    #[func]
+    fn on_mouse_entered(&mut self) {
+        let Some(block_id) = self.block_id.as_ref() else {
+            return;
+        };
+        log::info!("enter block_id: {}", block_id);
+    }
+
+    #[func]
+    fn on_mouse_exited(&mut self) {
+        let Some(block_id) = self.block_id.as_ref() else {
+            return;
+        };
+        log::info!("exit block_id: {}", block_id);
+    }
+
+    #[signal]
+    fn icon_clicked();
+}
+
+impl BlockIcon {
+    pub fn setup_icon(
         &mut self,
         block_id: BlockIndexType,
         block_type: &BlockType,
@@ -44,6 +99,7 @@ impl BlockIcon {
         block_storage: &BlockStorage,
         resource_storage: &ResourceStorage,
     ) {
+        self.block_id = Some(block_id);
         let block_anchor = self.block_anchor.as_mut().unwrap();
         match block_type.get_block_content() {
             BlockContent::Texture {
@@ -86,5 +142,14 @@ impl BlockIcon {
 
 #[godot_api]
 impl IControl for BlockIcon {
-    fn ready(&mut self) {}
+    fn ready(&mut self) {
+        let gd = self.base().to_godot();
+        self.base_mut()
+            .connect("gui_input", &Callable::from_object_method(&gd, "on_gui_input"));
+
+        self.base_mut()
+            .connect("mouse_entered", &Callable::from_object_method(&gd, "on_mouse_entered"));
+        self.base_mut()
+            .connect("mouse_exited", &Callable::from_object_method(&gd, "on_mouse_exited"));
+    }
 }
