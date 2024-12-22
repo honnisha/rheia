@@ -132,6 +132,11 @@ impl PlayerController {
         self.entity.bind_mut().rotate(rotation);
     }
 
+    /// Grouded check performs by cast_shape
+    ///
+    /// grounded_timer counting the time:
+    /// positive - how long grounded
+    /// negative - how long not grounded
     fn detect_is_grounded(&mut self, delta: f64) {
         let ray_direction = RayDirection {
             dir: Vector3::new(0.0, -1.0, 0.0),
@@ -178,8 +183,11 @@ impl PlayerController {
             movement = self.entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }
 
-        if self.grounded_timer > 0.1 {
+        if self.grounded_timer > 0.0 {
             self.vertical_movement = 0.0;
+        } else {
+            let custom_mass = self.character_controller.get_custom_mass().unwrap_or(1.0);
+            self.vertical_movement += CHARACTER_GRAVITY * delta as f32 * custom_mass;
         }
 
         // Check physics ground check
@@ -189,8 +197,6 @@ impl PlayerController {
         }
 
         movement.y = self.vertical_movement;
-        let custom_mass = self.character_controller.get_custom_mass().unwrap_or(1.0);
-        self.vertical_movement += CHARACTER_GRAVITY * delta as f32 * custom_mass;
         movement *= delta as f32;
 
         movement
@@ -238,6 +244,7 @@ impl PlayerController {
         self.collider.set_enabled(chunk_loaded);
 
         if chunk_loaded {
+            self.detect_is_grounded(delta);
             let movement = self.get_movement(delta);
 
             let mut filter = QueryFilter::default();
@@ -265,8 +272,6 @@ impl PlayerController {
                 });
                 self.base_mut().emit_signal("on_player_action", &[action.to_variant()]);
             }
-
-            self.detect_is_grounded(delta);
         }
 
         // Sync godot object position

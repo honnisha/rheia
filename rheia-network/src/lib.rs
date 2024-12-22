@@ -42,3 +42,6 @@ pub type NetworkClient = tokio::client::TokioClient;
 
 #[cfg(feature = "network-tokio")]
 pub type NetworkServer = tokio::server::TokioServer;
+
+#[cfg(feature = "network-tokio")]
+pub type NetworkServerConnection = tokio::server::TokioServerConnection;

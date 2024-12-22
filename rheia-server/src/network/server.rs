@@ -133,44 +133,45 @@ fn receive_message_system(
         log::error!(target: "network", "Network error: {}", message);
     }
 
-    for (client_id, decoded) in network.drain_client_messages() {
-        let client = clients.get(&client_id).unwrap();
-        match decoded {
-            ClientMessages::ResourcesLoaded { last_index } => {
-                let msg = PlayerMediaLoadedEvent::new(client.clone(), Some(last_index));
-                player_media_loaded_events.send(msg);
-            }
-            ClientMessages::SettingsLoaded => {
-                let msg = PlayerSettingsLoadedEvent::new(client.clone());
-                settings_loaded_events.send(msg);
-            }
-            ClientMessages::ConsoleInput { command } => {
-                CONSOLE_INPUT.0.send((client_id, command)).unwrap();
-            }
-            ClientMessages::ChunkRecieved { chunk_positions } => {
-                client.mark_chunks_as_recieved(chunk_positions);
-            }
-            ClientMessages::PlayerMove { position, rotation } => {
-                let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
-                player_move_events.send(movement);
-            }
-            ClientMessages::ConnectionInfo {
-                login,
-                version,
-                architecture,
-                rendering_device,
-            } => {
-                let info =
-                    PlayerConnectionInfoEvent::new(client.clone(), login, version, architecture, rendering_device);
-                connection_info_events.send(info);
-            }
-            ClientMessages::EditBlockRequest {
-                world_slug,
-                position,
-                new_block_info,
-            } => {
-                let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
-                edit_block_events.send(edit);
+    for (client_id, client) in clients.iter() {
+        for decoded in client.get_connection().drain_client_messages() {
+            match decoded {
+                ClientMessages::ResourcesLoaded { last_index } => {
+                    let msg = PlayerMediaLoadedEvent::new(client.clone(), Some(last_index));
+                    player_media_loaded_events.send(msg);
+                }
+                ClientMessages::SettingsLoaded => {
+                    let msg = PlayerSettingsLoadedEvent::new(client.clone());
+                    settings_loaded_events.send(msg);
+                }
+                ClientMessages::ConsoleInput { command } => {
+                    CONSOLE_INPUT.0.send((*client_id, command)).unwrap();
+                }
+                ClientMessages::ChunkRecieved { chunk_positions } => {
+                    client.mark_chunks_as_recieved(chunk_positions);
+                }
+                ClientMessages::PlayerMove { position, rotation } => {
+                    let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
+                    player_move_events.send(movement);
+                }
+                ClientMessages::ConnectionInfo {
+                    login,
+                    version,
+                    architecture,
+                    rendering_device,
+                } => {
+                    let info =
+                        PlayerConnectionInfoEvent::new(client.clone(), login, version, architecture, rendering_device);
+                    connection_info_events.send(info);
+                }
+                ClientMessages::EditBlockRequest {
+                    world_slug,
+                    position,
+                    new_block_info,
+                } => {
+                    let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
+                    edit_block_events.send(edit);
+                }
             }
         }
     }

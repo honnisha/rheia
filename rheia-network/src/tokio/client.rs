@@ -10,7 +10,7 @@ impl IClientNetwork for TokioClient {
         todo!()
     }
 
-    async fn step(&self, _delta: std::time::Duration) {
+    async fn step(&self, _delta: std::time::Duration) -> bool {
         todo!()
     }
 

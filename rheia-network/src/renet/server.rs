@@ -1,5 +1,6 @@
 use flume::{Receiver, Sender};
 use std::{
+    collections::HashMap,
     net::UdpSocket,
     sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, SystemTime},
@@ -27,7 +28,7 @@ type TransferLock = Arc<RwLock<NetcodeServerTransport>>;
 pub struct RenetServerNetwork {
     server: ServerLock,
     transport: TransferLock,
-    channel_client_messages: (Sender<(u64, ClientMessages)>, Receiver<(u64, ClientMessages)>),
+    connections: Arc<RwLock<HashMap<u64, RenetServerConnection>>>,
     channel_connections: (
         Sender<ConnectionMessages<RenetServerConnection>>,
         Receiver<ConnectionMessages<RenetServerConnection>>,
@@ -80,7 +81,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
         let network = Self {
             server: Arc::new(RwLock::new(server)),
             transport: Arc::new(RwLock::new(transport)),
-            channel_client_messages: flume::unbounded(),
+            connections: Default::default(),
             channel_connections: flume::unbounded(),
             channel_errors: flume::unbounded(),
         };
@@ -97,7 +98,9 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             return;
         }
 
-        for client_id in server.clients_id().into_iter() {
+        let mut connections = self.connections.write().unwrap();
+        for connection in connections.values() {
+            let client_id = ClientId::from_raw(connection.client_id);
             for channel_type in ClientChannel::iter() {
                 while let Some(client_message) = server.receive_message(client_id, channel_type) {
                     let decoded: ClientMessages = match bincode::deserialize(&client_message) {
@@ -108,7 +111,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
                         }
                     };
                     // log::info!(target: "network", "server receive message:{}", decoded);
-                    self.channel_client_messages.0.send((client_id.raw(), decoded)).unwrap();
+                    connection.channel_client_messages.0.send(decoded).unwrap();
                 }
             }
         }
@@ -117,16 +120,16 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
                     let addr = transport.client_addr(client_id.clone()).unwrap();
+                    let connection =
+                        RenetServerConnection::create(self.server.clone(), client_id.raw(), addr.to_string());
                     let connect = ConnectionMessages::Connect {
-                        connection: RenetServerConnection::create(
-                            self.server.clone(),
-                            client_id.raw(),
-                            addr.to_string(),
-                        ),
+                        connection: connection.clone(),
                     };
                     self.channel_connections.0.send(connect).unwrap();
+                    connections.insert(connection.get_client_id(), connection);
                 }
                 ServerEvent::ClientDisconnected { client_id, reason } => {
+                    connections.remove(&client_id.raw());
                     let connect = ConnectionMessages::Disconnect {
                         client_id: client_id.raw(),
                         reason: reason.to_string(),
@@ -138,10 +141,6 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
 
         transport.send_packets(&mut server);
         log::trace!(target: "network", "network step (executed:{:.2?})", delta);
-    }
-
-    fn drain_client_messages(&self) -> impl Iterator<Item = (u64, ClientMessages)> {
-        self.channel_client_messages.1.drain()
     }
 
     fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages<RenetServerConnection>> {
@@ -163,11 +162,19 @@ pub struct RenetServerConnection {
     server: ServerLock,
     client_id: u64,
     ip: String,
+
+    channel_client_messages: (Sender<ClientMessages>, Receiver<ClientMessages>),
 }
 
 impl RenetServerConnection {
     fn create(server: ServerLock, client_id: u64, ip: String) -> Self {
-        Self { server, client_id, ip }
+        Self {
+            server,
+            client_id,
+            ip,
+
+            channel_client_messages: flume::unbounded(),
+        }
     }
 }
 
@@ -188,5 +195,9 @@ impl IServerConnection for RenetServerConnection {
             RenetServerNetwork::map_type_channel(message_type),
             encoded,
         );
+    }
+
+    fn drain_client_messages(&self) -> impl Iterator<Item = ClientMessages> {
+        self.channel_client_messages.1.drain()
     }
 }

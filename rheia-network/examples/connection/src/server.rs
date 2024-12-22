@@ -2,15 +2,33 @@ use std::{collections::HashMap, time::Duration};
 
 use network::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, IServerNetwork},
-    NetworkServer,
+    server::{ConnectionMessages, IServerConnection, IServerNetwork},
+    NetworkServer, NetworkServerConnection,
 };
 
 use crate::console::Console;
 
+pub struct ClientNetwork {
+    connection: NetworkServerConnection,
+    login: Option<String>,
+}
+
+impl ClientNetwork {
+    pub fn new(connection: NetworkServerConnection) -> Self {
+        Self {
+            connection,
+            login: Default::default(),
+        }
+    }
+
+    pub fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages) {
+        self.connection.send_message(message_type, message);
+    }
+}
+
 pub struct Server {
     server: NetworkServer,
-    connections: HashMap<u64, String>,
+    connections: HashMap<u64, ClientNetwork>,
 }
 
 impl Server {
@@ -35,7 +53,10 @@ impl Server {
             for (client_id, decoded) in self.server.drain_client_messages() {
                 match decoded {
                     ClientMessages::ConsoleInput { command } => {
-                        let Some(login) = self.connections.get(&client_id) else {
+                        let Some(connection) = self.connections.get(&client_id) else {
+                            continue;
+                        };
+                        let Some(login) = connection.login.as_ref() else {
                             continue;
                         };
                         log::info!("- {}: {}", login, command);
@@ -47,7 +68,10 @@ impl Server {
                         architecture: _,
                         rendering_device: _,
                     } => {
-                        self.connections.insert(client_id.clone(), login.clone());
+                        let Some(connection) = self.connections.get_mut(&client_id) else {
+                            continue;
+                        };
+                        connection.login = Some(login.clone());
                         log::info!("Connected login:{} ip:{}", client_id, login);
                     }
                     _ => unimplemented!(),
@@ -55,12 +79,10 @@ impl Server {
             }
             for message in self.server.drain_connections() {
                 match message {
-                    ConnectionMessages::Connect { client_id, ip: _ } => {
-                        self.server.send_message(
-                            client_id,
-                            NetworkMessageType::ReliableOrdered,
-                            &ServerMessages::AllowConnection,
-                        );
+                    ConnectionMessages::Connect { connection } => {
+                        connection.send_message(NetworkMessageType::ReliableOrdered, &ServerMessages::AllowConnection);
+                        let client_network = ClientNetwork::new(connection.clone());
+                        self.connections.insert(connection.get_client_id(), client_network);
                     }
                     ConnectionMessages::Disconnect { client_id, reason } => {
                         self.connections.remove(&client_id);
@@ -80,9 +102,8 @@ impl Server {
 
     pub fn send_for_all(&self, input: String) {
         let msg = ServerMessages::ConsoleOutput { message: input };
-        for client_id in self.connections.keys() {
-            self.server
-                .send_message(*client_id, NetworkMessageType::ReliableOrdered, &msg);
+        for cleint_network in self.connections.values() {
+            cleint_network.send_message(NetworkMessageType::ReliableOrdered, &msg);
         }
     }
 }
