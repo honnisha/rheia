@@ -43,7 +43,7 @@ impl Console {
 
     pub fn send_message(message: String) {
         let date = Local::now();
-        let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
+        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), message);
 
         godot_print!("{}", m);
         CONSOLE_OUTPUT_CHANNEL.0.send(parse_to_console_godot(&m)).unwrap();

@@ -13,6 +13,7 @@ pub trait IPhysicsCollider<S: IPhysicsShape> {
     fn get_index(&self) -> usize;
     fn remove(&mut self);
     fn get_shape(&self) -> S;
+    fn set_shape(&mut self, shape: S);
 }
 
 pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, F: IQueryFilter<S, C>> {
@@ -21,13 +22,14 @@ pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, 
     fn get_custom_mass(&mut self) -> &Option<f32>;
 }
 
-pub trait IPhysicsColliderBuilder {
+pub trait IPhysicsColliderBuilder<S: IPhysicsShape> {
     fn cuboid(hx: f32, hy: f32, hz: f32) -> Self;
     fn cylinder(half_height: f32, radius: f32) -> Self;
     fn trimesh(verts: Vec<Vector3>, indices: Vec<[u32; 3]>) -> Self;
+    fn get_shape(&self) -> S;
 }
 
-pub trait IPhysicsContainer<S: IPhysicsShape, C: IPhysicsCollider<S>, B: IPhysicsColliderBuilder, F: IQueryFilter<S, C>>:
+pub trait IPhysicsContainer<S: IPhysicsShape, C: IPhysicsCollider<S>, B: IPhysicsColliderBuilder<S>, F: IQueryFilter<S, C>>:
     Clone + Default
 {
     fn step(&self, delta: f32);

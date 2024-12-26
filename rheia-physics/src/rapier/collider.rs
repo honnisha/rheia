@@ -1,6 +1,7 @@
 use std::borrow::Borrow;
 
 use super::bridge::{na_to_network, IntoNaVector3};
+use super::collider_builder::RapierPhysicsColliderBuilder;
 use super::container::RapierPhysicsContainer;
 use crate::physics::{IPhysicsCollider, IPhysicsShape};
 use common::chunks::position::Vector3 as NetworkVector3;
@@ -80,4 +81,10 @@ impl IPhysicsCollider<RapierPhysicsShape> for RapierPhysicsCollider {
         RapierPhysicsShape::create(collider.shape())
     }
 
+    fn set_shape(&mut self, shape: RapierPhysicsShape) {
+        let mut collider = self.physics_container.get_collider_mut(&self.collider_handle).unwrap();
+        let s = shape.get_shape().clone_dyn();
+        let shape = SharedShape(s.into());
+        collider.set_shape(shape);
+    }
 }

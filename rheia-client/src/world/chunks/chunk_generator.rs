@@ -10,7 +10,7 @@ use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries, chunks_map::ChunkLock,
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
-use common::VERTICAL_SECTIONS;
+use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
 use flume::Sender;
 use godot::obj::InstanceId;
 
@@ -50,14 +50,17 @@ pub(crate) fn generate_chunk(
 
                 let d = data.read();
                 let section_data = d.get(y).unwrap();
-                objects_container.bind_mut().setup(
-                    y as u32,
-                    &chunk_position,
-                    section_data,
-                    &*block_storage.read(),
-                    &physics,
-                    &*resources_storage_lock.read(),
-                ).unwrap();
+                objects_container
+                    .bind_mut()
+                    .setup(
+                        y as u32,
+                        &chunk_position,
+                        section_data,
+                        &*block_storage.read(),
+                        &physics,
+                        &*resources_storage_lock.read(),
+                    )
+                    .unwrap();
             }
         }
 

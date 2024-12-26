@@ -59,6 +59,7 @@ pub fn send_chunks(worlds_manager: Res<WorldsManager>, network_container: Res<Ne
         for (chunk_position, clients) in queue {
             let message = world.get_network_chunk_bytes(&chunk_position).unwrap();
             for client in clients.iter() {
+                // log::info!("send_loaded_chunk chunk_position:{}", chunk_position);
                 client.send_loaded_chunk(&chunk_position, message.clone());
             }
         }

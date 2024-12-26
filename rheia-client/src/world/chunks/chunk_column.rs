@@ -82,7 +82,7 @@ impl ChunkColumn {
             loaded: Arc::new(AtomicBool::new(false)),
         };
 
-        chunk_column.get_base().set_position(chunk_column.get_chunk_position());
+        chunk_column.get_base().set_position(chunk_column.get_position());
 
         chunk_column
     }
@@ -138,7 +138,11 @@ impl ChunkColumn {
         self.loaded.store(true, Ordering::Relaxed);
     }
 
-    pub fn get_chunk_position(&self) -> Vector3 {
+    pub fn _get_chunk_position(&self) -> &ChunkPosition {
+        &self.chunk_position
+    }
+
+    pub fn get_position(&self) -> Vector3 {
         Vector3::new(
             self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
             -1_f32,

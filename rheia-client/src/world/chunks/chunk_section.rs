@@ -9,7 +9,7 @@ use godot::{
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
-use physics::{physics::IPhysicsCollider, PhysicsCollider};
+use physics::{physics::{IPhysicsCollider, IPhysicsColliderBuilder}, PhysicsCollider};
 
 use crate::{
     utils::bridge::{GodotPositionConverter, IntoNetworkVector},
@@ -101,7 +101,7 @@ impl ChunkSection {
         mesh.set_mesh(&geometry.mesh_ist);
 
         self.need_update_geometry = true;
-        self.colider_builder = geometry.collider_builder
+        self.colider_builder = geometry.collider_builder;
     }
 
     pub fn is_geometry_update_needed(&self) -> bool {
@@ -112,20 +112,26 @@ impl ChunkSection {
     pub fn update_geometry(&mut self, physics: &PhysicsProxy) {
         self.need_update_geometry = false;
 
-        // Remove old collider if exists
-        if let Some(mut collider) = self.collider.take() {
-            collider.remove();
-        }
-
-        // Set new colider
+        // Set or create new colider
         if let Some(colider_builder) = self.colider_builder.take() {
-            let mut collider = physics.create_collider(
-                colider_builder,
-                Some(PhysicsType::ChunkMeshCollider(self.chunk_position.clone())),
-            );
-            let pos = self.get_section_position().clone();
-            collider.set_position(pos.to_network());
-            self.collider = Some(collider);
+            if let Some(collider) = self.collider.as_mut() {
+                collider.set_shape(colider_builder.get_shape());
+            }
+            else {
+                let mut collider = physics.create_collider(
+                    colider_builder,
+                    Some(PhysicsType::ChunkMeshCollider(self.chunk_position.clone())),
+                );
+                let pos = self.get_section_position().clone();
+                collider.set_position(pos.to_network());
+                self.collider = Some(collider);
+            }
+        }
+        else {
+            // Remove old collider if exists
+            if let Some(mut collider) = self.collider.take() {
+                collider.remove();
+            }
         }
     }
 

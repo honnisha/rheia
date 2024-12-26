@@ -98,7 +98,7 @@ impl ConsoleHandler {
 
     pub fn send_message(message: String) {
         let date = Local::now();
-        let m = format!("{}: {}", date.format("%Y-%m-%d %H:%M:%S"), message);
+        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), message);
 
         CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
     }
