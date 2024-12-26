@@ -61,7 +61,7 @@ impl BlockIcon {
             return;
         };
 
-        if let Ok(mut event) = event.clone().try_cast::<InputEventMouseButton>() {
+        if let Ok(event) = event.clone().try_cast::<InputEventMouseButton>() {
             if event.get_button_index() == MouseButton::LEFT && event.is_pressed() {
                 let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
                 self.base_mut().emit_signal("icon_clicked", &[icon.to_variant()]);
@@ -74,7 +74,7 @@ impl BlockIcon {
         let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
-        log::info!("enter block_id: {}", block_id);
+        // log::info!("enter block_id: {}", block_id);
     }
 
     #[func]
@@ -82,7 +82,7 @@ impl BlockIcon {
         let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
-        log::info!("exit block_id: {}", block_id);
+        // log::info!("exit block_id: {}", block_id);
     }
 
     #[signal]

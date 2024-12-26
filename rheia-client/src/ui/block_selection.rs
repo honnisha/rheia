@@ -87,10 +87,14 @@ impl BlockSelection {
         }
     }
 
+    #[signal]
+    fn on_closed();
+
     #[func]
     fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
         self.selected_block_id = Some(*block.bind().get_block_id());
         self.toggle(false);
+        self.base_mut().emit_signal("on_closed", &[]);
     }
 }
 

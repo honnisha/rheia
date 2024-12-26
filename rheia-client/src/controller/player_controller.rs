@@ -257,10 +257,9 @@ impl PlayerController {
 
             let hit = self.update_vision();
 
-            let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
-            let action_type = if self.controls.bind().is_main_action() && captured {
+            let action_type = if self.controls.bind().is_main_action() {
                 Some(PlayerActionType::Main)
-            } else if self.controls.bind().is_second_action() && captured {
+            } else if self.controls.bind().is_second_action() {
                 Some(PlayerActionType::Second)
             } else {
                 None

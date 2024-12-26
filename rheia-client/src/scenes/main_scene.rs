@@ -83,6 +83,9 @@ pub struct MainScene {
 
     #[export(file = "*.json")]
     debug_world_settings: GString,
+
+    // To prevent actions after ui windows closed
+    ui_lock: f32,
 }
 
 impl MainScene {
@@ -154,9 +157,12 @@ impl MainScene {
 
         let texture_mapper = worlds_manager.get_texture_mapper();
         let mut block_selection = self.block_selection.clone();
-        block_selection
-            .bind_mut()
-            .init_blocks(&*block_storage, &worlds_manager.get_material(), &*resource_manager, &*texture_mapper);
+        block_selection.bind_mut().init_blocks(
+            &*block_storage,
+            &worlds_manager.get_material(),
+            &*resource_manager,
+            &*texture_mapper,
+        );
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -233,7 +239,17 @@ impl MainScene {
     }
 
     #[func]
+    fn handler_block_selection_closed(&mut self) {
+        self.ui_lock = 0.5;
+    }
+
+    #[func]
     fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
+        let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+        if !captured || self.ui_lock > 0.0 {
+            return;
+        }
+
         let a = action.bind();
         let network = self.get_network().unwrap();
         if let Some((cast_result, physics_type)) = a.get_hit() {
@@ -251,7 +267,7 @@ impl MainScene {
                                 position: cast_result.get_place_block(),
                                 new_block_info: Some(BlockInfo::create(*block_id, None)),
                             }
-                        },
+                        }
                         PlayerActionType::Second => ClientMessages::EditBlockRequest {
                             world_slug: a.get_world_slug().clone(),
                             position: selected_block,
@@ -269,6 +285,7 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
+        let base = self.base().clone();
         log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
@@ -309,7 +326,11 @@ impl INode for MainScene {
                 .instantiate_as::<BlockSelection>();
             self.block_selection.init(block_selection);
 
-            let block_selection = self.block_selection.clone();
+            let mut block_selection = self.block_selection.clone();
+            block_selection.bind_mut().base_mut().connect(
+                "on_closed",
+                &Callable::from_object_method(&base, "handler_block_selection_closed"),
+            );
             self.base_mut().add_child(&block_selection);
 
             // Text splash screen
@@ -332,9 +353,11 @@ impl INode for MainScene {
         }
     }
 
-    fn process(&mut self, _delta: f64) {
+    fn process(&mut self, delta: f64) {
         #[cfg(feature = "trace")]
         let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
+
+        self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
 
         if self.network.is_some() {
             let network_info = match handle_network_events(self) {
