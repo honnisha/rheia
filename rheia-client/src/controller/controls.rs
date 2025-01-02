@@ -82,13 +82,11 @@ impl INode for Controls {
         //self.movement = Vector3::ZERO;
         let input = Input::singleton();
         if self.joyaxis_left == Vector2::ZERO {
-            if input.get_mouse_mode() == MouseMode::CAPTURED {
-                self.movement.x = input.get_action_strength(&ControllerActions::MoveRight.to_string())
-                    - input.get_action_strength(&ControllerActions::MoveLeft.to_string());
-                self.movement.z = input.get_action_strength(&ControllerActions::MoveForward.to_string())
-                    - input.get_action_strength(&ControllerActions::MoveBackwards.to_string());
-                self.movement.z *= -1.0;
-            }
+            self.movement.x = input.get_action_strength(&ControllerActions::MoveRight.to_string())
+                - input.get_action_strength(&ControllerActions::MoveLeft.to_string());
+            self.movement.z = input.get_action_strength(&ControllerActions::MoveForward.to_string())
+                - input.get_action_strength(&ControllerActions::MoveBackwards.to_string());
+            self.movement.z *= -1.0;
         } else {
             self.movement = Vector3::new(self.joyaxis_left.x, 0.0, self.joyaxis_left.y)
         }
