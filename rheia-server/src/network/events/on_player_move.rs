@@ -5,7 +5,7 @@ use common::chunks::block_position::BlockPositionTrait;
 
 use crate::entities::entity::Rotation;
 use crate::network::client_network::{ClientNetwork, WorldEntity};
-use crate::network::sync_entities::sync_player_move;
+use crate::network::sync_players::sync_player_move;
 use crate::worlds::world_manager::WorldManager;
 use crate::{entities::entity::Position, worlds::worlds_manager::WorldsManager};
 
@@ -28,7 +28,6 @@ impl PlayerMoveEvent {
 
 pub fn on_player_move(mut player_move_events: EventReader<PlayerMoveEvent>, worlds_manager: ResMut<WorldsManager>) {
     for event in player_move_events.read() {
-
         let world_entity = event.client.get_world_entity();
         let world_entity = match world_entity.as_ref() {
             Some(w) => w,
@@ -78,5 +77,5 @@ pub fn move_player(
         network.send_unload_chunks(world_entity.get_world_slug(), change.abandoned_chunks.clone());
     }
 
-    sync_player_move(world_manager, world_entity, &chunks_changed);
+    sync_player_move(world_manager, world_entity.get_entity(), &chunks_changed);
 }

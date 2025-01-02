@@ -141,13 +141,33 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 main.on_server_connected();
             }
 
+            ServerMessages::SpawnWorld { world_slug } => {
+                main.spawn_world(world_slug);
+                main.get_text_screen_mut().toggle(false);
+            }
+            ServerMessages::UpdatePlayerSkin { skin } => {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let Some(player_controller) = worlds_manager.get_player_controller_mut() else {
+                    log::error!(target: "network", "network tried to update skin with non existing world");
+                    continue;
+                };
+                player_controller.bind_mut().update_skin(skin);
+            }
             ServerMessages::Teleport {
                 world_slug,
                 position,
                 rotation,
             } => {
-                main.teleport_player(world_slug, position.to_godot(), rotation);
-                main.get_text_screen_mut().toggle(false);
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let Some(_world) = get_world_mut(&mut worlds_manager, world_slug) else {
+                    continue;
+                };
+                let Some(player_controller) = worlds_manager.get_player_controller_mut().as_mut() else {
+                    log::error!(target: "network", "network tried to teleport with non existing world");
+                    continue;
+                };
+                player_controller.bind_mut().set_position(position.to_godot());
+                player_controller.bind_mut().set_rotation(rotation);
             }
             ServerMessages::ChunkSectionInfo {
                 world_slug,
@@ -175,6 +195,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 world_slug,
                 position,
                 rotation,
+                skin,
             } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
                 let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
@@ -182,7 +203,16 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 };
                 let mut w = world.bind_mut();
                 let mut entities_manager = w.get_entities_manager_mut();
-                entities_manager.create_entity(id, position.to_godot(), rotation);
+                entities_manager.create_entity(id, skin, position.to_godot(), rotation);
+            }
+            ServerMessages::UpdateEntitySkin { world_slug, id, skin } => {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
+                    continue;
+                };
+                let mut w = world.bind_mut();
+                let mut entities_manager = w.get_entities_manager_mut();
+                entities_manager.update_entity_skin(id, skin);
             }
             ServerMessages::EntityMove {
                 world_slug,

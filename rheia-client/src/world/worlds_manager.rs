@@ -93,12 +93,8 @@ impl WorldsManager {
         &self.player_controller
     }
 
-    /// Raise exception if there is no world
-    pub fn teleport_player_controller(&mut self, position: Vector3, rotation: Rotation) {
-        let player_controller = self.player_controller.as_mut().unwrap();
-
-        player_controller.bind_mut().set_position(position);
-        player_controller.bind_mut().set_rotation(rotation);
+    pub fn get_player_controller_mut(&mut self) -> &mut Option<Gd<PlayerController>> {
+        &mut self.player_controller
     }
 
     pub fn create_player(&mut self, world: &Gd<WorldManager>) -> Gd<PlayerController> {

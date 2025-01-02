@@ -79,6 +79,8 @@ impl ChunkMap {
     }
 
     /// Get Entities of all players watching the chunk
+    ///
+    /// All of them contains ClientNetwork
     pub fn get_chunk_watchers(&self, chunk_position: &ChunkPosition) -> Option<&Vec<Entity>> {
         self.chunks_load_state.get_chunk_watchers(&chunk_position)
     }

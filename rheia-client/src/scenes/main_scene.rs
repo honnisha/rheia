@@ -167,7 +167,7 @@ impl MainScene {
 
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
-    pub fn teleport_player(&mut self, world_slug: String, position: Vector3, rotation: Rotation) {
+    pub fn spawn_world(&mut self, world_slug: String) {
         let base = self.base().clone();
         let mut worlds_manager = self.get_worlds_manager_mut();
 
@@ -178,9 +178,11 @@ impl MainScene {
                 let world = worlds_manager.create_world(world_slug);
                 Some(worlds_manager.create_player(&world))
             } else {
+                // The same world
                 None
             }
         } else {
+            // New world
             let world = worlds_manager.create_world(world_slug);
             Some(worlds_manager.create_player(&world))
         };
@@ -195,8 +197,6 @@ impl MainScene {
                 &Callable::from_object_method(&base, "handler_player_action"),
             );
         }
-
-        worlds_manager.teleport_player_controller(position, rotation)
     }
 }
 

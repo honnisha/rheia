@@ -5,8 +5,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    network::{client_network::ClientNetwork, clients_container::ClientsContainer, sync_entities::sync_entity_despawn},
-    worlds::worlds_manager::WorldsManager,
+    entities::skin::EntitySkin, network::{client_network::ClientNetwork, clients_container::ClientsContainer, sync_entities::sync_entity_despawn}, worlds::worlds_manager::WorldsManager
 };
 
 #[derive(Event)]
@@ -42,7 +41,15 @@ pub fn on_disconnect(
         match world_entity {
             Some(c) => {
                 let mut world_manager = worlds_manager.get_world_manager_mut(&c.get_world_slug()).unwrap();
-                sync_entity_despawn(&*world_manager, c.get_entity());
+
+                let ecs = world_manager.get_ecs();
+                let entity_ref = ecs.get_entity(c.get_entity()).unwrap();
+
+                // Sync his entity if exists
+                if entity_ref.get::<EntitySkin>().is_some() {
+                    sync_entity_despawn(&*world_manager, c.get_entity());
+                }
+
                 world_manager.despawn_player(&c);
             }
             None => return,

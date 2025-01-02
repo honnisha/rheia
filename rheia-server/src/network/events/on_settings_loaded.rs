@@ -1,9 +1,14 @@
 use crate::{
-    entities::entity::{Position, Rotation},
+    entities::{
+        entity::{Position, Rotation},
+        skin::EntitySkin,
+    },
     network::client_network::ClientNetwork,
+    worlds::bevy_commands::UpdatePlayerSkin,
 };
 use bevy::prelude::{Commands, Event, Res};
 use bevy_ecs::prelude::EventReader;
+use network::messages::EntitySkin as NetworkEntitySkin;
 
 use crate::worlds::{bevy_commands::SpawnPlayer, worlds_manager::WorldsManager};
 
@@ -34,6 +39,10 @@ pub fn on_settings_loaded(
             event.client.clone(),
             Position::new(0.0, 30.0, 0.0),
             Rotation::new(0.0, 0.0),
+        ));
+        commands.add(UpdatePlayerSkin::create(
+            event.client.clone(),
+            Some(EntitySkin::create(NetworkEntitySkin::Generic)),
         ));
     }
 }

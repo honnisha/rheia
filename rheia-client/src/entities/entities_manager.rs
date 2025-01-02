@@ -1,6 +1,7 @@
 use ahash::AHashMap;
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
+use network::messages::EntitySkin;
 
 use super::entity::Entity;
 
@@ -24,13 +25,13 @@ impl EntitiesManager {
         self.entities.get(&entity_id)
     }
 
-    pub fn create_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
+    pub fn create_entity(&mut self, id: u32, skin: EntitySkin, position: Vector3, rotation: Rotation) {
         if self.entities.contains_key(&id) {
-            log::error!(target:"entities", "Tried to spawn existing entity id:{}", id);
+            log::error!(target: "entities", "Tried to spawn existing entity id:{}", id);
             return;
         }
 
-        let mut entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base));
+        let mut entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, skin));
         self.base_mut().add_child(&entity);
 
         self.entities.insert(id, entity.clone());
@@ -39,12 +40,22 @@ impl EntitiesManager {
         e.change_position(position);
         e.rotate(rotation);
 
-        log::info!(target:"entities", "SPAWN id:{}", id);
+        log::info!(target: "entities", "SPAWN id:{}", id);
+    }
+
+    pub fn update_entity_skin(&mut self, id: u32, skin: EntitySkin) {
+        let Some(entity) = self.entities.get_mut(&id) else {
+            log::error!(target: "entities", "Tried to change skin for non-existent entity id:{}", id);
+            return;
+        };
+
+        let mut e = entity.bind_mut();
+        e.change_skin(skin);
     }
 
     pub fn move_entity(&mut self, id: u32, position: Vector3, rotation: Rotation) {
         let Some(entity) = self.entities.get_mut(&id) else {
-            log::error!(target:"entities", "Tried to move non existent entity id:{}", id);
+            log::error!(target:"entities", "Tried to move non-existent entity id:{}", id);
             return;
         };
 
@@ -56,10 +67,10 @@ impl EntitiesManager {
     pub fn despawn(&mut self, ids: Vec<u32>) {
         for id in ids.iter() {
             let Some(mut e) = self.entities.remove(id) else {
-                log::error!(target:"entities", "Tried to despawn non exitent entity id:{}", id);
+                log::error!(target:"entities", "Tried to despawn non-exitent entity id:{}", id);
                 continue;
             };
-            log::info!(target:"entities", "despawn id: {}", id);
+            log::info!(target: "entities", "despawn id: {}", id);
             e.bind_mut().base_mut().queue_free();
         }
     }

@@ -25,10 +25,11 @@ use super::events::{
     on_settings_loaded::{on_settings_loaded, PlayerSettingsLoadedEvent},
 };
 use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
+use crate::entities::events::on_player_spawn::on_player_spawn;
 use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
-use crate::network::sync_entities::{sync_player_spawn, PlayerSpawnEvent};
+use crate::network::sync_players::PlayerSpawnEvent;
 use crate::{console::commands_executer::CommandsHandler, LaunchSettings};
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
@@ -97,7 +98,7 @@ impl NetworkPlugin {
         app.add_systems(Update, on_settings_loaded.after(handle_events_system));
 
         app.add_event::<PlayerSpawnEvent>();
-        app.add_systems(Update, sync_player_spawn);
+        app.add_systems(Update, on_player_spawn);
     }
 
     pub(crate) fn send_console_output(client: &ClientNetwork, message: String) {

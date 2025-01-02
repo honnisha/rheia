@@ -36,10 +36,6 @@ impl Ecs {
         self.insert_entity_inside_chunk(*new_chunk, *entity);
     }
 
-    pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {
-        self.ecs.entity_mut(entity)
-    }
-
     pub fn spawn<B: Bundle>(&mut self, bundle: B, chunk: ChunkPosition) -> Entity {
         let id = self.ecs.spawn(bundle).id();
         self.insert_entity_inside_chunk(chunk, id);
@@ -71,6 +67,10 @@ impl Ecs {
 
     pub fn get_entity(&self, entity: Entity) -> Option<EntityRef> {
         self.ecs.get_entity(entity)
+    }
+
+    pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {
+        self.ecs.entity_mut(entity)
     }
 
     pub fn query<D: QueryData>(&mut self) -> QueryState<D, ()> {

@@ -6,8 +6,10 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::{WorldGenerator, WorldGeneratorSettings};
 use network::messages::ServerMessages;
 use parking_lot::RwLock;
+use network::messages::EntitySkin as NetworkEntitySkin;
 
 use crate::entities::entity::{Position, Rotation};
+use crate::entities::skin::EntitySkin;
 use crate::CHUNKS_DISTANCE;
 
 use crate::network::client_network::{ClientNetwork, WorldEntity};

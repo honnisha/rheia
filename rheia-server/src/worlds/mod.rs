@@ -1,7 +1,6 @@
 use bevy_app::{App, Plugin, Update};
 use bracket_lib::random::RandomNumberGenerator;
 use log::info;
-use on_chunk_loaded::on_chunk_loaded;
 
 pub mod bevy_commands;
 
@@ -52,6 +51,5 @@ impl Plugin for WorldsHandlerPlugin {
         app.insert_resource(worlds_manager);
 
         app.add_systems(Update, update_world_chunks);
-        app.add_systems(Update, on_chunk_loaded);
     }
 }

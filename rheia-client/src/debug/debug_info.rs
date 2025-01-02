@@ -130,7 +130,10 @@ impl DebugInfo {
                     debug_world_string!(),
                     world.get_slug(),
                     controller_positioin,
-                    player_controller.get_current_animation(),
+                    match player_controller.get_current_animation() {
+                        Some(s) => s,
+                        None => String::from("-"),
+                    },
                     world.get_chunks_count(),
                     chunk_pos,
                     chunk_info,

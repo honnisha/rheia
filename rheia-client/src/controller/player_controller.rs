@@ -4,9 +4,9 @@ use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetwork
 use crate::utils::primitives::{generate_lines, get_face_vector};
 use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use common::chunks::rotation::Rotation;
-use godot::classes::input::MouseMode;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
+use network::messages::EntitySkin;
 use physics::physics::{
     IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
 };
@@ -38,7 +38,7 @@ pub struct PlayerController {
     pub(crate) base: Base<Node3D>,
     physics: PhysicsProxy,
 
-    entity: Gd<Entity>,
+    entity: Option<Gd<Entity>>,
 
     camera_controller: Gd<CameraController>,
 
@@ -78,7 +78,7 @@ impl PlayerController {
             base,
             physics,
 
-            entity: Gd::<Entity>::from_init_fn(|base| Entity::create(base)),
+            entity: None,
             camera_controller,
 
             controls,
@@ -97,8 +97,33 @@ impl PlayerController {
         }
     }
 
-    pub fn get_current_animation(&self) -> String {
-        self.entity.bind().get_current_animation()
+    pub fn update_skin(&mut self, skin: Option<EntitySkin>) {
+        match skin {
+            Some(skin) => {
+                match self.entity.as_mut() {
+                    Some(e) => {
+                        e.bind_mut().change_skin(skin);
+                    },
+                    None => {
+                        let entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, skin));
+                        self.base_mut().add_child(&entity);
+                        self.entity = Some(entity);
+                    },
+                }
+            },
+            None => {
+                if let Some(mut e) = self.entity.take() {
+                    e.queue_free();
+                }
+            },
+        }
+    }
+
+    pub fn get_current_animation(&self) -> Option<String> {
+        match self.entity.as_ref() {
+            Some(entity) => Some(entity.bind().get_current_animation()),
+            None => None,
+        }
     }
 
     // Get position of the character
@@ -108,12 +133,18 @@ impl PlayerController {
 
     /// Horizontal degrees of character look
     pub fn get_yaw(&self) -> f32 {
-        self.entity.bind().get_yaw()
+        match self.entity.as_ref() {
+            Some(entity) => entity.bind().get_yaw(),
+            None => self.base().get_rotation_degrees().y,
+        }
     }
 
     /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
-        self.entity.bind().get_pitch()
+        match self.entity.as_ref() {
+            Some(entity) => entity.bind().get_pitch(),
+            None => self.base().get_rotation_degrees().x,
+        }
     }
 
     pub fn set_position(&mut self, position: Vector3) {
@@ -129,7 +160,9 @@ impl PlayerController {
         self.camera_controller.bind_mut().rotate(rotation);
 
         // Rotate visible third_person body
-        self.entity.bind_mut().rotate(rotation);
+        if let Some(entity) = self.entity.as_mut() {
+            entity.bind_mut().rotate(rotation);
+        }
     }
 
     /// Grouded check performs by cast_shape
@@ -160,6 +193,10 @@ impl PlayerController {
     }
 
     fn get_movement(&mut self, delta: f64) -> Vector3 {
+        let Some(entity) = self.entity.as_mut() else {
+            panic!("get_movement available onlt with entity");
+        };
+
         let mut movement = Vector3::ZERO;
 
         let controls = self.controls.bind();
@@ -173,14 +210,14 @@ impl PlayerController {
 
         if direction != Vector3::ZERO {
             let mut new_yaw = -direction.x.atan2(-direction.z) % 360.0;
-            new_yaw = lerp_angle(self.entity.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
+            new_yaw = lerp_angle(entity.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
 
             // Update skin rotation for visual display
-            let mut skin_rotation = self.entity.bind().get_rotation();
+            let mut skin_rotation = entity.bind().get_rotation();
             skin_rotation.y = new_yaw;
-            self.entity.bind_mut().set_rotation(skin_rotation);
+            entity.bind_mut().set_rotation(skin_rotation);
 
-            movement = self.entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
+            movement = entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }
 
         if self.grounded_timer > 0.0 {
@@ -192,7 +229,7 @@ impl PlayerController {
 
         // Check physics ground check
         if controls.is_jumping() && self.grounded_timer > -0.1 {
-            self.entity.bind_mut().trigger_animation(GenericAnimations::Jump);
+            entity.bind_mut().trigger_animation(GenericAnimations::Jump);
             self.vertical_movement = JUMP_SPEED;
         }
 
@@ -301,7 +338,9 @@ impl PlayerController {
             } else {
                 Vector3::ZERO
             };
-            self.entity.bind_mut().handle_movement(movement);
+            if let Some(entity) = self.entity.as_mut() {
+                entity.bind_mut().handle_movement(movement);
+            }
 
             self.base_mut()
                 .emit_signal("on_player_move", &[new_movement.to_variant(), new_chunk.to_variant()]);
@@ -322,9 +361,6 @@ impl PlayerController {
 #[godot_api]
 impl INode3D for PlayerController {
     fn ready(&mut self) {
-        let controller = self.entity.clone();
-        self.base_mut().add_child(&controller);
-
         let camera_controller = self.camera_controller.clone();
         self.base_mut().add_child(&camera_controller);
 

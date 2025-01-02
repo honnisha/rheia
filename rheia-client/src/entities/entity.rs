@@ -1,28 +1,44 @@
 use common::chunks::rotation::Rotation;
 use godot::{global::lerp, prelude::*};
+use network::messages::EntitySkin;
 
 use super::{enums::generic_animations::GenericAnimations, generic_skin::GenericSkin};
+
+enum EntitySkinContainer {
+    Generic(Gd<GenericSkin>),
+}
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
 pub struct Entity {
     pub base: Base<Node3D>,
 
-    skin: Gd<GenericSkin>,
+    skin: EntitySkinContainer,
     target_position: Option<Vector3>,
 }
 
 impl Entity {
-    pub fn create(base: Base<Node3D>) -> Self {
+    pub fn create(base: Base<Node3D>, skin: EntitySkin) -> Self {
+        let skin_container = match skin {
+            EntitySkin::Generic => {
+                let skin = Gd::<GenericSkin>::from_init_fn(|base| GenericSkin::create(base));
+                EntitySkinContainer::Generic(skin)
+            }
+            EntitySkin::Fixed(_) => {
+                todo!()
+            }
+        };
         Self {
             base,
-            skin: Gd::<GenericSkin>::from_init_fn(|base| GenericSkin::create(base)),
+            skin: skin_container,
             target_position: Default::default(),
         }
     }
 
     pub fn get_current_animation(&self) -> String {
-        self.skin.bind().get_current_animation()
+        match &self.skin {
+            EntitySkinContainer::Generic(skin) => skin.bind().get_current_animation(),
+        }
     }
 
     /// Horizontal degrees of character look
@@ -33,6 +49,10 @@ impl Entity {
     /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
         self.base().get_rotation_degrees().x
+    }
+
+    pub fn change_skin(&mut self, _skin: EntitySkin) {
+        unimplemented!("change_skin is not implemented");
     }
 
     pub fn change_position(&mut self, position: Vector3) {
@@ -59,7 +79,9 @@ impl Entity {
     }
 
     pub fn trigger_animation(&mut self, animation: GenericAnimations) {
-        self.skin.bind_mut().trigger_animation(animation)
+        match &mut self.skin {
+            EntitySkinContainer::Generic(skin) => skin.bind_mut().trigger_animation(animation),
+        }
     }
 
     /// Handler responsible for movememt
@@ -69,15 +91,19 @@ impl Entity {
     /// Can be called from player controller or network sync
     pub fn handle_movement(&mut self, movement: Vector3) {
         // let movement = position - e.get_position();
-        self.skin.bind_mut().handle_movement(movement)
+        match &mut self.skin {
+            EntitySkinContainer::Generic(skin) => skin.bind_mut().handle_movement(movement),
+        }
     }
 }
 
 #[godot_api]
 impl INode3D for Entity {
     fn ready(&mut self) {
-        let skin = self.skin.clone();
-        self.base_mut().add_child(&skin);
+        let mut base = self.base_mut().clone();
+        match &self.skin {
+            EntitySkinContainer::Generic(skin) => base.add_child(skin),
+        }
     }
 
     fn process(&mut self, _delta: f64) {

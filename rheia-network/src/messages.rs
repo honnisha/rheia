@@ -54,6 +54,12 @@ pub struct ResurceScheme {
     pub media: HashMap<String, String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum EntitySkin {
+    Generic,
+    Fixed(String),
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {
     AllowConnection,
@@ -76,6 +82,12 @@ pub enum ServerMessages {
         block_types: HashMap<BlockIndexType, BlockType>,
     },
 
+    SpawnWorld {
+        world_slug: String,
+    },
+    UpdatePlayerSkin {
+        skin: Option<EntitySkin>,
+    },
     // Used to teleport the player's client controller.
     Teleport {
         world_slug: String,
@@ -91,12 +103,19 @@ pub enum ServerMessages {
         world_slug: String,
         chunks: Vec<ChunkPosition>,
     },
+
     // In case the entity gets in the player's line of sight
     StartStreamingEntity {
         world_slug: String,
         id: u32,
         position: Vector3,
         rotation: Rotation,
+        skin: EntitySkin,
+    },
+    UpdateEntitySkin {
+        world_slug: String,
+        id: u32,
+        skin: EntitySkin,
     },
     // In case the entity escapes from the visible chunk or is deleted
     StopStreamingEntities {
@@ -109,6 +128,7 @@ pub enum ServerMessages {
         position: Vector3,
         rotation: Rotation,
     },
+
     EditBlock {
         world_slug: String,
         position: BlockPosition,

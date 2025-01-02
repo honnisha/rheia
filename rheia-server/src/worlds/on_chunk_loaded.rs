@@ -1,10 +1,16 @@
 use bevy::prelude::EventWriter;
 use bevy_ecs::system::Res;
 
-use crate::network::{client_network::{ClientNetwork, WorldEntity}, server::NetworkContainer, sync_entities::PlayerSpawnEvent};
+use crate::network::{
+    client_network::{ClientNetwork, WorldEntity},
+    server::NetworkContainer,
+    sync_players::PlayerSpawnEvent,
+};
 
 use super::worlds_manager::WorldsManager;
 
+/// Iterates trough all worlds
+/// and drain all their loaded chunks
 pub fn on_chunk_loaded(
     worlds_manager: Res<WorldsManager>,
     network_container: Res<NetworkContainer>,

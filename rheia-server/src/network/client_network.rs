@@ -141,7 +141,9 @@ impl ClientNetwork {
         *self.world_entity.write() = world_entity;
     }
 
-    /// Sends information about the player's new position over the network
+    /// Sends information about the player's new position over the network.
+    ///
+    /// Required to be in the world.
     pub fn network_send_teleport(&self, position: &Position, rotation: &Rotation) {
         let lock = self.get_world_entity();
         let world_entity = lock.as_ref().unwrap();
