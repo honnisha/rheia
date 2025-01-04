@@ -15,6 +15,7 @@ dest_files=["res://.godot/imported/Hack-Regular.ttf-1507c0bfa5f6bbae36fb780d3993
 Rendering=null
 antialiasing=1
 generate_mipmaps=false
+disable_embedded_bitmaps=true
 multichannel_signed_distance_field=false
 msdf_pixel_range=8
 msdf_size=48

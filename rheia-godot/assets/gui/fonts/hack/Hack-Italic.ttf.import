@@ -15,6 +15,7 @@ dest_files=["res://.godot/imported/Hack-Italic.ttf-eeb394497ec6eb92b68f561fc6610
 Rendering=null
 antialiasing=1
 generate_mipmaps=false
+disable_embedded_bitmaps=true
 multichannel_signed_distance_field=false
 msdf_pixel_range=8
 msdf_size=48
