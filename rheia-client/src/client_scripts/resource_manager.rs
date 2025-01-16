@@ -133,6 +133,16 @@ impl ResourceManager {
         self.archive_hash = Some(archive_hash);
     }
 
+    pub fn get_resource_scheme_count(&mut self) -> (usize, usize) {
+        let mut scripts_count: usize = 0;
+        let mut media_count: usize = 0;
+        for scheme in self.resources_scheme.as_ref().expect("resources_scheme is required") {
+            scripts_count += scheme.scripts.len();
+            media_count += scheme.media.len();
+        }
+        return (scripts_count, media_count);
+    }
+
     pub fn load_archive_chunk(&mut self, data: &mut Vec<u8>) {
         if self.archive_data.is_none() {
             self.archive_data = Some(Default::default());

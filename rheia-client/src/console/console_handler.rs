@@ -160,7 +160,7 @@ impl IMarginContainer for Console {
             _ => panic!("console_sugestions element not found"),
         };
         self.base_mut().set_visible(false);
-        log::info!(target: "console", "Console successfily loaded;");
+        log::info!(target: "console", "Console successfully loaded;");
     }
 
     fn process(&mut self, _delta: f64) {

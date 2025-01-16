@@ -85,7 +85,8 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
             ServerMessages::ResourcesScheme { list, archive_hash } => {
                 let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list, archive_hash);
-                log::info!(target: "network", "Resources scheme loaded from network");
+                let (scripts_count, media_count) = resource_manager.get_resource_scheme_count();
+                log::info!(target: "network", "Resources scheme loaded from network (scripts:{}, media:{})", scripts_count, media_count);
             }
             ServerMessages::ResourcesPart {
                 index,
@@ -101,7 +102,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                         if let Err(e) = resource_manager.load_archive() {
                             return Err(format!("Network resources download error: {}", e));
                         }
-                        log::info!(target: "network", "Resources archive installed from network; index:{}", index);
+                        log::info!(target: "network", "Resources archive downloading from the network; index:{}", index);
                     }
                 }
 
@@ -109,7 +110,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 network.send_message(NetworkMessageType::ReliableOrdered, &msg);
 
                 main.get_text_screen_mut()
-                    .update_text(format!("Media downloaded {}/{}", index + 1, total));
+                    .update_text(format!("Media downloading {}/{}", index + 1, total));
             }
             ServerMessages::Settings { block_types } => {
                 log::info!(target: "network", "Recieved settings from the network");
