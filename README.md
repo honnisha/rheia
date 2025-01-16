@@ -10,3 +10,10 @@ Aimed at wide possibilities for server-side extensibility and customization.
 - [rheia-common](https://github.com/honnisha/rheia/tree/master/rheia-common) - Common code used by the rest parts of the project.
 - [rheia-network](https://github.com/honnisha/rheia/tree/master/rheia-network) - Network code for client and server parts.
 - [rheia-physics](https://github.com/honnisha/rheia/tree/master/rheia-physics) - Physics code for client and server parts.
+
+## Screenshots
+
+<div align="center"><img src="https://github.com/honnisha/rheia/blob/master/screenshots/Screenshot_20250116_100456.png?raw=true"/></div>
+<div align="center"><img src="https://github.com/honnisha/rheia/blob/master/screenshots/Screenshot_20250116_100547.png?raw=true"/></div>
+<div align="center"><img src="https://github.com/honnisha/rheia/blob/master/screenshots/Screenshot_20250116_101039.png?raw=true"/></div>
+<div align="center"><img src="https://github.com/honnisha/rheia/blob/master/screenshots/Screenshot_20250116_101059.png?raw=true"/></div>
