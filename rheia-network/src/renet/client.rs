@@ -2,9 +2,9 @@ use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
 use renet::{
-    transport::{ClientAuthentication, NetcodeClientTransport},
     RenetClient,
 };
+use renet_netcode::{ClientAuthentication, NetcodeClientTransport};
 use std::{net::UdpSocket, sync::Arc, time::SystemTime};
 use strum::IntoEnumIterator;
 

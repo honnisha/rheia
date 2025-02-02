@@ -10,7 +10,7 @@ use super::{
     chunk_data_formatter::format_chunk_data_with_boundaries, chunks_map::ChunkLock,
     mesh::mesh_generator::generate_chunk_geometry, near_chunk_data::NearChunksData,
 };
-use common::{chunks::chunk_position::ChunkPosition, VERTICAL_SECTIONS};
+use common::VERTICAL_SECTIONS;
 use flume::Sender;
 use godot::obj::InstanceId;
 

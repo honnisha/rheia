@@ -12,7 +12,6 @@ use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockInfo;
-use common::chunks::rotation::Rotation;
 use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;

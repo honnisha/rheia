@@ -1,7 +1,6 @@
 use std::borrow::Borrow;
 
 use super::bridge::{na_to_network, IntoNaVector3};
-use super::collider_builder::RapierPhysicsColliderBuilder;
 use super::container::RapierPhysicsContainer;
 use crate::physics::{IPhysicsCollider, IPhysicsShape};
 use common::chunks::position::Vector3 as NetworkVector3;

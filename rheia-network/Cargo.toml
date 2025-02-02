@@ -7,7 +7,7 @@ edition = "2021"
 # default = ["network-tokio"]
 default = ["network-renet"]
 
-network-renet = ["renet"]
+network-renet = ["renet", "renet_netcode"]
 network-steamworks = ["steamworks"]
 network-rak-rs = ["rak-rs"]
 network-tokio = []
@@ -46,7 +46,8 @@ ndcopy = "0.3.0"
 # Network
 tokio = { version = "1.41.1", features = [ "full" ] }
 
-renet = { version = "0.0.16", features = ["bevy"], optional = true }
+renet = { version = "1.0", features = ["bevy"], optional = true }
+renet_netcode = { version = "1.0", optional = true }
 steamworks = { version = "0.11.0", optional = true }
 # "debug", "debug_all"
 rak-rs = { git = "https://github.com/NetrexMC/RakNet", branch = "master", optional = true, default-features = false, features = [ "async_tokio", "mcpe" ] }

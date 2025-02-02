@@ -21,7 +21,7 @@ pub struct WorldGeneratorSettings {
 
 pub struct WorldGenerator {
     noise: FastNoise,
-    settings: WorldGeneratorSettings,
+    _settings: WorldGeneratorSettings,
 }
 
 impl WorldGenerator {
@@ -42,7 +42,7 @@ impl WorldGenerator {
         noise.set_fractal_lacunarity(settings.fractal_lacunarity.unwrap_or(1.5));
         noise.set_frequency(settings.frequency.unwrap_or(2.0));
 
-        Ok(Self { noise, settings })
+        Ok(Self { noise, _settings: settings })
     }
 
     pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkDataType {

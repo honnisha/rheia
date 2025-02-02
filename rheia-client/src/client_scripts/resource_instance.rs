@@ -32,6 +32,8 @@ pub struct ResourceInstance {
     slug: String,
     scripts: Vec<ScriptInstance>,
     media: HashMap<String, MediaResource>,
+
+    #[allow(dead_code)]
     is_network: bool,
 }
 
@@ -110,10 +112,6 @@ impl ResourceInstance {
         &self.slug
     }
 
-    pub fn get_media_count(&self) -> usize {
-        self.media.len()
-    }
-
     pub fn has_media(&self, slug: &String) -> bool {
         self.media.contains_key(slug)
     }
@@ -122,7 +120,7 @@ impl ResourceInstance {
         self.media.get(slug)
     }
 
-    pub fn is_network(&self) -> bool {
+    pub fn _is_network(&self) -> bool {
         self.is_network
     }
 }

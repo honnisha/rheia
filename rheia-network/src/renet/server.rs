@@ -1,4 +1,5 @@
 use flume::{Receiver, Sender};
+use renet_netcode::{NetcodeServerTransport, ServerAuthentication, ServerConfig};
 use std::{
     collections::HashMap,
     net::UdpSocket,
@@ -7,10 +8,7 @@ use std::{
 };
 use strum::IntoEnumIterator;
 
-use renet::{
-    transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
-    ClientId, RenetServer, ServerEvent,
-};
+use renet::{RenetServer, ServerEvent};
 
 use crate::{
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
@@ -100,9 +98,8 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
 
         let mut connections = self.connections.write().unwrap();
         for connection in connections.values() {
-            let client_id = ClientId::from_raw(connection.client_id);
             for channel_type in ClientChannel::iter() {
-                while let Some(client_message) = server.receive_message(client_id, channel_type) {
+                while let Some(client_message) = server.receive_message(connection.client_id, channel_type) {
                     let decoded: ClientMessages = match bincode::deserialize(&client_message) {
                         Ok(d) => d,
                         Err(e) => {
@@ -120,8 +117,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
                     let addr = transport.client_addr(client_id.clone()).unwrap();
-                    let connection =
-                        RenetServerConnection::create(self.server.clone(), client_id.raw(), addr.to_string());
+                    let connection = RenetServerConnection::create(self.server.clone(), client_id, addr.to_string());
                     let connect = ConnectionMessages::Connect {
                         connection: connection.clone(),
                     };
@@ -129,9 +125,9 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
                     connections.insert(connection.get_client_id(), connection);
                 }
                 ServerEvent::ClientDisconnected { client_id, reason } => {
-                    connections.remove(&client_id.raw());
+                    connections.remove(&client_id);
                     let connect = ConnectionMessages::Disconnect {
-                        client_id: client_id.raw(),
+                        client_id: client_id,
                         reason: reason.to_string(),
                     };
                     self.channel_connections.0.send(connect).unwrap();
@@ -152,8 +148,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
     }
 
     fn is_connected(&self, connection: &RenetServerConnection) -> bool {
-        self.get_server()
-            .is_connected(ClientId::from_raw(connection.get_client_id()))
+        self.get_server().is_connected(connection.get_client_id())
     }
 }
 
@@ -191,7 +186,7 @@ impl IServerConnection for RenetServerConnection {
         let encoded = bincode::serialize(message).unwrap();
         let mut server = self.server.as_ref().write().expect("poisoned");
         server.send_message(
-            ClientId::from_raw(self.client_id),
+            self.client_id,
             RenetServerNetwork::map_type_channel(message_type),
             encoded,
         );

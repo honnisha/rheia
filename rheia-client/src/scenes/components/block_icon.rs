@@ -71,7 +71,7 @@ impl BlockIcon {
 
     #[func]
     fn on_mouse_entered(&mut self) {
-        let Some(block_id) = self.block_id.as_ref() else {
+        let Some(_block_id) = self.block_id.as_ref() else {
             return;
         };
         // log::info!("enter block_id: {}", block_id);
@@ -79,7 +79,7 @@ impl BlockIcon {
 
     #[func]
     fn on_mouse_exited(&mut self) {
-        let Some(block_id) = self.block_id.as_ref() else {
+        let Some(_block_id) = self.block_id.as_ref() else {
             return;
         };
         // log::info!("exit block_id: {}", block_id);

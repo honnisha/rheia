@@ -76,7 +76,7 @@ impl ResourceStorage {
         return None;
     }
 
-    pub fn iter_mut(&mut self) -> std::collections::hash_map::IterMut<'_, String, ResourceInstance> {
+    pub fn _iter_mut(&mut self) -> std::collections::hash_map::IterMut<'_, String, ResourceInstance> {
         self.resources.iter_mut()
     }
 }
@@ -271,7 +271,7 @@ impl ResourceManager {
     pub fn _run_event(&mut self, callback_name: &String, args: &Vec<Dynamic>) {
         let rc = self.rhai_engine.clone();
         let mut rhai_engine = rc.borrow_mut();
-        for (_slug, resource) in self.get_resources_storage_mut().iter_mut() {
+        for (_slug, resource) in self.get_resources_storage_mut()._iter_mut() {
             resource._run_event(&mut rhai_engine, callback_name, args);
         }
     }
