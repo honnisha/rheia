@@ -34,13 +34,13 @@ pub fn on_settings_loaded(
             panic!("default world is not found");
         };
 
-        commands.add(SpawnPlayer::create(
+        commands.queue(SpawnPlayer::create(
             default_world,
             event.client.clone(),
             Position::new(0.0, 30.0, 0.0),
             Rotation::new(0.0, 0.0),
         ));
-        commands.add(UpdatePlayerSkin::create(
+        commands.queue(UpdatePlayerSkin::create(
             event.client.clone(),
             Some(EntitySkin::create(NetworkEntitySkin::Generic)),
         ));

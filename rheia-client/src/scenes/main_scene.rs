@@ -78,7 +78,7 @@ pub struct MainScene {
 
     #[init(val = 12)]
     #[export]
-    debug_render_distance: u16,
+    debug_render_distance: i32,
 
     #[export(file = "*.json")]
     debug_world_settings: GString,

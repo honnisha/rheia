@@ -2,18 +2,16 @@ use bevy::prelude::Resource;
 use bevy::prelude::*;
 use bevy_app::App;
 use bevy_ecs::system::Res;
-use common::{
-    chunks::chunk_position::ChunkPosition,
-    network::{
-        client::ClientNetwork,
-        messages::{ClientMessages, NetworkMessageType, ServerMessages}, NetworkClient,
-    },
-};
+use common::chunks::chunk_position::ChunkPosition;
+use network::client::IClientNetwork;
+use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use network::NetworkClient;
 use parking_lot::RwLock;
 
 use std::sync::Arc;
 
-use crate::{utils::bridge::IntoBevyVector};
+use crate::utils::bridge::IntoBevyVector;
+use crate::VERSION;
 
 use super::events::{
     self, netcode_error::NetcodeErrorEvent, on_chunk_loaded::ChunkLoadedEvent, on_chunk_unloaded::ChunkUnloadedEvent,
@@ -70,7 +68,11 @@ pub struct NetworkContainer {
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
         log::info!(target: "network", "Connecting to the server at {}", ip_port);
-        let network = match NetworkClient::new(ip_port) {
+
+        let io_loop = tokio::runtime::Runtime::new().unwrap();
+        let result = io_loop.block_on(async { NetworkClient::new(ip_port).await });
+
+        let network = match result {
             Ok(n) => n,
             Err(e) => return Err(e),
         };
@@ -121,7 +123,7 @@ fn handle_events_system(
 
     // Recieve errors from network thread
     for error in network.iter_errors() {
-        netcode_error_event.send(NetcodeErrorEvent::new(error));
+        netcode_error_event.write(NetcodeErrorEvent::new(error));
         return;
     }
 
@@ -131,8 +133,11 @@ fn handle_events_system(
             ServerMessages::AllowConnection => {
                 let connection_info = ClientMessages::ConnectionInfo {
                     login: "Test_cl".to_string(),
+                    version: VERSION.to_string(),
+                    architecture: "-".to_string(),
+                    rendering_device: "-".to_string(),
                 };
-                network.send_message(&connection_info, NetworkMessageType::ReliableOrdered);
+                network.send_message(NetworkMessageType::ReliableOrdered, &connection_info);
             }
             ServerMessages::ConsoleOutput { message } => {
                 log::info!(target: "network", "{}", message);
@@ -142,15 +147,13 @@ fn handle_events_system(
             }
             ServerMessages::Teleport {
                 world_slug,
-                location,
-                yaw,
-                pitch,
+                position,
+                rotation,
             } => {
                 player_teleport_event.send(PlayerTeleportEvent::new(
                     world_slug,
-                    location.to_transform(),
-                    yaw,
-                    pitch,
+                    position,
+                    rotation,
                 ));
             }
             ServerMessages::ChunkSectionInfo {

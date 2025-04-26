@@ -17,55 +17,55 @@ common = { path = "../rheia-common" }
 network = { path = "../rheia-network" }
 physics = { path = "../rheia-physics" }
 
-godot = { git = "https://github.com/godot-rust/gdext.git", features = ["experimental-threads"] }
+godot = { version = "0.2.4", features = ["experimental-threads"] }
 
-rand = "0.8"
-lazy_static = "1.4.0"
-regex = "1.7.3"
-spiral = "0.1"
+rand = "0.9"
+lazy_static = "1.5"
+regex = "1.11"
+spiral = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
-env_logger = "0.10.0"
-log = { version = "0.4" }
-chrono = "0.4.24"
-dirs-next = "2.0.0"
 serde_json = "1.0"
-tokio = { version = "1.41.1", features = [ "full" ] }
+env_logger = "0.11"
+log = { version = "0.4" }
+chrono = "0.4.40"
+dirs-next = "2.0.0"
+tokio = { version = "1.44", features = [ "full" ] }
 
-zip = "2.2.0"
+zip = "2.6"
 
-arrayvec = "0.7.4"
-ahash = "0.8.7"
-dashmap = "5.5.3"
-parking_lot = "0.12.1"
+arrayvec = "0.7"
+ahash = "0.8"
+dashmap = "6.1"
+parking_lot = "0.12"
 
 # Helpful macros for working with enums and strings
-strum = "0.25.0"
-strum_macros = "0.25.3"
+strum = "0.27"
+strum_macros = "0.27"
 
-ndshape = "0.3.0"
+ndshape = "0.3"
 
 # Miltithread heavy tasks
-rayon = "1.8.1"
+rayon = "1.10"
 
 # Async channels
-crossbeam = "0.8.4"
-crossbeam-channel = "0.5.11"
+crossbeam = "0.8"
+crossbeam-channel = "0.5"
 
 # A blazingly fast multi-producer channel
 flume = "0.11"
 
 # Single thread links
-send_wrapper = "0.6.0"
+send_wrapper = "0.6"
 
 # Scripts
-rhai = { version = "1.16.3", features = ["internals", "serde"] }
+rhai = { version = "1.21", features = ["internals", "serde"] }
 
 # Schematics
-flate2 = "1.0"
+flate2 = "1.1"
 fastnbt = "2"
 
-image = "0.24.8"
+image = "0.25.2"
 
 tracing = { version = "0.1", optional = true }
 tracing-tracy = { version = "=0.11.1", optional = true }

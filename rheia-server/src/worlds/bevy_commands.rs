@@ -1,5 +1,5 @@
 use bevy::prelude::{Mut, World};
-use bevy_ecs::world::Command;
+use bevy_ecs::system::Command;
 use common::chunks::block_position::BlockPositionTrait;
 use network::messages::{NetworkMessageType, ServerMessages};
 
@@ -79,7 +79,7 @@ impl UpdatePlayerSkin {
 
 impl Command for UpdatePlayerSkin {
     fn apply(self, world: &mut World) {
-        world.resource_scope(|world, worlds_manager: Mut<WorldsManager>| {
+        world.resource_scope(|_world, worlds_manager: Mut<WorldsManager>| {
             let Some(world_entity) = self.client.get_world_entity() else {
                 panic!("UpdatePlayerSkin: player not in the world");
             };

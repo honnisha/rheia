@@ -77,7 +77,7 @@ pub fn on_connection_info(
             // Or send player as loaded
 
             let msg = PlayerMediaLoadedEvent::new(event.client.clone(), None);
-            player_media_loaded_events.send(msg);
+            player_media_loaded_events.write(msg);
         }
     }
 }

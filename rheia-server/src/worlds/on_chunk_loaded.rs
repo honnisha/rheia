@@ -34,7 +34,7 @@ pub fn on_chunk_loaded(
                 }
 
                 let world_entity = WorldEntity::new(world_slug.clone(), entity.id());
-                player_spawn_events.send(PlayerSpawnEvent::new(world_entity));
+                player_spawn_events.write(PlayerSpawnEvent::new(world_entity));
             }
         }
     }

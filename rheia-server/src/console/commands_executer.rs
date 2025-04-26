@@ -5,7 +5,7 @@ use super::{
     completer::CompleteResponse,
     console_sender::ConsoleSenderType,
 };
-use bevy_ecs::{system::Resource, world::World};
+use bevy_ecs::{resource::Resource, world::World};
 use log::error;
 use regex::Regex;
 
@@ -141,18 +141,17 @@ impl CommandsHandler {
 
             if let Some((command, arg)) = command.get_current(&command_sequence[1..]) {
                 match arg {
-                    Some(_a) => {},
+                    Some(_a) => {}
                     None => {
                         // println!("command:{} arg:{:?} &command_sequence[1..]:{:?}", command.get_name(), arg, &command_sequence[1..]);
                         for c in command.commands() {
-
                             // if command name starts with arg name
                             if c.get_name().starts_with(&last_arg) {
                                 let complete = c.get_name()[last_arg.len()..].to_string();
                                 complete_response.add_completion(complete);
                             }
                         }
-                    },
+                    }
                 }
             }
             break;

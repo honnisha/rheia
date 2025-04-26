@@ -1,5 +1,5 @@
-use bevy::prelude::IntoSystemConfigs;
 use bevy_app::{App, Plugin, Startup};
+use bevy_ecs::schedule::IntoScheduleConfigs;
 use resources_manager::rescan_resources;
 use server_settings::{rescan_server_settings, ServerSettings};
 

@@ -10,6 +10,8 @@ pub mod player_controller;
 pub mod utils;
 pub mod world;
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let mut app = App::new();
     app.add_plugins((

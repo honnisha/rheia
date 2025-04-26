@@ -1,6 +1,6 @@
 use ahash::AHashMap;
 use bevy::prelude::{Bundle, Component, Entity, EntityRef, EntityWorldMut, QueryState, World};
-use bevy_ecs::{change_detection::Mut, query::QueryData};
+use bevy_ecs::{change_detection::Mut, component::Mutable, query::QueryData};
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
 
 /// A wrapper around `bevy::prelude::World`
@@ -49,11 +49,11 @@ impl Ecs {
         self.ecs.despawn(entity)
     }
 
-    pub fn get_chunk_entities<'w>(&'w self, chunk: &ChunkPosition) -> Result<Vec<EntityRef<'w>>, Entity> {
+    pub fn get_chunk_entities<'w>(&'w self, chunk: &ChunkPosition) -> Result<Vec<EntityRef<'w>>, ()> {
         if let Some(entities) = self.chunks_entities.get(chunk) {
             let mut borrows = Vec::with_capacity(entities.len());
             for &id in entities {
-                borrows.push(self.ecs.get_entity(id).ok_or(id)?);
+                borrows.push(self.ecs.get_entity(id).ok().unwrap());
             }
             return Ok(borrows);
         }
@@ -61,12 +61,12 @@ impl Ecs {
         return Ok(empty);
     }
 
-    pub fn get_mut<T: Component>(&mut self, entity: Entity) -> Option<Mut<T>> {
+    pub fn get_mut<T: Component<Mutability = Mutable>>(&mut self, entity: Entity) -> Option<Mut<T>> {
         self.ecs.get_mut(entity)
     }
 
     pub fn get_entity(&self, entity: Entity) -> Option<EntityRef> {
-        self.ecs.get_entity(entity)
+        self.ecs.get_entity(entity).ok()
     }
 
     pub fn entity_mut(&mut self, entity: Entity) -> EntityWorldMut {

@@ -17,7 +17,7 @@ pub fn generate_chunks(
     world: &mut Gd<WorldManager>,
     x: i32,
     z: i32,
-    chunks_distance: u16,
+    chunks_distance: i32,
     settings: WorldGeneratorSettings,
 ) {
     let now = std::time::Instant::now();

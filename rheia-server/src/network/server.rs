@@ -1,12 +1,13 @@
 use std::thread;
 
-use bevy::prelude::IntoSystemConfigs;
 use bevy::time::Time;
 use bevy_app::{App, Update};
 use bevy_ecs::change_detection::Mut;
+use bevy_ecs::resource::Resource;
+use bevy_ecs::schedule::IntoScheduleConfigs;
 use bevy_ecs::{
     prelude::EventWriter,
-    system::{Res, ResMut, Resource},
+    system::{Res, ResMut},
     world::World,
 };
 use flume::{Receiver, Sender};
@@ -139,11 +140,11 @@ fn receive_message_system(
             match decoded {
                 ClientMessages::ResourcesLoaded { last_index } => {
                     let msg = PlayerMediaLoadedEvent::new(client.clone(), Some(last_index));
-                    player_media_loaded_events.send(msg);
+                    player_media_loaded_events.write(msg);
                 }
                 ClientMessages::SettingsLoaded => {
                     let msg = PlayerSettingsLoadedEvent::new(client.clone());
-                    settings_loaded_events.send(msg);
+                    settings_loaded_events.write(msg);
                 }
                 ClientMessages::ConsoleInput { command } => {
                     CONSOLE_INPUT.0.send((*client_id, command)).unwrap();
@@ -153,7 +154,7 @@ fn receive_message_system(
                 }
                 ClientMessages::PlayerMove { position, rotation } => {
                     let movement = PlayerMoveEvent::new(client.clone(), position.to_server(), rotation.to_server());
-                    player_move_events.send(movement);
+                    player_move_events.write(movement);
                 }
                 ClientMessages::ConnectionInfo {
                     login,
@@ -163,7 +164,7 @@ fn receive_message_system(
                 } => {
                     let info =
                         PlayerConnectionInfoEvent::new(client.clone(), login, version, architecture, rendering_device);
-                    connection_info_events.send(info);
+                    connection_info_events.write(info);
                 }
                 ClientMessages::EditBlockRequest {
                     world_slug,
@@ -171,7 +172,7 @@ fn receive_message_system(
                     new_block_info,
                 } => {
                     let edit = EditBlockEvent::new(client.clone(), world_slug, position, new_block_info);
-                    edit_block_events.send(edit);
+                    edit_block_events.write(edit);
                 }
             }
         }
@@ -202,11 +203,11 @@ fn handle_events_system(
             ConnectionMessages::Connect { connection } => {
                 clients.add(connection.clone());
                 let client = clients.get(&connection.get_client_id()).unwrap();
-                connection_events.send(PlayerConnectionEvent::new(client.clone()));
+                connection_events.write(PlayerConnectionEvent::new(client.clone()));
             }
             ConnectionMessages::Disconnect { client_id, reason } => {
                 let client = clients.get(&client_id).unwrap();
-                disconnection_events.send(PlayerDisconnectEvent::new(client.clone(), reason));
+                disconnection_events.write(PlayerDisconnectEvent::new(client.clone(), reason));
             }
         }
     }

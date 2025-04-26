@@ -1,4 +1,4 @@
-use bevy::prelude::{Entity, Event, EventReader, Res};
+use bevy::prelude::{Entity, Event};
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{

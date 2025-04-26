@@ -1,5 +1,5 @@
 use ahash::AHashMap;
-use bevy_ecs::system::Resource;
+use bevy_ecs::resource::Resource;
 use network::NetworkServerConnection;
 
 use super::client_network::ClientNetwork;

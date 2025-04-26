@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::{
-    prelude::{FrameCountPlugin, TaskPoolPlugin, TypeRegistrationPlugin},
+    prelude::{TaskPoolPlugin},
     time::TimePlugin,
 };
 use bevy_app::{App, ScheduleRunnerPlugin};
@@ -49,8 +49,6 @@ fn main() {
     app.add_plugins((
         TimePlugin::default(),
         TaskPoolPlugin::default(),
-        TypeRegistrationPlugin::default(),
-        FrameCountPlugin::default(),
         ScheduleRunnerPlugin::default(),
         ConsolePlugin::default(),
         RuntimePlugin::default(),

@@ -19,7 +19,7 @@ enum ServerState {
 pub struct RuntimePlugin;
 
 impl RuntimePlugin {
-    pub fn is_active() -> bool {
+    pub fn _is_active() -> bool {
         let state = SERVER_STATE.read().unwrap();
         match &*state {
             ServerState::ACTIVE => true,
@@ -59,6 +59,6 @@ fn activate_runtime() {
 
 fn update_runtime(mut app_exit_events: EventWriter<AppExit>) {
     if RuntimePlugin::is_stopped() {
-        app_exit_events.send(AppExit::Success);
+        app_exit_events.write(AppExit::Success);
     }
 }
