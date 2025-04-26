@@ -13,10 +13,10 @@ use self::{
 
 pub mod chunks;
 pub mod commands;
+pub mod ecs;
 pub mod on_chunk_loaded;
 pub mod world_manager;
 pub mod worlds_manager;
-pub mod ecs;
 
 pub struct WorldsHandlerPlugin;
 
@@ -51,5 +51,6 @@ impl Plugin for WorldsHandlerPlugin {
         app.insert_resource(worlds_manager);
 
         app.add_systems(Update, update_world_chunks);
+        app.add_systems(Update, on_chunk_loaded::on_chunk_loaded);
     }
 }
