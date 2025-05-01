@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_app::App;
 
+use crate::client_scripts::resource_manager::ResourceManagerType;
+
 use super::{
     chunks::chunk_generator::{chunk_generator, send_chunks_to_load, GenerateChunkEvent},
     world_manager::WorldManager,
@@ -22,6 +24,8 @@ impl Plugin for WorldsManagerPlugin {
 #[derive(Resource, Default)]
 pub struct WorldsManager {
     world: Option<WorldManager>,
+
+    resource_manager: Option<ResourceManagerType>,
 }
 
 impl WorldsManager {
@@ -55,5 +59,9 @@ impl WorldsManager {
     pub fn unload_world(&mut self) {
         log::info!(target: "world", "World \"{}\" unloaded", self.get_world_slug().unwrap_or(&"-".to_string()));
         self.world = None;
+    }
+
+    pub fn set_resource_manager(&mut self, resource_manager: ResourceManagerType) {
+        self.resource_manager = Some(resource_manager);
     }
 }

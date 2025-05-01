@@ -1,4 +1,3 @@
-use bevy::prelude::Resource;
 use bevy::prelude::*;
 use bevy_app::App;
 use bevy_ecs::system::Res;
@@ -10,12 +9,14 @@ use parking_lot::RwLock;
 
 use std::sync::Arc;
 
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::utils::bridge::IntoBevyVector;
+use crate::world::worlds_manager::WorldsManager;
 use crate::VERSION;
 
 use super::events::{
     self, netcode_error::NetcodeErrorEvent, on_chunk_loaded::ChunkLoadedEvent, on_chunk_unloaded::ChunkUnloadedEvent,
-    on_player_teleport::PlayerTeleportEvent, on_resource_loaded::ResourceLoadedEvent,
+    on_player_teleport::PlayerTeleportEvent,
 };
 
 #[derive(Default)]
@@ -27,12 +28,6 @@ impl Plugin for NetworkPlugin {
         app.add_systems(
             Update,
             events::netcode_error::netcode_error_handler.after(handle_events_system),
-        );
-
-        app.add_event::<ResourceLoadedEvent>();
-        app.add_systems(
-            Update,
-            events::on_resource_loaded::on_resource_loaded.after(handle_events_system),
         );
 
         app.add_event::<PlayerTeleportEvent>();
@@ -112,8 +107,9 @@ fn connect_server(mut commands: Commands) {
 
 fn handle_events_system(
     network_container: Res<NetworkContainer>,
+    mut resource_manager: NonSendMut<ResourceManager>,
+    mut worlds_manager: ResMut<WorldsManager>,
     mut netcode_error_event: EventWriter<NetcodeErrorEvent>,
-    mut resource_loaded_event: EventWriter<ResourceLoadedEvent>,
     mut player_teleport_event: EventWriter<PlayerTeleportEvent>,
     mut chunk_loaded_event: EventWriter<ChunkLoadedEvent>,
     mut chunk_unloaded_event: EventWriter<ChunkUnloadedEvent>,
@@ -142,9 +138,56 @@ fn handle_events_system(
             ServerMessages::ConsoleOutput { message } => {
                 log::info!(target: "network", "{}", message);
             }
-            ServerMessages::Resource { slug, scripts } => {
-                resource_loaded_event.send(ResourceLoadedEvent::new(slug, scripts));
+            ServerMessages::ResourcesScheme { list, archive_hash } => {
+                resource_manager.set_resource_scheme(list, archive_hash);
+                let (scripts_count, media_count) = resource_manager.get_resource_scheme_count();
+                log::info!(target: "network", "Resources scheme loaded from network (scripts:{}, media:{})", scripts_count, media_count);
             }
+            ServerMessages::ResourcesPart {
+                index,
+                total,
+                data,
+                last,
+            } => {
+                {
+                    resource_manager.load_archive_chunk(&mut data);
+
+                    if last {
+                        if let Err(e) = resource_manager.load_archive() {
+                            let msg = format!("Network resources download error: {}", e);
+                            netcode_error_event.write(NetcodeErrorEvent::new(msg));
+                            return;
+                        }
+                        log::info!(target: "network", "Resources archive downloading from the network; index:{}", index);
+                    }
+                }
+
+                let msg = ClientMessages::ResourcesLoaded { last_index: index };
+                network.send_message(NetworkMessageType::ReliableOrdered, &msg);
+            }
+            ServerMessages::Settings { block_types } => {
+                log::info!(target: "network", "Recieved settings from the network");
+
+                {
+                    let mut block_storage = worlds_manager.get_block_storage_mut();
+                    if let Err(e) =
+                        block_storage.load_blocks_types(block_types, &*resource_manager.get_resources_storage())
+                    {
+                        return Err(e);
+                    }
+                }
+
+                if let Err(e) = worlds_manager.build_textures(&*&resource_manager.get_resources_storage()) {
+                    return Err(e);
+                }
+
+                network.send_message(NetworkMessageType::ReliableOrdered, &ClientMessages::SettingsLoaded);
+
+                // main.on_server_connected();
+            }
+
+            ServerMessages::SpawnWorld { world_slug } => todo!(),
+            ServerMessages::UpdatePlayerSkin { skin } => todo!(),
             ServerMessages::Teleport {
                 world_slug,
                 position,
@@ -152,6 +195,36 @@ fn handle_events_system(
             } => {
                 player_teleport_event.send(PlayerTeleportEvent::new(world_slug, position.to_transform(), rotation));
             }
+
+            ServerMessages::ChunkSectionInfo {
+                world_slug,
+                chunk_position,
+                sections,
+            } => todo!(),
+            ServerMessages::UnloadChunks { world_slug, chunks } => todo!(),
+
+            ServerMessages::StartStreamingEntity {
+                world_slug,
+                id,
+                position,
+                rotation,
+                skin,
+            } => todo!(),
+            ServerMessages::UpdateEntitySkin { world_slug, id, skin } => todo!(),
+            ServerMessages::StopStreamingEntities { world_slug, ids } => todo!(),
+            ServerMessages::EntityMove {
+                world_slug,
+                id,
+                position,
+                rotation,
+            } => todo!(),
+
+            ServerMessages::EditBlock {
+                world_slug,
+                position,
+                new_block_info,
+            } => todo!(),
+            /*
             ServerMessages::ChunkSectionInfo {
                 world_slug,
                 chunk_position,
@@ -163,7 +236,7 @@ fn handle_events_system(
             ServerMessages::UnloadChunks { world_slug, chunks } => {
                 chunk_unloaded_event.send(ChunkUnloadedEvent::new(world_slug, chunks));
             }
-            _ => panic!("unsupported message"),
+            */
         }
     }
     if chunks.len() > 0 {

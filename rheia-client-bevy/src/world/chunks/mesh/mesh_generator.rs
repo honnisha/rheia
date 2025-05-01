@@ -7,10 +7,9 @@ use bevy::{
     },
 };
 use common::{
-    blocks::blocks_storage::BlockType,
+    blocks::{block_info::BlockInfo, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
     utils::block_mesh::{
-        greedy::{greedy_quads, GreedyQuadsBuffer},
-        visible_block_faces, QuadBuffer, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
+        greedy::{greedy_quads, GreedyQuadsBuffer}, visible_block_faces, QuadBuffer, UnitQuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG
     },
     CHUNK_SIZE,
 };
@@ -18,18 +17,17 @@ use ndshape::ConstShape;
 
 use crate::world::{
     block_storage::BlockStorage,
-    chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered, ChunkDataBordered},
+    chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered},
 };
 
-#[allow(dead_code)]
-pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {
-    let mut b_chunk = [BlockType::Air; ChunkBordersShape::SIZE as usize];
+pub(crate) fn _get_test_sphere(radius: f32, block_info: BlockInfo) -> ChunkColliderDataBordered {
+    let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
 
     for i in 0u32..(ChunkBordersShape::SIZE as u32) {
         let [x, y, z] = ChunkBordersShape::delinearize(i);
         b_chunk[i as usize] = match ((x * x + y * y + z * z) as f32).sqrt() < radius {
-            true => BlockType::Stone,
-            _ => BlockType::Air,
+            true => ChunkColliderInfo::create(VoxelVisibility::Opaque, Some(block_info.clone())),
+            _ => ChunkColliderInfo::create(VoxelVisibility::Empty, None),
         };
     }
     b_chunk
@@ -48,10 +46,10 @@ pub fn generate_buffer(chunk_collider_data: &ChunkColliderDataBordered) -> UnitQ
     buffer
 }
 
-pub fn _generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
-    let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
+pub fn _generate_buffer_greedy(chunk_collider_data: &ChunkColliderDataBordered) -> QuadBuffer {
+    let mut buffer = GreedyQuadsBuffer::new(chunk_collider_data.len());
     greedy_quads(
-        chunk_data, //&b_chunk,
+        chunk_collider_data,
         &ChunkBordersShape {},
         [0; 3],
         [CHUNK_SIZE as u32 + 1; 3],
@@ -87,7 +85,7 @@ pub fn generate_chunk_geometry(
         // group Vec<UnorientedUnitQuad>
         for quad in group.into_iter() {
             indices.extend_from_slice(&face.quad_mesh_indices(positions.len() as u32));
-            positions.extend_from_slice(&face.quad_mesh_positions(&quad.into(), 1.0));
+            positions.extend_from_slice(&face.quad_mesh_positions(&quad.clone().into(), 1.0));
             normals.extend_from_slice(&face.quad_mesh_normals());
             let unoriented_quad = UnorientedQuad::from(quad);
             tex_coords.extend_from_slice(&face.tex_coords(

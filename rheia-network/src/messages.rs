@@ -67,7 +67,7 @@ pub enum ServerMessages {
         message: String,
     },
 
-    // Server settings and resources
+    // Information about server resources (media, scripts)
     ResourcesScheme {
         list: Vec<ResurceScheme>,
         archive_hash: u64,

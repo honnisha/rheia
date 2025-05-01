@@ -1,3 +1,4 @@
+use bevy_ecs::resource::Resource;
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
@@ -81,7 +82,9 @@ impl ResourceStorage {
 }
 
 pub type ResourceStorageType = Arc<RwLock<ResourceStorage>>;
+pub type ResourceManagerType = Rc<RefCell<ResourceManager>>;
 
+#[derive(Resource)]
 pub struct ResourceManager {
     rhai_engine: Rc<RefCell<Engine>>,
     resources_storage: ResourceStorageType,
