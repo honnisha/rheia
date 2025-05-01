@@ -44,6 +44,11 @@ send_wrapper = "0.6"
 # Miltithread heavy tasks
 rayon = "1.10"
 
+# Scripts
+rhai = { version = "1.21", features = ["internals", "serde"] }
+
+zip = "2.6"
+
 # Enable a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1

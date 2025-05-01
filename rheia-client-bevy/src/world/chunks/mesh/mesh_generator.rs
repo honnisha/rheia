@@ -16,7 +16,10 @@ use common::{
 };
 use ndshape::ConstShape;
 
-use crate::world::chunks::chunk_section::{ChunkBordersShape, ChunkDataBordered};
+use crate::world::{
+    block_storage::BlockStorage,
+    chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered, ChunkDataBordered},
+};
 
 #[allow(dead_code)]
 pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {
@@ -32,12 +35,10 @@ pub fn get_test_sphere(radius: f32) -> ChunkDataBordered {
     b_chunk
 }
 
-pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
-    //let b_chunk = get_test_sphere(7.0);
-
+pub fn generate_buffer(chunk_collider_data: &ChunkColliderDataBordered) -> UnitQuadBuffer {
     let mut buffer = UnitQuadBuffer::new();
     visible_block_faces(
-        chunk_data, //&b_chunk,
+        chunk_collider_data,
         &ChunkBordersShape {},
         [0; 3],
         [CHUNK_SIZE as u32 + 1; 3],
@@ -47,7 +48,7 @@ pub fn generate_buffer(chunk_data: &ChunkDataBordered) -> UnitQuadBuffer {
     buffer
 }
 
-pub fn generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
+pub fn _generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
     let mut buffer = GreedyQuadsBuffer::new(chunk_data.len());
     greedy_quads(
         chunk_data, //&b_chunk,
@@ -61,10 +62,11 @@ pub fn generate_buffer_greedy(chunk_data: &ChunkDataBordered) -> QuadBuffer {
 }
 
 pub fn generate_chunk_geometry(
-    //texture_mapper: &RwLockReadGuard<TextureMapper>,
-    chunk_data: &ChunkDataBordered,
+    // texture_mapper: &TextureMapper,
+    chunk_collider_data: &ChunkColliderDataBordered,
+    block_storage: &BlockStorage,
 ) -> Mesh {
-    let buffer = generate_buffer_greedy(chunk_data);
+    let buffer = generate_buffer(chunk_collider_data);
 
     let num_indices = buffer.num_quads() * 6;
     let num_vertices = buffer.num_quads() * 4;

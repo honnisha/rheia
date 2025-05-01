@@ -9,6 +9,7 @@ pub mod network;
 pub mod player_controller;
 pub mod utils;
 pub mod world;
+pub mod client_scripts;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

@@ -6765,6 +6765,7 @@ dependencies = [
  "parking_lot 0.12.3",
  "physics",
  "rayon",
+ "rhai",
  "send_wrapper 0.6.0",
  "serde",
  "serde_yaml",
@@ -6772,6 +6773,7 @@ dependencies = [
  "strum 0.27.1",
  "strum_macros 0.27.1",
  "tokio",
+ "zip",
 ]
 
 [[package]]

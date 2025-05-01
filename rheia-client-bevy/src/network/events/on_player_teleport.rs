@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use bevy::prelude::{Event, EventReader, Transform, ResMut};
+use bevy::prelude::{Event, EventReader, ResMut, Transform};
+use common::chunks::rotation::Rotation;
 
 use crate::world::worlds_manager::WorldsManager;
 
@@ -8,17 +9,15 @@ use crate::world::worlds_manager::WorldsManager;
 pub struct PlayerTeleportEvent {
     world_slug: String,
     transform: Transform,
-    yaw: f32,
-    pitch: f32,
+    rotation: Rotation,
 }
 
 impl PlayerTeleportEvent {
-    pub fn new(world_slug: String, transform: Transform, yaw: f32, pitch: f32) -> Self {
+    pub fn new(world_slug: String, transform: Transform, rotation: Rotation) -> Self {
         Self {
             world_slug,
             transform,
-            yaw,
-            pitch,
+            rotation,
         }
     }
 }
@@ -35,10 +34,10 @@ pub fn on_player_teleport(
                     worlds_manager.unload_world();
                     worlds_manager.load_world(event.world_slug.clone());
                 }
-            },
+            }
             None => {
                 worlds_manager.load_world(event.world_slug.clone());
-            },
+            }
         }
     }
 }

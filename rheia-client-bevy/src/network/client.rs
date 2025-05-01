@@ -150,11 +150,7 @@ fn handle_events_system(
                 position,
                 rotation,
             } => {
-                player_teleport_event.send(PlayerTeleportEvent::new(
-                    world_slug,
-                    position,
-                    rotation,
-                ));
+                player_teleport_event.send(PlayerTeleportEvent::new(world_slug, position.to_transform(), rotation));
             }
             ServerMessages::ChunkSectionInfo {
                 world_slug,
@@ -174,6 +170,6 @@ fn handle_events_system(
         let input = ClientMessages::ChunkRecieved {
             chunk_positions: chunks,
         };
-        network.send_message(&input, NetworkMessageType::WorldInfo);
+        network.send_message(NetworkMessageType::WorldInfo, &input);
     }
 }

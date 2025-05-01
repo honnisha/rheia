@@ -1,5 +1,5 @@
 use bevy::transform::components::Transform;
-use common::network::messages::Vector3 as NetworkVector3;
+use common::chunks::position::Vector3 as NetworkVector3;
 
 pub trait IntoBevyVector {
     fn to_transform(&self) -> Transform;
