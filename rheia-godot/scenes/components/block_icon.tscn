@@ -26,6 +26,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+color = Color(0.235294, 0.235294, 0.235294, 0.470588)
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1
@@ -48,7 +49,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
 keep_aspect = 0
 projection = 1
 current = true
-size = 2.0
+size = 1.528
 far = 100.0
 
 [node name="Anchor" type="Node3D" parent="SubViewportContainer/SubViewport"]

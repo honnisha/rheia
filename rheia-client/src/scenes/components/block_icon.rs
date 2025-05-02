@@ -122,7 +122,7 @@ impl BlockIcon {
                 }
                 block_anchor.add_child(&mesh);
             }
-            BlockContent::ModelCube { model: _ } => {
+            BlockContent::ModelCube { model: _, icon_size } => {
                 let mut objects_container = ObjectsContainer::new_alloc();
                 let position = BlockPosition::new(0, 0, 0);
                 objects_container
@@ -132,7 +132,12 @@ impl BlockIcon {
                 objects_container.set_position(Vector3::new(-1.5, -1.5, -1.5));
 
                 if let Some(camera) = self.camera.as_mut() {
-                    camera.set_size(3.0);
+                    let icon_size = match icon_size {
+                        Some(s) => s,
+                        None => &1.0,
+                    };
+                    // чем больше, тем дальше
+                    camera.set_size(3.0 / icon_size);
                 }
                 block_anchor.add_child(&objects_container);
             }

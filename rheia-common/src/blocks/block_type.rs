@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::voxel_visibility::VoxelVisibility;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum BlockContent {
     Texture {
@@ -12,6 +12,7 @@ pub enum BlockContent {
     },
     ModelCube {
         model: String,
+        icon_size: Option<f32>,
     },
 }
 
@@ -28,7 +29,7 @@ impl BlockContent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BlockType {
     voxel_visibility: VoxelVisibility,
     block_content: BlockContent,
@@ -63,7 +64,7 @@ impl BlockType {
 
     pub fn get_model(&self) -> Option<&String> {
         match &self.block_content {
-            BlockContent::ModelCube { model } => {
+            BlockContent::ModelCube { model, icon_size: _ } => {
                 return Some(model);
             }
             _ => None,

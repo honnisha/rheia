@@ -81,7 +81,7 @@ impl ObjectsContainer {
 
             let position = BlockPosition::from_chunk_position(chunk_position, &y, chunk_block_position);
             match block_type.get_block_content() {
-                BlockContent::ModelCube { model: _ } => {
+                BlockContent::ModelCube { model: _, icon_size: _ } => {
                     self.create_block_model(&position, &block_type, Some(physics), resource_storage)?;
                 }
                 _ => continue,

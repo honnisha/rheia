@@ -85,7 +85,7 @@ impl ServerSettings {
                             return Err(format!("&ctexture not found: {}", bottom_texture.as_ref().unwrap()));
                         }
                     }
-                    BlockContent::ModelCube { model } => {
+                    BlockContent::ModelCube { model, icon_size: _ } => {
                         if !resource_manager.has_media(model) {
                             return Err(format!("&cmodel not found: {}", model));
                         }

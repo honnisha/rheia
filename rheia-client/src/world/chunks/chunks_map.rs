@@ -200,7 +200,7 @@ impl ChunkMap {
                 } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model: _ } => {
+                BlockContent::ModelCube { model: _, icon_size: _ } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");
@@ -232,7 +232,7 @@ impl ChunkMap {
                 } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model: _ } => {
+                BlockContent::ModelCube { model: _, icon_size: _ } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");
@@ -275,30 +275,22 @@ impl ChunkMap {
 
         let x = position.get_chunk_position() + ChunkPosition::new(-1, 0);
         if block_position.x == 0 && self.get_chunk(&x).is_some() {
-            self.chunks_to_update
-                .borrow_mut()
-                .insert((x, section as usize));
+            self.chunks_to_update.borrow_mut().insert((x, section as usize));
         }
 
         let x = position.get_chunk_position() + ChunkPosition::new(1, 0);
         if block_position.x == CHUNK_SIZE - 1 && self.get_chunk(&x).is_some() {
-            self.chunks_to_update
-                .borrow_mut()
-                .insert((x, section as usize));
+            self.chunks_to_update.borrow_mut().insert((x, section as usize));
         }
 
         let z = position.get_chunk_position() + ChunkPosition::new(0, -1);
         if block_position.z == 0 && self.get_chunk(&z).is_some() {
-            self.chunks_to_update
-                .borrow_mut()
-                .insert((z, section as usize));
+            self.chunks_to_update.borrow_mut().insert((z, section as usize));
         }
 
         let z = position.get_chunk_position() + ChunkPosition::new(0, 1);
         if block_position.z == CHUNK_SIZE - 1 && self.get_chunk(&z).is_some() {
-            self.chunks_to_update
-                .borrow_mut()
-                .insert((z, section as usize));
+            self.chunks_to_update.borrow_mut().insert((z, section as usize));
         }
     }
 

@@ -300,19 +300,19 @@ impl INode for MainScene {
 
             self.regenerate_debug_world(false);
         } else {
-            // Console
-            let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
-            self.console.init(console);
-
-            let console = self.console.clone();
-            self.base_mut().add_child(&console);
-
             // Debug
             let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
             self.debug_info.init(debug_info);
 
             let debug_info = self.debug_info.clone();
             self.base_mut().add_child(&debug_info);
+
+            // Console
+            let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
+            self.console.init(console);
+
+            let console = self.console.clone();
+            self.base_mut().add_child(&console);
 
             self.debug_info.bind_mut().toggle(false);
 
@@ -374,7 +374,6 @@ impl INode for MainScene {
             let input = Input::singleton();
             if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
                 if !Console::is_active() {
-                    self.debug_info.bind_mut().toggle(false);
                     self.block_selection.bind_mut().toggle(false);
                 }
 
@@ -384,17 +383,11 @@ impl INode for MainScene {
                 let is_active = self.block_selection.bind().is_active();
                 if !is_active {
                     self.console.bind_mut().toggle(false);
-                    self.debug_info.bind_mut().toggle(false);
                 }
 
                 self.block_selection.bind_mut().toggle(!is_active);
             }
             if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
-                if !DebugInfo::is_active() {
-                    self.console.bind_mut().toggle(false);
-                    self.block_selection.bind_mut().toggle(false);
-                }
-
                 self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
             }
         }

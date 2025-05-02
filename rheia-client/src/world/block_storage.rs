@@ -64,7 +64,7 @@ impl BlockStorage {
                         return Err(format!("texture not found: &e\"{}\"", bottom_texture.as_ref().unwrap()));
                     }
                 }
-                BlockContent::ModelCube { model } => {
+                BlockContent::ModelCube { model, icon_size: _ } => {
                     if !resources_storage.has_media(model) {
                         return Err(format!("model not found: &e\"{}\"", model));
                     }

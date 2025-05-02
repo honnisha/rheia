@@ -73,7 +73,7 @@ impl TextureMapper {
                     },
                 }
             }
-            BlockContent::ModelCube { model } => return None,
+            BlockContent::ModelCube { model, icon_size: _ } => return None,
         };
 
         self.textures_map.iter().position(|t| t == texture)
