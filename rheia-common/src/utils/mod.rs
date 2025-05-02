@@ -44,3 +44,11 @@ pub fn validate_username(username: &String) -> bool {
     let re = regex::Regex::new(r"^[a-zA-Z0-9_]{2,16}$").unwrap();
     re.is_match(username)
 }
+
+pub fn uppercase_first(s: &String) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().chain(c).collect(),
+    }
+}

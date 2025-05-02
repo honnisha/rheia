@@ -81,7 +81,7 @@ impl Color {
 
     pub fn to_godot_tag(&self) -> Cow<'static, str> {
         match *self {
-            Color::Reset => "[/color]".into(),
+            Color::Reset => "[/color][color=white]".into(),
             Color::Black => "[color=black]".into(),
             Color::DarkBlue => "[color=dark_blue]".into(),
             Color::DarkGreen => "[color=dark_green]".into(),
@@ -149,7 +149,10 @@ pub fn parse_to_console_godot(origin: &String) -> String {
         result.replace_range(c.start() + offset..c.end() + offset, &replace_str);
         offset += replace_str.len() - c.as_str().len();
     }
-    return format!("{}{}", result, Color::Reset.to_godot_tag());
+    if result.find("[color").is_some() {
+        result = format!("{}{}", result, Color::Reset.to_godot_tag());
+    }
+    result
 }
 
 pub fn get_log_level_color(level: &Level) -> Cow<'static, str> {
@@ -157,7 +160,7 @@ pub fn get_log_level_color(level: &Level) -> Cow<'static, str> {
         Level::Error => "&c".into(),
         Level::Warn => "&6".into(),
         Level::Info => "&a".into(),
-        Level::Debug => "&7".into(),
+        Level::Debug => "&e".into(),
         Level::Trace => "&8".into(),
     }
 }

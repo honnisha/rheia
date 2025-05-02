@@ -168,6 +168,9 @@ impl ResourceManager {
 
         self.archive_hash = Some(calculate_hash(&archive_data));
         self.archive_data = Some(archive_data);
+
+        let parts_count = self.get_archive_parts_count(ARCHIVE_CHUNK_SIZE);
+        log::info!(target: "resources", "Resources archive generated; parts count: {}", parts_count);
     }
     pub fn get_archive_len(&self) -> usize {
         self.archive_data.as_ref().unwrap().len()

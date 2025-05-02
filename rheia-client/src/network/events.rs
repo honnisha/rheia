@@ -92,17 +92,23 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 index,
                 total,
                 mut data,
-                last,
             } => {
                 {
                     let mut resource_manager = main.get_resource_manager_mut();
                     resource_manager.load_archive_chunk(&mut data);
 
-                    if last {
-                        if let Err(e) = resource_manager.load_archive() {
-                            return Err(format!("Network resources download error: {}", e));
+                    let is_last = index + 1 >= total;
+                    if is_last {
+                        match resource_manager.load_archive() {
+                            Ok(count) => {
+                                let mut resource_names = "".to_string();
+                                for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
+                                    resource_names.push_str(resource_slug.as_str());
+                                }
+                                log::info!(target: "network", "Resources loaded from network: {}; media count:{}", resource_names, count);
+                            }
+                            Err(e) => return Err(format!("Network resources download error: {}", e)),
                         }
-                        log::info!(target: "network", "Resources archive downloading from the network; index:{}", index);
                     }
                 }
 

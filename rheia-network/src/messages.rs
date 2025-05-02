@@ -76,7 +76,6 @@ pub enum ServerMessages {
         index: u32,
         total: u32,
         data: Vec<u8>,
-        last: bool,
     },
     Settings {
         block_types: HashMap<BlockIndexType, BlockType>,

@@ -65,12 +65,10 @@ pub fn on_connection_info(
             event.client.send_message(NetworkMessageType::ReliableOrdered, &scheme);
 
             let total = resources_manager.get_archive_parts_count(ARCHIVE_CHUNK_SIZE);
-            let is_last = 1 >= total;
             let resources_part = ServerMessages::ResourcesPart {
                 index: 0,
                 total: total as u32,
                 data: resources_manager.get_archive_part(0, ARCHIVE_CHUNK_SIZE),
-                last: is_last,
             };
             event.client.send_message(NetworkMessageType::ReliableUnordered, &resources_part);
         } else {

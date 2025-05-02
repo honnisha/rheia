@@ -158,7 +158,7 @@ impl INode for MainMenu {
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
             log::error!(target: "main", "log::set_logger error: {}", e)
         }
-        log::set_max_level(log::LevelFilter::Debug);
+        log::set_max_level(log::LevelFilter::Info);
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 

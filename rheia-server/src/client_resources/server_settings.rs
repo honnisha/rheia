@@ -96,7 +96,7 @@ impl ServerSettings {
         }
 
         self.loaded = true;
-        log::info!(target: "server_settings", "Server settings loaded successfully; &e{} archive blocks", self.get_blocks_count());
+        log::info!(target: "server_settings", "Server settings loaded successfully; &e{} blocks", self.get_blocks_count());
         return Ok(());
     }
 

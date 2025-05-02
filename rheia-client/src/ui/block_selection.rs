@@ -1,4 +1,5 @@
-use common::blocks::{block_info::BlockIndexType, block_type::BlockCategory};
+use ahash::HashSet;
+use common::{blocks::block_info::BlockIndexType, utils::uppercase_first};
 use godot::{
     classes::{input::MouseMode, Control, FlowContainer, IControl, Material, VBoxContainer},
     prelude::*,
@@ -50,6 +51,9 @@ impl BlockSelection {
         self.base().is_visible()
     }
 
+    pub fn build_sections(&mut self) {
+    }
+
     pub fn get_selected_block_id(&self) -> &Option<BlockIndexType> {
         &self.selected_block_id
     }
@@ -62,6 +66,17 @@ impl BlockSelection {
         texture_mapper: &TextureMapper,
     ) {
         let mut icons_grid = self.icons_grid.as_mut().unwrap().clone();
+
+        let mut categories: HashSet<String> = HashSet::default();
+        for (_block_id, block_type) in block_storage.iter() {
+            categories.insert(block_type.get_category().clone());
+        }
+        let categories_holder = self.categories_holder.as_mut().unwrap();
+        for category in categories.iter() {
+            let mut button = self.button_scene.as_ref().unwrap().instantiate_as::<CustomButton>();
+            button.set_text(&uppercase_first(category));
+            categories_holder.add_child(&button);
+        }
 
         for (block_id, block_type) in block_storage.iter() {
             if self.selected_block_id.is_none() {
@@ -106,12 +121,6 @@ impl IControl for BlockSelection {
         let categories_holder = self.categories_holder.as_mut().unwrap();
         for child in categories_holder.get_children().iter_shared() {
             child.free();
-        }
-
-        for category in BlockCategory::external_iter() {
-            let mut button = self.button_scene.as_ref().unwrap().instantiate_as::<CustomButton>();
-            button.set_text(&*category.to_str());
-            categories_holder.add_child(&button);
         }
 
         let icons_grid = self.icons_grid.as_mut().unwrap();

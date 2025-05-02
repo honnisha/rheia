@@ -212,7 +212,7 @@ impl MainScene {
 
     #[func]
     fn regenerate_debug_world(&mut self, _value: bool) {
-        log::info!("Regenerate debug world");
+        log::info!(target: "main", "Regenerate debug world");
 
         let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
 
@@ -239,7 +239,7 @@ impl MainScene {
 
     #[func]
     fn handler_block_selection_closed(&mut self) {
-        self.ui_lock = 0.5;
+        self.ui_lock = 0.1;
     }
 
     #[func]
@@ -285,7 +285,6 @@ impl MainScene {
 impl INode for MainScene {
     fn ready(&mut self) {
         let base = self.base().clone();
-        log::set_max_level(log::LevelFilter::Debug);
 
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.resource_manager.clone().borrow_mut().load_local_resources() {
@@ -402,7 +401,7 @@ impl INode for MainScene {
     }
 
     fn exit_tree(&mut self) {
-        log::info!(target: "main", "Exiting the game");
+        log::info!(target: "main", "Main scene exited;");
         if let Some(n) = self.network.as_ref() {
             n.disconnect();
         }

@@ -41,7 +41,6 @@ pub fn on_media_loaded(
                         index: index + 1,
                         total: total as u32,
                         data: resources_manager.get_archive_part(index as usize + 1, ARCHIVE_CHUNK_SIZE),
-                        last: is_last,
                     };
 
                     event

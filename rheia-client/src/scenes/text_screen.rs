@@ -1,3 +1,4 @@
+use common::utils::colors::parse_to_console_godot;
 use godot::{
     classes::{Button, IMarginContainer, MarginContainer, RichTextLabel},
     prelude::*,
@@ -17,7 +18,7 @@ pub struct TextScreen {
 
 impl TextScreen {
     pub fn update_text(&mut self, text: String) {
-        let msg = format!("[center]{}[/center]", text);
+        let msg = format!("[center]{}[/center]", parse_to_console_godot(&text));
         self.text.as_mut().unwrap().set_text(&msg);
     }
 

@@ -76,6 +76,10 @@ impl ResourceStorage {
         return None;
     }
 
+    pub fn iter(&self) -> std::collections::hash_map::Iter<'_, String, ResourceInstance> {
+        self.resources.iter()
+    }
+
     pub fn _iter_mut(&mut self) -> std::collections::hash_map::IterMut<'_, String, ResourceInstance> {
         self.resources.iter_mut()
     }
@@ -176,7 +180,7 @@ impl ResourceManager {
         ResourceType::None
     }
 
-    pub fn load_archive(&mut self) -> Result<(), String> {
+    pub fn load_archive(&mut self) -> Result<u32, String> {
         let archive_data = self.archive_data.take().expect("archive_data is not set");
 
         let archive_hash = calculate_hash(&archive_data);
@@ -199,6 +203,7 @@ impl ResourceManager {
 
         let mut resources_storage = self.get_resources_storage_mut();
 
+        let mut count: u32 = 0;
         let file = std::io::Cursor::new(&archive_data);
         let mut zip = zip::ZipArchive::new(file).unwrap();
         for i in 0..zip.len() {
@@ -240,9 +245,10 @@ impl ResourceManager {
                     return Err(format!("File from archive \"{}\" is not found in schema", file_hash));
                 }
             }
+            count += 1;
         }
 
-        Ok(())
+        Ok(count)
     }
 
     pub fn load_local_resources(&mut self) -> Result<(), String> {

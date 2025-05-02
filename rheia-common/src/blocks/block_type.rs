@@ -1,8 +1,4 @@
-use std::borrow::Cow;
-
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 use super::voxel_visibility::VoxelVisibility;
 
@@ -32,31 +28,11 @@ impl BlockContent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, EnumIter)]
-#[serde(rename_all = "snake_case")]
-pub enum BlockCategory {
-    Base,
-    Furniture,
-}
-
-impl BlockCategory {
-    pub fn external_iter() -> BlockCategoryIter {
-        BlockCategory::iter()
-    }
-
-    pub fn to_str(&self) -> Cow<'static, str> {
-        match *self {
-            BlockCategory::Base => "base".into(),
-            BlockCategory::Furniture => "furniture".into(),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct BlockType {
     voxel_visibility: VoxelVisibility,
     block_content: BlockContent,
-    category: BlockCategory,
+    category: String,
 }
 
 impl BlockType {
@@ -64,11 +40,15 @@ impl BlockType {
         Self {
             voxel_visibility,
             block_content,
-            category: BlockCategory::Base,
+            category: "base".to_string(),
         }
     }
 
-    pub fn category(mut self, category: BlockCategory) -> Self {
+    pub fn get_category(&self) -> &String {
+        &self.category
+    }
+
+    pub fn category(mut self, category: String) -> Self {
         self.category = category;
         self
     }

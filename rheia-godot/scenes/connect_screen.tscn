@@ -51,6 +51,7 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_fonts/font = ExtResource("3_4so0s")
 placeholder_text = "Enter IP"
 alignment = 1
 
@@ -59,6 +60,7 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_fonts/font = ExtResource("3_4so0s")
 placeholder_text = "Username"
 alignment = 1
 
