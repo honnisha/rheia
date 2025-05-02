@@ -45,8 +45,9 @@ impl Console {
         let date = Local::now();
         let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), message);
 
-        godot_print!("{}", m);
-        CONSOLE_OUTPUT_CHANNEL.0.send(parse_to_console_godot(&m)).unwrap();
+        let godot_msg = parse_to_console_godot(&m);
+        godot_print_rich!("{}", godot_msg);
+        CONSOLE_OUTPUT_CHANNEL.0.send(godot_msg).unwrap();
     }
 
     fn append_text(&mut self, message: String) {

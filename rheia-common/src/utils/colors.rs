@@ -78,6 +78,28 @@ impl Color {
         //format!("\\e[38;5;{}m", self.to_terminal_code())
         format!("\x1b[0;{}m", self.to_terminal_code())
     }
+
+    pub fn to_godot_tag(&self) -> Cow<'static, str> {
+        match *self {
+            Color::Reset => "[/color]".into(),
+            Color::Black => "[color=black]".into(),
+            Color::DarkBlue => "[color=dark_blue]".into(),
+            Color::DarkGreen => "[color=dark_green]".into(),
+            Color::DarkAqua => "[color=dark_aqua]".into(),
+            Color::DarkRed => "[color=dark_red]".into(),
+            Color::DarkPurple => "[color=dark_purple]".into(),
+            Color::Gold => "[color=gold]".into(),
+            Color::Gray => "[color=gray]".into(),
+            Color::DarkGray => "[color=dark_gray]".into(),
+            Color::Blue => "[color=blue]".into(),
+            Color::Green => "[color=green]".into(),
+            Color::Aqua => "[color=aqua]".into(),
+            Color::Red => "[color=red]".into(),
+            Color::LightPurple => "[color=light_purple]".into(),
+            Color::Yellow => "[color=yellow]".into(),
+            Color::White => "[color=white]".into(),
+        }
+    }
 }
 
 pub fn parse_to_terminal_colors(origin: &String) -> String {
@@ -106,7 +128,28 @@ pub fn parse_to_terminal_colors(origin: &String) -> String {
 }
 
 pub fn parse_to_console_godot(origin: &String) -> String {
-    origin.clone()
+    let mut result = origin.clone();
+    let re = regex::Regex::new(COLORS_REGEX).unwrap();
+
+    let mut offset = 0;
+    for c in re.find_iter(&origin) {
+        if c.start() + offset >= 1 {
+            let pre = result.as_bytes()[c.start() - 1 + offset] as char;
+            if pre == '\\' {
+                result.remove(c.start() - 1 + offset);
+                offset -= 1;
+                continue;
+            }
+        }
+
+        let replace_str = match Color::from_str(c.as_str()) {
+            Some(c) => c.to_godot_tag(),
+            None => continue,
+        };
+        result.replace_range(c.start() + offset..c.end() + offset, &replace_str);
+        offset += replace_str.len() - c.as_str().len();
+    }
+    return format!("{}{}", result, Color::Reset.to_godot_tag());
 }
 
 pub fn get_log_level_color(level: &Level) -> Cow<'static, str> {
@@ -121,6 +164,8 @@ pub fn get_log_level_color(level: &Level) -> Cow<'static, str> {
 
 #[cfg(test)]
 mod tests {
+    use crate::utils::colors::parse_to_console_godot;
+
     use super::parse_to_terminal_colors;
 
     #[test]
@@ -130,5 +175,13 @@ mod tests {
             r,
             "\u{1b}[35mmagenta_blue-\u{1b}[34m_skeep-&2_gold-\u{1b}[33m_red-\u{1b}[31m_test\u{1b}[0m".to_string()
         );
+    }
+
+    #[test]
+    fn test_to_godot() {
+        let r = parse_to_console_godot(
+            &"time: &8main &aINFO&r: text".to_string(),
+        );
+        assert_eq!(r, "time: [color=#a9a9a9]main [color=green]INFO[/color]: text[/color]".to_string());
     }
 }
