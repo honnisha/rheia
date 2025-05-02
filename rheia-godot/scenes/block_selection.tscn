@@ -1,11 +1,13 @@
-[gd_scene load_steps=3 format=3 uid="uid://b205afj08rdbg"]
+[gd_scene load_steps=5 format=3 uid="uid://b205afj08rdbg"]
 
 [ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="1_g1jwp"]
 [ext_resource type="PackedScene" uid="uid://cm5xtx5fy4aop" path="res://scenes/components/button.tscn" id="1_wr0x4"]
+[ext_resource type="Texture2D" uid="uid://b6u20mrpcebke" path="res://assets/gui/textures/qiyan/window/window_c.png" id="3_gbq8l"]
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="3_tg7bt"]
 
 [node name="BlockSelection" type="BlockSelection" node_paths=PackedStringArray("categories_holder", "icons_grid")]
-categories_holder = NodePath("Panel/SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder")
-icons_grid = NodePath("Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid")
+categories_holder = NodePath("NinePatchRect/MarginContainer/SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder")
+icons_grid = NodePath("NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid")
 button_scene = ExtResource("1_wr0x4")
 block_icon_scene = ExtResource("1_g1jwp")
 anchors_preset = -1
@@ -16,55 +18,69 @@ anchor_bottom = 0.8
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="."]
+[node name="NinePatchRect" type="NinePatchRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+texture = ExtResource("3_gbq8l")
+patch_margin_left = 15
+patch_margin_top = 15
+patch_margin_right = 15
+patch_margin_bottom = 15
+metadata/_edit_use_anchors_ = true
 
-[node name="SplitContainer" type="SplitContainer" parent="Panel"]
+[node name="MarginContainer" type="MarginContainer" parent="NinePatchRect"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
 
-[node name="HSplitContainer" type="HSplitContainer" parent="Panel/SplitContainer"]
+[node name="SplitContainer" type="SplitContainer" parent="NinePatchRect/MarginContainer"]
 layout_mode = 2
 
-[node name="BoxContainer" type="BoxContainer" parent="Panel/SplitContainer/HSplitContainer"]
+[node name="HSplitContainer" type="HSplitContainer" parent="NinePatchRect/MarginContainer/SplitContainer"]
+layout_mode = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer"]
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="CategoriesHolder" type="VBoxContainer" parent="Panel/SplitContainer/HSplitContainer/BoxContainer"]
+[node name="CategoriesHolder" type="VBoxContainer" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer/BoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="Button" type="Button" parent="Panel/SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder"]
+[node name="Button" type="Button" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder"]
 layout_mode = 2
 size_flags_vertical = 2
+theme = ExtResource("3_tg7bt")
 text = "Test"
 alignment = 0
 
-[node name="HSplitContainer2" type="HSplitContainer" parent="Panel/SplitContainer"]
+[node name="HSplitContainer2" type="HSplitContainer" parent="NinePatchRect/MarginContainer/SplitContainer"]
 layout_mode = 2
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Panel/SplitContainer/HSplitContainer2"]
+[node name="ScrollContainer" type="ScrollContainer" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2"]
 layout_mode = 2
 
-[node name="IconsGrid" type="FlowContainer" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer"]
+[node name="IconsGrid" type="FlowContainer" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="BlockIcon" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
+[node name="BlockIcon" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
 
-[node name="BlockIcon2" parent="Panel/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
+[node name="BlockIcon2" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
 custom_minimum_size = Vector2(75, 75)
 layout_mode = 2

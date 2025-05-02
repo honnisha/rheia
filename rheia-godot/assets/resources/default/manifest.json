@@ -10,6 +10,7 @@
 		"res://assets/block/sand.png",
 		"res://assets/block/water_still.png",
 
-		"res://assets/models/generic/generic.glb"
+		"res://assets/models/generic/generic.glb",
+		"res://assets/gui/textures/elements.png"
 	],
 }

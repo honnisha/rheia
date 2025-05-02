@@ -1,3 +1,16 @@
-[gd_resource type="Theme" format=3 uid="uid://b02sh2g6s5sq0"]
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://b02sh2g6s5sq0"]
+
+[ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_op4pw"]
+[ext_resource type="FontFile" uid="uid://dex64ol46xo2a" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold.otf" id="2_07edv"]
+[ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_2xpso"]
+[ext_resource type="FontFile" uid="uid://dldpnw7khwbnk" path="res://assets/gui/fonts/Monocraft/Monocraft-Italic.otf" id="4_usuut"]
 
 [resource]
+Button/fonts/font = ExtResource("1_op4pw")
+LineEdit/fonts/font = ExtResource("1_op4pw")
+Panel/styles/panel = null
+RichTextLabel/fonts/bold_font = ExtResource("2_07edv")
+RichTextLabel/fonts/bold_italics_font = ExtResource("3_2xpso")
+RichTextLabel/fonts/italics_font = ExtResource("4_usuut")
+RichTextLabel/fonts/mono_font = ExtResource("1_op4pw")
+RichTextLabel/fonts/normal_font = ExtResource("1_op4pw")
