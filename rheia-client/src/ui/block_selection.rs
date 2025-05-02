@@ -1,4 +1,4 @@
-use ahash::HashSet;
+use ahash::{HashMap, HashSet};
 use common::{blocks::block_info::BlockIndexType, utils::uppercase_first};
 use godot::{
     classes::{input::MouseMode, Control, FlowContainer, IControl, Material, VBoxContainer},
@@ -33,6 +33,8 @@ pub struct BlockSelection {
     block_icon_scene: Option<Gd<PackedScene>>,
 
     selected_block_id: Option<BlockIndexType>,
+
+    icons: HashMap<BlockIndexType, Gd<BlockIcon>>,
 }
 
 #[godot_api]
@@ -51,9 +53,6 @@ impl BlockSelection {
         self.base().is_visible()
     }
 
-    pub fn build_sections(&mut self) {
-    }
-
     pub fn get_selected_block_id(&self) -> &Option<BlockIndexType> {
         &self.selected_block_id
     }
@@ -65,6 +64,8 @@ impl BlockSelection {
         resource_manager: &ResourceManager,
         texture_mapper: &TextureMapper,
     ) {
+        let gd = self.base().to_godot();
+
         let mut icons_grid = self.icons_grid.as_mut().unwrap().clone();
 
         let mut categories: HashSet<String> = HashSet::default();
@@ -84,7 +85,6 @@ impl BlockSelection {
             }
 
             let mut icon = self.block_icon_scene.as_ref().unwrap().instantiate_as::<BlockIcon>();
-            icon.set_custom_minimum_size(Vector2::new(75.0, 75.0));
             icon.bind_mut().setup_icon(
                 *block_id,
                 block_type,
@@ -94,11 +94,19 @@ impl BlockSelection {
                 &*resource_manager.get_resources_storage(),
             );
 
+            icon.connect("icon_clicked", &Callable::from_object_method(&gd, "on_icon_clicked"));
+
             icon.connect(
-                "icon_clicked",
-                &Callable::from_object_method(&self.base().to_godot(), "on_icon_clicked"),
+                "icon_mouse_entered",
+                &Callable::from_object_method(&gd, "on_icon_mouse_entered"),
             );
+            icon.connect(
+                "icon_mouse_exited",
+                &Callable::from_object_method(&gd, "on_icon_mouse_exited"),
+            );
+
             icons_grid.add_child(&icon);
+            self.icons.insert(block_id.clone(), icon);
         }
     }
 
@@ -110,6 +118,18 @@ impl BlockSelection {
         self.selected_block_id = Some(*block.bind().get_block_id());
         self.toggle(false);
         self.base_mut().emit_signal("on_closed", &[]);
+    }
+
+    #[func]
+    fn on_icon_mouse_entered(&mut self, block: Gd<BlockIconSelect>) {
+        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
+        icon.bind_mut().toggle_selected(true);
+    }
+
+    #[func]
+    fn on_icon_mouse_exited(&mut self, block: Gd<BlockIconSelect>) {
+        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
+        icon.bind_mut().toggle_selected(false);
     }
 }
 

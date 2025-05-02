@@ -6,7 +6,7 @@ use common::{
     chunks::block_position::BlockPosition,
 };
 use godot::{
-    classes::{Control, IControl, InputEvent, InputEventMouseButton, Material, MeshInstance3D},
+    classes::{ColorRect, Control, IControl, InputEvent, InputEventMouseButton, Material, MeshInstance3D, TextureRect},
     global::MouseButton,
     prelude::*,
 };
@@ -50,6 +50,12 @@ pub struct BlockIcon {
     pub block_anchor: Option<Gd<Node3D>>,
 
     #[export]
+    pub outline_texture: Option<Gd<TextureRect>>,
+
+    #[export]
+    pub backgroud_color: Option<Gd<ColorRect>>,
+
+    #[export]
     camera: Option<Gd<Camera3D>>,
 }
 
@@ -71,25 +77,47 @@ impl BlockIcon {
 
     #[func]
     fn on_mouse_entered(&mut self) {
-        let Some(_block_id) = self.block_id.as_ref() else {
+        let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
-        // log::info!("enter block_id: {}", block_id);
+        let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
+        self.base_mut().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
     }
 
     #[func]
     fn on_mouse_exited(&mut self) {
-        let Some(_block_id) = self.block_id.as_ref() else {
+        let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
-        // log::info!("exit block_id: {}", block_id);
+        let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
+        self.base_mut().emit_signal("icon_mouse_exited", &[icon.to_variant()]);
     }
 
     #[signal]
     fn icon_clicked();
+
+    #[signal]
+    fn icon_mouse_entered();
+
+    #[signal]
+    fn icon_mouse_exited();
 }
 
 impl BlockIcon {
+    pub fn toggle_selected(&mut self, state: bool) {
+        if let Some(outline_texture) = self.outline_texture.as_mut() {
+            outline_texture.set_visible(state);
+        }
+        if let Some(backgroud_color) = self.backgroud_color.as_mut() {
+            let mut color = backgroud_color.get_color();
+            color.a = match state {
+                true => 0.25,
+                false => 0.15,
+            };
+            backgroud_color.set_color(color);
+        }
+    }
+
     pub fn setup_icon(
         &mut self,
         block_id: BlockIndexType,
@@ -156,5 +184,7 @@ impl IControl for BlockIcon {
             .connect("mouse_entered", &Callable::from_object_method(&gd, "on_mouse_entered"));
         self.base_mut()
             .connect("mouse_exited", &Callable::from_object_method(&gd, "on_mouse_exited"));
+
+        self.toggle_selected(false);
     }
 }

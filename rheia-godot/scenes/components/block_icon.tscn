@@ -1,6 +1,21 @@
-[gd_scene load_steps=4 format=3 uid="uid://y4kca7bo7tc"]
+[gd_scene load_steps=7 format=3 uid="uid://y4kca7bo7tc"]
 
+[ext_resource type="Shader" path="res://assets/shaders/highlight_shine.gdshader" id="1_3wfa2"]
 [ext_resource type="Texture2D" uid="uid://b5vcwpmsk25kr" path="res://assets/block/grass_top.png" id="1_hg8sq"]
+[ext_resource type="Texture2D" uid="uid://byuam0oob22o3" path="res://assets/gui/textures/icon_outline.png" id="1_snxch"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ejxoe"]
+shader = ExtResource("1_3wfa2")
+shader_parameter/Line_Smoothness = 0.045
+shader_parameter/Line_Width = 0.09
+shader_parameter/Brightness = 3.0
+shader_parameter/Rotation_deg = 30.0
+shader_parameter/Distortion = 1.8
+shader_parameter/Speed = 0.7
+shader_parameter/Position = 0.0
+shader_parameter/Position_Min = 0.25
+shader_parameter/Position_Max = 0.5
+shader_parameter/Alpha = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kme0x"]
 albedo_texture = ExtResource("1_hg8sq")
@@ -8,9 +23,13 @@ texture_filter = 0
 
 [sub_resource type="BoxMesh" id="BoxMesh_axew6"]
 
-[node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("block_anchor", "camera")]
+[node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("block_anchor", "outline_texture", "backgroud_color", "camera")]
 block_anchor = NodePath("SubViewportContainer/SubViewport/Anchor")
+outline_texture = NodePath("Outline")
+backgroud_color = NodePath("ColorRect")
 camera = NodePath("SubViewportContainer/SubViewport/Camera3D")
+material = SubResource("ShaderMaterial_ejxoe")
+custom_minimum_size = Vector2(75, 75)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -19,6 +38,16 @@ offset_bottom = -448.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="Outline" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_snxch")
+
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -26,7 +55,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.235294, 0.235294, 0.235294, 0.470588)
+color = Color(1, 1, 1, 0.054902)
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1

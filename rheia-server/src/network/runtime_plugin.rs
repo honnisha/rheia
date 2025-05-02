@@ -1,8 +1,12 @@
 use bevy::prelude::{App, EventWriter, Plugin};
 use bevy_app::AppExit;
 use bevy_app::{First, Startup};
+use bevy_ecs::system::Res;
 use lazy_static::lazy_static;
+use network::messages::{NetworkMessageType, ServerMessages};
 use std::sync::{Arc, RwLock};
+
+use super::clients_container::ClientsContainer;
 
 lazy_static! {
     static ref SERVER_STATE: Arc<RwLock<ServerState>> = Arc::new(RwLock::new(ServerState::STARTED));
@@ -57,8 +61,14 @@ fn activate_runtime() {
     RuntimePlugin::activate();
 }
 
-fn update_runtime(mut app_exit_events: EventWriter<AppExit>) {
+fn update_runtime(mut app_exit_events: EventWriter<AppExit>, clients: Res<ClientsContainer>) {
     if RuntimePlugin::is_stopped() {
+        for (_client_id, client) in clients.iter() {
+            let msg = ServerMessages::Disconnect {
+                message: Some("Server shutting down".to_string()),
+            };
+            client.send_message(NetworkMessageType::ReliableUnordered, &msg);
+        }
         app_exit_events.write(AppExit::Success);
     }
 }

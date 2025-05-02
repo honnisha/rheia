@@ -66,6 +66,9 @@ pub enum ServerMessages {
     ConsoleOutput {
         message: String,
     },
+    Disconnect {
+        message: Option<String>,
+    },
 
     // Information about server resources (media, scripts)
     ResourcesScheme {

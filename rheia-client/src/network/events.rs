@@ -78,6 +78,15 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 log::info!(target: "network", "Server allowed connection");
                 network.send_message(NetworkMessageType::ReliableOrdered, &connection_info);
             }
+            ServerMessages::Disconnect { message } => {
+                let msg = match message {
+                    Some(m) => m,
+                    None => "-".to_string(),
+                };
+                main.send_disconnect_event(format!("Disconnected by server: {}", msg));
+                break;
+            },
+
             ServerMessages::ConsoleOutput { message } => {
                 log::info!(target: "network", "{}", message);
             }

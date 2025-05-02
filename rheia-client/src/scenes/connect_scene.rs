@@ -34,7 +34,7 @@ impl ConnectScreen {
 
     #[func]
     fn back_pressed(&mut self) {
-        self.base_mut().queue_free();
+        self.toggle(false);
     }
 
     #[func]
