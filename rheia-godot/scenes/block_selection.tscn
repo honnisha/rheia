@@ -78,9 +78,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="BlockIcon" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
-custom_minimum_size = Vector2(75, 75)
 layout_mode = 2
 
 [node name="BlockIcon2" parent="NinePatchRect/MarginContainer/SplitContainer/HSplitContainer2/ScrollContainer/IconsGrid" instance=ExtResource("1_g1jwp")]
-custom_minimum_size = Vector2(75, 75)
 layout_mode = 2

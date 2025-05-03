@@ -39,7 +39,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Outline" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(75, 75)
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,6 +47,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("1_snxch")
+expand_mode = 2
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
