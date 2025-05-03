@@ -61,7 +61,7 @@ impl Ecs {
         return Ok(empty);
     }
 
-    pub fn get_mut<T: Component<Mutability = Mutable>>(&mut self, entity: Entity) -> Option<Mut<T>> {
+    pub fn _get_mut<T: Component<Mutability = Mutable>>(&mut self, entity: Entity) -> Option<Mut<T>> {
         self.ecs.get_mut(entity)
     }
 
@@ -73,7 +73,7 @@ impl Ecs {
         self.ecs.entity_mut(entity)
     }
 
-    pub fn query<D: QueryData>(&mut self) -> QueryState<D, ()> {
+    pub fn _query<D: QueryData>(&mut self) -> QueryState<D, ()> {
         self.ecs.query::<D>()
     }
 }

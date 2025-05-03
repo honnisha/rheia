@@ -3,7 +3,7 @@ use super::{
 };
 use crate::{logger::CONSOLE_LOGGER, utils::settings::GameSettings};
 use godot::{
-    classes::{BoxContainer, Control, Engine, RichTextLabel},
+    classes::{BoxContainer, Control, Engine, IControl, RichTextLabel},
     meta::AsArg,
     prelude::*,
 };
@@ -15,9 +15,9 @@ const TEXT_EXIT: &str = "Exit";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(GodotClass)]
-#[class(init, base=Node)]
+#[class(init, base=Control)]
 pub struct MainMenu {
-    base: Base<Node>,
+    base: Base<Control>,
 
     #[export]
     gui: Option<Gd<Control>>,
@@ -153,7 +153,7 @@ impl MainMenu {
 }
 
 #[godot_api]
-impl INode for MainMenu {
+impl IControl for MainMenu {
     fn ready(&mut self) {
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
             log::error!(target: "main", "log::set_logger error: {}", e)

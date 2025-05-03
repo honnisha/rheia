@@ -65,14 +65,7 @@ impl ResourceInstance {
         self.media.iter()
     }
 
-    pub fn get_media(&self) -> &HashMap<String, Vec<u8>> {
-        &self.media
-    }
-
-    pub fn get_client_scripts(&self) -> &HashMap<String, String> {
-        &self.scripts
-    }
-
+    #[allow(dead_code)]
     pub fn empty(slug: String) -> Self {
         Self {
             slug: slug.clone(),

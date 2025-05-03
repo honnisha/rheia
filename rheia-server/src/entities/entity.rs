@@ -58,11 +58,11 @@ impl Rotation {
         Self { pitch, yaw }
     }
 
-    pub fn get_yaw(&self) -> &PositionFloatType {
+    pub fn _get_yaw(&self) -> &PositionFloatType {
         &self.yaw
     }
 
-    pub fn get_pitch(&self) -> &PositionFloatType {
+    pub fn _get_pitch(&self) -> &PositionFloatType {
         &self.pitch
     }
 
