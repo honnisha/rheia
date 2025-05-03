@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://0jv33c5spadv"]
 
-[ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_n2v47"]
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_e8uu4"]
 
 [node name="MainMenuButton" type="MainMenuButton" node_paths=PackedStringArray("text")]
 text = NodePath("Text")
@@ -10,6 +10,6 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 3
 focus_mode = 0
-theme_override_fonts/font = ExtResource("1_n2v47")
+theme = ExtResource("1_e8uu4")
 theme_override_font_sizes/font_size = 20
 text = "Example"

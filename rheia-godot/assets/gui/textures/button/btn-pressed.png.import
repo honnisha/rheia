@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cceb816pbun8a"
-path="res://.godot/imported/menu_background.png-c993529ad6cc338d4e4dee62c8c6b9c4.ctex"
+uid="uid://clvhdb31ue2sm"
+path="res://.godot/imported/btn-pressed.png-0fedf38b89feb4f11462e18121731afa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/menu_background.png"
-dest_files=["res://.godot/imported/menu_background.png-c993529ad6cc338d4e4dee62c8c6b9c4.ctex"]
+source_file="res://assets/gui/textures/button/btn-pressed.png"
+dest_files=["res://.godot/imported/btn-pressed.png-0fedf38b89feb4f11462e18121731afa.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=3
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -23,7 +23,7 @@ compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=0
+roughness/mode=5
 roughness/src_normal=""
 process/fix_alpha_border=false
 process/premult_alpha=false

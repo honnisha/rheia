@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkjva1mbfvwoy"
-path="res://.godot/imported/window_corner.png-c4da4352904bf156276d72f91fe0a1cb.ctex"
+uid="uid://l8mh48pr5tjf"
+path="res://.godot/imported/btn-HOVER.png-72d9ffbf3f59085d9bc2eb846cccd936.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/qiyan/window/window_corner.png"
-dest_files=["res://.godot/imported/window_corner.png-c4da4352904bf156276d72f91fe0a1cb.ctex"]
+source_file="res://assets/gui/textures/button/btn-HOVER.png"
+dest_files=["res://.godot/imported/btn-HOVER.png-72d9ffbf3f59085d9bc2eb846cccd936.ctex"]
 
 [params]
 

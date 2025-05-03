@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://cihth3ka1wf05"]
 
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="1_bl486"]
-[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/menu_background.png" id="1_wc0lw"]
+[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/window/menu_background.png" id="1_wc0lw"]
 [ext_resource type="Texture2D" uid="uid://dl0enn5gojofm" path="res://assets/godot_logo.png" id="2_x5xk6"]
 [ext_resource type="PackedScene" uid="uid://bpi7q8ph1tlrj" path="res://scenes/connect_screen.tscn" id="3_8ft6b"]
 [ext_resource type="PackedScene" uid="uid://0jv33c5spadv" path="res://scenes/components/menu_button.tscn" id="3_frrkb"]

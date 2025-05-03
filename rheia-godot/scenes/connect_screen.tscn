@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://bpi7q8ph1tlrj"]
+[gd_scene load_steps=3 format=3 uid="uid://bpi7q8ph1tlrj"]
 
-[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/menu_background.png" id="1_uoenq"]
-[ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="2_icyol"]
-[ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="3_4so0s"]
+[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/window/menu_background.png" id="1_uoenq"]
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="2_sh6k3"]
 
 [node name="ConnectScreen" type="ConnectScreen" node_paths=PackedStringArray("error_text", "input", "username_input", "back_button", "connect_button")]
 error_text = NodePath("VBoxContainer/VBoxContainer/Error")
@@ -42,7 +41,7 @@ size_flags_vertical = 6
 custom_minimum_size = Vector2(0, 25)
 layout_mode = 2
 size_flags_vertical = 2
-theme_override_fonts/normal_font = ExtResource("2_icyol")
+theme = ExtResource("2_sh6k3")
 bbcode_enabled = true
 text = "[center][color=#B72828]text[/color][/center]"
 
@@ -51,7 +50,7 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_fonts/font = ExtResource("3_4so0s")
+theme = ExtResource("2_sh6k3")
 placeholder_text = "Enter IP"
 alignment = 1
 
@@ -60,7 +59,7 @@ custom_minimum_size = Vector2(300, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_fonts/font = ExtResource("3_4so0s")
+theme = ExtResource("2_sh6k3")
 placeholder_text = "Username"
 alignment = 1
 
@@ -74,7 +73,7 @@ custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 size_flags_horizontal = 6
 focus_mode = 0
-theme_override_fonts/font = ExtResource("3_4so0s")
+theme = ExtResource("2_sh6k3")
 theme_override_font_sizes/font_size = 20
 text = "Back
 "
@@ -84,6 +83,6 @@ custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 size_flags_horizontal = 6
 focus_mode = 0
-theme_override_fonts/font = ExtResource("3_4so0s")
+theme = ExtResource("2_sh6k3")
 theme_override_font_sizes/font_size = 20
 text = "Connect"

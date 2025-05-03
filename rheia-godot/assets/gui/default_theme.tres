@@ -1,13 +1,47 @@
-[gd_resource type="Theme" load_steps=5 format=3 uid="uid://b02sh2g6s5sq0"]
+[gd_resource type="Theme" load_steps=14 format=3 uid="uid://b02sh2g6s5sq0"]
 
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_op4pw"]
 [ext_resource type="FontFile" uid="uid://dex64ol46xo2a" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold.otf" id="2_07edv"]
+[ext_resource type="Texture2D" uid="uid://l8mh48pr5tjf" path="res://assets/gui/textures/button/btn-HOVER.png" id="2_i1ngb"]
+[ext_resource type="Texture2D" uid="uid://eu8qi24ljvgd" path="res://assets/gui/textures/button/tabs_btn.png" id="2_ivphd"]
 [ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_2xpso"]
+[ext_resource type="Texture2D" uid="uid://clvhdb31ue2sm" path="res://assets/gui/textures/button/btn-pressed.png" id="4_fot8x"]
 [ext_resource type="FontFile" uid="uid://dldpnw7khwbnk" path="res://assets/gui/fonts/Monocraft/Monocraft-Italic.otf" id="4_usuut"]
+[ext_resource type="Texture2D" uid="uid://cxx3q3s51ocqn" path="res://assets/gui/textures/input/chat_text_input.png" id="5_pldt6"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0rafm"]
+texture = ExtResource("2_i1ngb")
+texture_margin_left = 15.0
+texture_margin_right = 15.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ccmdx"]
+texture = ExtResource("2_ivphd")
+texture_margin_left = 15.0
+texture_margin_right = 15.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_aodms"]
+texture = ExtResource("4_fot8x")
+texture_margin_left = 15.0
+texture_margin_right = 15.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hdqgq"]
+texture = ExtResource("5_pldt6")
+texture_margin_left = 15.0
+texture_margin_right = 15.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tsr0i"]
+texture = ExtResource("5_pldt6")
+texture_margin_left = 15.0
+texture_margin_right = 15.0
 
 [resource]
 Button/fonts/font = ExtResource("1_op4pw")
+Button/styles/hover = SubResource("StyleBoxTexture_0rafm")
+Button/styles/normal = SubResource("StyleBoxTexture_ccmdx")
+Button/styles/pressed = SubResource("StyleBoxTexture_aodms")
 LineEdit/fonts/font = ExtResource("1_op4pw")
+LineEdit/styles/focus = SubResource("StyleBoxTexture_hdqgq")
+LineEdit/styles/normal = SubResource("StyleBoxTexture_tsr0i")
 Panel/styles/panel = null
 RichTextLabel/fonts/bold_font = ExtResource("2_07edv")
 RichTextLabel/fonts/bold_italics_font = ExtResource("3_2xpso")

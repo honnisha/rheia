@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://s0y1jtenikqf"
-path="res://.godot/imported/Button_RL_Background.png-e9233b7b254acbe4a9c4e0a9610d6863.ctex"
+uid="uid://eu8qi24ljvgd"
+path="res://.godot/imported/tabs_btn.png-339d91179b54bb8312d15f3ff1ae67de.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/button/Button_RL_Background.png"
-dest_files=["res://.godot/imported/Button_RL_Background.png-e9233b7b254acbe4a9c4e0a9610d6863.ctex"]
+source_file="res://assets/gui/textures/button/tabs_btn.png"
+dest_files=["res://.godot/imported/tabs_btn.png-339d91179b54bb8312d15f3ff1ae67de.ctex"]
 
 [params]
 

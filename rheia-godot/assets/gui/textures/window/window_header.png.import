@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1gwrplfd1v5a"
-path="res://.godot/imported/Button_RL_Border.png-04b175a4d614f574c5e49e65027e552d.ctex"
+uid="uid://bq84dacukx42s"
+path="res://.godot/imported/window_header.png-b5a326bbcc37baf3004b7113f2f31aa2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/button/Button_RL_Border.png"
-dest_files=["res://.godot/imported/Button_RL_Border.png-04b175a4d614f574c5e49e65027e552d.ctex"]
+source_file="res://assets/gui/textures/window/window_header.png"
+dest_files=["res://.godot/imported/window_header.png-b5a326bbcc37baf3004b7113f2f31aa2.ctex"]
 
 [params]
 

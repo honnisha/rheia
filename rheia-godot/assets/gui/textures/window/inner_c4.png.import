@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://to4p35snw8tr"
-path="res://.godot/imported/inner_c4.png-92f519c4d27b543e6bbe2ce3dae2d292.ctex"
+path="res://.godot/imported/inner_c4.png-35c81d845c4f2ea37816ac340631566a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/qiyan/window/inner_c4.png"
-dest_files=["res://.godot/imported/inner_c4.png-92f519c4d27b543e6bbe2ce3dae2d292.ctex"]
+source_file="res://assets/gui/textures/window/inner_c4.png"
+dest_files=["res://.godot/imported/inner_c4.png-35c81d845c4f2ea37816ac340631566a.ctex"]
 
 [params]
 

@@ -1,8 +1,13 @@
-[gd_scene format=3 uid="uid://cm5xtx5fy4aop"]
+[gd_scene load_steps=2 format=3 uid="uid://cm5xtx5fy4aop"]
+
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_dasgf"]
 
 [node name="Button" type="CustomButton"]
+custom_minimum_size = Vector2(0, 30)
 offset_right = 41.0
 offset_bottom = 31.0
 size_flags_vertical = 2
+focus_mode = 0
+theme = ExtResource("1_dasgf")
 text = "Test"
 alignment = 0
