@@ -56,6 +56,7 @@ impl BlockIcon {
                 self.base_mut().emit_signal("icon_clicked", &[icon.to_variant()]);
             }
         }
+        log::info!("gui_input");
     }
 
     #[func]
@@ -87,6 +88,10 @@ impl BlockIcon {
 }
 
 impl BlockIcon {
+    pub fn set_block_id(&mut self, block_id: BlockIndexType) {
+        self.block_id = Some(block_id);
+    }
+
     pub fn toggle_selected(&mut self, state: bool) {
         if let Some(outline_texture) = self.outline_texture.as_mut() {
             outline_texture.set_visible(state);
@@ -103,7 +108,7 @@ impl BlockIcon {
 
     pub fn set_camera_size(&mut self, size: f32) {
         if let Some(camera) = self.camera.as_mut() {
-            camera.set_size(2.0);
+            camera.set_size(size);
         }
     }
 

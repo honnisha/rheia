@@ -90,6 +90,7 @@ impl BlockIconsStorage {
 
         for (block_id, block_type) in block_storage.iter() {
             let mut icon = block_icon_scene.instantiate_as::<BlockIcon>();
+            icon.bind_mut().set_block_id(block_id.clone());
             BlockIconsStorage::generate_icon(
                 &mut icon,
                 *block_id,
@@ -102,5 +103,9 @@ impl BlockIconsStorage {
             storage.icons.insert(block_id.clone(), icon);
         }
         storage
+    }
+
+    pub fn get_icon(&self, block_id: &BlockIndexType) -> Option<&Gd<BlockIcon>> {
+        self.icons.get(block_id)
     }
 }

@@ -1,17 +1,29 @@
-[gd_scene load_steps=5 format=3 uid="uid://dqdv2s6xhb6v3"]
+[gd_scene load_steps=9 format=3 uid="uid://dqdv2s6xhb6v3"]
 
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_nf5ot"]
-[ext_resource type="Texture2D" uid="uid://bnbb4tvwhsekl" path="res://assets/gui/textures/sidemenu/sidemenu_button_shorten.png" id="2_2hgkv"]
+[ext_resource type="Texture2D" uid="uid://1jvdthow0xrf" path="res://assets/gui/textures/sidemenu/sidemenu_button-hover.png" id="2_b4ied"]
 [ext_resource type="Texture2D" uid="uid://bo1kuivdy6x43" path="res://assets/gui/textures/sidemenu/c_sidemanu_item_ACTIVE.png" id="3_3d1u2"]
+[ext_resource type="Texture2D" uid="uid://bqqxin3is4e2x" path="res://assets/gui/textures/sidemenu/sidemenu_button-pressed.png" id="3_phab0"]
+[ext_resource type="Texture2D" uid="uid://dkae41sk5u5pj" path="res://assets/gui/textures/sidemenu/sidemenu_button.png" id="4_eft8g"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_uplc1"]
+texture = ExtResource("2_b4ied")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ytgao"]
+texture = ExtResource("3_phab0")
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cjdrr"]
-texture = ExtResource("2_2hgkv")
+texture = ExtResource("4_eft8g")
 
-[node name="TabButton" type="TabUIButton"]
+[node name="TabButton" type="TabUIButton" node_paths=PackedStringArray("selected_texture")]
+selected_texture = NodePath("TextureSelected")
 custom_minimum_size = Vector2(0, 40)
-offset_right = 43.0
+offset_right = 178.0
 offset_bottom = 40.0
+focus_mode = 0
 theme_override_fonts/font = ExtResource("1_nf5ot")
+theme_override_styles/hover = SubResource("StyleBoxTexture_uplc1")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_ytgao")
 theme_override_styles/normal = SubResource("StyleBoxTexture_cjdrr")
 text = "Test"
 
@@ -21,7 +33,9 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = -17.0
 grow_horizontal = 2
 grow_vertical = 2
+scale = Vector2(1.215, 1)
 texture = ExtResource("3_3d1u2")
 expand_mode = 1

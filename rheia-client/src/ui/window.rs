@@ -6,6 +6,9 @@ const WINDOW_SCENE: &str = "res://scenes/ui/window.tscn";
 #[class(init, base=Control)]
 pub struct WindowUIComponent {
     base: Base<Control>,
+
+    #[export]
+    content_holder: Option<Gd<Control>>,
 }
 
 #[godot_api]
@@ -23,6 +26,6 @@ impl WindowUIComponent {
     }
 
     pub fn add_component(&mut self, node: impl AsObjectArg<Node>) {
-        self.base_mut().add_child(node);
+        self.content_holder.as_mut().unwrap().add_child(node);
     }
 }

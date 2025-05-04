@@ -1,15 +1,19 @@
-use ahash::HashSet;
+use ahash::{HashMap, HashSet};
 use common::blocks::block_info::BlockIndexType;
+use godot::classes::control::{LayoutPreset, SizeFlags};
+use godot::classes::{FlowContainer, ScrollContainer, Theme};
 use godot::prelude::*;
 use godot::{
     classes::{input::MouseMode, Input},
     obj::Gd,
 };
 
+use crate::scenes::main_scene::DEFAULT_THEME_PATH;
 use crate::ui::tabs::tabs_component::TabsUIComponent;
 use crate::ui::window::WindowUIComponent;
 use crate::world::block_storage::BlockStorage;
 
+use super::block_icon::{BlockIcon, BlockIconSelect};
 use super::block_icons_storage::BlockIconsStorage;
 
 #[derive(GodotClass)]
@@ -21,17 +25,43 @@ pub struct BlockSelection {
     tabs: Gd<TabsUIComponent>,
 
     selected_block_id: Option<BlockIndexType>,
+
+    icons: HashMap<BlockIndexType, Gd<BlockIcon>>,
 }
 
 #[godot_api]
 impl BlockSelection {
     #[signal]
     fn on_closed();
+
+    #[func]
+    fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
+        self.selected_block_id = Some(*block.bind().get_block_id());
+        self.toggle(false);
+
+        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
+        icon.bind_mut().toggle_selected(false);
+
+        self.base_mut().emit_signal("on_closed", &[]);
+    }
+
+    #[func]
+    fn on_icon_mouse_entered(&mut self, block: Gd<BlockIconSelect>) {
+        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
+        icon.bind_mut().toggle_selected(true);
+    }
+
+    #[func]
+    fn on_icon_mouse_exited(&mut self, block: Gd<BlockIconSelect>) {
+        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
+        icon.bind_mut().toggle_selected(false);
+    }
 }
 
 impl BlockSelection {
     pub fn create(base: Base<Node>) -> Self {
         let mut window = WindowUIComponent::create();
+
         let tabs = TabsUIComponent::create();
         window.bind_mut().add_component(&tabs);
         Self {
@@ -39,6 +69,7 @@ impl BlockSelection {
             window,
             tabs,
             selected_block_id: None,
+            icons: Default::default(),
         }
     }
 
@@ -52,14 +83,52 @@ impl BlockSelection {
         }
     }
 
-    pub fn set_blocks(&mut self, block_icons_storage: &mut BlockIconsStorage, block_storage: &BlockStorage) {
+    pub fn set_blocks(&mut self, block_icons_storage: &BlockIconsStorage, block_storage: &BlockStorage) {
+        let gd = self.base().to_godot();
+
         // Collect all block categories
         let mut categories: HashSet<String> = HashSet::default();
         for (_block_id, block_type) in block_storage.iter() {
             categories.insert(block_type.get_category().clone());
         }
+
+        let default_theme = load::<Theme>(DEFAULT_THEME_PATH);
+
         for category in categories.iter() {
-            let tab_category = self.tabs.bind_mut().add_category(category.clone(), category.clone());
+            let mut tab_category = self.tabs.bind_mut().add_category(category.clone(), category.clone());
+
+            let mut scroll = ScrollContainer::new_alloc();
+            tab_category.add_child(&scroll);
+            scroll.set_anchors_preset(LayoutPreset::FULL_RECT);
+            scroll.set_theme(&default_theme);
+
+            let mut flow_container = FlowContainer::new_alloc();
+            scroll.add_child(&flow_container);
+            flow_container.set_h_size_flags(SizeFlags::EXPAND_FILL);
+            flow_container.set_v_size_flags(SizeFlags::EXPAND_FILL);
+            flow_container.set_theme(&default_theme);
+
+            for (block_id, block_type) in block_storage.iter() {
+                if block_type.get_category() == category {
+
+                    let icon = block_icons_storage.get_icon(block_id).unwrap();
+                    let mut icon = icon.clone();
+                    // let mut icon = icon.duplicate().unwrap().cast::<BlockIcon>();
+                    flow_container.add_child(&icon);
+
+                    icon.connect("icon_clicked", &Callable::from_object_method(&gd, "on_icon_clicked"));
+
+                    icon.connect(
+                        "icon_mouse_entered",
+                        &Callable::from_object_method(&gd, "on_icon_mouse_entered"),
+                    );
+                    icon.connect(
+                        "icon_mouse_exited",
+                        &Callable::from_object_method(&gd, "on_icon_mouse_exited"),
+                    );
+                    self.icons.insert(block_id.clone(), icon);
+                }
+            }
         }
     }
 
@@ -74,6 +143,8 @@ impl BlockSelection {
 #[godot_api]
 impl INode for BlockSelection {
     fn ready(&mut self) {
+        let window = self.window.clone();
+        self.base_mut().add_child(&window);
         self.toggle(false);
     }
 }

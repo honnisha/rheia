@@ -83,6 +83,8 @@ impl ConnectScreen {
 #[godot_api]
 impl IControl for ConnectScreen {
     fn ready(&mut self) {
+        self.toggle(false);
+
         self.set_error_msg("".to_string());
 
         let mut input = self.input.as_mut().unwrap().clone();

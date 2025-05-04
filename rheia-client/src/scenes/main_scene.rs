@@ -27,6 +27,8 @@ use super::components::block_icons_storage::BlockIconsStorage;
 
 pub type FloatType = f32;
 
+pub const DEFAULT_THEME_PATH: &str = "res://assets/gui/default_theme.tres";
+
 #[cfg(feature = "trace")]
 #[global_allocator]
 static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
@@ -172,7 +174,7 @@ impl MainScene {
         let block_storage = worlds_manager.get_block_storage();
 
         self.block_selection.bind_mut().set_blocks(
-            self.block_icons_storage.as_mut().unwrap(),
+            self.block_icons_storage.as_ref().unwrap(),
             &*block_storage,
         )
     }

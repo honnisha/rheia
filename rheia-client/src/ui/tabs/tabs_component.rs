@@ -1,6 +1,9 @@
 use ahash::HashMap;
 use common::utils::uppercase_first;
-use godot::{classes::{Control, HSplitContainer, IControl, VBoxContainer}, prelude::*};
+use godot::{
+    classes::{control::LayoutPreset, Control, HSplitContainer, IControl, VBoxContainer},
+    prelude::*,
+};
 
 use super::tab_button::TabUIButton;
 
@@ -46,9 +49,13 @@ impl TabsUIComponent {
     }
 
     pub fn add_category(&mut self, tab_key: String, title: String) -> Gd<TabContentUIComponent> {
+        let gd = self.base().to_godot();
+
         let tabs_content_holder = self.tabs_content_holder.as_mut().unwrap();
-        let tab_content = TabContentUIComponent::create();
+        let mut tab_content = TabContentUIComponent::create();
         tabs_content_holder.add_child(&tab_content);
+        tab_content.set_anchors_preset(LayoutPreset::FULL_RECT);
+
         self.tabs_content.insert(tab_key.clone(), tab_content.clone());
 
         let tabs_holder = self.tabs_holder.as_mut().unwrap();
@@ -58,14 +65,13 @@ impl TabsUIComponent {
         tabs_holder.add_child(&tab_button);
         self.tabs_buttons.insert(tab_key.clone(), tab_button.clone());
 
-        let gd = tab_button.bind().base().to_godot();
-        tab_button.connect(
-            "tab_pressed",
-            &Callable::from_object_method(&gd, "on_tab_pressed"),
-        );
+        tab_button.connect("tab_pressed", &Callable::from_object_method(&gd, "on_tab_pressed"));
 
-        if self.active_tab.is_none() {
-            self.set_active_tab(&tab_key)
+        match self.active_tab.as_ref() {
+            Some(active_tab) => {
+                tab_content.bind_mut().toggle(*active_tab == tab_key);
+            },
+            None => self.set_active_tab(&tab_key),
         }
 
         tab_content
@@ -99,8 +105,6 @@ impl TabsUIComponent {
 #[godot_api]
 impl IControl for TabsUIComponent {
     fn ready(&mut self) {
-        self.base_mut().set_visible(false);
-
         let tabs_holder = self.tabs_holder.as_mut().unwrap();
         for child in tabs_holder.get_children().iter_shared() {
             child.free();
