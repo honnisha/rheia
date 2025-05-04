@@ -56,7 +56,6 @@ impl BlockIcon {
                 self.base_mut().emit_signal("icon_clicked", &[icon.to_variant()]);
             }
         }
-        log::info!("gui_input");
     }
 
     #[func]
