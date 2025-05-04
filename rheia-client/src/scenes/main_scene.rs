@@ -7,7 +7,7 @@ use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
-use crate::ui::block_selection::BlockSelection;
+use crate::scenes::components::block_selection::BlockSelection;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
@@ -23,6 +23,8 @@ use std::rc::Rc;
 
 use crate::scenes::text_screen::TextScreen;
 
+use super::components::block_icons_storage::BlockIconsStorage;
+
 pub type FloatType = f32;
 
 #[cfg(feature = "trace")]
@@ -35,7 +37,7 @@ pub type ResourceManagerType = Rc<RefCell<ResourceManager>>;
 #[derive(GodotClass)]
 #[class(init, tool, base=Node)]
 pub struct MainScene {
-    base: Base<Node>,
+    pub(crate) base: Base<Node>,
     ip_port: Option<String>,
     login: Option<String>,
 
@@ -63,11 +65,10 @@ pub struct MainScene {
 
     #[export]
     block_icon_scene: Option<Gd<PackedScene>>,
+    block_icons_storage: Option<BlockIconsStorage>,
 
     #[init(val = OnReady::manual())]
     block_selection: OnReady<Gd<BlockSelection>>,
-    #[export]
-    block_selection_scene: Option<Gd<PackedScene>>,
 
     #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
     debug_world: u32,
@@ -148,20 +149,32 @@ impl MainScene {
     pub fn on_server_connected(&mut self) {
         self.debug_info.bind_mut().toggle(true);
 
-        let resource_manager = self.get_resource_manager();
+        let block_icons_storage = {
+            let resource_manager = self.get_resource_manager();
+
+            let worlds_manager = self.get_wm().clone();
+            let worlds_manager = worlds_manager.bind();
+            let block_storage = worlds_manager.get_block_storage();
+
+            let texture_mapper = worlds_manager.get_texture_mapper();
+            BlockIconsStorage::init(
+                self.block_icon_scene.as_ref().unwrap(),
+                &*block_storage,
+                &worlds_manager.get_material(),
+                &*resource_manager,
+                &*texture_mapper,
+            )
+        };
+        self.block_icons_storage = Some(block_icons_storage);
 
         let worlds_manager = self.get_wm().clone();
         let worlds_manager = worlds_manager.bind();
         let block_storage = worlds_manager.get_block_storage();
 
-        let texture_mapper = worlds_manager.get_texture_mapper();
-        let mut block_selection = self.block_selection.clone();
-        block_selection.bind_mut().init_blocks(
+        self.block_selection.bind_mut().set_blocks(
+            self.block_icons_storage.as_mut().unwrap(),
             &*block_storage,
-            &worlds_manager.get_material(),
-            &*resource_manager,
-            &*texture_mapper,
-        );
+        )
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -317,11 +330,7 @@ impl INode for MainScene {
             self.debug_info.bind_mut().toggle(false);
 
             // Selection meny
-            let block_selection = self
-                .block_selection_scene
-                .as_mut()
-                .unwrap()
-                .instantiate_as::<BlockSelection>();
+            let block_selection = Gd::<BlockSelection>::from_init_fn(|base| BlockSelection::create(base));
             self.block_selection.init(block_selection);
 
             let mut block_selection = self.block_selection.clone();

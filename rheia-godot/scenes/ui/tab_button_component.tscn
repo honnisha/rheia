@@ -1,0 +1,27 @@
+[gd_scene load_steps=5 format=3 uid="uid://dqdv2s6xhb6v3"]
+
+[ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="1_nf5ot"]
+[ext_resource type="Texture2D" uid="uid://bnbb4tvwhsekl" path="res://assets/gui/textures/sidemenu/sidemenu_button_shorten.png" id="2_2hgkv"]
+[ext_resource type="Texture2D" uid="uid://bo1kuivdy6x43" path="res://assets/gui/textures/sidemenu/c_sidemanu_item_ACTIVE.png" id="3_3d1u2"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cjdrr"]
+texture = ExtResource("2_2hgkv")
+
+[node name="TabButton" type="TabUIButton"]
+custom_minimum_size = Vector2(0, 40)
+offset_right = 43.0
+offset_bottom = 40.0
+theme_override_fonts/font = ExtResource("1_nf5ot")
+theme_override_styles/normal = SubResource("StyleBoxTexture_cjdrr")
+text = "Test"
+
+[node name="TextureSelected" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_3d1u2")
+expand_mode = 1

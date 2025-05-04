@@ -7,10 +7,7 @@ use godot::{
 
 use crate::{
     client_scripts::resource_manager::ResourceManager,
-    scenes::components::{
-        block_icon::{BlockIcon, BlockIconSelect},
-        button::CustomButton,
-    },
+    scenes::components::block_icon::{BlockIcon, BlockIconSelect},
     utils::textures::texture_mapper::TextureMapper,
     world::block_storage::BlockStorage,
 };

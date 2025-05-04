@@ -1,1 +1,2 @@
-pub mod block_selection;
+pub mod tabs;
+pub mod window;

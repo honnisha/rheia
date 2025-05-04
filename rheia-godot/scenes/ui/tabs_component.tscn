@@ -1,0 +1,37 @@
+[gd_scene load_steps=2 format=3 uid="uid://blcecdnsv7jmw"]
+
+[ext_resource type="PackedScene" uid="uid://dqdv2s6xhb6v3" path="res://scenes/ui/tab_button_component.tscn" id="1_glxg3"]
+
+[node name="TabsContainer" type="TabsUIComponent" node_paths=PackedStringArray("tabs_holder", "tabs_content_holder")]
+tabs_holder = NodePath("SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder")
+tabs_content_holder = NodePath("SplitContainer/HSplitContainer/HSplitContainer")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SplitContainer" type="SplitContainer" parent="."]
+layout_mode = 2
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 1142.0
+offset_bottom = 638.0
+
+[node name="HSplitContainer" type="HSplitContainer" parent="SplitContainer"]
+layout_mode = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="SplitContainer/HSplitContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+
+[node name="CategoriesHolder" type="VBoxContainer" parent="SplitContainer/HSplitContainer/BoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="TabButton" parent="SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder" instance=ExtResource("1_glxg3")]
+layout_mode = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="SplitContainer/HSplitContainer"]
+layout_mode = 2
