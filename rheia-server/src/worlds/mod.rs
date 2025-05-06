@@ -1,10 +1,14 @@
 use bevy_app::{App, Plugin, Update};
 use bracket_lib::random::RandomNumberGenerator;
+use common::world_generator::default::WorldGeneratorSettings;
 use log::info;
 
 pub mod bevy_commands;
 
-use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
+use crate::{
+    console::commands_executer::{CommandExecuter, CommandsHandler},
+    launch_settings::LaunchSettings,
+};
 
 use self::{
     commands::{command_parser_teleport, command_parser_world, command_teleport, command_world},
@@ -34,12 +38,21 @@ impl Plugin for WorldsHandlerPlugin {
 
         let mut worlds_manager = WorldsManager::default();
 
+        let launch_settings = app.world().get_resource::<LaunchSettings>().unwrap();
+        let world_storage_settings = launch_settings.get_world_storage_settings();
+
         let default_world = "default".to_string();
         if worlds_manager.count() == 0 && !worlds_manager.has_world_with_slug(&default_world) {
             let mut rng = RandomNumberGenerator::new();
             let seed = rng.next_u64();
 
-            match worlds_manager.create_world(default_world.clone(), seed) {
+            let world = worlds_manager.create_world(
+                default_world.clone(),
+                seed,
+                WorldGeneratorSettings::default(),
+                world_storage_settings,
+            );
+            match world {
                 Ok(_) => {
                     info!(target: "worlds", "Default world \"{}\" was created", default_world);
                 }

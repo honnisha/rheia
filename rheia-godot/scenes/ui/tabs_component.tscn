@@ -1,10 +1,15 @@
-[gd_scene load_steps=3 format=3 uid="uid://blcecdnsv7jmw"]
+[gd_scene load_steps=5 format=3 uid="uid://blcecdnsv7jmw"]
 
 [ext_resource type="PackedScene" uid="uid://dqdv2s6xhb6v3" path="res://scenes/ui/tab_button_component.tscn" id="1_glxg3"]
+[ext_resource type="Texture2D" uid="uid://c58gw05dc4ngt" path="res://assets/gui/textures/sidemenu/c_sidemenu_background.png" id="1_voyhs"]
 [ext_resource type="PackedScene" uid="uid://lohprdv6sylq" path="res://scenes/ui/tab_content_component.tscn" id="2_otls6"]
 
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_m4ktu"]
+texture = ExtResource("1_voyhs")
+expand_margin_right = 70.0
+
 [node name="TabsContainer" type="TabsUIComponent" node_paths=PackedStringArray("tabs_holder", "tabs_content_holder")]
-tabs_holder = NodePath("SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder")
+tabs_holder = NodePath("SplitContainer/HSplitContainer/BoxContainer/PanelContainer/CategoriesHolder")
 tabs_content_holder = NodePath("SplitContainer/HSplitContainer/HSplitContainer")
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,12 +33,21 @@ dragger_visibility = 1
 custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 
-[node name="CategoriesHolder" type="VBoxContainer" parent="SplitContainer/HSplitContainer/BoxContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="SplitContainer/HSplitContainer/BoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxTexture_m4ktu")
+
+[node name="CategoriesHolder" type="VBoxContainer" parent="SplitContainer/HSplitContainer/BoxContainer/PanelContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="TabButton" parent="SplitContainer/HSplitContainer/BoxContainer/CategoriesHolder" instance=ExtResource("1_glxg3")]
+[node name="TabButton" parent="SplitContainer/HSplitContainer/BoxContainer/PanelContainer/CategoriesHolder" instance=ExtResource("1_glxg3")]
+layout_mode = 2
+
+[node name="NinePatchRect" type="NinePatchRect" parent="SplitContainer/HSplitContainer/BoxContainer"]
+visible = false
 layout_mode = 2
 
 [node name="HSplitContainer" type="HSplitContainer" parent="SplitContainer/HSplitContainer"]

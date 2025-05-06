@@ -26,7 +26,7 @@ impl BlockStorage {
         self.blocks.get(k)
     }
 
-    pub fn iter(&self) -> std::collections::btree_map::Iter<'_, u8, BlockType> {
+    pub fn iter(&self) -> std::collections::btree_map::Iter<'_, BlockIndexType, BlockType> {
         self.blocks.iter()
     }
 

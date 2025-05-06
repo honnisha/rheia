@@ -10,7 +10,7 @@ pub enum BlockFace {
     West,
 }
 
-pub type BlockIndexType = u8;
+pub type BlockIndexType = u16;
 
 #[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize)]
 pub struct BlockInfo {

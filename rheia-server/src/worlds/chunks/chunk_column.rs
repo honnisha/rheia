@@ -3,7 +3,8 @@ use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGenerator;
-use common::VERTICAL_SECTIONS;
+use common::world_storage::taits::IWorldStorage;
+use common::{WorldStorageManager, VERTICAL_SECTIONS};
 use core::fmt;
 use network::messages::{ChunkDataType, ServerMessages};
 use parking_lot::RwLock;
@@ -42,6 +43,10 @@ impl ChunkColumn {
         }
     }
 
+    pub fn get_chunk_position(&self) -> &ChunkPosition {
+        &self.chunk_position
+    }
+
     /// If chunk load his data
     pub(crate) fn is_loaded(&self) -> bool {
         self.loaded
@@ -55,10 +60,10 @@ impl ChunkColumn {
         match new_block_info {
             Some(i) => {
                 s.insert(chunk_block, i);
-            },
+            }
             None => {
                 s.remove(&chunk_block);
-            },
+            }
         }
     }
 
@@ -89,6 +94,7 @@ impl ChunkColumn {
 
 pub(crate) fn load_chunk(
     world_generator: Arc<RwLock<WorldGenerator>>,
+    storage: Arc<RwLock<WorldStorageManager>>,
     chunk_column: Arc<RwLock<ChunkColumn>>,
     loaded_chunks: flume::Sender<ChunkPosition>,
 ) {
@@ -98,11 +104,18 @@ pub(crate) fn load_chunk(
 
         let mut chunk_column = chunk_column.write();
 
-        for y in 0..VERTICAL_SECTIONS {
-            let chunk_section = world_generator
-                .read()
-                .generate_chunk_data(&chunk_column.chunk_position, y);
-            chunk_column.sections.push(Box::new(chunk_section));
+        // Load from storage
+        if storage.read().has_chunk_data(&chunk_column.chunk_position) {
+            chunk_column.sections = storage.read().load_chunk_data(&chunk_column.chunk_position);
+        }
+        // Or generate new
+        else {
+            for y in 0..VERTICAL_SECTIONS {
+                let chunk_section = world_generator
+                    .read()
+                    .generate_chunk_data(&chunk_column.chunk_position, y);
+                chunk_column.sections.push(Box::new(chunk_section));
+            }
         }
         chunk_column.loaded = true;
 

@@ -1,10 +1,12 @@
 use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
+use common::world_generator::default::WorldGeneratorSettings;
 
 use crate::console::command::{Arg, Command, CommandMatch};
 use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
+use crate::launch_settings::LaunchSettings;
 use crate::network::client_network::ClientNetwork;
 use crate::network::events::on_player_move::move_player;
 
@@ -26,7 +28,11 @@ pub(crate) fn command_world(
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
 ) -> Result<(), CommandError> {
+    let launch_settings = world.get_resource::<LaunchSettings>().unwrap();
+    let world_storage_settings = launch_settings.get_world_storage_settings();
+
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
+
     if let Some(world_subcommand) = args.subcommand() {
         match world_subcommand.get_name().as_str() {
             "list" => {
@@ -59,7 +65,13 @@ pub(crate) fn command_world(
                         rng.next_u64()
                     }
                 };
-                match worlds_manager.create_world(slug.clone(), seed) {
+                let world = worlds_manager.create_world(
+                    slug.clone(),
+                    seed,
+                    WorldGeneratorSettings::default(),
+                    world_storage_settings,
+                );
+                match world {
                     Ok(_) => {
                         sender.send_console_message(format!("World \"{}\" was successfully created", slug));
                     }

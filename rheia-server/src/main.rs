@@ -1,16 +1,12 @@
 use std::time::Duration;
 
-use bevy::{
-    prelude::{TaskPoolPlugin},
-    time::TimePlugin,
-};
+use bevy::{prelude::TaskPoolPlugin, time::TimePlugin};
 use bevy_app::{App, ScheduleRunnerPlugin};
 
-use launch_settings::LaunchSettings;
+use launch_settings::{get_log_level, LaunchSettings};
 use log::info;
 
 use crate::{
-    args::get_log_level,
     logger::CONSOLE_LOGGER,
     network::{runtime_plugin::RuntimePlugin, server::NetworkPlugin},
 };
@@ -19,7 +15,6 @@ use worlds::WorldsHandlerPlugin;
 
 use crate::console::ConsolePlugin;
 
-mod args;
 mod client_resources;
 mod console;
 mod entities;

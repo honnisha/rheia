@@ -1,11 +1,10 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
-use common::world_generator::default::{WorldGenerator, WorldGeneratorSettings};
+use common::world_generator::default::WorldGeneratorSettings;
+use common::world_storage::taits::WorldStorageSettings;
 use network::messages::ServerMessages;
-use parking_lot::RwLock;
 
 use crate::entities::entity::{Position, Rotation};
 use crate::CHUNKS_DISTANCE;
@@ -26,18 +25,19 @@ pub struct WorldManager {
     slug: String,
     ecs: Ecs,
     chunks_map: ChunkMap,
-    world_generator: Arc<RwLock<WorldGenerator>>,
 }
 
 impl WorldManager {
-    pub fn new(slug: String, seed: u64) -> Self {
+    pub fn new(
+        slug: String,
+        seed: u64,
+        world_settings: WorldGeneratorSettings,
+        world_storage_settings: WorldStorageSettings,
+    ) -> Self {
         WorldManager {
             slug: slug,
             ecs: Ecs::new(),
-            chunks_map: ChunkMap::new(),
-            world_generator: Arc::new(RwLock::new(
-                WorldGenerator::create(Some(seed), WorldGeneratorSettings::default()).unwrap(),
-            )),
+            chunks_map: ChunkMap::new(seed, world_settings, world_storage_settings),
         }
     }
 
@@ -128,8 +128,7 @@ impl WorldManager {
     /// Proxy for sending update_chunks
     pub fn update_chunks(&mut self, delta: Duration) {
         let world_slug = self.get_slug().clone();
-        self.chunks_map
-            .update_chunks(delta, &world_slug, self.world_generator.clone());
+        self.chunks_map.update_chunks(delta, &world_slug);
     }
 
     pub fn get_network_chunk_bytes(&self, chunk_position: &ChunkPosition) -> Option<ServerMessages> {

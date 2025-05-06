@@ -4,6 +4,7 @@ use ahash::HashMap;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::Res;
+use common::{world_generator::default::WorldGeneratorSettings, world_storage::taits::WorldStorageSettings};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use super::world_manager::WorldManager;
@@ -29,12 +30,25 @@ impl WorldsManager {
         self.worlds.contains_key(slug)
     }
 
-    pub fn create_world(&mut self, slug: String, seed: u64) -> Result<(), String> {
+    pub fn create_world(
+        &mut self,
+        slug: String,
+        seed: u64,
+        world_settings: WorldGeneratorSettings,
+        world_storage_settings: WorldStorageSettings,
+    ) -> Result<(), String> {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
         }
-        self.worlds
-            .insert(slug.clone(), Arc::new(RwLock::new(WorldManager::new(slug, seed))));
+        self.worlds.insert(
+            slug.clone(),
+            Arc::new(RwLock::new(WorldManager::new(
+                slug,
+                seed,
+                world_settings,
+                world_storage_settings,
+            ))),
+        );
         Ok(())
     }
 
