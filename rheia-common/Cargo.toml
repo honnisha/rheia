@@ -38,3 +38,5 @@ ndcopy = "0.3.0"
 bracket-lib = "0.8.7"
 bracket-noise = "0.8.7"
 bracket-random = "0.8.7"
+
+rusqlite = { version = "0.35.0", features = ["bundled"] }

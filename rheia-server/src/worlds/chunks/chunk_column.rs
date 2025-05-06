@@ -3,13 +3,15 @@ use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGenerator;
-use common::world_storage::taits::IWorldStorage;
-use common::{WorldStorageManager, VERTICAL_SECTIONS};
+use common::worlds_storage::taits::IWorldStorage;
+use common::VERTICAL_SECTIONS;
 use core::fmt;
 use network::messages::{ChunkDataType, ServerMessages};
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{sync::Arc, time::Duration};
+
+use super::chunks_map::StorageLock;
 
 pub struct ChunkColumn {
     chunk_position: ChunkPosition,
@@ -94,7 +96,7 @@ impl ChunkColumn {
 
 pub(crate) fn load_chunk(
     world_generator: Arc<RwLock<WorldGenerator>>,
-    storage: Arc<RwLock<WorldStorageManager>>,
+    storage: StorageLock,
     chunk_column: Arc<RwLock<ChunkColumn>>,
     loaded_chunks: flume::Sender<ChunkPosition>,
 ) {
@@ -105,8 +107,8 @@ pub(crate) fn load_chunk(
         let mut chunk_column = chunk_column.write();
 
         // Load from storage
-        if storage.read().has_chunk_data(&chunk_column.chunk_position) {
-            chunk_column.sections = storage.read().load_chunk_data(&chunk_column.chunk_position);
+        if storage.lock().has_chunk_data(&chunk_column.chunk_position) {
+            chunk_column.sections = storage.lock().load_chunk_data(&chunk_column.chunk_position);
         }
         // Or generate new
         else {

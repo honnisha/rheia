@@ -4,3 +4,4 @@ console_history.txt
 client/rust/target/*
 server/target/*
 target/*
+worlds/*

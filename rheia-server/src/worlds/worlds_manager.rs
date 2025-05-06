@@ -4,7 +4,10 @@ use ahash::HashMap;
 use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::Res;
-use common::{world_generator::default::WorldGeneratorSettings, world_storage::taits::WorldStorageSettings};
+use common::{
+    world_generator::default::WorldGeneratorSettings, worlds_storage::taits::WorldStorageSettings,
+    worlds_storage::taits::IWorldStorage, WorldStorageManager,
+};
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use super::world_manager::WorldManager;
@@ -26,6 +29,19 @@ impl Default for WorldsManager {
 }
 
 impl WorldsManager {
+    pub fn scan_worlds(&mut self, world_storage_settings: &WorldStorageSettings) {
+        for world_info in WorldStorageManager::scan_worlds(world_storage_settings) {
+            self.create_world(
+                world_info.slug.clone(),
+                world_info.seed,
+                WorldGeneratorSettings::default(),
+                &world_storage_settings,
+            )
+                .unwrap();
+            log::info!(target: "worlds", "World \"{}\" loaded", world_info.slug);
+        }
+    }
+
     pub fn has_world_with_slug(&self, slug: &String) -> bool {
         self.worlds.contains_key(slug)
     }
@@ -35,20 +51,16 @@ impl WorldsManager {
         slug: String,
         seed: u64,
         world_settings: WorldGeneratorSettings,
-        world_storage_settings: WorldStorageSettings,
+        world_storage_settings: &WorldStorageSettings,
     ) -> Result<(), String> {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
         }
-        self.worlds.insert(
-            slug.clone(),
-            Arc::new(RwLock::new(WorldManager::new(
-                slug,
-                seed,
-                world_settings,
-                world_storage_settings,
-            ))),
-        );
+        let world = match WorldManager::new(slug.clone(), seed, world_settings, world_storage_settings) {
+            Ok(w) => w,
+            Err(e) => return Err(format!("World error: \"{}\"", e)),
+        };
+        self.worlds.insert(slug, Arc::new(RwLock::new(world)));
         Ok(())
     }
 

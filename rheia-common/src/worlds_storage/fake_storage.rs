@@ -1,13 +1,14 @@
 use crate::chunks::chunk_position::ChunkPosition;
 
-use super::taits::{ChunkData, IWorldStorage, WorldStorageSettings};
+use super::taits::{ChunkData, IWorldStorage, WorldInfo, WorldStorageSettings};
 
-#[derive(Default)]
 pub struct FakeWorldStorage {}
 
 impl IWorldStorage for FakeWorldStorage {
-    fn create(_settings: WorldStorageSettings) -> Self {
-        Self {}
+    type Error = String;
+
+    fn create(_world_slug: String, _settings: &WorldStorageSettings) -> Result<Self, String> {
+        Ok(Self {})
     }
 
     fn has_chunk_data(&self, _chunk_position: &ChunkPosition) -> bool {
@@ -19,4 +20,9 @@ impl IWorldStorage for FakeWorldStorage {
     }
 
     fn save_chunk_data(&self, _chunk_position: &ChunkPosition, _data: &ChunkData) {}
+
+    fn scan_worlds(_settings: &WorldStorageSettings) -> Vec<WorldInfo> {
+        let worlds: Vec<WorldInfo> = Default::default();
+        worlds
+    }
 }

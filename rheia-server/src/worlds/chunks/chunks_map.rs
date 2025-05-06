@@ -8,10 +8,10 @@ use common::{
     },
     utils::vec_remove_item,
     world_generator::default::{WorldGenerator, WorldGeneratorSettings},
-    world_storage::taits::{IWorldStorage, WorldStorageSettings},
+    worlds_storage::taits::IWorldStorage,
     WorldStorageManager, VERTICAL_SECTIONS,
 };
-use parking_lot::{RwLock, RwLockReadGuard};
+use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
@@ -23,6 +23,10 @@ use crate::{
 use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState};
 
 pub type MapChunksType = AHashMap<ChunkPosition, Arc<RwLock<ChunkColumn>>>;
+
+pub type ChunkSectionType<'a> = RwLockReadGuard<'a, ChunkColumn>;
+
+pub type StorageLock = Arc<Mutex<WorldStorageManager>>;
 
 /// Container of 2d ChunkColumn's.
 /// This container manages vision of the chunks
@@ -38,24 +42,18 @@ pub struct ChunkMap {
 
     world_generator: Arc<RwLock<WorldGenerator>>,
 
-    storage: Arc<RwLock<WorldStorageManager>>,
+    storage: StorageLock,
 }
 
-pub type ChunkSectionType<'a> = RwLockReadGuard<'a, ChunkColumn>;
-
 impl ChunkMap {
-    pub fn new(
-        seed: u64,
-        world_settings: WorldGeneratorSettings,
-        world_storage_settings: WorldStorageSettings,
-    ) -> Self {
+    pub fn new(seed: u64, world_settings: WorldGeneratorSettings, storage: WorldStorageManager) -> Self {
         Self {
             chunks: Default::default(),
             chunks_load_state: Default::default(),
             loaded_chunks: flume::unbounded(),
 
             world_generator: Arc::new(RwLock::new(WorldGenerator::create(Some(seed), world_settings).unwrap())),
-            storage: Arc::new(RwLock::new(WorldStorageManager::create(world_storage_settings))),
+            storage: Arc::new(Mutex::new(storage)),
         }
     }
 
@@ -208,7 +206,7 @@ impl ChunkMap {
             let chunk_column = chunk_column.read();
             let for_despawn = chunk_column.is_for_despawn(CHUNKS_DESPAWN_TIMER);
             self.storage
-                .read()
+                .lock()
                 .save_chunk_data(chunk_column.get_chunk_position(), &chunk_column.sections);
             if for_despawn {
                 log::trace!(target: "chunks", "Chunk {} despawned", chunk);
@@ -259,7 +257,11 @@ impl ChunkMap {
 #[cfg(test)]
 mod tests {
     use bevy::prelude::Entity;
-    use common::{world_generator::default::WorldGeneratorSettings, world_storage::taits::WorldStorageSettings};
+    use common::{
+        world_generator::default::WorldGeneratorSettings,
+        worlds_storage::taits::{IWorldStorage, WorldStorageSettings},
+        WorldStorageManager,
+    };
     use std::time::Duration;
 
     use crate::CHUNKS_DESPAWN_TIMER;
@@ -268,7 +270,8 @@ mod tests {
 
     #[test]
     fn test_tickets_spawn_despawn() {
-        let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), WorldStorageSettings::default());
+        let storage = WorldStorageManager::create("test".to_string(), &WorldStorageSettings::default()).unwrap();
+        let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), storage);
         let entity = Entity::from_raw(0);
         let chunks_distance = 2_u16;
 
@@ -309,7 +312,8 @@ mod tests {
 
     #[test]
     fn test_update_chunks() {
-        let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), WorldStorageSettings::default());
+        let storage = WorldStorageManager::create("test".to_string(), &WorldStorageSettings::default()).unwrap();
+        let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), storage);
         let world_slug = "default".to_string();
         let entity = Entity::from_raw(0);
         let pos = ChunkPosition::new(0, 0);

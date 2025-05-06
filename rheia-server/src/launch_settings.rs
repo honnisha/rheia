@@ -1,6 +1,6 @@
 use bevy::prelude::Resource;
 use clap::Parser;
-use common::world_storage::taits::WorldStorageSettings;
+use common::worlds_storage::taits::WorldStorageSettings;
 use std::env;
 use std::path::PathBuf;
 

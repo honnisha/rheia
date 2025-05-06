@@ -3,7 +3,8 @@ use std::time::Duration;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGeneratorSettings;
-use common::world_storage::taits::WorldStorageSettings;
+use common::worlds_storage::taits::{IWorldStorage, WorldStorageSettings};
+use common::WorldStorageManager;
 use network::messages::ServerMessages;
 
 use crate::entities::entity::{Position, Rotation};
@@ -32,13 +33,17 @@ impl WorldManager {
         slug: String,
         seed: u64,
         world_settings: WorldGeneratorSettings,
-        world_storage_settings: WorldStorageSettings,
-    ) -> Self {
-        WorldManager {
+        world_storage_settings: &WorldStorageSettings,
+    ) -> Result<Self, String> {
+        let storage = match WorldStorageManager::create(slug.clone(), world_storage_settings) {
+            Ok(s) => s,
+            Err(e) => return Err(e),
+        };
+        Ok(WorldManager {
             slug: slug,
             ecs: Ecs::new(),
-            chunks_map: ChunkMap::new(seed, world_settings, world_storage_settings),
-        }
+            chunks_map: ChunkMap::new(seed, world_settings, storage),
+        })
     }
 
     pub fn get_ecs(&self) -> &Ecs {

@@ -41,6 +41,8 @@ impl Plugin for WorldsHandlerPlugin {
         let launch_settings = app.world().get_resource::<LaunchSettings>().unwrap();
         let world_storage_settings = launch_settings.get_world_storage_settings();
 
+        worlds_manager.scan_worlds(&world_storage_settings);
+
         let default_world = "default".to_string();
         if worlds_manager.count() == 0 && !worlds_manager.has_world_with_slug(&default_world) {
             let mut rng = RandomNumberGenerator::new();
@@ -50,7 +52,7 @@ impl Plugin for WorldsHandlerPlugin {
                 default_world.clone(),
                 seed,
                 WorldGeneratorSettings::default(),
-                world_storage_settings,
+                &world_storage_settings,
             );
             match world {
                 Ok(_) => {

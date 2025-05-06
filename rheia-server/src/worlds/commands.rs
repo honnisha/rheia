@@ -69,7 +69,7 @@ pub(crate) fn command_world(
                     slug.clone(),
                     seed,
                     WorldGeneratorSettings::default(),
-                    world_storage_settings,
+                    &world_storage_settings,
                 );
                 match world {
                     Ok(_) => {
