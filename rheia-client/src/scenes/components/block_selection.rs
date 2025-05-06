@@ -39,9 +39,6 @@ impl BlockSelection {
         self.selected_block_id = Some(*block.bind().get_block_id());
         self.toggle(false);
 
-        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
-        icon.bind_mut().toggle_selected(false);
-
         self.base_mut().emit_signal("on_closed", &[]);
     }
 
@@ -75,6 +72,10 @@ impl BlockSelection {
 
     pub fn toggle(&mut self, state: bool) {
         self.window.bind_mut().toggle(state);
+
+        for (_block_id, icon) in self.icons.iter_mut() {
+            icon.bind_mut().toggle_selected(false);
+        }
 
         if state {
             Input::singleton().set_mouse_mode(MouseMode::VISIBLE);

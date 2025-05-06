@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://ha34myf86so5"]
+[gd_scene load_steps=10 format=3 uid="uid://ha34myf86so5"]
 
 [ext_resource type="Shader" path="res://assets/shaders/gradient.gdshader" id="1_g0c32"]
 [ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="1_qrd16"]
@@ -6,12 +6,13 @@
 [ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_ssvxi"]
 [ext_resource type="FontFile" uid="uid://dex64ol46xo2a" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold.otf" id="4_al1k3"]
 [ext_resource type="FontFile" uid="uid://vrwsx0k32eym" path="res://assets/gui/fonts/Monocraft/Monocraft.otf" id="5_q8hs5"]
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="6_mqyru"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kw2y6"]
 shader = ExtResource("1_g0c32")
 shader_parameter/direction = Vector2(0, -1)
-shader_parameter/start_color = Color(0.233925, 0.233925, 0.233925, 1)
-shader_parameter/end_color = Color(0.325441, 0.325441, 0.325441, 1)
+shader_parameter/start_color = Color(0.0901961, 0.0745098, 0.054902, 1)
+shader_parameter/end_color = Color(0.180392, 0.14902, 0.113725, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g3xgf"]
 
@@ -63,6 +64,7 @@ custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 size_flags_horizontal = 6
 focus_mode = 0
+theme = ExtResource("6_mqyru")
 theme_override_fonts/font = ExtResource("5_q8hs5")
 theme_override_font_sizes/font_size = 20
 text = "Back

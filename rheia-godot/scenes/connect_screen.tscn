@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://bpi7q8ph1tlrj"]
 
-[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/window/menu_background.png" id="1_uoenq"]
+[ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/menu_background.png" id="1_uoenq"]
 [ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="2_sh6k3"]
 
 [node name="ConnectScreen" type="ConnectScreen" node_paths=PackedStringArray("error_text", "input", "username_input", "back_button", "connect_button")]

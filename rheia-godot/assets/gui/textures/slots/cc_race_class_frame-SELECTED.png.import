@@ -2,20 +2,20 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cceb816pbun8a"
-path="res://.godot/imported/menu_background.png-08e3a1319f1dd591e06aab24bd9293f5.ctex"
+uid="uid://b5udata6g51gn"
+path="res://.godot/imported/cc_race_class_frame-SELECTED.png-9ac6ffa3738f939267e3eb6ff58e71a6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/gui/textures/window/menu_background.png"
-dest_files=["res://.godot/imported/menu_background.png-08e3a1319f1dd591e06aab24bd9293f5.ctex"]
+source_file="res://assets/gui/textures/slots/cc_race_class_frame-SELECTED.png"
+dest_files=["res://.godot/imported/cc_race_class_frame-SELECTED.png-9ac6ffa3738f939267e3eb6ff58e71a6.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=3
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
@@ -23,7 +23,7 @@ compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=0
+roughness/mode=5
 roughness/src_normal=""
 process/fix_alpha_border=false
 process/premult_alpha=false

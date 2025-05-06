@@ -64,7 +64,8 @@ impl BlockIcon {
             return;
         };
         let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
-        self.base_mut().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
+        self.to_gd().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
+        // self.base_mut().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
     }
 
     #[func]
@@ -73,7 +74,7 @@ impl BlockIcon {
             return;
         };
         let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
-        self.base_mut().emit_signal("icon_mouse_exited", &[icon.to_variant()]);
+        self.to_gd().emit_signal("icon_mouse_exited", &[icon.to_variant()]);
     }
 
     #[signal]
