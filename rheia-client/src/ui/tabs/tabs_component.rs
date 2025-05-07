@@ -61,7 +61,7 @@ impl TabsUIComponent {
         let tabs_holder = self.tabs_holder.as_mut().unwrap();
 
         let mut tab_button = TabUIButton::create(&title, title.clone());
-        tab_button.set_text(&uppercase_first(&title));
+        tab_button.set_text(&uppercase_first(&title).replace("-", " ").replace("_", " "));
         tabs_holder.add_child(&tab_button);
         self.tabs_buttons.insert(tab_key.clone(), tab_button.clone());
 

@@ -23,7 +23,7 @@ enum ServerState {
 pub struct RuntimePlugin;
 
 impl RuntimePlugin {
-    pub fn _is_active() -> bool {
+    pub fn is_active() -> bool {
         let state = SERVER_STATE.read().unwrap();
         match &*state {
             ServerState::ACTIVE => true,

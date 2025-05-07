@@ -22,10 +22,13 @@ offset_right = 178.0
 offset_bottom = 40.0
 focus_mode = 0
 theme_override_fonts/font = ExtResource("1_nf5ot")
+theme_override_font_sizes/font_size = 14
 theme_override_styles/hover = SubResource("StyleBoxTexture_uplc1")
 theme_override_styles/pressed = SubResource("StyleBoxTexture_ytgao")
 theme_override_styles/normal = SubResource("StyleBoxTexture_cjdrr")
-text = "Test"
+text = "Test-asdsdasd-asdasda"
+autowrap_mode = 2
+clip_text = true
 
 [node name="TextureSelected" type="TextureRect" parent="."]
 visible = false

@@ -35,7 +35,7 @@ impl WorldManager {
         world_settings: WorldGeneratorSettings,
         world_storage_settings: &WorldStorageSettings,
     ) -> Result<Self, String> {
-        let storage = match WorldStorageManager::create(slug.clone(), world_storage_settings) {
+        let storage = match WorldStorageManager::create(slug.clone(), seed.clone(), world_storage_settings) {
             Ok(s) => s,
             Err(e) => return Err(e),
         };

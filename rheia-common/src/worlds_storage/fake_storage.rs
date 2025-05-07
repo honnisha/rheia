@@ -7,7 +7,7 @@ pub struct FakeWorldStorage {}
 impl IWorldStorage for FakeWorldStorage {
     type Error = String;
 
-    fn create(_world_slug: String, _settings: &WorldStorageSettings) -> Result<Self, String> {
+    fn create(_world_slug: String, _seed: u64, _settings: &WorldStorageSettings) -> Result<Self, String> {
         Ok(Self {})
     }
 
@@ -21,8 +21,8 @@ impl IWorldStorage for FakeWorldStorage {
 
     fn save_chunk_data(&self, _chunk_position: &ChunkPosition, _data: &ChunkData) {}
 
-    fn scan_worlds(_settings: &WorldStorageSettings) -> Vec<WorldInfo> {
+    fn scan_worlds(_settings: &WorldStorageSettings) -> Result<Vec<WorldInfo>, String> {
         let worlds: Vec<WorldInfo> = Default::default();
-        worlds
+        Ok(worlds)
     }
 }

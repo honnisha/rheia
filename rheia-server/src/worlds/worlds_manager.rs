@@ -30,7 +30,15 @@ impl Default for WorldsManager {
 
 impl WorldsManager {
     pub fn scan_worlds(&mut self, world_storage_settings: &WorldStorageSettings) {
-        for world_info in WorldStorageManager::scan_worlds(world_storage_settings) {
+        let worlds_info = match WorldStorageManager::scan_worlds(world_storage_settings) {
+            Ok(w) => w,
+            Err(e) => {
+                log::error!(target: "worlds", "&cWorlds loading error!");
+                log::error!(target: "worlds", "Error: {}", e);
+                panic!();
+            },
+        };
+        for world_info in worlds_info {
             self.create_world(
                 world_info.slug.clone(),
                 world_info.seed,
@@ -38,7 +46,7 @@ impl WorldsManager {
                 &world_storage_settings,
             )
                 .unwrap();
-            log::info!(target: "worlds", "World \"{}\" loaded", world_info.slug);
+            log::info!(target: "worlds", "World &a\"{}\"&r loaded", world_info.slug);
         }
     }
 

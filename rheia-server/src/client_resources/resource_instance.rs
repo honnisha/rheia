@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Iter;
 use std::{collections::HashMap, path::PathBuf};
 
+const ALLOWED_FILES_EXT: &'static [&'static str] = &[".png", ".glb"];
+
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ResourceManifest {
     pub slug: String,
@@ -127,6 +129,11 @@ impl ResourceInstance {
         }
         if let Some(media_list) = &manifest.media {
             for media in media_list.iter() {
+
+                if !ResourceInstance::is_media_allowed(&media) {
+                    return Err(format!("file extension is not supported &c{}", media));
+                }
+
                 let mut media_path = resource_path.clone();
                 media_path.push(media);
 
@@ -141,6 +148,15 @@ impl ResourceInstance {
             }
         }
         Ok(inst)
+    }
+
+    fn is_media_allowed(media: &str) -> bool {
+        for ext in ALLOWED_FILES_EXT.iter() {
+            if media.ends_with(ext) {
+                return true;
+            }
+        }
+        return false;
     }
 
     pub fn add_script(&mut self, slug: String, data: String) {

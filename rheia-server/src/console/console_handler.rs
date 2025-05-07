@@ -89,7 +89,7 @@ impl ConsoleHandler {
 
         thread::spawn(move || loop {
             for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
-                printer.print(parse_to_terminal_colors(&message)).unwrap();
+                printer.print(message).unwrap();
                 thread::sleep(Duration::from_millis(1));
             }
             thread::sleep(Duration::from_millis(50));
@@ -98,9 +98,13 @@ impl ConsoleHandler {
 
     pub fn send_message(message: String) {
         let date = Local::now();
-        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), message);
+        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), parse_to_terminal_colors(&message));
 
-        CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
+        if RuntimePlugin::is_active() {
+            CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();
+        } else {
+            println!("{}", m);
+        }
     }
 
     pub fn iter_commands() -> Drain<'static, String> {

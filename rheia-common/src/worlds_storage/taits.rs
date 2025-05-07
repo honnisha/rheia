@@ -29,10 +29,10 @@ pub struct WorldInfo {
 pub trait IWorldStorage: Sized {
     type Error;
 
-    fn create(world_slug: String, settings: &WorldStorageSettings) -> Result<Self, Self::Error>;
+    fn create(world_slug: String, seed: u64, settings: &WorldStorageSettings) -> Result<Self, Self::Error>;
     fn has_chunk_data(&self, chunk_position: &ChunkPosition) -> bool;
     fn load_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData;
     fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData);
 
-    fn scan_worlds(settings: &WorldStorageSettings) -> Vec<WorldInfo>;
+    fn scan_worlds(settings: &WorldStorageSettings) -> Result<Vec<WorldInfo>, String>;
 }

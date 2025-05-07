@@ -270,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_tickets_spawn_despawn() {
-        let storage = WorldStorageManager::create("test".to_string(), &WorldStorageSettings::default()).unwrap();
+        let storage = WorldStorageManager::create("test".to_string(), 1, &WorldStorageSettings::default()).unwrap();
         let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), storage);
         let entity = Entity::from_raw(0);
         let chunks_distance = 2_u16;
@@ -312,7 +312,7 @@ mod tests {
 
     #[test]
     fn test_update_chunks() {
-        let storage = WorldStorageManager::create("test".to_string(), &WorldStorageSettings::default()).unwrap();
+        let storage = WorldStorageManager::create("test".to_string(), 1, &WorldStorageSettings::default()).unwrap();
         let mut chunk_map = ChunkMap::new(1, WorldGeneratorSettings::default(), storage);
         let world_slug = "default".to_string();
         let entity = Entity::from_raw(0);
