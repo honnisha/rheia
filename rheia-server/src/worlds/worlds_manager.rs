@@ -53,6 +53,13 @@ impl WorldsManager {
         self.worlds.contains_key(slug)
     }
 
+    pub fn save_all(&self) -> Result<(), String> {
+        for (_world_slug, world) in self.worlds.iter() {
+            world.write().save()?;
+        }
+        Ok(())
+    }
+
     pub fn create_world(
         &mut self,
         slug: String,

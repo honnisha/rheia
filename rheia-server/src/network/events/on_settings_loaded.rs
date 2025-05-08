@@ -4,13 +4,13 @@ use crate::{
         skin::EntitySkin,
     },
     network::client_network::ClientNetwork,
-    worlds::bevy_commands::UpdatePlayerSkin,
+    worlds::commands::UpdatePlayerSkin,
 };
 use bevy::prelude::{Commands, Event, Res};
 use bevy_ecs::prelude::EventReader;
 use network::messages::EntitySkin as NetworkEntitySkin;
 
-use crate::worlds::{bevy_commands::SpawnPlayer, worlds_manager::WorldsManager};
+use crate::worlds::{commands::SpawnPlayer, worlds_manager::WorldsManager};
 
 #[derive(Event)]
 pub struct PlayerSettingsLoadedEvent {

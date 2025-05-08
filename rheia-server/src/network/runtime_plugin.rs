@@ -7,6 +7,7 @@ use network::messages::{NetworkMessageType, ServerMessages};
 use std::sync::{Arc, RwLock};
 
 use crate::console::console_handler::ConsoleHandler;
+use crate::worlds::worlds_manager::WorldsManager;
 
 use super::clients_container::ClientsContainer;
 
@@ -18,6 +19,7 @@ lazy_static! {
 enum ServerState {
     STARTED,
     ACTIVE,
+    STOPPING,
     STOPPED,
 }
 
@@ -35,10 +37,7 @@ impl RuntimePlugin {
 
     pub fn is_stopped() -> bool {
         let state = SERVER_STATE.read().unwrap();
-        match &*state {
-            ServerState::STOPPED => true,
-            _ => false,
-        }
+        *state == ServerState::STOPPED || *state == ServerState::STOPPING
     }
 
     pub fn activate() {
@@ -50,7 +49,17 @@ impl RuntimePlugin {
 
     pub fn stop() {
         let mut state = SERVER_STATE.write().unwrap();
-        *state = ServerState::STOPPED;
+        *state = ServerState::STOPPING;
+    }
+
+    pub(crate) fn is_stopping() -> bool {
+        let state = SERVER_STATE.write().unwrap();
+        *state == ServerState::STOPPING
+    }
+
+    pub(crate) fn set_stoped() {
+        let mut state = SERVER_STATE.write().unwrap();
+        *state = ServerState::STOPPING;
     }
 }
 
@@ -69,8 +78,11 @@ fn update_runtime(
     mut app_exit_events: EventWriter<AppExit>,
     clients: Res<ClientsContainer>,
     mut console_handler: ResMut<ConsoleHandler>,
+    worlds_manager: Res<WorldsManager>,
 ) {
-    if RuntimePlugin::is_stopped() {
+    if RuntimePlugin::is_stopping() {
+        log::info!(target: "main", "Server shutdown...");
+        worlds_manager.save_all().unwrap();
         console_handler.handle_stop_server();
         for (_client_id, client) in clients.iter() {
             let msg = ServerMessages::Disconnect {
@@ -79,5 +91,6 @@ fn update_runtime(
             client.send_message(NetworkMessageType::ReliableUnordered, &msg);
         }
         app_exit_events.write(AppExit::Success);
+        RuntimePlugin::set_stoped();
     }
 }

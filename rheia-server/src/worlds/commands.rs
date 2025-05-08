@@ -1,134 +1,133 @@
-use bevy_ecs::world::World;
-use bracket_lib::random::RandomNumberGenerator;
-use common::world_generator::default::WorldGeneratorSettings;
+use bevy::prelude::{Mut, World};
+use bevy_ecs::system::Command;
+use common::chunks::block_position::BlockPositionTrait;
+use network::messages::{NetworkMessageType, ServerMessages};
 
-use crate::console::command::{Arg, Command, CommandMatch};
-use crate::console::commands_executer::CommandError;
-use crate::console::console_sender::ConsoleSenderType;
-use crate::entities::entity::{Position, Rotation};
-use crate::launch_settings::LaunchSettings;
-use crate::network::client_network::ClientNetwork;
-use crate::network::events::on_player_move::move_player;
+use crate::{
+    entities::{
+        entity::{Position, Rotation},
+        skin::EntitySkin,
+    },
+    network::{
+        client_network::ClientNetwork,
+        sync_entities::{sync_entity_despawn, sync_entity_spawn, sync_update_entity_skin},
+        sync_players::PlayerSpawnEvent,
+    },
+};
 
 use super::worlds_manager::WorldsManager;
 
-pub(crate) fn command_parser_world() -> Command {
-    Command::new("world".to_string())
-        .subcommand_required(true)
-        .subcommand(Command::new("list".to_owned()))
-        .subcommand(
-            Command::new("create".to_owned())
-                .arg(Arg::new("slug".to_owned()).required(true))
-                .arg(Arg::new("seed".to_owned())),
-        )
+pub struct SpawnPlayer {
+    world_slug: String,
+    client: ClientNetwork,
+    position: Position,
+    rotation: Rotation,
 }
 
-pub(crate) fn command_world(
-    world: &mut World,
-    sender: Box<dyn ConsoleSenderType>,
-    args: CommandMatch,
-) -> Result<(), CommandError> {
-    let launch_settings = world.get_resource::<LaunchSettings>().unwrap();
-    let world_storage_settings = launch_settings.get_world_storage_settings();
-
-    let mut worlds_manager = world.resource_mut::<WorldsManager>();
-
-    if let Some(world_subcommand) = args.subcommand() {
-        match world_subcommand.get_name().as_str() {
-            "list" => {
-                if worlds_manager.count() == 0 {
-                    sender.send_console_message("Worlds list is empty".to_string());
-                    return Ok(());
-                }
-                let worlds = worlds_manager.get_worlds();
-                sender.send_console_message("Worlds list:".to_string());
-                for (_slug, world) in worlds.iter() {
-                    let world = world.read();
-                    sender.send_console_message(format!(
-                        " - {} (loaded chunks: {})",
-                        world.get_slug(),
-                        world.get_chunks_count()
-                    ));
-                }
-            }
-            "create" => {
-                let slug = world_subcommand.get_arg::<String>(&"slug".to_owned())?;
-                if slug.len() == 0 {
-                    sender.send_console_message(format!("Name of the world cannot be empty"));
-                    return Ok(());
-                }
-
-                let seed = match world_subcommand.get_arg::<u64>(&"slug".to_owned()) {
-                    Ok(s) => s,
-                    Err(_) => {
-                        let mut rng = RandomNumberGenerator::new();
-                        rng.next_u64()
-                    }
-                };
-                let world = worlds_manager.create_world(
-                    slug.clone(),
-                    seed,
-                    WorldGeneratorSettings::default(),
-                    &world_storage_settings,
-                );
-                match world {
-                    Ok(_) => {
-                        sender.send_console_message(format!("World \"{}\" was successfully created", slug));
-                    }
-                    Err(e) => {
-                        sender.send_console_message(format!("World \"{}\" creation error: {}", slug, e));
-                    }
-                }
-            }
-            _ => {
-                sender.send_console_message("Error".to_string());
-            }
+impl SpawnPlayer {
+    pub fn create(world_slug: String, client: ClientNetwork, position: Position, rotation: Rotation) -> Self {
+        Self {
+            world_slug,
+            client,
+            position,
+            rotation,
         }
     }
-    return Ok(());
 }
 
-pub(crate) fn command_parser_teleport() -> Command {
-    Command::new("tp".to_owned())
-        .arg(Arg::new("x".to_owned()).required(true))
-        .arg(Arg::new("y".to_owned()).required(true))
-        .arg(Arg::new("z".to_owned()).required(true))
+impl Command for SpawnPlayer {
+    fn apply(self, world: &mut World) {
+        world.resource_scope(|world, worlds_manager: Mut<WorldsManager>| {
+            let Some(mut world_manager) = worlds_manager.get_world_manager_mut(&self.world_slug) else {
+                panic!("SpawnPlayer: world \"{}\" doesn't exists", self.world_slug);
+            };
+
+            let world_entity = world_manager.spawn_player(self.client.clone(), self.position, self.rotation);
+
+            self.client.set_world_entity(Some(world_entity.clone()));
+
+            // Send world creation message
+            let spawn_world = ServerMessages::SpawnWorld {
+                world_slug: self.world_slug.clone(),
+            };
+            self.client
+                .send_message(NetworkMessageType::ReliableOrdered, &spawn_world);
+
+            // Send teleport instructions
+            self.client.network_send_teleport(&self.position, &self.rotation);
+
+            if world_manager
+                .get_chunks_map()
+                .is_chunk_loaded(&self.position.get_chunk_position())
+            {
+                world.send_event(PlayerSpawnEvent::new(world_entity.clone())).unwrap();
+            }
+        });
+    }
 }
 
-pub(crate) fn command_teleport(
-    world: &mut World,
-    sender: Box<dyn ConsoleSenderType>,
-    args: CommandMatch,
-) -> Result<(), CommandError> {
-    let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
-    let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
-    let z = args.get_arg::<f32>(&"z".to_owned())?.clone();
+pub struct UpdatePlayerSkin {
+    client: ClientNetwork,
+    skin: Option<EntitySkin>,
+}
 
-    let worlds_manager = world.resource::<WorldsManager>();
+impl UpdatePlayerSkin {
+    pub fn create(client: ClientNetwork, skin: Option<EntitySkin>) -> Self {
+        Self { client, skin }
+    }
+}
 
-    let client = match sender.as_any().downcast_ref::<ClientNetwork>() {
-        Some(c) => c,
-        None => {
-            sender.send_console_message("This command is allowed to be used only for players".to_string());
-            return Ok(());
-        }
-    };
+impl Command for UpdatePlayerSkin {
+    fn apply(self, world: &mut World) {
+        world.resource_scope(|_world, worlds_manager: Mut<WorldsManager>| {
+            let Some(world_entity) = self.client.get_world_entity() else {
+                panic!("UpdatePlayerSkin: player not in the world");
+            };
+            let Some(mut world_manager) = worlds_manager.get_world_manager_mut(world_entity.get_world_slug()) else {
+                panic!(
+                    "UpdatePlayerSkin: world \"{}\" doesn't exists",
+                    world_entity.get_world_slug()
+                );
+            };
 
-    let position = Position::new(x, y, z);
-    let rotation = Rotation::new(0.0, 0.0);
+            let ecs = world_manager.get_ecs_mut();
 
-    let Some(world_entity) = client.get_world_entity() else {
-        sender.send_console_message(format!(
-            "Player \"{}\" is not in the world",
-            client.get_client_info().unwrap().get_login()
-        ));
-        return Ok(());
-    };
+            let mut entity = ecs.entity_mut(world_entity.get_entity());
+            let old_skin = entity.get_mut::<EntitySkin>();
 
-    let mut world_manager = worlds_manager
-        .get_world_manager_mut(&world_entity.get_world_slug())
-        .unwrap();
+            match self.skin.as_ref() {
+                Some(new_skin) => {
+                    match old_skin {
+                        Some(mut old_skin) => {
+                            // Replace the old skin
+                            *old_skin = new_skin.clone();
+                            sync_update_entity_skin(&*world_manager, world_entity.get_entity());
+                        }
+                        None => {
+                            // Create the new skin
+                            entity.insert(new_skin.clone());
+                            sync_entity_spawn(&*world_manager, world_entity.get_entity());
+                        }
+                    }
+                }
+                None => {
+                    // Remove the old skin
+                    if old_skin.is_some() {
+                        entity.remove::<EntitySkin>();
+                    }
+                    sync_entity_despawn(&*world_manager, world_entity.get_entity());
+                }
+            }
 
-    move_player(&mut *world_manager, &world_entity, position, rotation);
-    return Ok(());
+            // Send world creation message
+            let skin_message = ServerMessages::UpdatePlayerSkin {
+                skin: match self.skin.as_ref() {
+                    Some(s) => Some(s.to_network().clone()),
+                    None => None,
+                },
+            };
+            self.client
+                .send_message(NetworkMessageType::ReliableOrdered, &skin_message);
+        });
+    }
 }

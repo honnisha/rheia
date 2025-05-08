@@ -1,16 +1,16 @@
 use bevy_app::{App, Plugin, Startup, Update};
-pub mod bevy_commands;
+pub mod commands;
 pub mod load_worlds;
 
 use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
 
 use self::{
-    commands::{command_parser_teleport, command_parser_world, command_teleport, command_world},
+    console_commands::{command_parser_teleport, command_parser_world, command_teleport, command_world},
     worlds_manager::{update_world_chunks, WorldsManager},
 };
 
 pub mod chunks;
-pub mod commands;
+pub mod console_commands;
 pub mod ecs;
 pub mod on_chunk_loaded;
 pub mod world_manager;

@@ -118,6 +118,12 @@ impl WorldManager {
         changed_chunks
     }
 
+    pub fn save(&mut self) -> Result<(), String> {
+        self.chunks_map.save()?;
+        log::info!(target: "worlds", "World &a\"{}\"&r saved", self.slug);
+        Ok(())
+    }
+
     pub fn despawn_player(&mut self, world_entity: &WorldEntity) {
         self.get_chunks_map_mut().stop_chunks_render(world_entity.get_entity());
 

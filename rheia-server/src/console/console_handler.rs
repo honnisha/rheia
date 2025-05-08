@@ -3,10 +3,8 @@ use chrono::Local;
 use common::utils::colors::parse_to_terminal_colors;
 use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
-use log::{error, info};
 use rustyline::{
-    error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config,
-    Editor, ExternalPrinter,
+    config::Configurer, error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config, Editor, ExternalPrinter
 };
 use std::{
     fs::OpenOptions,
@@ -54,6 +52,7 @@ impl ConsoleHandler {
 
         let mut rl = Editor::with_config(config).unwrap();
         rl.set_helper(Some(helper));
+        rl.set_enable_signals(true);
 
         let _ = OpenOptions::new()
             .create_new(true)
@@ -62,8 +61,8 @@ impl ConsoleHandler {
             .open(CONSOLE_HISTORY_FILE);
 
         let _ = match rl.load_history(CONSOLE_HISTORY_FILE) {
-            Ok(_) => info!(target: "console", "Console file history loaded from &e\"{}\"", CONSOLE_HISTORY_FILE),
-            Err(e) => error!(target: "console", "Console history &e\"{}\"&r error: &c{}", CONSOLE_HISTORY_FILE, e),
+            Ok(_) => log::info!(target: "console", "Console file history loaded from &e\"{}\"", CONSOLE_HISTORY_FILE),
+            Err(e) => log::error!(target: "console", "Console history &e\"{}\"&r error: &c{}", CONSOLE_HISTORY_FILE, e),
         };
 
         let mut printer = rl.create_external_printer().unwrap();
@@ -79,10 +78,10 @@ impl ConsoleHandler {
                 Err(ReadlineError::Interrupted) => {
                     let _ = match rl.save_history(CONSOLE_HISTORY_FILE) {
                         Ok(_) => {
-                            info!(target: "console", "Console file history saved in &e\"{}\"", CONSOLE_HISTORY_FILE)
+                            log::info!(target: "console", "Console file history saved in &e\"{}\"", CONSOLE_HISTORY_FILE)
                         }
                         Err(e) => {
-                            error!(target: "console", "Console file &e\"{}\"&r history save error: &c{}", CONSOLE_HISTORY_FILE, e)
+                            log::error!(target: "console", "Console file &e\"{}\"&r history save error: &c{}", CONSOLE_HISTORY_FILE, e)
                         }
                     };
 

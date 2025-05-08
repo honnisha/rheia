@@ -213,8 +213,7 @@ impl ChunkMap {
                     .storage
                     .lock()
                     .save_chunk_data(chunk_column.get_chunk_position(), &chunk_column.sections);
-                if let Err(e) = save_chunk_data
-                {
+                if let Err(e) = save_chunk_data {
                     log::error!(target: "worlds", "&cChunk save error!");
                     log::error!(target: "worlds", "Error: {}", e);
                     RuntimePlugin::stop();
@@ -261,6 +260,20 @@ impl ChunkMap {
             .write()
             .change_block(section, block_position, new_block_info);
         return Ok(());
+    }
+
+    pub fn save(&mut self) -> Result<(), String> {
+        for (_chunk_position, chunk_column) in self.chunks.iter() {
+            let chunk_column = chunk_column.read();
+            let save_chunk_data = self
+                .storage
+                .lock()
+                .save_chunk_data(chunk_column.get_chunk_position(), &chunk_column.sections);
+            if let Err(e) = save_chunk_data {
+                return Err(e);
+            }
+        }
+        Ok(())
     }
 }
 
