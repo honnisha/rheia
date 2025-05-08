@@ -1,5 +1,5 @@
 use bevy_app::{App, Plugin, Update, Startup};
-use bevy_ecs::world::World;
+use bevy_ecs::{system::ResMut, world::World};
 
 use self::{console_handler::ConsoleHandler, commands_executer::CommandsHandler, console_sender::Console, completer::{CustomCompleter, CompleteResponse}};
 
@@ -21,9 +21,10 @@ impl Default for ConsolePlugin {
 impl Plugin for ConsolePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(CommandsHandler::default());
+        app.insert_resource(ConsoleHandler::default());
         app.add_systems(Update, handler_console_input);
         app.add_systems(Update, handler_console_complete);
-        app.add_systems(Startup, ConsoleHandler::run_handler);
+        app.add_systems(Startup, run_handler);
     }
 }
 
@@ -41,4 +42,8 @@ fn handler_console_complete(world: &mut World) {
         CommandsHandler::complete(world, Box::new(sender), &mut response);
         CustomCompleter::send_complete_response(response);
     }
+}
+
+fn run_handler(mut console_handler: ResMut<ConsoleHandler>) {
+    console_handler.run_handler();
 }

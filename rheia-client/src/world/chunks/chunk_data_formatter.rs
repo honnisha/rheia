@@ -4,11 +4,10 @@ use common::{
         block_info::BlockInfo, block_type::BlockType, chunk_collider_info::ChunkColliderInfo,
         voxel_visibility::VoxelVisibility,
     },
-    chunks::block_position::ChunkBlockPosition,
+    chunks::{block_position::ChunkBlockPosition, ChunkDataType},
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use ndshape::ConstShape;
-use network::messages::ChunkDataType;
 
 use crate::world::block_storage::BlockStorage;
 

@@ -1,3 +1,4 @@
+use bevy_ecs::resource::Resource;
 use chrono::Local;
 use common::utils::colors::parse_to_terminal_colors;
 use flume::{Drain, Receiver, Sender};
@@ -7,7 +8,11 @@ use rustyline::{
     error::ReadlineError, highlight::MatchingBracketHighlighter, validate::MatchingBracketValidator, ColorMode, Config,
     Editor, ExternalPrinter,
 };
-use std::{fs::OpenOptions, thread, time::Duration};
+use std::{
+    fs::OpenOptions,
+    thread::{self},
+    time::Duration,
+};
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
@@ -24,13 +29,14 @@ lazy_static! {
     static ref CONSOLE_INPUT_CHANNEL: (Sender<String>, Receiver<String>) = flume::bounded(1);
 }
 
-pub struct ConsoleHandler;
+#[derive(Resource, Default)]
+pub struct ConsoleHandler {}
 
 const CONSOLE_HISTORY_FILE: &str = "console_history.txt";
 
 /// Read and write console std
 impl ConsoleHandler {
-    pub fn run_handler() {
+    pub fn run_handler(&mut self) {
         let config = Config::builder()
             .history_ignore_space(true)
             .auto_add_history(true)
@@ -63,7 +69,7 @@ impl ConsoleHandler {
         let mut printer = rl.create_external_printer().unwrap();
 
         thread::spawn(move || loop {
-            let readline = rl.readline("> ");
+            let readline = rl.readline("");
             match readline {
                 Ok(input) => {
                     if input.len() > 0 {
@@ -72,7 +78,9 @@ impl ConsoleHandler {
                 }
                 Err(ReadlineError::Interrupted) => {
                     let _ = match rl.save_history(CONSOLE_HISTORY_FILE) {
-                        Ok(_) => info!(target: "console", "Console file history saved in &e\"{}\"", CONSOLE_HISTORY_FILE),
+                        Ok(_) => {
+                            info!(target: "console", "Console file history saved in &e\"{}\"", CONSOLE_HISTORY_FILE)
+                        }
                         Err(e) => {
                             error!(target: "console", "Console file &e\"{}\"&r history save error: &c{}", CONSOLE_HISTORY_FILE, e)
                         }
@@ -96,9 +104,19 @@ impl ConsoleHandler {
         });
     }
 
+    pub fn handle_stop_server(&mut self) {
+        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
+            println!("{}", message);
+        }
+    }
+
     pub fn send_message(message: String) {
         let date = Local::now();
-        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), parse_to_terminal_colors(&message));
+        let m = format!(
+            "{}: {}",
+            date.format("%H:%M:%S.%3f"),
+            parse_to_terminal_colors(&message)
+        );
 
         if RuntimePlugin::is_active() {
             CONSOLE_OUTPUT_CHANNEL.0.send(m).unwrap();

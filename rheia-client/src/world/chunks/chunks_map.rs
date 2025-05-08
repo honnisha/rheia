@@ -13,11 +13,11 @@ use common::{
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_position::ChunkPosition,
+        SectionsData,
     },
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::prelude::*;
-use network::messages::SectionsData;
 use parking_lot::RwLock;
 use std::cell::RefCell;
 use std::rc::Rc;

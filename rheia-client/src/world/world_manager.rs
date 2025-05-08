@@ -10,10 +10,9 @@ use crate::{
 };
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition},
+    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, SectionsData},
 };
 use godot::{classes::Material, prelude::*};
-use network::messages::SectionsData;
 
 /// Godot world
 /// Contains all things inside world

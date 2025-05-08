@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use ahash::AHashMap;
-use common::chunks::position::Vector3 as NetworkVector3;
+use common::chunks::{position::Vector3 as NetworkVector3, ChunkDataType};
 use common::{
     blocks::block_type::{BlockContent, BlockType},
     chunks::{
@@ -16,7 +16,6 @@ use common::{
     },
 };
 use godot::prelude::*;
-use network::messages::ChunkDataType;
 use physics::{
     physics::{IPhysicsCollider, IPhysicsColliderBuilder},
     PhysicsCollider, PhysicsColliderBuilder,

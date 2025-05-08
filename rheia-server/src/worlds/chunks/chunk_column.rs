@@ -2,14 +2,17 @@ use arrayvec::ArrayVec;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
+use common::chunks::ChunkDataType;
 use common::world_generator::default::WorldGenerator;
-use common::worlds_storage::taits::IWorldStorage;
+use common::worlds_storage::taits::{ChunkData, IWorldStorage};
 use common::VERTICAL_SECTIONS;
 use core::fmt;
-use network::messages::{ChunkDataType, ServerMessages};
+use network::messages::ServerMessages;
 use parking_lot::RwLock;
 use std::fmt::Display;
 use std::{sync::Arc, time::Duration};
+
+use crate::network::runtime_plugin::RuntimePlugin;
 
 use super::chunks_map::StorageLock;
 
@@ -17,7 +20,7 @@ pub struct ChunkColumn {
     chunk_position: ChunkPosition,
     world_slug: String,
 
-    pub sections: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>,
+    pub sections: ChunkData,
     despawn_timer: Arc<RwLock<Duration>>,
     loaded: bool,
 }
@@ -104,11 +107,32 @@ pub(crate) fn load_chunk(
         #[cfg(feature = "trace")]
         let _span = bevy_utils::tracing::info_span!("load_chunk").entered();
 
+        if RuntimePlugin::is_stopped() {
+            return;
+        }
+
         let mut chunk_column = chunk_column.write();
 
         // Load from storage
-        if storage.lock().has_chunk_data(&chunk_column.chunk_position) {
-            chunk_column.sections = storage.lock().load_chunk_data(&chunk_column.chunk_position);
+        let index = match storage.lock().has_chunk_data(&chunk_column.chunk_position) {
+            Ok(i) => i,
+            Err(e) => {
+                log::error!(target: "worlds", "&cChunk load error!");
+                log::error!(target: "worlds", "Error: {}", e);
+                RuntimePlugin::stop();
+                return;
+            },
+        };
+        if let Some(index) = index {
+            chunk_column.sections = match storage.lock().load_chunk_data(index) {
+                Ok(c) => c,
+                Err(e) => {
+                    log::error!(target: "worlds", "&cChunk load error!");
+                    log::error!(target: "worlds", "Error: {}", e);
+                    RuntimePlugin::stop();
+                    return;
+                }
+            };
         }
         // Or generate new
         else {

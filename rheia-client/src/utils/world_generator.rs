@@ -2,12 +2,11 @@ use std::collections::HashMap;
 
 use arrayvec::ArrayVec;
 use common::{
-    chunks::chunk_position::ChunkPosition,
+    chunks::{chunk_position::ChunkPosition, ChunkDataType, SectionsData},
     world_generator::default::{WorldGenerator, WorldGeneratorSettings},
     VERTICAL_SECTIONS,
 };
 use godot::obj::Gd;
-use network::messages::{ChunkDataType, SectionsData};
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use spiral::ManhattanIterator;
 

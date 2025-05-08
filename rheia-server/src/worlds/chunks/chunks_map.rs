@@ -16,6 +16,7 @@ use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
+    network::runtime_plugin::RuntimePlugin,
     worlds::{chunks::chunk_column::load_chunk, world_manager::ChunkChanged},
     CHUNKS_DESPAWN_TIMER,
 };
@@ -112,26 +113,26 @@ impl ChunkMap {
     /*
         /// Gets the vector of old and new chunks when transitioning between chunks
         pub fn get_chunks_transition(
-            from: &ChunkPosition,
-            to: &ChunkPosition,
-            chunks_distance: u16,
-        ) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
-            let iter = ManhattanIterator::new(from.x as i32, from.z as i32, chunks_distance as i32);
-            let mut old: Vec<ChunkPosition> = iter.map(|pos| ChunkPosition::new(pos.0 as i64, pos.1 as i64)).collect();
+        from: &ChunkPosition,
+        to: &ChunkPosition,
+        chunks_distance: u16,
+    ) -> (Vec<ChunkPosition>, Vec<ChunkPosition>) {
+        let iter = ManhattanIterator::new(from.x as i32, from.z as i32, chunks_distance as i32);
+        let mut old: Vec<ChunkPosition> = iter.map(|pos| ChunkPosition::new(pos.0 as i64, pos.1 as i64)).collect();
 
-            let mut new: Vec<ChunkPosition> = Default::default();
-            let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
-            for (x, z) in iter {
-                let chunk = ChunkPosition::new(x as i64, z as i64);
-                if !old.contains(&chunk) {
-                    new.push(chunk);
-                }
-            }
+        let mut new: Vec<ChunkPosition> = Default::default();
+        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
+        for (x, z) in iter {
+        let chunk = ChunkPosition::new(x as i64, z as i64);
+        if !old.contains(&chunk) {
+        new.push(chunk);
+    }
+    }
 
-            old.retain(|&chunk| !new.contains(&chunk));
-            (old, new)
-        }
-    */
+        old.retain(|&chunk| !new.contains(&chunk));
+        (old, new)
+    }
+         */
 
     /// Trigered when player is move between chunks
     /// for updating chunks vision
@@ -205,11 +206,20 @@ impl ChunkMap {
         self.chunks.retain(|&chunk, chunk_column| {
             let chunk_column = chunk_column.read();
             let for_despawn = chunk_column.is_for_despawn(CHUNKS_DESPAWN_TIMER);
-            self.storage
-                .lock()
-                .save_chunk_data(chunk_column.get_chunk_position(), &chunk_column.sections);
             if for_despawn {
                 log::trace!(target: "chunks", "Chunk {} despawned", chunk);
+
+                let save_chunk_data = self
+                    .storage
+                    .lock()
+                    .save_chunk_data(chunk_column.get_chunk_position(), &chunk_column.sections);
+                if let Err(e) = save_chunk_data
+                {
+                    log::error!(target: "worlds", "&cChunk save error!");
+                    log::error!(target: "worlds", "Error: {}", e);
+                    RuntimePlugin::stop();
+                    panic!();
+                }
             }
             !for_despawn
         });

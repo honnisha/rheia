@@ -4,11 +4,11 @@ use common::{
     chunks::{
         block_position::{BlockPosition, ChunkBlockPosition},
         chunk_position::ChunkPosition,
+        SectionsData,
     },
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{classes::Material, prelude::*};
-use network::messages::SectionsData;
 use parking_lot::RwLock;
 use std::sync::{
     atomic::{AtomicBool, Ordering},

@@ -39,4 +39,4 @@ bracket-lib = "0.8.7"
 bracket-noise = "0.8.7"
 bracket-random = "0.8.7"
 
-rusqlite = { version = "0.35.0", features = ["bundled"] }
+rusqlite = { version = "0.35.0", features = ["bundled", "blob"] }

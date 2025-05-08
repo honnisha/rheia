@@ -4,7 +4,7 @@ use arrayvec::ArrayVec;
 
 use crate::{chunks::chunk_position::ChunkPosition, world_generator::ChunkDataType, VERTICAL_SECTIONS};
 
-pub(crate) type ChunkData = ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>;
+pub type ChunkData = ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>;
 
 #[derive(Default)]
 pub struct WorldStorageSettings {
@@ -28,11 +28,13 @@ pub struct WorldInfo {
 
 pub trait IWorldStorage: Sized {
     type Error;
+    type PrimaryKey;
 
     fn create(world_slug: String, seed: u64, settings: &WorldStorageSettings) -> Result<Self, Self::Error>;
-    fn has_chunk_data(&self, chunk_position: &ChunkPosition) -> bool;
-    fn load_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData;
-    fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData);
+    fn has_chunk_data(&self, chunk_position: &ChunkPosition) -> Result<Option<Self::PrimaryKey>, String> ;
+    fn load_chunk_data(&self, chunk_id: Self::PrimaryKey) -> Result<ChunkData, String>;
+    fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData) -> Result<Self::PrimaryKey, String>;
+    fn delete(&self, settings: &WorldStorageSettings) -> Result<(), String>;
 
     fn scan_worlds(settings: &WorldStorageSettings) -> Result<Vec<WorldInfo>, String>;
 }

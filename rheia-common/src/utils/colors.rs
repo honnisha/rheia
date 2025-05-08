@@ -176,15 +176,17 @@ mod tests {
         let r = parse_to_terminal_colors(&"&5magenta_blue-&1_skeep-\\&2_gold-&6_red-&4_test".to_string());
         assert_eq!(
             r,
-            "\u{1b}[35mmagenta_blue-\u{1b}[34m_skeep-&2_gold-\u{1b}[33m_red-\u{1b}[31m_test\u{1b}[0m".to_string()
+            "\u{1b}[0;35mmagenta_blue-\u{1b}[0;34m_skeep-&2_gold-\u{1b}[0;33m_red-\u{1b}[0;31m_test\u{1b}[0;0m"
+                .to_string()
         );
     }
 
     #[test]
     fn test_to_godot() {
-        let r = parse_to_console_godot(
-            &"time: &8main &aINFO&r: text".to_string(),
+        let r = parse_to_console_godot(&"time: &8main &aINFO&r: text".to_string());
+        assert_eq!(
+            r,
+            "time: [color=dark_gray]main [color=green]INFO[/color][color=white]: text[/color][color=white]".to_string()
         );
-        assert_eq!(r, "time: [color=#a9a9a9]main [color=green]INFO[/color]: text[/color]".to_string());
     }
 }

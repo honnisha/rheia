@@ -2,11 +2,10 @@ use std::collections::HashMap;
 
 use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::BlockType;
-use common::chunks::block_position::ChunkBlockPosition;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
-use common::VERTICAL_SECTIONS;
+use common::chunks::SectionsData;
 use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
@@ -39,9 +38,6 @@ pub enum ClientMessages {
     },
     SettingsLoaded,
 }
-
-pub type ChunkDataType = HashMap<ChunkBlockPosition, BlockInfo>;
-pub type SectionsData = [Box<ChunkDataType>; VERTICAL_SECTIONS];
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ResurceScheme {

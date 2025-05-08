@@ -1,10 +1,12 @@
 use bevy::prelude::{App, EventWriter, Plugin};
 use bevy_app::AppExit;
 use bevy_app::{First, Startup};
-use bevy_ecs::system::Res;
+use bevy_ecs::system::{Res, ResMut};
 use lazy_static::lazy_static;
 use network::messages::{NetworkMessageType, ServerMessages};
 use std::sync::{Arc, RwLock};
+
+use crate::console::console_handler::ConsoleHandler;
 
 use super::clients_container::ClientsContainer;
 
@@ -41,7 +43,9 @@ impl RuntimePlugin {
 
     pub fn activate() {
         let mut state = SERVER_STATE.write().unwrap();
-        *state = ServerState::ACTIVE;
+        if *state == ServerState::STARTED {
+            *state = ServerState::ACTIVE;
+        }
     }
 
     pub fn stop() {
@@ -61,8 +65,13 @@ fn activate_runtime() {
     RuntimePlugin::activate();
 }
 
-fn update_runtime(mut app_exit_events: EventWriter<AppExit>, clients: Res<ClientsContainer>) {
+fn update_runtime(
+    mut app_exit_events: EventWriter<AppExit>,
+    clients: Res<ClientsContainer>,
+    mut console_handler: ResMut<ConsoleHandler>,
+) {
     if RuntimePlugin::is_stopped() {
+        console_handler.handle_stop_server();
         for (_client_id, client) in clients.iter() {
             let msg = ServerMessages::Disconnect {
                 message: Some("Server shutting down".to_string()),

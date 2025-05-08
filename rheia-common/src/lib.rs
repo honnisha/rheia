@@ -1,4 +1,4 @@
-use worlds_storage::sqllite_storage::SQLLiteStorage;
+use worlds_storage::sqlite_storage::SQLiteStorage;
 
 pub mod blocks;
 pub mod chunks;
@@ -6,7 +6,7 @@ pub mod utils;
 pub mod world_generator;
 pub mod worlds_storage;
 
-pub type WorldStorageManager = SQLLiteStorage;
+pub type WorldStorageManager = SQLiteStorage;
 
 pub const CHUNK_SIZE: u8 = 16_u8;
 pub const CHUNK_SIZE_BOUNDARY: u32 = CHUNK_SIZE as u32 + 2;

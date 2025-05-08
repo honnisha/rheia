@@ -5,8 +5,8 @@ use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::Res;
 use common::{
-    world_generator::default::WorldGeneratorSettings, worlds_storage::taits::WorldStorageSettings,
-    worlds_storage::taits::IWorldStorage, WorldStorageManager,
+    world_generator::default::WorldGeneratorSettings, worlds_storage::taits::IWorldStorage,
+    worlds_storage::taits::WorldStorageSettings, WorldStorageManager,
 };
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -29,14 +29,12 @@ impl Default for WorldsManager {
 }
 
 impl WorldsManager {
-    pub fn scan_worlds(&mut self, world_storage_settings: &WorldStorageSettings) {
+    pub fn scan_worlds(&mut self, world_storage_settings: &WorldStorageSettings) -> Result<(), String> {
         let worlds_info = match WorldStorageManager::scan_worlds(world_storage_settings) {
             Ok(w) => w,
             Err(e) => {
-                log::error!(target: "worlds", "&cWorlds loading error!");
-                log::error!(target: "worlds", "Error: {}", e);
-                panic!();
-            },
+                return Err(e.to_string());
+            }
         };
         for world_info in worlds_info {
             self.create_world(
@@ -45,9 +43,10 @@ impl WorldsManager {
                 WorldGeneratorSettings::default(),
                 &world_storage_settings,
             )
-                .unwrap();
+            .unwrap();
             log::info!(target: "worlds", "World &a\"{}\"&r loaded", world_info.slug);
         }
+        Ok(())
     }
 
     pub fn has_world_with_slug(&self, slug: &String) -> bool {
