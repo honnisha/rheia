@@ -1,11 +1,15 @@
 use bevy::prelude::{Entity, EntityRef};
 use common::chunks::block_position::BlockPositionTrait;
-use network::messages::{NetworkMessageType, ServerMessages};
+use network::messages::{EntityNetworkComponent, NetworkMessageType, ServerMessages};
+use strum::IntoEnumIterator;
 
 use crate::{
     entities::{
         entity::{Position, Rotation},
-        skin::EntitySkin,
+        entity_tag::EntityTagComponent,
+        skin::EntitySkinComponent,
+        traits::IEntityNetworkComponent,
+        EntityComponent,
     },
     worlds::world_manager::{ChunkChanged, WorldManager},
 };
@@ -16,47 +20,32 @@ pub(crate) fn send_start_streaming_entity(target_client: &ClientNetwork, entity_
     let position = entity_ref.get::<Position>().unwrap();
     let rotation = entity_ref.get::<Rotation>().unwrap();
     let skin = entity_ref
-        .get::<EntitySkin>()
+        .get::<EntitySkinComponent>()
         .expect("skin is required for send_start_streaming_entity");
+
+    let mut components: Vec<EntityNetworkComponent> = Default::default();
+
+    for comp in EntityComponent::iter() {
+        match comp {
+            EntityComponent::Tag(_) => {
+                if let Some(tag) = entity_ref.get::<EntityTagComponent>() {
+                    components.push(tag.to_network());
+                }
+            }
+            EntityComponent::Skin(_) => {
+                components.push(skin.to_network());
+            }
+        }
+    }
 
     let msg = ServerMessages::StartStreamingEntity {
         id: entity_ref.id().index(),
         world_slug: world_slug,
         position: position.to_network(),
         rotation: rotation.to_network(),
-        skin: skin.to_network().clone(),
+        components: components,
     };
     target_client.send_message(NetworkMessageType::ReliableOrdered, &msg);
-}
-
-/// Sync skin for all watchers
-pub(crate) fn sync_update_entity_skin(world_manager: &WorldManager, entity: Entity) {
-    let ecs = world_manager.get_ecs();
-    let entity_ref = ecs.get_entity(entity).unwrap();
-    let skin = entity_ref.get::<EntitySkin>().unwrap();
-    let position = entity_ref.get::<Position>().unwrap();
-
-    let msg = ServerMessages::UpdateEntitySkin {
-        world_slug: world_manager.get_slug().clone(),
-        id: entity_ref.id().index(),
-        skin: skin.to_network().clone(),
-    };
-
-    if let Some(entities) = world_manager
-        .get_chunks_map()
-        .get_chunk_watchers(&position.get_chunk_position())
-    {
-        for watcher_entity in entities {
-            if *watcher_entity == entity {
-                continue;
-            }
-
-            let watcher_entity_ref = ecs.get_entity(*watcher_entity).unwrap();
-            let watcher_client = watcher_entity_ref.get::<ClientNetwork>().unwrap();
-
-            watcher_client.send_message(NetworkMessageType::ReliableOrdered, &msg);
-        }
-    }
 }
 
 /// Синхронизация спавна для всех наблюдателей чанка, в котором находится entity

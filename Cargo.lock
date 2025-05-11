@@ -6737,7 +6737,7 @@ dependencies = [
 
 [[package]]
 name = "rheia-client"
-version = "0.1.15"
+version = "0.1.16"
 dependencies = [
  "ahash",
  "arrayvec 0.7.4",
@@ -6843,6 +6843,8 @@ dependencies = [
  "serde_yaml",
  "shellexpand",
  "spiral",
+ "strum 0.27.1",
+ "strum_macros 0.27.1",
  "tokio",
  "uuid",
  "zip",

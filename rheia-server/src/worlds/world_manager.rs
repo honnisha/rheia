@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use bevy_ecs::bundle::Bundle;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGeneratorSettings;
@@ -8,9 +9,10 @@ use common::WorldStorageManager;
 use network::messages::ServerMessages;
 
 use crate::entities::entity::{Position, Rotation};
+use crate::entities::EntityComponent;
 use crate::CHUNKS_DISTANCE;
 
-use crate::network::client_network::{ClientNetwork, WorldEntity};
+use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
 
 use super::ecs::Ecs;
@@ -70,10 +72,31 @@ impl WorldManager {
         self.get_chunks_map().count()
     }
 
-    pub fn spawn_player(&mut self, client: ClientNetwork, position: Position, rotation: Rotation) -> WorldEntity {
-        let bundle = (position.clone(), rotation, client);
-
+    pub fn spawn_player<B: Bundle>(
+        &mut self,
+        position: Position,
+        bundle: B,
+        components: Vec<EntityComponent>,
+    ) -> WorldEntity {
         let entity = self.get_ecs_mut().spawn(bundle, position.get_chunk_position());
+
+        let mut entity_ecs = self.get_ecs_mut().entity_mut(entity);
+        if components.len() > 0 {
+            for component in components {
+                match component {
+                    EntityComponent::Tag(c) => {
+                        if let Some(c) = c {
+                            entity_ecs.insert(c);
+                        }
+                    }
+                    EntityComponent::Skin(c) => {
+                        if let Some(c) = c {
+                            entity_ecs.insert(c);
+                        }
+                    }
+                }
+            }
+        }
 
         self.get_chunks_map_mut()
             .start_chunks_render(entity, &position.get_chunk_position(), CHUNKS_DISTANCE);

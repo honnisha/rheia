@@ -7,4 +7,4 @@ linux.debug.x86_64 = "res://../target/debug/librheia_client.so"
 linux.release.x86_64 = "res://../target/release/librheia_client.so"
 
 windows.debug.x86_64 = "res://../target/debug/rheia_client.dll"
-windows.release.x86_64 = "res://../target/release/rheia_client.dll"
+windows.release.x86_64 = "res://../target/x86_64-pc-windows-gnu/release/rheia_client.dll"

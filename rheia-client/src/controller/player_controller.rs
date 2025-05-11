@@ -6,7 +6,7 @@ use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
-use network::messages::EntitySkin;
+use network::messages::{EntityNetworkComponent, EntitySkin as EntitySkinNetwork};
 use physics::physics::{
     IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
 };
@@ -97,25 +97,24 @@ impl PlayerController {
         }
     }
 
-    pub fn update_skin(&mut self, skin: Option<EntitySkin>) {
+    pub fn update_skin(&mut self, skin: Option<EntitySkinNetwork>) {
         match skin {
-            Some(skin) => {
-                match self.entity.as_mut() {
-                    Some(e) => {
-                        e.bind_mut().change_skin(skin);
-                    },
-                    None => {
-                        let entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, skin));
-                        self.base_mut().add_child(&entity);
-                        self.entity = Some(entity);
-                    },
+            Some(skin) => match self.entity.as_mut() {
+                Some(e) => {
+                    e.bind_mut().change_skin(skin);
+                }
+                None => {
+                    let components = vec![EntityNetworkComponent::Skin(Some(skin))];
+                    let entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, components));
+                    self.base_mut().add_child(&entity);
+                    self.entity = Some(entity);
                 }
             },
             None => {
                 if let Some(mut e) = self.entity.take() {
                     e.queue_free();
                 }
-            },
+            }
         }
     }
 

@@ -2,7 +2,7 @@ use bevy::prelude::{Component, Entity};
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
 use core::fmt;
 use network::{
-    messages::{NetworkMessageType, ServerMessages},
+    messages::{EntityNetworkComponent, NetworkMessageType, ServerMessages},
     server::IServerConnection,
     NetworkServerConnection,
 };
@@ -11,7 +11,7 @@ use std::{any::Any, fmt::Display, sync::Arc};
 
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
-    entities::entity::{Position, Rotation},
+    entities::{entity::{Position, Rotation}, EntityComponent},
 };
 
 use super::{events::on_connection_info::PlayerConnectionInfoEvent, server::NetworkPlugin};
@@ -147,10 +147,28 @@ impl ClientNetwork {
     pub fn network_send_teleport(&self, position: &Position, rotation: &Rotation) {
         let lock = self.get_world_entity();
         let world_entity = lock.as_ref().unwrap();
-        let input = ServerMessages::Teleport {
+        let input = ServerMessages::PlayerTeleport {
             world_slug: world_entity.get_world_slug().clone(),
             position: position.to_network(),
             rotation: rotation.to_network(),
+        };
+        self.send_message(NetworkMessageType::ReliableOrdered, &input);
+    }
+
+    pub fn network_send_spawn(
+        &self,
+        position: &Position,
+        rotation: &Rotation,
+        components: &Vec<EntityComponent>,
+    ) {
+        let lock = self.get_world_entity();
+        let world_entity = lock.as_ref().unwrap();
+        let components = components.iter().map(|x| x.to_network()).collect::<Vec<_>>();
+        let input = ServerMessages::PlayerSpawn {
+            world_slug: world_entity.get_world_slug().clone(),
+            position: position.to_network(),
+            rotation: rotation.to_network(),
+            components,
         };
         self.send_message(NetworkMessageType::ReliableOrdered, &input);
     }

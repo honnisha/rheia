@@ -2,7 +2,7 @@ use bevy::prelude::{Entity, Event};
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
-    entities::skin::EntitySkin,
+    entities::skin::EntitySkinComponent,
     worlds::world_manager::{ChunkChanged, WorldManager},
 };
 
@@ -41,7 +41,7 @@ pub fn send_entities_for_player(world_manager: &WorldManager, target_entity: Ent
                         continue;
                     }
 
-                    if target_ref.get::<EntitySkin>().is_some() {
+                    if target_ref.get::<EntitySkinComponent>().is_some() {
                         send_start_streaming_entity(&*client, target_ref, world_manager.get_slug().clone());
                     }
                 }
@@ -89,7 +89,7 @@ pub fn sync_player_move(world_manager: &WorldManager, target_entity: Entity, chu
                 if target_ref.id() == target_entity {
                     continue;
                 }
-                if target_ref.get::<EntitySkin>().is_some() {
+                if target_ref.get::<EntitySkinComponent>().is_some() {
                     send_start_streaming_entity(&*client, target_ref, world_manager.get_slug().clone());
                 }
             }
@@ -97,7 +97,7 @@ pub fn sync_player_move(world_manager: &WorldManager, target_entity: Entity, chu
     }
 
     // Sync his entity if exists
-    if entity_ref.get::<EntitySkin>().is_some() {
+    if entity_ref.get::<EntitySkinComponent>().is_some() {
         sync_entity_move(world_manager, target_entity, chunks_changed);
     }
 }

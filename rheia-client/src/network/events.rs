@@ -2,8 +2,8 @@ use common::chunks::chunk_position::ChunkPosition;
 use godot::classes::{Engine, RenderingServer};
 use godot::obj::Gd;
 use network::client::{IClientNetwork, NetworkInfo};
-use network::messages::NetworkMessageType;
 use network::messages::{ClientMessages, ServerMessages};
+use network::messages::{EntityNetworkComponent, NetworkMessageType};
 
 use crate::console::console_handler::Console;
 use crate::scenes::main_menu::VERSION;
@@ -85,7 +85,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 };
                 main.send_disconnect_event(format!("Disconnected by server: {}", msg));
                 break;
-            },
+            }
 
             ServerMessages::ConsoleOutput { message } => {
                 log::info!(target: "network", "{}", message);
@@ -97,11 +97,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 let (scripts_count, media_count) = resource_manager.get_resource_scheme_count();
                 log::info!(target: "network", "Resources scheme loaded from network (scripts:{}, media:{})", scripts_count, media_count);
             }
-            ServerMessages::ResourcesPart {
-                index,
-                total,
-                mut data,
-            } => {
+            ServerMessages::ResourcesPart { index, total, mut data } => {
                 {
                     let mut resource_manager = main.get_resource_manager_mut();
                     resource_manager.load_archive_chunk(&mut data);
@@ -161,15 +157,18 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 main.spawn_world(world_slug);
                 main.get_text_screen_mut().toggle(false);
             }
-            ServerMessages::UpdatePlayerSkin { skin } => {
+            ServerMessages::UpdatePlayerComponent { component } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
                 let Some(player_controller) = worlds_manager.get_player_controller_mut() else {
                     log::error!(target: "network", "network tried to update skin with non existing world");
                     continue;
                 };
-                player_controller.bind_mut().update_skin(skin);
+                match component {
+                    EntityNetworkComponent::Tag(_tag) => panic!("tried to update tag on player itself"),
+                    EntityNetworkComponent::Skin(skin) => player_controller.bind_mut().update_skin(skin),
+                }
             }
-            ServerMessages::Teleport {
+            ServerMessages::PlayerTeleport {
                 world_slug,
                 position,
                 rotation,
@@ -184,6 +183,30 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 };
                 player_controller.bind_mut().set_position(position.to_godot());
                 player_controller.bind_mut().set_rotation(rotation);
+            }
+            ServerMessages::PlayerSpawn {
+                world_slug,
+                position,
+                rotation,
+                components,
+            } => {
+                let mut worlds_manager = main.get_worlds_manager_mut();
+                let Some(_world) = get_world_mut(&mut worlds_manager, world_slug) else {
+                    continue;
+                };
+                let Some(player_controller) = worlds_manager.get_player_controller_mut().as_mut() else {
+                    log::error!(target: "network", "network tried to teleport with non existing world");
+                    continue;
+                };
+                player_controller.bind_mut().set_position(position.to_godot());
+                player_controller.bind_mut().set_rotation(rotation);
+
+                for component in components {
+                    match component {
+                        EntityNetworkComponent::Tag(_tag) => panic!("tried to update tag on player itself"),
+                        EntityNetworkComponent::Skin(skin) => player_controller.bind_mut().update_skin(skin),
+                    }
+                }
             }
             ServerMessages::ChunkSectionInfo {
                 world_slug,
@@ -211,7 +234,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 world_slug,
                 position,
                 rotation,
-                skin,
+                components,
             } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
                 let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
@@ -219,16 +242,23 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 };
                 let mut w = world.bind_mut();
                 let mut entities_manager = w.get_entities_manager_mut();
-                entities_manager.create_entity(id, skin, position.to_godot(), rotation);
+                entities_manager.create_entity(id, position.to_godot(), rotation, components);
             }
-            ServerMessages::UpdateEntitySkin { world_slug, id, skin } => {
+            ServerMessages::UpdateEntityComponent {
+                world_slug,
+                id,
+                component,
+            } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
                 let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
                     continue;
                 };
                 let mut w = world.bind_mut();
                 let mut entities_manager = w.get_entities_manager_mut();
-                entities_manager.update_entity_skin(id, skin);
+                match component {
+                    EntityNetworkComponent::Tag(c) => entities_manager.update_entity_tag(id, c),
+                    EntityNetworkComponent::Skin(c) => entities_manager.update_entity_skin(id, c.unwrap()),
+                }
             }
             ServerMessages::EntityMove {
                 world_slug,

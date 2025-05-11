@@ -1,7 +1,7 @@
 use bevy::prelude::{EventReader, Res};
 
 use crate::{
-    entities::skin::EntitySkin,
+    entities::skin::EntitySkinComponent,
     network::{
         sync_entities::sync_entity_spawn,
         sync_players::{send_entities_for_player, PlayerSpawnEvent},
@@ -32,7 +32,7 @@ pub(crate) fn on_player_spawn(
         let entity_ref = ecs.get_entity(target_entity).unwrap();
 
         // Sync his entity if exists
-        if entity_ref.get::<EntitySkin>().is_some() {
+        if entity_ref.get::<EntitySkinComponent>().is_some() {
             sync_entity_spawn(&*world_manager, target_entity);
         }
     }

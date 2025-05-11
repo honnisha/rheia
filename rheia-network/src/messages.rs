@@ -56,6 +56,32 @@ pub enum EntitySkin {
     Fixed(String),
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EntityTag {
+    content: String,
+    offset: f32,
+}
+
+impl EntityTag {
+    pub fn create(content: String, offset: f32) -> Self {
+        Self { content, offset }
+    }
+
+    pub fn get_offset(&self) -> &f32 {
+        &self.offset
+    }
+
+    pub fn get_content(&self) -> &String {
+        &self.content
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum EntityNetworkComponent {
+    Tag(Option<EntityTag>),
+    Skin(Option<EntitySkin>),
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {
     AllowConnection,
@@ -83,11 +109,17 @@ pub enum ServerMessages {
     SpawnWorld {
         world_slug: String,
     },
-    UpdatePlayerSkin {
-        skin: Option<EntitySkin>,
+    UpdatePlayerComponent {
+        component: EntityNetworkComponent,
+    },
+    PlayerSpawn {
+        world_slug: String,
+        position: Vector3,
+        rotation: Rotation,
+        components: Vec<EntityNetworkComponent>,
     },
     // Used to teleport the player's client controller.
-    Teleport {
+    PlayerTeleport {
         world_slug: String,
         position: Vector3,
         rotation: Rotation,
@@ -108,12 +140,12 @@ pub enum ServerMessages {
         id: u32,
         position: Vector3,
         rotation: Rotation,
-        skin: EntitySkin,
+        components: Vec<EntityNetworkComponent>,
     },
-    UpdateEntitySkin {
+    UpdateEntityComponent {
         world_slug: String,
         id: u32,
-        skin: EntitySkin,
+        component: EntityNetworkComponent,
     },
     // In case the entity escapes from the visible chunk or is deleted
     StopStreamingEntities {

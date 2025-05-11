@@ -1,14 +1,15 @@
 use crate::{
     entities::{
         entity::{Position, Rotation},
-        skin::EntitySkin,
+        entity_tag::EntityTagComponent,
+        skin::EntitySkinComponent,
+        EntityComponent,
     },
     network::client_network::ClientNetwork,
-    worlds::commands::UpdatePlayerSkin,
 };
 use bevy::prelude::{Commands, Event, Res};
 use bevy_ecs::prelude::EventReader;
-use network::messages::EntitySkin as NetworkEntitySkin;
+use network::messages::{EntitySkin as NetworkEntitySkin, EntityTag};
 
 use crate::worlds::{commands::SpawnPlayer, worlds_manager::WorldsManager};
 
@@ -34,15 +35,27 @@ pub fn on_settings_loaded(
             panic!("default world is not found");
         };
 
+        let mut components: Vec<EntityComponent> = Default::default();
+
+        let skin = EntitySkinComponent::create(NetworkEntitySkin::Generic);
+        components.push(EntityComponent::Skin(Some(skin)));
+
+        let client_info = event.client.get_client_info().unwrap();
+        let tag = EntityTagComponent::create(EntityTag::create(client_info.get_login().clone(), 2.5));
+        components.push(EntityComponent::Tag(Some(tag)));
+
         commands.queue(SpawnPlayer::create(
             default_world,
             event.client.clone(),
             Position::new(0.0, 30.0, 0.0),
             Rotation::new(0.0, 0.0),
+            components,
         ));
-        commands.queue(UpdatePlayerSkin::create(
-            event.client.clone(),
-            Some(EntitySkin::create(NetworkEntitySkin::Generic)),
-        ));
+
+        // let skin = EntitySkinComponent::create(NetworkEntitySkin::Generic);
+        // commands.queue(UpdatePlayerComponent::create(
+        //     event.client.clone(),
+        //     EntityComponent::Skin(Some(skin)),
+        // ));
     }
 }

@@ -19,7 +19,7 @@ godot --export-release linux_desktop ~/godot/Rheia.x86_64
 rustup target add x86_64-pc-windows-gn
 cargo b -p rheia-client --release --target x86_64-pc-windows-gnu
 
-godot --export-release windows_desktop ~/windows-build/Rheia.exe
+godot --export-release windows_desktop ~/Dropbox/Rheia/Rheia.exe
 ```
 
 ## Run game from the console

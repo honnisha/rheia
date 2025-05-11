@@ -58,3 +58,6 @@ fastnbt = "2"
 rayon = "1.10"
 
 bincode = "1.3"
+
+strum = "0.27"
+strum_macros = "0.27"
