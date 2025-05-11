@@ -217,7 +217,7 @@ impl ChunkMap {
 
         chunk_column
             .write()
-            .change_block_info(section, block_position, new_block_info.clone());
+            .change_block_info(section, &block_position, new_block_info.clone());
 
         if let Some(new_block_info) = new_block_info {
             let Some(new_block_type) = block_storage.get(&new_block_info.get_id()) else {

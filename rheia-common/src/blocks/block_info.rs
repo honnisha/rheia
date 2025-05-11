@@ -12,10 +12,20 @@ pub enum BlockFace {
 
 pub type BlockIndexType = u16;
 
-#[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Eq, Serialize, Deserialize)]
 pub struct BlockInfo {
     id: BlockIndexType,
     face: Option<BlockFace>,
+}
+
+impl std::fmt::Debug for BlockInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        let face = match self.face {
+            Some(f) => format!(" face:{:?}", f),
+            None => "".to_string(),
+        };
+        write!(f, "b#{}{}", self.id, face)
+    }
 }
 
 impl BlockInfo {

@@ -4,7 +4,6 @@ use common::chunks::chunk_data::ChunkData;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGenerator;
 use common::worlds_storage::taits::IWorldStorage;
-use common::VERTICAL_SECTIONS;
 use core::fmt;
 use network::messages::ServerMessages;
 use parking_lot::RwLock;
@@ -56,19 +55,8 @@ impl ChunkColumn {
         self.loaded
     }
 
-    pub fn change_block(&mut self, section: u32, chunk_block: ChunkBlockPosition, new_block_info: Option<BlockInfo>) {
-        if section > VERTICAL_SECTIONS as u32 {
-            panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
-        }
-        let s = self.sections.get_mut(section as usize).unwrap();
-        match new_block_info {
-            Some(i) => {
-                s.insert(chunk_block, i);
-            }
-            None => {
-                s.remove(&chunk_block);
-            }
-        }
+    pub fn change_block(&mut self, section: u32, chunk_block: &ChunkBlockPosition, new_block_info: Option<BlockInfo>) {
+        self.sections.change_block(section, &chunk_block, new_block_info);
     }
 
     pub(crate) fn is_for_despawn(&self, duration: Duration) -> bool {

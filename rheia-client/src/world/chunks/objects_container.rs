@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use ahash::AHashMap;
-use common::chunks::{chunk_data::ChunkSectionDataType, position::Vector3 as NetworkVector3};
+use common::chunks::{chunk_data::ChunkSectionData, position::Vector3 as NetworkVector3};
 use common::{
     blocks::block_type::{BlockContent, BlockType},
     chunks::{
@@ -68,17 +68,18 @@ impl ObjectsContainer {
         &mut self,
         y: u32,
         chunk_position: &ChunkPosition,
-        chunk_data: &ChunkSectionDataType,
+        chunk_data: &ChunkSectionData,
         block_storage: &BlockStorage,
         physics: &PhysicsProxy,
         resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
-        for (chunk_block_position, block_info) in chunk_data.iter() {
+        for (block_index, block_info) in chunk_data.iter() {
+            let chunk_block_position = ChunkBlockPosition::delinearize(*block_index);
             let Some(block_type) = block_storage.get(&block_info.get_id()) else {
                 continue;
             };
 
-            let position = BlockPosition::from_chunk_position(chunk_position, &y, chunk_block_position);
+            let position = BlockPosition::from_chunk_position(chunk_position, &y, &chunk_block_position);
             match block_type.get_block_content() {
                 BlockContent::ModelCube { model: _, icon_size: _ } => {
                     self.create_block_model(&position, &block_type, Some(physics), resource_storage)?;

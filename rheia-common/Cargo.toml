@@ -39,3 +39,5 @@ bracket-noise = "0.8.7"
 bracket-random = "0.8.7"
 
 rusqlite = { version = "0.35.0", features = ["bundled", "blob"] }
+
+zip = "2.6"

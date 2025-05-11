@@ -152,11 +152,11 @@ impl ChunkColumn {
     pub fn change_block_info(
         &mut self,
         section: u32,
-        chunk_block: ChunkBlockPosition,
+        chunk_block: &ChunkBlockPosition,
         new_block_info: Option<BlockInfo>,
     ) {
         let mut d = self.data.write();
-        d.change_block(section, chunk_block, new_block_info);
+        d.change_block(section, &chunk_block, new_block_info);
     }
 
     pub fn get_block_info(&self, block_position: &BlockPosition) -> Option<BlockInfo> {

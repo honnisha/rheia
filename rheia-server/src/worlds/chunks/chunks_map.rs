@@ -258,7 +258,7 @@ impl ChunkMap {
         }
         chunk_column
             .write()
-            .change_block(section, block_position, new_block_info);
+            .change_block(section, &block_position, new_block_info);
         return Ok(());
     }
 

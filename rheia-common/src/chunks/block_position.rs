@@ -1,4 +1,5 @@
 use crate::{utils::fix_chunk_loc_pos, CHUNK_SIZE};
+use ndshape::{AbstractShape, ConstShape3u16};
 use serde::{Deserialize, Serialize};
 
 use super::{chunk_position::ChunkPosition, position::Vector3};
@@ -8,7 +9,7 @@ pub trait BlockPositionTrait {
 }
 
 /// Uses as block position inside chunk section CHUNK_SIZExCHUNK_SIZE
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Default, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct ChunkBlockPosition {
     pub x: u8,
     pub y: u8,
@@ -18,6 +19,23 @@ pub struct ChunkBlockPosition {
 impl ChunkBlockPosition {
     pub fn new(x: u8, y: u8, z: u8) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn linearize(&self) -> u16 {
+        let shape = ConstShape3u16::<16, 16, 16>;
+        shape.linearize([self.x as u16, self.y as u16, self.z as u16])
+    }
+
+    pub fn delinearize(index: u16) -> Self {
+        let shape = ConstShape3u16::<16, 16, 16>;
+        let pos = shape.delinearize(index);
+        Self::new(pos[0] as u8, pos[1] as u8, pos[2] as u8)
+    }
+}
+
+impl std::fmt::Debug for ChunkBlockPosition {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "[CB:{},{},{}]", self.x, self.y, self.z)
     }
 }
 
@@ -75,7 +93,7 @@ impl BlockPosition {
 
 impl std::fmt::Debug for BlockPosition {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(f, "{},{},{}", self.x, self.y, self.z)
+        write!(f, "[P:{},{},{}]", self.x, self.y, self.z)
     }
 }
 

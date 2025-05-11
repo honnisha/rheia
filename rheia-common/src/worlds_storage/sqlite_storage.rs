@@ -100,7 +100,7 @@ impl IWorldStorage for SQLiteStorage {
         blob.read_at_exact(&mut encoded, 0).unwrap();
 
         let encoded_len = encoded.len();
-        let sections = match ChunkData::decode(encoded) {
+        let sections = match ChunkData::decode_zip(encoded) {
             Ok(d) => d,
             Err(e) => {
                 return Err(format!(
@@ -115,7 +115,7 @@ impl IWorldStorage for SQLiteStorage {
     }
 
     fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData) -> Result<Self::PrimaryKey, String> {
-        let encoded = data.encode();
+        let encoded = data.encode_zip();
 
         let id = match self.has_chunk_data(chunk_position) {
             Ok(id) => id,

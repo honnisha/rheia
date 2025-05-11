@@ -6,7 +6,7 @@
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_m4ktu"]
 texture = ExtResource("1_voyhs")
-expand_margin_right = 70.0
+expand_margin_right = 95.0
 
 [node name="TabsContainer" type="TabsUIComponent" node_paths=PackedStringArray("tabs_holder", "tabs_content_holder")]
 tabs_holder = NodePath("SplitContainer/HSplitContainer/BoxContainer/PanelContainer/CategoriesHolder")
@@ -30,7 +30,7 @@ layout_mode = 2
 dragger_visibility = 1
 
 [node name="BoxContainer" type="BoxContainer" parent="SplitContainer/HSplitContainer"]
-custom_minimum_size = Vector2(150, 0)
+custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="SplitContainer/HSplitContainer/BoxContainer"]

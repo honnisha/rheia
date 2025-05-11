@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use crate::{
     blocks::block_info::BlockInfo,
     chunks::{
         block_position::ChunkBlockPosition,
-        chunk_data::{ChunkData, ChunkSectionDataType},
+        chunk_data::{ChunkData, ChunkSectionData},
         chunk_position::ChunkPosition,
     },
     CHUNK_SIZE, VERTICAL_SECTIONS,
@@ -54,13 +52,13 @@ impl WorldGenerator {
         let mut chunk_data: ChunkData = Default::default();
         for y in 0..VERTICAL_SECTIONS {
             let chunk_section = self.generate_section_data(&chunk_position, y);
-            chunk_data.push_section(Box::new(chunk_section));
+            chunk_data.push_section(chunk_section);
         }
         chunk_data
     }
 
-    fn generate_section_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkSectionDataType {
-        let mut section_data: ChunkSectionDataType = HashMap::new();
+    fn generate_section_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkSectionData {
+        let mut section_data: ChunkSectionData = Default::default();
 
         for x in 0_u8..(CHUNK_SIZE as u8) {
             for z in 0_u8..(CHUNK_SIZE as u8) {
@@ -75,11 +73,13 @@ impl WorldGenerator {
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
-                        section_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
+                        section_data.insert(&pos, BlockInfo::create(1, None));
+                        // GrassBlock
                     }
 
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        section_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
+                        section_data.insert(&pos, BlockInfo::create(1, None));
+                        // GrassBlock
                     }
                 }
             }
