@@ -50,6 +50,7 @@ impl Command for UpdatePlayerComponent {
             let ecs = world_manager.get_ecs_mut();
             let mut entity = ecs.entity_mut(world_entity.get_entity());
 
+            let mut is_send_to_player = false;
             match &self.updated_component {
                 EntityComponent::Tag(tag) => {
                     match tag {
@@ -66,6 +67,7 @@ impl Command for UpdatePlayerComponent {
                     sync_update_entity_component::<EntityTagComponent>(&*world_manager, world_entity.get_entity())
                 }
                 EntityComponent::Skin(entity_skin) => {
+                    is_send_to_player = true;
                     let old_skin = entity.get_mut::<EntitySkinComponent>();
 
                     match entity_skin.as_ref() {
@@ -97,12 +99,13 @@ impl Command for UpdatePlayerComponent {
                 }
             }
 
-            // Send world creation message
-            let comp_message = ServerMessages::UpdatePlayerComponent {
-                component: self.updated_component.to_network(),
-            };
-            self.client
-                .send_message(NetworkMessageType::ReliableOrdered, &comp_message);
+            if is_send_to_player {
+                let comp_message = ServerMessages::UpdatePlayerComponent {
+                    component: self.updated_component.to_network(),
+                };
+                self.client
+                    .send_message(NetworkMessageType::ReliableOrdered, &comp_message);
+            }
         });
     }
 }
@@ -120,8 +123,6 @@ pub(crate) fn sync_update_entity_component<T: Component + IEntityNetworkComponen
         Some(c) => c.to_network(),
         None => T::get_empty(),
     };
-
-    T::get_empty();
 
     let msg = ServerMessages::UpdateEntityComponent {
         world_slug: world_manager.get_slug().clone(),

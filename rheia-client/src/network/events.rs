@@ -164,7 +164,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     continue;
                 };
                 match component {
-                    EntityNetworkComponent::Tag(_tag) => panic!("tried to update tag on player itself"),
+                    EntityNetworkComponent::Tag(_tag) => (),
                     EntityNetworkComponent::Skin(skin) => player_controller.bind_mut().update_skin(skin),
                 }
             }
@@ -203,7 +203,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
 
                 for component in components {
                     match component {
-                        EntityNetworkComponent::Tag(_tag) => panic!("tried to update tag on player itself"),
+                        EntityNetworkComponent::Tag(_tag) => (),
                         EntityNetworkComponent::Skin(skin) => player_controller.bind_mut().update_skin(skin),
                     }
                 }
