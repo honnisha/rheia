@@ -1,9 +1,8 @@
+use common::chunks::chunk_data::ChunkData;
 use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
-use renet::{
-    RenetClient,
-};
+use renet::RenetClient;
 use renet_netcode::{ClientAuthentication, NetcodeClientTransport};
 use std::{net::UdpSocket, sync::Arc, time::SystemTime};
 use strum::IntoEnumIterator;
@@ -134,6 +133,18 @@ impl IClientNetwork for RenetClientNetwork {
                         log::error!(target: "renet", "Decode server {} error: {}", channel_type, e);
                         continue;
                     }
+                };
+                let decoded = match decoded {
+                    ServerMessages::ChunkSectionInfoEncoded {
+                        world_slug,
+                        chunk_position,
+                        encoded,
+                    } => ServerMessages::ChunkSectionInfo {
+                        world_slug,
+                        chunk_position,
+                        sections: ChunkData::decode_zip(encoded).unwrap(),
+                    },
+                    _ => decoded,
                 };
                 self.network_decoder_out.0.send(decoded).unwrap();
             }

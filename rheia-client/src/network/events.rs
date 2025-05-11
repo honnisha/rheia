@@ -208,6 +208,9 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     }
                 }
             }
+            ServerMessages::ChunkSectionInfoEncoded { world_slug, chunk_position, encoded } => {
+                panic!("ChunkSectionInfoEncoded must be decoded");
+            }
             ServerMessages::ChunkSectionInfo {
                 world_slug,
                 chunk_position,

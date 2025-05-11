@@ -72,9 +72,9 @@ impl ChunkColumn {
     }
 
     pub(crate) fn build_network_format(&self) -> ServerMessages {
-        return ServerMessages::ChunkSectionInfo {
+        return ServerMessages::ChunkSectionInfoEncoded {
             world_slug: self.world_slug.clone(),
-            sections: self.sections.clone(),
+            encoded: self.sections.encode_zip(),
             chunk_position: self.chunk_position.clone(),
         };
     }

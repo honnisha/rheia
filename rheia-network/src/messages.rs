@@ -103,6 +103,11 @@ pub enum ServerMessages {
         chunk_position: ChunkPosition,
         sections: ChunkData,
     },
+    ChunkSectionInfoEncoded {
+        world_slug: String,
+        chunk_position: ChunkPosition,
+        encoded: Vec<u8>,
+    },
     UnloadChunks {
         world_slug: String,
         chunks: Vec<ChunkPosition>,
