@@ -1,6 +1,9 @@
 use bevy::prelude::{Entity, EntityRef};
 use common::chunks::block_position::BlockPositionTrait;
-use network::messages::{EntityNetworkComponent, NetworkMessageType, ServerMessages};
+use network::{
+    entities::EntityNetworkComponent,
+    messages::{NetworkMessageType, ServerMessages},
+};
 use strum::IntoEnumIterator;
 
 use crate::{

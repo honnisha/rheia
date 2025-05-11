@@ -1,5 +1,5 @@
 use entity_tag::EntityTagComponent;
-use network::messages::EntityNetworkComponent;
+use network::entities::EntityNetworkComponent;
 use skin::EntitySkinComponent;
 use strum_macros::EnumIter;
 use traits::IEntityNetworkComponent;

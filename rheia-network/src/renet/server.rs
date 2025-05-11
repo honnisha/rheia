@@ -113,6 +113,13 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             }
         }
 
+        connections.retain(|_key, c| {
+            if *c.is_to_disconnect() {
+                server.disconnect(c.get_client_id());
+            }
+            !c.is_to_disconnect()
+        });
+
         while let Some(event) = server.get_event() {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
@@ -157,6 +164,7 @@ pub struct RenetServerConnection {
     server: ServerLock,
     client_id: u64,
     ip: String,
+    to_disconnect: bool,
 
     channel_client_messages: (Sender<ClientMessages>, Receiver<ClientMessages>),
 }
@@ -167,9 +175,14 @@ impl RenetServerConnection {
             server,
             client_id,
             ip,
+            to_disconnect: false,
 
             channel_client_messages: flume::unbounded(),
         }
+    }
+
+    fn is_to_disconnect(&self) -> &bool {
+        &self.to_disconnect
     }
 }
 
@@ -194,5 +207,9 @@ impl IServerConnection for RenetServerConnection {
 
     fn drain_client_messages(&self) -> impl Iterator<Item = ClientMessages> {
         self.channel_client_messages.1.drain()
+    }
+
+    fn disconnect(&mut self) {
+        self.to_disconnect = true;
     }
 }

@@ -1,6 +1,9 @@
 use common::chunks::rotation::Rotation;
 use godot::{global::lerp, prelude::*};
-use network::messages::{EntityNetworkComponent, EntitySkin, EntityTag as NetoworkEntityTag};
+use network::{
+    entities::EntityNetworkComponent,
+    messages::{NetworkEntitySkin, NetworkEntityTag},
+};
 
 use super::{entity_tag::EntityTag, enums::generic_animations::GenericAnimations, generic_skin::GenericSkin};
 
@@ -20,7 +23,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn create(base: Base<Node3D>, components: Vec<EntityNetworkComponent>) -> Self {
-        let mut skin: Option<EntitySkin> = None;
+        let mut skin: Option<NetworkEntitySkin> = None;
         let mut tag: Option<Gd<EntityTag>> = None;
         for component in components {
             match component {
@@ -34,11 +37,11 @@ impl Entity {
         }
         let skin = skin.expect("imposible to create entity without tag");
         let skin_container = match skin {
-            EntitySkin::Generic => {
+            NetworkEntitySkin::Generic => {
                 let skin = Gd::<GenericSkin>::from_init_fn(|base| GenericSkin::create(base));
                 EntitySkinContainer::Generic(skin)
             }
-            EntitySkin::Fixed(_) => {
+            NetworkEntitySkin::Fixed(_) => {
                 todo!()
             }
         };
@@ -66,32 +69,32 @@ impl Entity {
         self.base().get_rotation_degrees().x
     }
 
-    pub fn change_tag(&mut self, tag: Option<NetoworkEntityTag>) {
+    pub fn change_tag(&mut self, tag: Option<NetworkEntityTag>) {
         match tag {
             Some(t) => {
                 match self.tag.as_mut() {
                     Some(old_tag) => {
                         // Update old tag
                         old_tag.bind_mut().update(t);
-                    },
+                    }
                     None => {
                         // create new tag
                         let new_tag_obj = Gd::<EntityTag>::from_init_fn(|base| EntityTag::create(base, t));
                         self.base_mut().add_child(&new_tag_obj);
                         self.tag = Some(new_tag_obj);
-                    },
+                    }
                 }
-            },
+            }
             None => {
                 // Remove tag
                 if let Some(mut old_tag) = self.tag.take() {
                     old_tag.queue_free();
                 }
-            },
+            }
         }
     }
 
-    pub fn change_skin(&mut self, _skin: EntitySkin) {
+    pub fn change_skin(&mut self, _skin: NetworkEntitySkin) {
         unimplemented!("change_skin is not implemented");
     }
 

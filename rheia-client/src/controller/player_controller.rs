@@ -6,7 +6,8 @@ use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
-use network::messages::{EntityNetworkComponent, EntitySkin as EntitySkinNetwork};
+use network::entities::EntityNetworkComponent;
+use network::messages::NetworkEntitySkin;
 use physics::physics::{
     IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
 };
@@ -97,7 +98,7 @@ impl PlayerController {
         }
     }
 
-    pub fn update_skin(&mut self, skin: Option<EntitySkinNetwork>) {
+    pub fn update_skin(&mut self, skin: Option<NetworkEntitySkin>) {
         match skin {
             Some(skin) => match self.entity.as_mut() {
                 Some(e) => {

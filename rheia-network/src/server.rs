@@ -23,4 +23,5 @@ pub trait IServerConnection: Clone {
     fn get_client_id(&self) -> u64;
     fn drain_client_messages(&self) -> impl Iterator<Item = ClientMessages>;
     fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages);
+    fn disconnect(&mut self);
 }

@@ -2,8 +2,8 @@ use common::chunks::chunk_position::ChunkPosition;
 use godot::classes::{Engine, RenderingServer};
 use godot::obj::Gd;
 use network::client::{IClientNetwork, NetworkInfo};
-use network::messages::{ClientMessages, ServerMessages};
-use network::messages::{EntityNetworkComponent, NetworkMessageType};
+use network::entities::EntityNetworkComponent;
+use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
 use crate::console::console_handler::Console;
 use crate::scenes::main_menu::VERSION;

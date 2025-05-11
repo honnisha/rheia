@@ -10,6 +10,9 @@ use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPositio
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
+use crate::entities::entity_tag::EntityTag;
+use crate::entities::{EntityNetworkComponent, EntitySkin};
+
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
     ConnectionInfo {
@@ -50,37 +53,8 @@ pub struct ResurceScheme {
     pub media: HashMap<String, String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum EntitySkin {
-    Generic,
-    Fixed(String),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct EntityTag {
-    content: String,
-    offset: f32,
-}
-
-impl EntityTag {
-    pub fn create(content: String, offset: f32) -> Self {
-        Self { content, offset }
-    }
-
-    pub fn get_offset(&self) -> &f32 {
-        &self.offset
-    }
-
-    pub fn get_content(&self) -> &String {
-        &self.content
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum EntityNetworkComponent {
-    Tag(Option<EntityTag>),
-    Skin(Option<EntitySkin>),
-}
+pub type NetworkEntityTag = EntityTag;
+pub type NetworkEntitySkin = EntitySkin;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ServerMessages {

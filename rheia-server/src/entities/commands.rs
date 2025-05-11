@@ -98,11 +98,11 @@ impl Command for UpdatePlayerComponent {
             }
 
             // Send world creation message
-            let skin_message = ServerMessages::UpdatePlayerComponent {
+            let comp_message = ServerMessages::UpdatePlayerComponent {
                 component: self.updated_component.to_network(),
             };
             self.client
-                .send_message(NetworkMessageType::ReliableOrdered, &skin_message);
+                .send_message(NetworkMessageType::ReliableOrdered, &comp_message);
         });
     }
 }

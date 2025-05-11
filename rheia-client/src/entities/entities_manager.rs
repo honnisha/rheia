@@ -1,7 +1,10 @@
 use ahash::AHashMap;
 use common::chunks::rotation::Rotation;
 use godot::prelude::*;
-use network::messages::{EntityNetworkComponent, EntitySkin, EntityTag};
+use network::{
+    entities::EntityNetworkComponent,
+    messages::{NetworkEntitySkin, NetworkEntityTag},
+};
 
 use super::entity::Entity;
 
@@ -49,7 +52,7 @@ impl EntitiesManager {
         log::info!(target: "entities", "SPAWN id:{}", id);
     }
 
-    pub fn update_entity_tag(&mut self, id: u32, tag: Option<EntityTag>) {
+    pub fn update_entity_tag(&mut self, id: u32, tag: Option<NetworkEntityTag>) {
         let Some(entity) = self.entities.get_mut(&id) else {
             log::error!(target: "entities", "Tried to change tag for non-existent entity id:{}", id);
             return;
@@ -59,7 +62,7 @@ impl EntitiesManager {
         e.change_tag(tag);
     }
 
-    pub fn update_entity_skin(&mut self, id: u32, skin: EntitySkin) {
+    pub fn update_entity_skin(&mut self, id: u32, skin: NetworkEntitySkin) {
         let Some(entity) = self.entities.get_mut(&id) else {
             log::error!(target: "entities", "Tried to change skin for non-existent entity id:{}", id);
             return;

@@ -2,7 +2,7 @@ use bevy::prelude::{Component, Entity};
 use common::{chunks::chunk_position::ChunkPosition, utils::vec_remove_item};
 use core::fmt;
 use network::{
-    messages::{EntityNetworkComponent, NetworkMessageType, ServerMessages},
+    messages::{NetworkMessageType, ServerMessages},
     server::IServerConnection,
     NetworkServerConnection,
 };
@@ -11,7 +11,10 @@ use std::{any::Any, fmt::Display, sync::Arc};
 
 use crate::{
     console::console_sender::{ConsoleSender, ConsoleSenderType},
-    entities::{entity::{Position, Rotation}, EntityComponent},
+    entities::{
+        entity::{Position, Rotation},
+        EntityComponent,
+    },
 };
 
 use super::{events::on_connection_info::PlayerConnectionInfoEvent, server::NetworkPlugin};
@@ -155,12 +158,7 @@ impl ClientNetwork {
         self.send_message(NetworkMessageType::ReliableOrdered, &input);
     }
 
-    pub fn network_send_spawn(
-        &self,
-        position: &Position,
-        rotation: &Rotation,
-        components: &Vec<EntityComponent>,
-    ) {
+    pub fn network_send_spawn(&self, position: &Position, rotation: &Rotation, components: &Vec<EntityComponent>) {
         let lock = self.get_world_entity();
         let world_entity = lock.as_ref().unwrap();
         let components = components.iter().map(|x| x.to_network()).collect::<Vec<_>>();
@@ -231,6 +229,13 @@ impl ClientNetwork {
 
     pub fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages) {
         self.connection.send_message(message_type, message);
+    }
+
+    pub fn send_disconnect(&mut self, message: Option<String>) {
+        let msg = ServerMessages::Disconnect { message };
+        self.connection
+            .send_message(NetworkMessageType::ReliableUnordered, &msg);
+        self.connection.disconnect();
     }
 }
 

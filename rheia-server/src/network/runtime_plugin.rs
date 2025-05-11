@@ -3,7 +3,6 @@ use bevy_app::AppExit;
 use bevy_app::{First, Startup};
 use bevy_ecs::system::{Res, ResMut};
 use lazy_static::lazy_static;
-use network::messages::{NetworkMessageType, ServerMessages};
 use std::sync::{Arc, RwLock};
 
 use crate::console::console_handler::ConsoleHandler;
@@ -76,20 +75,15 @@ fn activate_runtime() {
 
 fn update_runtime(
     mut app_exit_events: EventWriter<AppExit>,
-    clients: Res<ClientsContainer>,
+    mut clients: ResMut<ClientsContainer>,
     mut console_handler: ResMut<ConsoleHandler>,
     worlds_manager: Res<WorldsManager>,
 ) {
     if RuntimePlugin::is_stopping() {
         log::info!(target: "main", "Server shutdown...");
+        clients.disconnect_all(Some("Server shutting down".to_string()));
         worlds_manager.save_all().unwrap();
         console_handler.handle_stop_server();
-        for (_client_id, client) in clients.iter() {
-            let msg = ServerMessages::Disconnect {
-                message: Some("Server shutting down".to_string()),
-            };
-            client.send_message(NetworkMessageType::ReliableUnordered, &msg);
-        }
         app_exit_events.write(AppExit::Success);
         RuntimePlugin::set_stoped();
     }

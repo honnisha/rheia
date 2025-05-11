@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument("-v", "--version", required=True)
 parser.add_argument("-p", "--path")
+parser.add_argument("-z", "--zip", type=bool, default=False)
 
 
 def generate():
@@ -27,10 +28,12 @@ def generate():
         return
 
     print('Building exe')
-    os.system(f'godot --export-release windows_desktop {path}/Rheia.exe')
+    os.system(f'cd ~/godot/rheia/rheia-godot/; godot --export-release windows_desktop {path}/Rheia.exe')
 
-    print('Creating zip')
-    shutil.make_archive(path, 'zip', path)
+    if args.zip:
+        print('Creating zip')
+        shutil.make_archive(path, 'zip', path)
+
     print('Complited')
 
 

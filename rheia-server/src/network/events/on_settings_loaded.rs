@@ -9,7 +9,7 @@ use crate::{
 };
 use bevy::prelude::{Commands, Event, Res};
 use bevy_ecs::prelude::EventReader;
-use network::messages::{EntitySkin as NetworkEntitySkin, EntityTag};
+use network::messages::{NetworkEntitySkin, NetworkEntityTag};
 
 use crate::worlds::{commands::SpawnPlayer, worlds_manager::WorldsManager};
 
@@ -41,7 +41,7 @@ pub fn on_settings_loaded(
         components.push(EntityComponent::Skin(Some(skin)));
 
         let client_info = event.client.get_client_info().unwrap();
-        let tag = EntityTagComponent::create(EntityTag::create(client_info.get_login().clone(), 2.5));
+        let tag = EntityTagComponent::create(NetworkEntityTag::create(client_info.get_login().clone(), 2.1, 32, 3));
         components.push(EntityComponent::Tag(Some(tag)));
 
         commands.queue(SpawnPlayer::create(

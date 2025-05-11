@@ -1,15 +1,15 @@
 use bevy::prelude::Component;
-use network::messages::{EntityNetworkComponent, EntitySkin};
+use network::{entities::EntityNetworkComponent, messages::NetworkEntitySkin};
 
 use super::traits::IEntityNetworkComponent;
 
 #[derive(Component, Clone)]
 pub struct EntitySkinComponent {
-    skin: EntitySkin,
+    skin: NetworkEntitySkin,
 }
 
 impl EntitySkinComponent {
-    pub fn create(skin: EntitySkin) -> Self {
+    pub fn create(skin: NetworkEntitySkin) -> Self {
         Self { skin }
     }
 }
