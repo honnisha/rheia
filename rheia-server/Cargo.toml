@@ -29,7 +29,6 @@ zip = "2.6"
 # For spiral iteration
 spiral = "0.2"
 
-arrayvec = "0.7"
 ahash = "0.8"
 dashmap = "6.1"
 parking_lot = "0.12"

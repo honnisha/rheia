@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use ahash::AHashMap;
-use common::chunks::{position::Vector3 as NetworkVector3, ChunkDataType};
+use common::chunks::{chunk_data::ChunkSectionDataType, position::Vector3 as NetworkVector3};
 use common::{
     blocks::block_type::{BlockContent, BlockType},
     chunks::{
@@ -68,7 +68,7 @@ impl ObjectsContainer {
         &mut self,
         y: u32,
         chunk_position: &ChunkPosition,
-        chunk_data: &ChunkDataType,
+        chunk_data: &ChunkSectionDataType,
         block_storage: &BlockStorage,
         physics: &PhysicsProxy,
         resource_storage: &ResourceStorage,

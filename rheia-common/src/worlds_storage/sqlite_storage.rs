@@ -5,9 +5,9 @@ use std::{
 
 use rusqlite::{blob::ZeroBlob, Connection, DatabaseName, OptionalExtension};
 
-use crate::chunks::{chunk_position::ChunkPosition, SectionsData};
+use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
 
-use super::taits::{ChunkData, IWorldStorage, WorldInfo, WorldStorageSettings};
+use super::taits::{IWorldStorage, WorldInfo, WorldStorageSettings};
 
 const SQL_TABLE_EXISTS: &str = "SELECT EXISTS(SELECT name FROM sqlite_master WHERE type='table' AND name='chunks');";
 
@@ -99,28 +99,23 @@ impl IWorldStorage for SQLiteStorage {
         let mut encoded = vec![0u8; blob.size() as usize];
         blob.read_at_exact(&mut encoded, 0).unwrap();
 
-        let sections_array: SectionsData = match bincode::deserialize(&encoded) {
+        let encoded_len = encoded.len();
+        let sections = match ChunkData::decode(encoded) {
             Ok(d) => d,
             Err(e) => {
                 return Err(format!(
-                    "Decode chunk error: &c{} (encoded size:{} blob size: {})",
+                    "Error: {} (encoded size:{} blob size: {})",
                     e,
-                    encoded.len(),
+                    encoded_len,
                     blob.size()
                 ))
             }
         };
-
-        let mut sections: ChunkData = Default::default();
-        for section in sections_array {
-            sections.push(section);
-        }
         Ok(sections)
     }
 
     fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData) -> Result<Self::PrimaryKey, String> {
-        let array_data: SectionsData = data.clone().into_inner().expect("data error");
-        let encoded = bincode::serialize(&array_data).unwrap();
+        let encoded = data.encode();
 
         let id = match self.has_chunk_data(chunk_position) {
             Ok(id) => id,
@@ -216,24 +211,17 @@ mod tests {
     use std::env;
 
     use crate::{
-        chunks::chunk_position::ChunkPosition,
+        chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition},
         world_generator::default::{WorldGenerator, WorldGeneratorSettings},
         worlds_storage::{
             sqlite_storage::SQLiteStorage,
-            taits::{ChunkData, IWorldStorage, WorldStorageSettings},
+            taits::{IWorldStorage, WorldStorageSettings},
         },
-        VERTICAL_SECTIONS,
     };
 
     fn generate_chunk(seed: u64, chunk_position: &ChunkPosition) -> ChunkData {
-        let mut sections: ChunkData = Default::default();
         let generator = WorldGenerator::create(Some(seed), WorldGeneratorSettings::default()).unwrap();
-
-        for y in 0..VERTICAL_SECTIONS {
-            let chunk_section = generator.generate_chunk_data(&chunk_position, y);
-            sections.push(Box::new(chunk_section));
-        }
-        sections
+        generator.generate_chunk_data(&chunk_position)
     }
 
     #[test]

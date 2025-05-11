@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::BlockType;
+use common::chunks::chunk_data::ChunkData;
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
-use common::chunks::SectionsData;
 use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
@@ -101,7 +101,7 @@ pub enum ServerMessages {
     ChunkSectionInfo {
         world_slug: String,
         chunk_position: ChunkPosition,
-        sections: SectionsData,
+        sections: ChunkData,
     },
     UnloadChunks {
         world_slug: String,

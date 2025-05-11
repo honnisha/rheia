@@ -1,10 +1,9 @@
-use arrayvec::ArrayVec;
 use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
+use common::chunks::chunk_data::ChunkData;
 use common::chunks::chunk_position::ChunkPosition;
-use common::chunks::ChunkDataType;
 use common::world_generator::default::WorldGenerator;
-use common::worlds_storage::taits::{ChunkData, IWorldStorage};
+use common::worlds_storage::taits::IWorldStorage;
 use common::VERTICAL_SECTIONS;
 use core::fmt;
 use network::messages::ServerMessages;
@@ -85,13 +84,9 @@ impl ChunkColumn {
     }
 
     pub(crate) fn build_network_format(&self) -> ServerMessages {
-        let mut data: ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS> = Default::default();
-        for section in self.sections.iter() {
-            data.push(section.clone());
-        }
         return ServerMessages::ChunkSectionInfo {
             world_slug: self.world_slug.clone(),
-            sections: data.into_inner().expect("data error"),
+            sections: self.sections.clone(),
             chunk_position: self.chunk_position.clone(),
         };
     }
@@ -121,7 +116,7 @@ pub(crate) fn load_chunk(
                 log::error!(target: "worlds", "Error: {}", e);
                 RuntimePlugin::stop();
                 return;
-            },
+            }
         };
         if let Some(index) = index {
             chunk_column.sections = match storage.lock().load_chunk_data(index) {
@@ -136,12 +131,7 @@ pub(crate) fn load_chunk(
         }
         // Or generate new
         else {
-            for y in 0..VERTICAL_SECTIONS {
-                let chunk_section = world_generator
-                    .read()
-                    .generate_chunk_data(&chunk_column.chunk_position, y);
-                chunk_column.sections.push(Box::new(chunk_section));
-            }
+            chunk_column.sections = world_generator.read().generate_chunk_data(&chunk_column.chunk_position);
         }
         chunk_column.loaded = true;
 

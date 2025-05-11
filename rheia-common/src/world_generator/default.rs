@@ -2,14 +2,16 @@ use std::collections::HashMap;
 
 use crate::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
-    CHUNK_SIZE,
+    chunks::{
+        block_position::ChunkBlockPosition,
+        chunk_data::{ChunkData, ChunkSectionDataType},
+        chunk_position::ChunkPosition,
+    },
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
 use serde::{Deserialize, Serialize};
-
-use super::ChunkDataType;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WorldGeneratorSettings {
@@ -31,7 +33,7 @@ impl WorldGenerator {
             None => {
                 let mut rng = RandomNumberGenerator::new();
                 rng.next_u64()
-            },
+            }
         };
 
         let mut noise = FastNoise::seeded(seed);
@@ -42,11 +44,23 @@ impl WorldGenerator {
         noise.set_fractal_lacunarity(settings.fractal_lacunarity.unwrap_or(1.5));
         noise.set_frequency(settings.frequency.unwrap_or(2.0));
 
-        Ok(Self { noise, _settings: settings })
+        Ok(Self {
+            noise,
+            _settings: settings,
+        })
     }
 
-    pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkDataType {
-        let mut chunk_data: ChunkDataType = HashMap::new();
+    pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData {
+        let mut chunk_data: ChunkData = Default::default();
+        for y in 0..VERTICAL_SECTIONS {
+            let chunk_section = self.generate_section_data(&chunk_position, y);
+            chunk_data.push_section(Box::new(chunk_section));
+        }
+        chunk_data
+    }
+
+    fn generate_section_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkSectionDataType {
+        let mut section_data: ChunkSectionDataType = HashMap::new();
 
         for x in 0_u8..(CHUNK_SIZE as u8) {
             for z in 0_u8..(CHUNK_SIZE as u8) {
@@ -61,14 +75,15 @@ impl WorldGenerator {
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
-                        chunk_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
+                        section_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
                     }
+
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        chunk_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
+                        section_data.insert(pos, BlockInfo::create(1, None)); // GrassBlock
                     }
                 }
             }
         }
-        return chunk_data;
+        return section_data;
     }
 }

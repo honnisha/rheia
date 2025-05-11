@@ -10,7 +10,7 @@ use crate::{
 };
 use common::{
     blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_position::ChunkPosition, SectionsData},
+    chunks::{block_position::BlockPosition, chunk_data::ChunkData, chunk_position::ChunkPosition},
 };
 use godot::{classes::Material, prelude::*};
 
@@ -90,7 +90,7 @@ impl WorldManager {
     }
 
     /// Recieve chunk data from network
-    pub fn recieve_chunk(&mut self, chunk_position: ChunkPosition, data: SectionsData) {
+    pub fn recieve_chunk(&mut self, chunk_position: ChunkPosition, data: ChunkData) {
         self.chunk_map.bind_mut().create_chunk_column(chunk_position, data);
     }
 

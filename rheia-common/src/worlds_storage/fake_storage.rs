@@ -1,6 +1,6 @@
-use crate::chunks::chunk_position::ChunkPosition;
+use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
 
-use super::taits::{ChunkData, IWorldStorage, WorldInfo, WorldStorageSettings};
+use super::taits::{IWorldStorage, WorldInfo, WorldStorageSettings};
 
 pub struct FakeWorldStorage {}
 

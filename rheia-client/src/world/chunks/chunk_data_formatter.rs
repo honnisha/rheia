@@ -4,7 +4,7 @@ use common::{
         block_info::BlockInfo, block_type::BlockType, chunk_collider_info::ChunkColliderInfo,
         voxel_visibility::VoxelVisibility,
     },
-    chunks::{block_position::ChunkBlockPosition, ChunkDataType},
+    chunks::{block_position::ChunkBlockPosition, chunk_data::ChunkSectionDataType},
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use ndshape::ConstShape;
@@ -130,7 +130,7 @@ pub fn format_chunk_data_with_boundaries(
     return Ok((b_chunk, mesh_count));
 }
 
-type BondaryType<'a> = ArrayVec<(i8, i32, Option<Box<ChunkDataType>>), 6>;
+type BondaryType<'a> = ArrayVec<(i8, i32, Option<Box<ChunkSectionDataType>>), 6>;
 
 fn get_boundaries_chunks<'a>(
     chunks_near: &'a NearChunksData,
@@ -183,7 +183,7 @@ fn get_boundaries_chunks<'a>(
     result
 }
 
-fn get_section<'a>(column: &'a Option<ColumnDataLockType>, y: usize) -> Option<Box<ChunkDataType>> {
+fn get_section<'a>(column: &'a Option<ColumnDataLockType>, y: usize) -> Option<Box<ChunkSectionDataType>> {
     match column {
         Some(c) => match c.read().get(y) {
             Some(r) => Some(r.clone()),

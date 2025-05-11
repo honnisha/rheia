@@ -2428,7 +2428,6 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "ahash",
- "arrayvec 0.7.4",
  "bincode",
  "bracket-lib",
  "bracket-noise",
@@ -6814,7 +6813,6 @@ name = "rheia-server"
 version = "0.1.0"
 dependencies = [
  "ahash",
- "arrayvec 0.7.4",
  "bevy",
  "bevy_app",
  "bevy_ecs 0.16.0",

@@ -12,8 +12,8 @@ use common::{
     blocks::{block_info::BlockInfo, block_type::BlockContent},
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
+        chunk_data::ChunkData,
         chunk_position::ChunkPosition,
-        SectionsData,
     },
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
@@ -86,7 +86,7 @@ impl ChunkMap {
     }
 
     /// Create chunk column and send it to render queue
-    pub fn create_chunk_column(&mut self, chunk_position: ChunkPosition, sections: SectionsData) {
+    pub fn create_chunk_column(&mut self, chunk_position: ChunkPosition, sections: ChunkData) {
         if self.chunks.contains_key(&chunk_position) {
             log::error!(
                 target: "chunk_map",

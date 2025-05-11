@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 
-use arrayvec::ArrayVec;
-
-use crate::{chunks::chunk_position::ChunkPosition, world_generator::ChunkDataType, VERTICAL_SECTIONS};
-
-pub type ChunkData = ArrayVec<Box<ChunkDataType>, VERTICAL_SECTIONS>;
+use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
 
 #[derive(Default)]
 pub struct WorldStorageSettings {
@@ -31,7 +27,7 @@ pub trait IWorldStorage: Sized {
     type PrimaryKey;
 
     fn create(world_slug: String, seed: u64, settings: &WorldStorageSettings) -> Result<Self, Self::Error>;
-    fn has_chunk_data(&self, chunk_position: &ChunkPosition) -> Result<Option<Self::PrimaryKey>, String> ;
+    fn has_chunk_data(&self, chunk_position: &ChunkPosition) -> Result<Option<Self::PrimaryKey>, String>;
     fn load_chunk_data(&self, chunk_id: Self::PrimaryKey) -> Result<ChunkData, String>;
     fn save_chunk_data(&self, chunk_position: &ChunkPosition, data: &ChunkData) -> Result<Self::PrimaryKey, String>;
     fn delete(&self, settings: &WorldStorageSettings) -> Result<(), String>;

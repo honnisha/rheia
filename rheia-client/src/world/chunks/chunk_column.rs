@@ -1,10 +1,9 @@
-use arrayvec::ArrayVec;
 use common::{
     blocks::block_info::BlockInfo,
     chunks::{
         block_position::{BlockPosition, ChunkBlockPosition},
+        chunk_data::ChunkData,
         chunk_position::ChunkPosition,
-        SectionsData,
     },
     CHUNK_SIZE, VERTICAL_SECTIONS,
 };
@@ -17,16 +16,16 @@ use std::sync::{
 
 use super::chunk_section::ChunkSection;
 
-type SectionsType = ArrayVec<Gd<ChunkSection>, VERTICAL_SECTIONS>;
+type SectionsGdType = Vec<Gd<ChunkSection>>;
 
-pub type ColumnDataLockType = Arc<RwLock<SectionsData>>;
+pub type ColumnDataLockType = Arc<RwLock<ChunkData>>;
 
 #[derive(GodotClass)]
 #[class(no_init, tool, base=Node3D)]
 pub struct ChunkBase {
     pub base: Base<Node3D>,
 
-    pub sections: SectionsType,
+    pub sections: SectionsGdType,
 }
 
 impl ChunkBase {
@@ -71,7 +70,7 @@ pub struct ChunkColumn {
 }
 
 impl ChunkColumn {
-    pub fn create(chunk_position: ChunkPosition, data: SectionsData) -> Self {
+    pub fn create(chunk_position: ChunkPosition, data: ChunkData) -> Self {
         let chunk_base = Gd::<ChunkBase>::from_init_fn(|base| ChunkBase::create(base));
 
         let chunk_column = Self {
@@ -156,28 +155,12 @@ impl ChunkColumn {
         chunk_block: ChunkBlockPosition,
         new_block_info: Option<BlockInfo>,
     ) {
-        if section > VERTICAL_SECTIONS as u32 {
-            panic!("Tried to change block in section {section} more than max {VERTICAL_SECTIONS}");
-        }
-
         let mut d = self.data.write();
-
-        match new_block_info {
-            Some(i) => {
-                d[section as usize].insert(chunk_block, i);
-            }
-            None => {
-                d[section as usize].remove(&chunk_block);
-            }
-        }
+        d.change_block(section, chunk_block, new_block_info);
     }
 
     pub fn get_block_info(&self, block_position: &BlockPosition) -> Option<BlockInfo> {
-        let (section, block_position) = block_position.get_block_position();
         let d = self.data.read();
-        match d[section as usize].get(&block_position) {
-            Some(b) => Some(b.clone()),
-            None => None,
-        }
+        d.get_block_info(block_position)
     }
 }
