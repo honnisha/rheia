@@ -1,6 +1,6 @@
 use common::blocks::block_info::BlockIndexType;
 use godot::{
-    classes::{ColorRect, Control, IControl, InputEvent, InputEventMouseButton, TextureRect},
+    classes::{Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, TextureRect},
     global::MouseButton,
     meta::AsObjectArg,
     prelude::*,
@@ -53,38 +53,39 @@ impl BlockIcon {
         if let Ok(event) = event.clone().try_cast::<InputEventMouseButton>() {
             if event.get_button_index() == MouseButton::LEFT && event.is_pressed() {
                 let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
-                self.base_mut().emit_signal("icon_clicked", &[icon.to_variant()]);
+                self.signals().icon_clicked().emit(&icon)
             }
         }
     }
 
     #[func]
     fn on_mouse_entered(&mut self) {
+        self.toggle_selected(true);
         let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
         let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
-        self.to_gd().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
-        // self.base_mut().emit_signal("icon_mouse_entered", &[icon.to_variant()]);
+        self.signals().icon_mouse_entered().emit(&icon);
     }
 
     #[func]
     fn on_mouse_exited(&mut self) {
+        self.toggle_selected(false);
         let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
         let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
-        self.to_gd().emit_signal("icon_mouse_exited", &[icon.to_variant()]);
+        self.signals().icon_mouse_exited().emit(&icon);
     }
 
     #[signal]
-    fn icon_clicked();
+    fn icon_clicked(icon: Gd<BlockIconSelect>);
 
     #[signal]
-    fn icon_mouse_entered();
+    fn icon_mouse_entered(icon: Gd<BlockIconSelect>);
 
     #[signal]
-    fn icon_mouse_exited();
+    fn icon_mouse_exited(icon: Gd<BlockIconSelect>);
 }
 
 impl BlockIcon {

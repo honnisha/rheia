@@ -15,7 +15,7 @@ use common::blocks::block_info::BlockInfo;
 use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
-use godot::classes::{Engine, FileAccess};
+use godot::classes::{Engine, FileAccess, Input};
 use godot::prelude::*;
 use network::messages::{ClientMessages, NetworkMessageType};
 use std::cell::RefCell;
@@ -173,10 +173,9 @@ impl MainScene {
         let worlds_manager = worlds_manager.bind();
         let block_storage = worlds_manager.get_block_storage();
 
-        self.block_selection.bind_mut().set_blocks(
-            self.block_icons_storage.as_ref().unwrap(),
-            &*block_storage,
-        )
+        self.block_selection
+            .bind_mut()
+            .set_blocks(self.block_icons_storage.as_ref().unwrap(), &*block_storage)
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
@@ -405,9 +404,15 @@ impl INode for MainScene {
     }
 
     fn exit_tree(&mut self) {
-        log::info!(target: "main", "Main scene exited;");
+        {
+            let mut worlds_manager = self.get_worlds_manager_mut();
+            if worlds_manager.get_world().is_some() {
+                worlds_manager.destroy_world()
+            }
+        }
         if let Some(n) = self.network.as_ref() {
             n.disconnect();
         }
+        log::info!(target: "main", "Main scene exited;");
     }
 }

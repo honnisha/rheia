@@ -39,19 +39,7 @@ impl BlockSelection {
         self.selected_block_id = Some(*block.bind().get_block_id());
         self.toggle(false);
 
-        self.base_mut().emit_signal("on_closed", &[]);
-    }
-
-    #[func]
-    fn on_icon_mouse_entered(&mut self, block: Gd<BlockIconSelect>) {
-        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
-        icon.bind_mut().toggle_selected(true);
-    }
-
-    #[func]
-    fn on_icon_mouse_exited(&mut self, block: Gd<BlockIconSelect>) {
-        let icon = self.icons.get_mut(block.bind().get_block_id()).unwrap();
-        icon.bind_mut().toggle_selected(false);
+        self.signals().on_closed().emit();
     }
 }
 
@@ -119,14 +107,14 @@ impl BlockSelection {
 
                     icon.connect("icon_clicked", &Callable::from_object_method(&gd, "on_icon_clicked"));
 
-                    icon.connect(
-                        "icon_mouse_entered",
-                        &Callable::from_object_method(&gd, "on_icon_mouse_entered"),
-                    );
-                    icon.connect(
-                        "icon_mouse_exited",
-                        &Callable::from_object_method(&gd, "on_icon_mouse_exited"),
-                    );
+                    // icon.connect(
+                    //     "icon_mouse_entered",
+                    //     &Callable::from_object_method(&gd, "on_icon_mouse_entered"),
+                    // );
+                    // icon.connect(
+                    //     "icon_mouse_exited",
+                    //     &Callable::from_object_method(&gd, "on_icon_mouse_exited"),
+                    // );
                     self.icons.insert(block_id.clone(), icon);
                 }
             }

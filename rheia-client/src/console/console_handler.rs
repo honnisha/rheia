@@ -8,7 +8,7 @@ use common::utils::colors::parse_to_console_godot;
 use flume::{bounded, unbounded, Drain};
 use flume::{Receiver, Sender};
 use godot::{
-    classes::{input::MouseMode, IMarginContainer, LineEdit, MarginContainer, RichTextLabel, TextureButton},
+    classes::{input::MouseMode, IMarginContainer, Input, LineEdit, MarginContainer, RichTextLabel, TextureButton},
     prelude::*,
 };
 use lazy_static::lazy_static;

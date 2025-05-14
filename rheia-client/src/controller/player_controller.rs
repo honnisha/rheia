@@ -352,10 +352,10 @@ impl PlayerController {
 #[godot_api]
 impl PlayerController {
     #[signal]
-    fn on_player_move();
+    fn on_player_move(new_movement: Gd::<EntityMovement>, new_chunk: bool);
 
     #[signal]
-    fn on_player_action();
+    fn on_player_action(action: Gd::<PlayerAction>);
 }
 
 #[godot_api]

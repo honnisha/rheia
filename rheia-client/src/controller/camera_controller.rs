@@ -1,5 +1,5 @@
 use common::chunks::rotation::Rotation;
-use godot::classes::Sprite2D;
+use godot::classes::{Camera3D, Sprite2D};
 use godot::prelude::*;
 
 use super::{
