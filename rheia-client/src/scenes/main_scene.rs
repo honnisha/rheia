@@ -265,10 +265,10 @@ impl MainScene {
 
         let a = action.bind();
         let network = self.get_network().unwrap();
-        if let Some((cast_result, physics_type)) = a.get_hit() {
-            match physics_type {
+        if let Some(look_at) = a.get_hit() {
+            match look_at.bind().get_physics_type() {
                 PhysicsType::ChunkMeshCollider(_chunk_position) => {
-                    let selected_block = cast_result.get_selected_block();
+                    let selected_block = look_at.bind().get_cast_result().get_selected_block();
                     let msg = match a.get_action_type() {
                         PlayerActionType::Main => {
                             let bs = self.block_selection.bind();
@@ -277,7 +277,7 @@ impl MainScene {
                             };
                             ClientMessages::EditBlockRequest {
                                 world_slug: a.get_world_slug().clone(),
-                                position: cast_result.get_place_block(),
+                                position: look_at.bind().get_cast_result().get_place_block(),
                                 new_block_info: Some(BlockInfo::create(*block_id, None)),
                             }
                         }
@@ -330,7 +330,7 @@ impl INode for MainScene {
 
             self.debug_info.bind_mut().toggle(false);
 
-            // Selection meny
+            // Selection menu
             let block_selection = Gd::<BlockSelection>::from_init_fn(|base| BlockSelection::create(base));
             self.block_selection.init(block_selection);
 

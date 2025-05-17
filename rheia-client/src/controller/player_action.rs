@@ -1,7 +1,5 @@
-use godot::register::GodotClass;
-use physics::physics::RayCastResultNormal;
-
-use crate::world::physics::PhysicsType;
+use super::player_controller::LookAt;
+use godot::{obj::Gd, register::GodotClass};
 
 pub enum PlayerActionType {
     Main,
@@ -11,17 +9,13 @@ pub enum PlayerActionType {
 #[derive(GodotClass)]
 #[class(no_init)]
 pub struct PlayerAction {
-    hit: Option<(RayCastResultNormal, PhysicsType)>,
+    hit: Option<Gd<LookAt>>,
     action_type: PlayerActionType,
     world_slug: String,
 }
 
 impl PlayerAction {
-    pub fn create(
-        hit: Option<(RayCastResultNormal, PhysicsType)>,
-        action_type: PlayerActionType,
-        world_slug: String,
-    ) -> Self {
+    pub fn create(hit: Option<Gd<LookAt>>, action_type: PlayerActionType, world_slug: String) -> Self {
         Self {
             hit,
             action_type,
@@ -29,7 +23,7 @@ impl PlayerAction {
         }
     }
 
-    pub fn get_hit(&self) -> &Option<(RayCastResultNormal, PhysicsType)> {
+    pub fn get_hit(&self) -> &Option<Gd<LookAt>> {
         &self.hit
     }
 

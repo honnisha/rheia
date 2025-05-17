@@ -5,7 +5,7 @@ use std::{
 };
 
 /// Network 3D vector
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,

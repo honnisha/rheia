@@ -17,7 +17,7 @@ use crate::controller::camera_controller::RayDirection;
 use crate::utils::bridge::IntoGodotVector;
 use crate::utils::bridge::IntoNetworkVector;
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PhysicsType {
     ChunkMeshCollider(ChunkPosition),
     EntityCollider(u32),

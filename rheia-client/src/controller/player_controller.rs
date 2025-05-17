@@ -2,7 +2,7 @@ use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::utils::primitives::{generate_lines, get_face_vector};
-use crate::world::physics::{get_degrees_from_normal, PhysicsProxy, PhysicsType};
+use crate::world::physics::{PhysicsProxy, PhysicsType, get_degrees_from_normal};
 use common::chunks::rotation::Rotation;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
@@ -13,6 +13,7 @@ use physics::physics::{
 };
 use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 
+use super::building_visualizer::BuildingVisualizer;
 use super::camera_controller::{CameraController, RayDirection};
 use super::controls::Controls;
 use super::entity_movement::EntityMovement;
@@ -32,6 +33,30 @@ pub(crate) const CONTROLLER_CAMERA_OFFSET_VERTICAL: f32 = CONTROLLER_HEIGHT * 0.
 const CONTROLLER_HEIGHT: f32 = 1.8;
 const CONTROLLER_RADIUS: f32 = 0.4;
 const CONTROLLER_MASS: f32 = 3.0;
+
+#[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
+#[class(no_init)]
+pub struct LookAt {
+    cast_result: RayCastResultNormal,
+    physics_type: PhysicsType,
+}
+
+impl LookAt {
+    pub fn create(cast_result: RayCastResultNormal, physics_type: PhysicsType) -> Self {
+        Self {
+            cast_result,
+            physics_type,
+        }
+    }
+
+    pub fn get_cast_result(&self) -> &RayCastResultNormal {
+        &self.cast_result
+    }
+
+    pub fn get_physics_type(&self) -> &PhysicsType {
+        &self.physics_type
+    }
+}
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
@@ -56,7 +81,7 @@ pub struct PlayerController {
 
     look_at_message: String,
 
-    block_selection: Gd<Node3D>,
+    building_visualizer: Gd<BuildingVisualizer>,
 }
 
 impl PlayerController {
@@ -69,11 +94,7 @@ impl PlayerController {
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
         let collider = physics.clone().create_collider(collider_builder, None);
 
-        let mut selection = Node3D::new_alloc();
-
-        let mesh = generate_lines(get_face_vector(), Color::from_rgb(0.0, 0.0, 0.0));
-        selection.add_child(&mesh);
-        selection.set_visible(false);
+        let building_visualizer = Gd::<BuildingVisualizer>::from_init_fn(|base| BuildingVisualizer::create(base));
 
         Self {
             base,
@@ -93,8 +114,7 @@ impl PlayerController {
             grounded_timer: 0.0,
 
             look_at_message: Default::default(),
-
-            block_selection: selection,
+            building_visualizer,
         }
     }
 
@@ -239,11 +259,9 @@ impl PlayerController {
         movement
     }
 
-    pub fn update_vision(&mut self) -> Option<(RayCastResultNormal, PhysicsType)> {
+    pub fn update_vision(&mut self) -> Option<Gd<LookAt>> {
         let mut filter = QueryFilter::default();
         filter.exclude_collider(&self.collider);
-
-        self.block_selection.set_visible(false);
 
         let camera_controller = self.camera_controller.bind();
         let ray_direction = camera_controller.get_ray_from_center();
@@ -255,18 +273,14 @@ impl PlayerController {
         self.look_at_message = match physics_type {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
                 let selected_block = cast_result.get_selected_block();
-                self.block_selection.set_visible(true);
-                self.block_selection
-                    .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
-                self.block_selection
-                    .set_rotation_degrees(get_degrees_from_normal(cast_result.normal.to_godot()));
                 format!("block:{selected_block:?}")
             }
             PhysicsType::EntityCollider(entity_id) => {
                 format!("entity_id:{entity_id}")
             }
         };
-        return Some((cast_result, physics_type));
+        let look_at = Gd::<LookAt>::from_init_fn(|_base| LookAt::create(cast_result, physics_type));
+        return Some(look_at);
     }
 
     pub fn get_look_at_message(&self) -> &String {
@@ -293,6 +307,7 @@ impl PlayerController {
             self.collider.set_position(self.collider.get_position() + translation);
 
             let hit = self.update_vision();
+            self.signals().look_at_update().emit(hit.as_ref());
 
             let action_type = if self.controls.bind().is_main_action() {
                 Some(PlayerActionType::Main)
@@ -306,7 +321,7 @@ impl PlayerController {
                 let action = Gd::<PlayerAction>::from_init_fn(|_base| {
                     PlayerAction::create(hit, action_type, world_slug.clone())
                 });
-                self.base_mut().emit_signal("on_player_action", &[action.to_variant()]);
+                self.signals().on_player_action().emit(&action);
             }
         }
 
@@ -342,8 +357,7 @@ impl PlayerController {
                 entity.bind_mut().handle_movement(movement);
             }
 
-            self.base_mut()
-                .emit_signal("on_player_move", &[new_movement.to_variant(), new_chunk.to_variant()]);
+            self.signals().on_player_move().emit(&new_movement, new_chunk);
             self.cache_movement = Some(new_movement);
         }
     }
@@ -352,10 +366,13 @@ impl PlayerController {
 #[godot_api]
 impl PlayerController {
     #[signal]
-    fn on_player_move(new_movement: Gd::<EntityMovement>, new_chunk: bool);
+    fn look_at_update(new_look: Option<Gd<LookAt>>);
 
     #[signal]
-    fn on_player_action(action: Gd::<PlayerAction>);
+    fn on_player_move(new_movement: Gd<EntityMovement>, new_chunk: bool);
+
+    #[signal]
+    fn on_player_action(action: Gd<PlayerAction>);
 }
 
 #[godot_api]
@@ -367,7 +384,10 @@ impl INode3D for PlayerController {
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
 
-        let block_selection = self.block_selection.clone();
-        self.base_mut().add_child(&block_selection);
+        let building_visualizer = self.building_visualizer.clone();
+        self.signals()
+            .look_at_update()
+            .connect_obj(&building_visualizer, BuildingVisualizer::on_look_at_update);
+        self.base_mut().add_child(&building_visualizer);
     }
 }

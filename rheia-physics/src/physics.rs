@@ -39,7 +39,7 @@ pub trait IPhysicsContainer<S: IPhysicsShape, C: IPhysicsCollider<S>, B: IPhysic
     fn cast_shape(&self, shape: S, origin: Vector3, dir: Vector3, max_toi: f32, filter: F) -> Option<ShapeCastResult>;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Copy, PartialEq)]
 pub struct RayCastResultNormal {
     pub collider_id: usize,
     pub point: Vector3,

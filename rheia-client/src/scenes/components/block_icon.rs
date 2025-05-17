@@ -7,7 +7,7 @@ use godot::{
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
-#[class(init)]
+#[class(no_init)]
 pub struct BlockIconSelect {
     block_id: BlockIndexType,
 }
