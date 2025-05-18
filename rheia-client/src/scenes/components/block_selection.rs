@@ -14,7 +14,7 @@ use crate::ui::window::WindowUIComponent;
 use crate::world::block_storage::BlockStorage;
 
 use super::block_icon::{BlockIcon, BlockIconSelect};
-use super::block_icons_storage::BlockIconsStorage;
+use super::block_mesh_storage::BlockMeshStorage;
 
 #[derive(GodotClass)]
 #[class(no_init, tool, base=Node)]
@@ -72,7 +72,7 @@ impl BlockSelection {
         }
     }
 
-    pub fn set_blocks(&mut self, block_icons_storage: &BlockIconsStorage, block_storage: &BlockStorage) {
+    pub fn set_blocks(&mut self, block_mesh_storage: &BlockMeshStorage, block_storage: &BlockStorage) {
         let gd = self.base().to_godot();
 
         // Collect all block categories
@@ -100,7 +100,7 @@ impl BlockSelection {
             for (block_id, block_type) in block_storage.iter() {
                 if block_type.get_category() == category {
 
-                    let icon = block_icons_storage.get_icon(block_id).unwrap();
+                    let icon = block_mesh_storage.get_icon(block_id).unwrap();
                     let mut icon = icon.clone();
                     // let mut icon = icon.duplicate().unwrap().cast::<BlockIcon>();
                     flow_container.add_child(&icon);

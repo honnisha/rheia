@@ -1,3 +1,4 @@
+use super::components::block_mesh_storage::BlockMeshStorage;
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::entity_movement::EntityMovement;
@@ -8,6 +9,7 @@ use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
 use crate::scenes::components::block_selection::BlockSelection;
+use crate::scenes::text_screen::TextScreen;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
@@ -20,10 +22,6 @@ use godot::prelude::*;
 use network::messages::{ClientMessages, NetworkMessageType};
 use std::cell::RefCell;
 use std::rc::Rc;
-
-use crate::scenes::text_screen::TextScreen;
-
-use super::components::block_icons_storage::BlockIconsStorage;
 
 pub type FloatType = f32;
 
@@ -67,7 +65,7 @@ pub struct MainScene {
 
     #[export]
     block_icon_scene: Option<Gd<PackedScene>>,
-    block_icons_storage: Option<BlockIconsStorage>,
+    block_mesh_storage: Option<BlockMeshStorage>,
 
     #[init(val = OnReady::manual())]
     block_selection: OnReady<Gd<BlockSelection>>,
@@ -151,7 +149,7 @@ impl MainScene {
     pub fn on_server_connected(&mut self) {
         self.debug_info.bind_mut().toggle(true);
 
-        let block_icons_storage = {
+        let block_mesh_storage = {
             let resource_manager = self.get_resource_manager();
 
             let worlds_manager = self.get_wm().clone();
@@ -159,7 +157,7 @@ impl MainScene {
             let block_storage = worlds_manager.get_block_storage();
 
             let texture_mapper = worlds_manager.get_texture_mapper();
-            BlockIconsStorage::init(
+            BlockMeshStorage::init(
                 self.block_icon_scene.as_ref().unwrap(),
                 &*block_storage,
                 &worlds_manager.get_material(),
@@ -167,7 +165,7 @@ impl MainScene {
                 &*texture_mapper,
             )
         };
-        self.block_icons_storage = Some(block_icons_storage);
+        self.block_mesh_storage = Some(block_mesh_storage);
 
         let worlds_manager = self.get_wm().clone();
         let worlds_manager = worlds_manager.bind();
@@ -175,7 +173,7 @@ impl MainScene {
 
         self.block_selection
             .bind_mut()
-            .set_blocks(self.block_icons_storage.as_ref().unwrap(), &*block_storage)
+            .set_blocks(self.block_mesh_storage.as_ref().unwrap(), &*block_storage)
     }
 
     /// Player can teleport in new world, between worlds or in exsting world

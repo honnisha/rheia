@@ -144,20 +144,6 @@ impl ClientNetwork {
         *self.world_entity.write() = world_entity;
     }
 
-    /// Sends information about the player's new position over the network.
-    ///
-    /// Required to be in the world.
-    pub fn network_send_teleport(&self, position: &Position, rotation: &Rotation) {
-        let lock = self.get_world_entity();
-        let world_entity = lock.as_ref().unwrap();
-        let input = ServerMessages::PlayerTeleport {
-            world_slug: world_entity.get_world_slug().clone(),
-            position: position.to_network(),
-            rotation: rotation.to_network(),
-        };
-        self.send_message(NetworkMessageType::ReliableOrdered, &input);
-    }
-
     pub fn network_send_spawn(&self, position: &Position, rotation: &Rotation, components: &Vec<EntityComponent>) {
         let lock = self.get_world_entity();
         let world_entity = lock.as_ref().unwrap();

@@ -92,12 +92,6 @@ pub enum ServerMessages {
         rotation: Rotation,
         components: Vec<EntityNetworkComponent>,
     },
-    // Used to teleport the player's client controller.
-    PlayerTeleport {
-        world_slug: String,
-        position: Vector3,
-        rotation: Rotation,
-    },
     ChunkSectionInfo {
         world_slug: String,
         chunk_position: ChunkPosition,

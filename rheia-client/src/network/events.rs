@@ -168,22 +168,6 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     EntityNetworkComponent::Skin(skin) => player_controller.bind_mut().update_skin(skin),
                 }
             }
-            ServerMessages::PlayerTeleport {
-                world_slug,
-                position,
-                rotation,
-            } => {
-                let mut worlds_manager = main.get_worlds_manager_mut();
-                let Some(_world) = get_world_mut(&mut worlds_manager, world_slug) else {
-                    continue;
-                };
-                let Some(player_controller) = worlds_manager.get_player_controller_mut().as_mut() else {
-                    log::error!(target: "network", "network tried to teleport with non existing world");
-                    continue;
-                };
-                player_controller.bind_mut().set_position(position.to_godot());
-                player_controller.bind_mut().set_rotation(rotation);
-            }
             ServerMessages::PlayerSpawn {
                 world_slug,
                 position,

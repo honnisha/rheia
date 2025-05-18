@@ -26,14 +26,19 @@ use crate::{
 
 use super::block_icon::BlockIcon;
 
-#[derive(Default)]
-pub struct BlockIconsStorage {
-    icons: HashMap<BlockIndexType, Gd<BlockIcon>>,
+enum BlockMesh {
+    Texture(Gd<MeshInstance3D>),
+    ModelCube(Gd<ObjectsContainer>),
 }
 
-impl BlockIconsStorage {
+pub struct BlockMeshStorage {
+    block_icon_scene: Gd<PackedScene>,
+    meshes: HashMap<BlockIndexType, (BlockMesh, f32)>,
+}
+
+impl BlockMeshStorage {
     fn generate_icon(
-        icon: &mut Gd<BlockIcon>,
+        &mut self,
         block_id: BlockIndexType,
         block_type: &BlockType,
         material: &Gd<Material>,
@@ -57,8 +62,7 @@ impl BlockIconsStorage {
 
                 mesh.set_material_overlay(material);
 
-                icon.bind_mut().set_camera_size(2.0);
-                icon.bind_mut().add_component(&mesh);
+                self.meshes.insert(block_id, (BlockMesh::Texture(mesh), 2.0));
             }
             BlockContent::ModelCube { model: _, icon_size } => {
                 let mut objects_container = ObjectsContainer::new_alloc();
@@ -73,8 +77,8 @@ impl BlockIconsStorage {
                     Some(s) => s,
                     None => &1.0,
                 };
-                icon.bind_mut().set_camera_size(3.0 / icon_size);
-                icon.bind_mut().add_component(&objects_container);
+                self.meshes
+                    .insert(block_id, (BlockMesh::ModelCube(objects_container), 3.0 / icon_size));
             }
         }
     }
@@ -86,13 +90,13 @@ impl BlockIconsStorage {
         resource_manager: &ResourceManager,
         texture_mapper: &TextureMapper,
     ) -> Self {
-        let mut storage = Self::default();
+        let mut storage = Self {
+            block_icon_scene: block_icon_scene.clone(),
+            meshes: Default::default(),
+        };
 
         for (block_id, block_type) in block_storage.iter() {
-            let mut icon = block_icon_scene.instantiate_as::<BlockIcon>();
-            icon.bind_mut().set_block_id(block_id.clone());
-            BlockIconsStorage::generate_icon(
-                &mut icon,
+            storage.generate_icon(
                 *block_id,
                 block_type,
                 material,
@@ -100,12 +104,23 @@ impl BlockIconsStorage {
                 block_storage,
                 &*resource_manager.get_resources_storage(),
             );
-            storage.icons.insert(block_id.clone(), icon);
         }
         storage
     }
 
-    pub fn get_icon(&self, block_id: &BlockIndexType) -> Option<&Gd<BlockIcon>> {
-        self.icons.get(block_id)
+    pub fn get_icon(&self, block_id: &BlockIndexType) -> Option<Gd<BlockIcon>> {
+        let Some((mesh, camera_size)) = self.meshes.get(block_id) else {
+            return None;
+        };
+        let mut icon = self.block_icon_scene.instantiate_as::<BlockIcon>();
+        icon.bind_mut().set_block_id(block_id.clone());
+
+        icon.bind_mut().set_camera_size(camera_size.clone());
+        match mesh {
+            BlockMesh::Texture(gd) => icon.bind_mut().add_component(gd),
+            BlockMesh::ModelCube(gd) => icon.bind_mut().add_component(gd),
+        }
+
+        Some(icon)
     }
 }
