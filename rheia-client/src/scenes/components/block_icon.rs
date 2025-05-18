@@ -6,6 +6,8 @@ use godot::{
     prelude::*,
 };
 
+const ICON_SCENE: &str = "res://scenes/components/block_icon.tscn";
+
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
 #[class(no_init)]
 pub struct BlockIconSelect {
@@ -44,6 +46,10 @@ pub struct BlockIcon {
 
 #[godot_api]
 impl BlockIcon {
+    pub fn create() -> Gd<Self> {
+        load::<PackedScene>(ICON_SCENE).instantiate_as::<Self>()
+    }
+
     #[func]
     fn on_gui_input(&mut self, event: Gd<InputEvent>) {
         let Some(block_id) = self.block_id.as_ref() else {

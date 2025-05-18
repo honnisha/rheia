@@ -106,11 +106,11 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     if is_last {
                         match resource_manager.load_archive() {
                             Ok(count) => {
-                                let mut resource_names = "".to_string();
+                                let mut resource_names: Vec<String> = Default::default();
                                 for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
-                                    resource_names.push_str(resource_slug.as_str());
+                                    resource_names.push(resource_slug.clone());
                                 }
-                                log::info!(target: "network", "Resources loaded from network: {}; media count:{}", resource_names, count);
+                                log::info!(target: "network", "Resources loaded from network: {}; media count:{}", resource_names.join(", "), count);
                             }
                             Err(e) => return Err(format!("Network resources download error: {}", e)),
                         }

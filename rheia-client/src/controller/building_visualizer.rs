@@ -1,13 +1,12 @@
-use godot::prelude::*;
-
+use super::look_at::LookAt;
 use crate::{
-    controller::player_controller::LookAt,
     utils::{
         bridge::IntoGodotVector,
         primitives::{generate_lines, get_face_vector},
     },
     world::physics::{PhysicsType, get_degrees_from_normal},
 };
+use godot::prelude::*;
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node)]

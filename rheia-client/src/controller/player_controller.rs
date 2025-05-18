@@ -1,23 +1,27 @@
-use crate::entities::entity::Entity;
-use crate::entities::enums::generic_animations::GenericAnimations;
-use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
-use crate::utils::primitives::{generate_lines, get_face_vector};
-use crate::world::physics::{PhysicsProxy, PhysicsType, get_degrees_from_normal};
-use common::chunks::rotation::Rotation;
-use godot::global::{deg_to_rad, lerp_angle};
-use godot::prelude::*;
-use network::entities::EntityNetworkComponent;
-use network::messages::NetworkEntitySkin;
-use physics::physics::{
-    IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter, RayCastResultNormal,
-};
-use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
-
 use super::building_visualizer::BuildingVisualizer;
 use super::camera_controller::{CameraController, RayDirection};
 use super::controls::Controls;
 use super::entity_movement::EntityMovement;
+use super::enums::controller_actions::ControllerActions;
+use super::look_at::LookAt;
 use super::player_action::{PlayerAction, PlayerActionType};
+use crate::entities::entity::Entity;
+use crate::entities::enums::generic_animations::GenericAnimations;
+use crate::scenes::components::block_icon::BlockIconSelect;
+use crate::scenes::components::block_menu::BlockMenu;
+use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
+use crate::world::physics::{PhysicsProxy, PhysicsType};
+use crate::world::worlds_manager::WorldsManager;
+use common::blocks::block_info::BlockIndexType;
+use common::chunks::rotation::Rotation;
+use godot::classes::input::MouseMode;
+use godot::classes::{Engine, Input};
+use godot::global::{deg_to_rad, lerp_angle};
+use godot::prelude::*;
+use network::entities::EntityNetworkComponent;
+use network::messages::NetworkEntitySkin;
+use physics::physics::{IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IQueryFilter};
+use physics::{PhysicsCharacterController, PhysicsCollider, PhysicsColliderBuilder, QueryFilter};
 
 const TURN_SPEED: f64 = 6.0;
 const MOVEMENT_SPEED: f32 = 4.0;
@@ -36,25 +40,22 @@ const CONTROLLER_MASS: f32 = 3.0;
 
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
 #[class(no_init)]
-pub struct LookAt {
-    cast_result: RayCastResultNormal,
-    physics_type: PhysicsType,
+pub struct SelectedItemGd {
+    item: Option<SelectedItem>,
 }
 
-impl LookAt {
-    pub fn create(cast_result: RayCastResultNormal, physics_type: PhysicsType) -> Self {
-        Self {
-            cast_result,
-            physics_type,
-        }
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum SelectedItem {
+    BlockPlacing(BlockIndexType),
+    BlockDestroy,
+}
+impl SelectedItemGd {
+    pub fn create(item: Option<SelectedItem>) -> Self {
+        Self { item }
     }
 
-    pub fn get_cast_result(&self) -> &RayCastResultNormal {
-        &self.cast_result
-    }
-
-    pub fn get_physics_type(&self) -> &PhysicsType {
-        &self.physics_type
+    pub fn get_selected_item(&self) -> Option<&SelectedItem> {
+        self.item.as_ref()
     }
 }
 
@@ -82,6 +83,13 @@ pub struct PlayerController {
     look_at_message: String,
 
     building_visualizer: Gd<BuildingVisualizer>,
+
+    selected_item: Option<SelectedItem>,
+
+    block_menu: Gd<BlockMenu>,
+
+    // To prevent actions after ui windows closed
+    ui_lock: f32,
 }
 
 impl PlayerController {
@@ -95,6 +103,8 @@ impl PlayerController {
         let collider = physics.clone().create_collider(collider_builder, None);
 
         let building_visualizer = Gd::<BuildingVisualizer>::from_init_fn(|base| BuildingVisualizer::create(base));
+
+        let block_menu = Gd::<BlockMenu>::from_init_fn(|base| BlockMenu::create(base));
 
         Self {
             base,
@@ -115,7 +125,21 @@ impl PlayerController {
 
             look_at_message: Default::default(),
             building_visualizer,
+
+            selected_item: None,
+
+            block_menu: block_menu,
+
+            ui_lock: 0.0,
         }
+    }
+
+    pub fn set_selected_item(&mut self, new_item: Option<SelectedItem>) {
+        self.selected_item = new_item;
+    }
+
+    pub fn get_selected_item(&self) -> &Option<SelectedItem> {
+        &self.selected_item
     }
 
     pub fn update_skin(&mut self, skin: Option<NetworkEntitySkin>) {
@@ -321,7 +345,13 @@ impl PlayerController {
                 let action = Gd::<PlayerAction>::from_init_fn(|_base| {
                     PlayerAction::create(hit, action_type, world_slug.clone())
                 });
-                self.signals().on_player_action().emit(&action);
+                let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+                if captured || self.ui_lock <= 0.0 {
+                    let selected_item = Gd::<SelectedItemGd>::from_init_fn(|_base| {
+                        SelectedItemGd::create(self.get_selected_item().clone())
+                    });
+                    self.signals().on_player_action().emit(&action, &selected_item);
+                }
             }
         }
 
@@ -361,18 +391,36 @@ impl PlayerController {
             self.cache_movement = Some(new_movement);
         }
     }
+
+    pub fn set_blocks(&mut self, worlds_manager: &WorldsManager) {
+        let block_storage = worlds_manager.get_block_storage();
+
+        self.block_menu
+            .bind_mut()
+            .set_blocks(worlds_manager.get_block_mesh_storage().unwrap(), &*block_storage);
+    }
 }
 
 #[godot_api]
 impl PlayerController {
     #[signal]
-    fn look_at_update(new_look: Option<Gd<LookAt>>);
+    pub fn look_at_update(new_look: Option<Gd<LookAt>>);
 
     #[signal]
-    fn on_player_move(new_movement: Gd<EntityMovement>, new_chunk: bool);
+    pub fn on_player_move(new_movement: Gd<EntityMovement>, new_chunk: bool);
 
     #[signal]
-    fn on_player_action(action: Gd<PlayerAction>);
+    pub fn on_player_action(action: Gd<PlayerAction>, item: Gd<SelectedItemGd>);
+
+    #[func]
+    fn on_block_selected(&mut self, block: Gd<BlockIconSelect>) {
+        self.set_selected_item(Some(SelectedItem::BlockPlacing(*block.bind().get_block_id())));
+    }
+
+    #[func]
+    fn on_block_menu_closed(&mut self) {
+        self.ui_lock = 0.1;
+    }
 }
 
 #[godot_api]
@@ -384,10 +432,34 @@ impl INode3D for PlayerController {
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
 
+        let mut block_menu = self.block_menu.clone();
+        self.base_mut().add_child(&block_menu);
+
+        block_menu
+            .signals()
+            .closed()
+            .connect_obj(&self.to_gd(), PlayerController::on_block_menu_closed);
+        block_menu
+            .signals()
+            .block_clicked()
+            .connect_obj(&self.to_gd(), PlayerController::on_block_selected);
+
         let building_visualizer = self.building_visualizer.clone();
         self.signals()
             .look_at_update()
             .connect_obj(&building_visualizer, BuildingVisualizer::on_look_at_update);
         self.base_mut().add_child(&building_visualizer);
+    }
+
+    fn process(&mut self, delta: f64) {
+        self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
+
+        if !Engine::singleton().is_editor_hint() {
+            let input = Input::singleton();
+            if input.is_action_just_pressed(&ControllerActions::ToggleBlockSelection.to_string()) {
+                let is_active = self.block_menu.bind().is_active();
+                self.block_menu.bind_mut().toggle(!is_active);
+            }
+        }
     }
 }

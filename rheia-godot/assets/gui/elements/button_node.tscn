@@ -1,8 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://dc00ydlsjrmtu"]
+[gd_scene load_steps=5 format=3 uid="uid://dc00ydlsjrmtu"]
 
-[ext_resource type="Texture2D" uid="uid://s0y1jtenikqf" path="res://assets/gui/textures/button/Button_RL_Background.png" id="1_13smv"]
-[ext_resource type="Texture2D" uid="uid://kj0f3dsn7j42" path="res://assets/gui/textures/button/Button_RL_Background_hover.png" id="2_5wcrh"]
-[ext_resource type="Texture2D" uid="uid://c1gwrplfd1v5a" path="res://assets/gui/textures/button/Button_RL_Border.png" id="3_t352f"]
+[sub_resource type="Resource" id="Resource_kyoqx"]
+metadata/__load_path__ = "res://assets/gui/textures/button/Button_RL_Border.png"
+
+[sub_resource type="Resource" id="Resource_0h047"]
+metadata/__load_path__ = "res://assets/gui/textures/button/Button_RL_Border.png"
+
+[sub_resource type="Resource" id="Resource_45jhl"]
+metadata/__load_path__ = "res://assets/gui/textures/button/Button_RL_Background.png"
+
+[sub_resource type="Resource" id="Resource_04bhl"]
+metadata/__load_path__ = "res://assets/gui/textures/button/Button_RL_Background_hover.png"
 
 [node name="ButtonNode" type="Control"]
 layout_mode = 3
@@ -26,7 +34,7 @@ anchors_preset = 9
 anchor_bottom = 1.0
 offset_right = 44.4
 grow_vertical = 2
-texture = ExtResource("3_t352f")
+texture = SubResource("Resource_kyoqx")
 expand_mode = 1
 
 [node name="OutlineRight" type="TextureRect" parent="."]
@@ -39,7 +47,7 @@ offset_left = -44.4
 offset_right = -3.05176e-05
 grow_horizontal = 0
 grow_vertical = 2
-texture = ExtResource("3_t352f")
+texture = SubResource("Resource_0h047")
 expand_mode = 1
 flip_h = true
 
@@ -56,7 +64,7 @@ theme_override_constants/margin_bottom = 0
 
 [node name="TextureButton" type="TextureButton" parent="MarginContainer"]
 layout_mode = 2
-texture_normal = ExtResource("1_13smv")
-texture_hover = ExtResource("2_5wcrh")
+texture_normal = SubResource("Resource_45jhl")
+texture_hover = SubResource("Resource_04bhl")
 ignore_texture_size = true
 stretch_mode = 0

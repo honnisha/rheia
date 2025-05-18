@@ -8,7 +8,7 @@ use common::{
 };
 use godot::{
     builtin::Vector3,
-    classes::{Material, MeshInstance3D, PackedScene},
+    classes::{Material, MeshInstance3D},
     obj::{Gd, NewAlloc},
 };
 
@@ -31,8 +31,8 @@ enum BlockMesh {
     ModelCube(Gd<ObjectsContainer>),
 }
 
+#[derive(Default)]
 pub struct BlockMeshStorage {
-    block_icon_scene: Gd<PackedScene>,
     meshes: HashMap<BlockIndexType, (BlockMesh, f32)>,
 }
 
@@ -84,16 +84,12 @@ impl BlockMeshStorage {
     }
 
     pub fn init(
-        block_icon_scene: &Gd<PackedScene>,
         block_storage: &BlockStorage,
         material: &Gd<Material>,
         resource_manager: &ResourceManager,
         texture_mapper: &TextureMapper,
     ) -> Self {
-        let mut storage = Self {
-            block_icon_scene: block_icon_scene.clone(),
-            meshes: Default::default(),
-        };
+        let mut storage: Self = Default::default();
 
         for (block_id, block_type) in block_storage.iter() {
             storage.generate_icon(
@@ -112,7 +108,7 @@ impl BlockMeshStorage {
         let Some((mesh, camera_size)) = self.meshes.get(block_id) else {
             return None;
         };
-        let mut icon = self.block_icon_scene.instantiate_as::<BlockIcon>();
+        let mut icon = BlockIcon::create();
         icon.bind_mut().set_block_id(block_id.clone());
 
         icon.bind_mut().set_camera_size(camera_size.clone());

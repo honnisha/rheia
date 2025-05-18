@@ -1,14 +1,14 @@
-use super::components::block_mesh_storage::BlockMeshStorage;
+use super::components::block_icon::BlockIconSelect;
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::entity_movement::EntityMovement;
 use crate::controller::enums::controller_actions::ControllerActions;
-use crate::controller::player_action::{PlayerAction, PlayerActionType};
+use crate::controller::player_action::PlayerAction;
+use crate::controller::player_controller::{SelectedItem, SelectedItemGd};
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
-use crate::scenes::components::block_selection::BlockSelection;
 use crate::scenes::text_screen::TextScreen;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
@@ -63,13 +63,6 @@ pub struct MainScene {
     #[export]
     debug_info_scene: Option<Gd<PackedScene>>,
 
-    #[export]
-    block_icon_scene: Option<Gd<PackedScene>>,
-    block_mesh_storage: Option<BlockMeshStorage>,
-
-    #[init(val = OnReady::manual())]
-    block_selection: OnReady<Gd<BlockSelection>>,
-
     #[var(usage_flags = [GROUP, EDITOR, READ_ONLY])]
     debug_world: u32,
 
@@ -83,9 +76,6 @@ pub struct MainScene {
 
     #[export(file = "*.json")]
     debug_world_settings: GString,
-
-    // To prevent actions after ui windows closed
-    ui_lock: f32,
 }
 
 impl MainScene {
@@ -122,7 +112,7 @@ impl MainScene {
         self.worlds_manager.as_mut().unwrap().bind_mut()
     }
 
-    fn connect(&mut self) {
+    fn connect_to_server(&mut self) {
         let ip = self.ip_port.as_ref().expect("init_data is not called");
 
         self.text_screen
@@ -142,45 +132,22 @@ impl MainScene {
 
     pub fn send_disconnect_event(&mut self, message: String) {
         Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
-        self.base_mut().emit_signal("disconnect", &[message.to_variant()]);
+        self.signals().network_disconnect().emit(&message.to_godot());
     }
 
     /// Signaling that everything is loaded from the server
     pub fn on_server_connected(&mut self) {
         self.debug_info.bind_mut().toggle(true);
 
-        let block_mesh_storage = {
-            let resource_manager = self.get_resource_manager();
-
-            let worlds_manager = self.get_wm().clone();
-            let worlds_manager = worlds_manager.bind();
-            let block_storage = worlds_manager.get_block_storage();
-
-            let texture_mapper = worlds_manager.get_texture_mapper();
-            BlockMeshStorage::init(
-                self.block_icon_scene.as_ref().unwrap(),
-                &*block_storage,
-                &worlds_manager.get_material(),
-                &*resource_manager,
-                &*texture_mapper,
-            )
-        };
-        self.block_mesh_storage = Some(block_mesh_storage);
-
-        let worlds_manager = self.get_wm().clone();
-        let worlds_manager = worlds_manager.bind();
-        let block_storage = worlds_manager.get_block_storage();
-
-        self.block_selection
-            .bind_mut()
-            .set_blocks(self.block_mesh_storage.as_ref().unwrap(), &*block_storage)
+        let rm = self.resource_manager.clone();
+        self.get_worlds_manager_mut().on_network_connected(&*rm.borrow());
     }
 
     /// Player can teleport in new world, between worlds or in exsting world
     /// so worlds can be created and destroyed
     pub fn spawn_world(&mut self, world_slug: String) {
-        let base = self.base().clone();
-        let mut worlds_manager = self.get_worlds_manager_mut();
+        let mut wm = self.worlds_manager.as_mut().unwrap().clone();
+        let mut worlds_manager = wm.bind_mut();
 
         let created_controller = if let Some(world) = worlds_manager.get_world() {
             if world.bind().get_slug() != &world_slug {
@@ -199,14 +166,17 @@ impl MainScene {
         };
 
         if let Some(mut player_controller) = created_controller {
-            player_controller.bind_mut().base_mut().connect(
-                "on_player_move",
-                &Callable::from_object_method(&base, "handler_player_move"),
-            );
-            player_controller.bind_mut().base_mut().connect(
-                "on_player_action",
-                &Callable::from_object_method(&base, "handler_player_action"),
-            );
+            player_controller
+                .signals()
+                .on_player_move()
+                .connect_obj(&self.to_gd(), MainScene::handler_player_move);
+
+            player_controller
+                .signals()
+                .on_player_action()
+                .connect_obj(&self.to_gd(), MainScene::handler_player_action);
+
+            player_controller.bind_mut().set_blocks(&*worlds_manager);
         }
     }
 }
@@ -214,7 +184,7 @@ impl MainScene {
 #[godot_api]
 impl MainScene {
     #[signal]
-    fn disconnect();
+    pub fn network_disconnect(message: GString);
 
     #[func]
     fn handler_player_move(&mut self, movement: Gd<EntityMovement>, _new_chunk: bool) {
@@ -250,42 +220,35 @@ impl MainScene {
     }
 
     #[func]
-    fn handler_block_selection_closed(&mut self) {
-        self.ui_lock = 0.1;
-    }
-
-    #[func]
-    fn handler_player_action(&mut self, action: Gd<PlayerAction>) {
-        let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
-        if !captured || self.ui_lock > 0.0 {
-            return;
-        }
-
+    fn handler_player_action(&mut self, action: Gd<PlayerAction>, item: Gd<SelectedItemGd>) {
         let a = action.bind();
         let network = self.get_network().unwrap();
         if let Some(look_at) = a.get_hit() {
             match look_at.bind().get_physics_type() {
                 PhysicsType::ChunkMeshCollider(_chunk_position) => {
                     let selected_block = look_at.bind().get_cast_result().get_selected_block();
-                    let msg = match a.get_action_type() {
-                        PlayerActionType::Main => {
-                            let bs = self.block_selection.bind();
-                            let Some(block_id) = bs.get_selected_block_id() else {
-                                return;
-                            };
-                            ClientMessages::EditBlockRequest {
-                                world_slug: a.get_world_slug().clone(),
-                                position: look_at.bind().get_cast_result().get_place_block(),
-                                new_block_info: Some(BlockInfo::create(*block_id, None)),
+                    if a.is_main_type() {
+                        if let Some(i) = item.bind().get_selected_item() {
+                            match i {
+                                SelectedItem::BlockPlacing(block_id) => {
+                                    let msg = ClientMessages::EditBlockRequest {
+                                        world_slug: a.get_world_slug().clone(),
+                                        position: look_at.bind().get_cast_result().get_place_block(),
+                                        new_block_info: Some(BlockInfo::create(*block_id, None)),
+                                    };
+                                    network.send_message(NetworkMessageType::Unreliable, &msg);
+                                }
+                                SelectedItem::BlockDestroy => {
+                                    let msg = ClientMessages::EditBlockRequest {
+                                        world_slug: a.get_world_slug().clone(),
+                                        position: selected_block,
+                                        new_block_info: None,
+                                    };
+                                    network.send_message(NetworkMessageType::Unreliable, &msg);
+                                }
                             }
                         }
-                        PlayerActionType::Second => ClientMessages::EditBlockRequest {
-                            world_slug: a.get_world_slug().clone(),
-                            position: selected_block,
-                            new_block_info: None,
-                        },
-                    };
-                    network.send_message(NetworkMessageType::Unreliable, &msg);
+                    }
                 }
                 PhysicsType::EntityCollider(_entity_id) => {}
             }
@@ -296,8 +259,6 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
-        let base = self.base().clone();
-
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.resource_manager.clone().borrow_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));
@@ -328,17 +289,6 @@ impl INode for MainScene {
 
             self.debug_info.bind_mut().toggle(false);
 
-            // Selection menu
-            let block_selection = Gd::<BlockSelection>::from_init_fn(|base| BlockSelection::create(base));
-            self.block_selection.init(block_selection);
-
-            let mut block_selection = self.block_selection.clone();
-            block_selection.bind_mut().base_mut().connect(
-                "on_closed",
-                &Callable::from_object_method(&base, "handler_block_selection_closed"),
-            );
-            self.base_mut().add_child(&block_selection);
-
             // Text splash screen
             let text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
             self.text_screen.init(text_screen);
@@ -349,21 +299,20 @@ impl INode for MainScene {
 
             Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
 
-            self.connect();
+            self.connect_to_server();
         }
 
-        if let Some(worlds_manager) = self.worlds_manager.as_mut() {
+        let mut wm = self.worlds_manager.clone();
+        if let Some(worlds_manager) = wm.as_mut() {
             worlds_manager
                 .bind_mut()
                 .set_resource_manager(self.resource_manager.clone());
         }
     }
 
-    fn process(&mut self, delta: f64) {
+    fn process(&mut self, _delta: f64) {
         #[cfg(feature = "trace")]
         let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
-
-        self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
 
         if self.network.is_some() {
             let network_info = match handle_network_events(self) {
@@ -381,19 +330,7 @@ impl INode for MainScene {
         if !Engine::singleton().is_editor_hint() {
             let input = Input::singleton();
             if input.is_action_just_pressed(&ControllerActions::ToggleConsole.to_string()) {
-                if !Console::is_active() {
-                    self.block_selection.bind_mut().toggle(false);
-                }
-
                 self.console.bind_mut().toggle(!Console::is_active());
-            }
-            if input.is_action_just_pressed(&ControllerActions::ToggleBlockSelection.to_string()) {
-                let is_active = self.block_selection.bind().is_active();
-                if !is_active {
-                    self.console.bind_mut().toggle(false);
-                }
-
-                self.block_selection.bind_mut().toggle(!is_active);
             }
             if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
                 self.debug_info.bind_mut().toggle(!DebugInfo::is_active());

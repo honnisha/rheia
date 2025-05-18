@@ -97,16 +97,16 @@ impl MainMenu {
         main_scene
             .bind_mut()
             .init_data(ip_port.to_string(), username.to_string());
-        main_scene.connect(
-            "disconnect",
-            &Callable::from_object_method(&self.base().to_godot(), "on_disconnect"),
-        );
+        main_scene
+            .signals()
+            .network_disconnect()
+            .connect_obj(&self.to_gd(), MainMenu::on_network_disconnect);
         self.main_scene = Some(main_scene.clone());
         self.base_mut().add_child(&main_scene);
     }
 
     #[func]
-    fn on_disconnect(&mut self, message: GString) {
+    fn on_network_disconnect(&mut self, message: GString) {
         if let Some(mut main_scene) = self.main_scene.take() {
             main_scene.queue_free();
         }

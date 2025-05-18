@@ -16,7 +16,7 @@ pub struct NetworkContainer {
 
 impl NetworkContainer {
     pub fn new(ip_port: String) -> Result<Self, String> {
-        log::info!(target: "network", "Connecting to the server at {}", ip_port);
+        log::info!(target: "network", "Connecting to the server at &e{}", ip_port);
 
         let io_loop = tokio::runtime::Runtime::new().unwrap();
         let result = io_loop.block_on(async { NetworkClient::new(ip_port).await });

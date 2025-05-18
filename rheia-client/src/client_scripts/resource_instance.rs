@@ -93,7 +93,7 @@ impl ResourceInstance {
             return Err("this filetype is not supported".to_string());
         };
         self.media.insert(media_slug.clone(), resource);
-        log::info!(target:"resources", "Resource \"{}\" media \"{}\" loaded", self.slug, media_slug);
+        log::debug!(target:"resources", "Resource \"{}\" media \"{}\" loaded", self.slug, media_slug);
         Ok(())
     }
 

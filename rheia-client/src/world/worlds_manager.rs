@@ -2,12 +2,13 @@ use common::chunks::block_position::{BlockPosition, BlockPositionTrait};
 use godot::classes::StandardMaterial3D;
 use godot::prelude::*;
 use godot::{classes::Material, prelude::Gd};
-use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use parking_lot::RwLock;
+use parking_lot::lock_api::{RwLockReadGuard, RwLockWriteGuard};
 use std::sync::Arc;
 
-use crate::client_scripts::resource_manager::ResourceStorage;
+use crate::client_scripts::resource_manager::{ResourceManager, ResourceStorage};
 use crate::controller::player_controller::PlayerController;
+use crate::scenes::components::block_mesh_storage::BlockMeshStorage;
 use crate::scenes::main_scene::ResourceManagerType;
 use crate::utils::textures::texture_mapper::TextureMapper;
 
@@ -35,6 +36,8 @@ pub struct WorldsManager {
 
     #[export]
     terrain_material: Option<Gd<StandardMaterial3D>>,
+
+    block_mesh_storage: Option<BlockMeshStorage>,
 }
 
 impl WorldsManager {
@@ -56,6 +59,22 @@ impl WorldsManager {
         };
         log::info!(target: "main", "Textures builded successfily; texture blocks:{} textures loaded:{} (executed:{:.2?})", block_storage.textures_blocks_count(), texture_mapper.len(), now.elapsed());
         return Ok(());
+    }
+
+    pub fn on_network_connected(&mut self, resource_manager: &ResourceManager) {
+        let block_mesh_storage = {
+            BlockMeshStorage::init(
+                &*self.get_block_storage(),
+                &self.get_material(),
+                &*resource_manager,
+                &*self.get_texture_mapper(),
+            )
+        };
+        self.block_mesh_storage = Some(block_mesh_storage);
+    }
+
+    pub fn get_block_mesh_storage(&self) -> Option<&BlockMeshStorage> {
+        self.block_mesh_storage.as_ref()
     }
 
     pub fn get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {

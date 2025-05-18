@@ -1,5 +1,6 @@
-use super::player_controller::LookAt;
 use godot::{obj::Gd, register::GodotClass};
+
+use super::look_at::LookAt;
 
 pub enum PlayerActionType {
     Main,
@@ -27,8 +28,11 @@ impl PlayerAction {
         &self.hit
     }
 
-    pub fn get_action_type(&self) -> &PlayerActionType {
-        &self.action_type
+    pub fn is_main_type(&self) -> bool {
+        match self.action_type {
+            PlayerActionType::Main => true,
+            PlayerActionType::Second => false,
+        }
     }
 
     pub fn get_world_slug(&self) -> &String {

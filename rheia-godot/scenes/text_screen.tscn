@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://ha34myf86so5"]
 
-[ext_resource type="Shader" path="res://assets/shaders/gradient.gdshader" id="1_g0c32"]
+[ext_resource type="Shader" uid="uid://uf3n6krsif12" path="res://assets/shaders/gradient.gdshader" id="1_g0c32"]
 [ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="1_qrd16"]
 [ext_resource type="FontFile" uid="uid://dldpnw7khwbnk" path="res://assets/gui/fonts/Monocraft/Monocraft-Italic.otf" id="2_papxd"]
 [ext_resource type="FontFile" uid="uid://t0pxs7ig3xsp" path="res://assets/gui/fonts/Monocraft/Monocraft-Bold-Italic.otf" id="3_ssvxi"]
