@@ -30,6 +30,15 @@ impl BlockStorage {
         self.blocks.iter()
     }
 
+    pub fn get_categories(&self) -> Vec<String> {
+        let mut categories: Vec<String> = Vec::default();
+        for (_block_id, block_type) in self.iter() {
+            if !categories.contains(block_type.get_category()) {
+                categories.push(block_type.get_category().clone());
+            }
+        }
+        categories
+    }
     pub fn textures_blocks_count(&self) -> i32 {
         let mut result = 0;
         for b in self.blocks.values() {

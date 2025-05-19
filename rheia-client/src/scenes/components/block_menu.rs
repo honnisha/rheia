@@ -37,12 +37,14 @@ impl BlockMenu {
 
     #[func]
     fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
+        self.signals().closed().emit();
         self.toggle(false);
         self.signals().block_clicked().emit(&block);
     }
 
     #[func]
     fn on_window_closed(&mut self) {
+        self.signals().closed().emit();
         self.window.bind_mut().toggle(false);
     }
 }
@@ -79,13 +81,10 @@ impl BlockMenu {
         let gd = self.base().to_godot();
 
         // Collect all block categories
-        let mut categories: HashSet<String> = HashSet::default();
-        for (_block_id, block_type) in block_storage.iter() {
-            categories.insert(block_type.get_category().clone());
-        }
 
         let default_theme = load::<Theme>(DEFAULT_THEME_PATH);
 
+        let categories = block_storage.get_categories();
         for category in categories.iter() {
             let mut tab_category = self.tabs.bind_mut().add_category(category.clone(), category.clone());
 
@@ -122,7 +121,13 @@ impl BlockMenu {
 #[godot_api]
 impl INode for BlockMenu {
     fn ready(&mut self) {
-        let window = self.window.clone();
+        let mut window = self.window.clone();
+
+        window
+            .signals()
+            .closed()
+            .connect_obj(&self.to_gd().clone(), BlockMenu::on_window_closed);
+
         self.base_mut().add_child(&window);
         self.toggle(false);
     }

@@ -346,7 +346,7 @@ impl PlayerController {
                     PlayerAction::create(hit, action_type, world_slug.clone())
                 });
                 let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
-                if captured || self.ui_lock <= 0.0 {
+                if captured && self.ui_lock <= 0.0 {
                     let selected_item = Gd::<SelectedItemGd>::from_init_fn(|_base| {
                         SelectedItemGd::create(self.get_selected_item().clone())
                     });
