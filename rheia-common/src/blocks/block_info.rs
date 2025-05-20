@@ -36,6 +36,10 @@ impl BlockInfo {
     pub fn get_id(&self) -> BlockIndexType {
         self.id
     }
+
+    pub fn get_face(&self) -> Option<&BlockFace> {
+        self.face.as_ref()
+    }
 }
 
 impl PartialEq for BlockInfo {

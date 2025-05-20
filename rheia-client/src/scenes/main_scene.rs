@@ -3,7 +3,7 @@ use crate::console::console_handler::Console;
 use crate::controller::entity_movement::EntityMovement;
 use crate::controller::enums::controller_actions::ControllerActions;
 use crate::controller::player_action::PlayerAction;
-use crate::controller::player_controller::{SelectedItem, SelectedItemGd};
+use crate::controller::selected_item::{SelectedItem, SelectedItemGd};
 use crate::debug::debug_info::DebugInfo;
 use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
@@ -12,7 +12,6 @@ use crate::scenes::text_screen::TextScreen;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
-use common::blocks::block_info::BlockInfo;
 use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
@@ -229,11 +228,11 @@ impl MainScene {
                     if a.is_main_type() {
                         if let Some(i) = item.bind().get_selected_item() {
                             match i {
-                                SelectedItem::BlockPlacing(block_id) => {
+                                SelectedItem::BlockPlacing(block_info) => {
                                     let msg = ClientMessages::EditBlockRequest {
                                         world_slug: a.get_world_slug().clone(),
                                         position: look_at.bind().get_cast_result().get_place_block(),
-                                        new_block_info: Some(BlockInfo::create(*block_id, None)),
+                                        new_block_info: Some(block_info.clone()),
                                     };
                                     network.send_message(NetworkMessageType::Unreliable, &msg);
                                 }

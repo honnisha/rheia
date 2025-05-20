@@ -37,7 +37,7 @@ pub struct WorldsManager {
     #[export]
     terrain_material: Option<Gd<StandardMaterial3D>>,
 
-    block_mesh_storage: Option<BlockMeshStorage>,
+    block_mesh_storage: Option<Gd<BlockMeshStorage>>,
 }
 
 impl WorldsManager {
@@ -73,7 +73,7 @@ impl WorldsManager {
         self.block_mesh_storage = Some(block_mesh_storage);
     }
 
-    pub fn get_block_mesh_storage(&self) -> Option<&BlockMeshStorage> {
+    pub fn get_block_mesh_storage(&self) -> Option<&Gd<BlockMeshStorage>> {
         self.block_mesh_storage.as_ref()
     }
 

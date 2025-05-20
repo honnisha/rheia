@@ -1,3 +1,15 @@
+use crate::{
+    client_scripts::resource_manager::{ResourceManager, ResourceStorage},
+    utils::textures::texture_mapper::TextureMapper,
+    world::{
+        block_storage::BlockStorage,
+        chunks::{
+            chunk_data_formatter::generate_single_block,
+            mesh::mesh_generator::generate_chunk_geometry,
+            objects_container::{CustomObject, ObjectsContainer},
+        },
+    },
+};
 use ahash::HashMap;
 use common::{
     blocks::{
@@ -7,37 +19,25 @@ use common::{
     chunks::block_position::BlockPosition,
 };
 use godot::{
-    builtin::Vector3,
     classes::{Material, MeshInstance3D},
-    obj::{Gd, NewAlloc},
-};
-
-use crate::{
-    client_scripts::resource_manager::{ResourceManager, ResourceStorage},
-    utils::textures::texture_mapper::TextureMapper,
-    world::{
-        block_storage::BlockStorage,
-        chunks::{
-            chunk_data_formatter::generate_single_block, mesh::mesh_generator::generate_chunk_geometry,
-            objects_container::ObjectsContainer,
-        },
-    },
+    prelude::*,
 };
 
 use super::block_icon::BlockIcon;
 
-enum BlockMesh {
+pub enum BlockMesh {
     Texture(Gd<MeshInstance3D>),
-    ModelCube(Gd<ObjectsContainer>),
+    ModelCube(Gd<CustomObject>),
 }
 
-#[derive(Default)]
+#[derive(Default, GodotClass)]
+#[class(no_init)]
 pub struct BlockMeshStorage {
     meshes: HashMap<BlockIndexType, (BlockMesh, f32)>,
 }
 
 impl BlockMeshStorage {
-    fn generate_icon(
+    fn generate_block_mesh(
         &mut self,
         block_id: BlockIndexType,
         block_type: &BlockType,
@@ -58,7 +58,6 @@ impl BlockMeshStorage {
 
                 let mut mesh = MeshInstance3D::new_alloc();
                 mesh.set_mesh(&geometry.mesh_ist);
-                mesh.set_position(Vector3::new(-1.5, -1.5, -1.5));
 
                 mesh.set_material_overlay(material);
 
@@ -71,14 +70,14 @@ impl BlockMeshStorage {
                     .bind_mut()
                     .create_block_model(&position, block_type, None, resource_storage)
                     .unwrap();
-                objects_container.set_position(Vector3::new(-1.5, -1.5, -1.5));
 
                 let icon_size = match icon_size {
                     Some(s) => s,
                     None => &1.0,
                 };
+                let obj = objects_container.bind().get_first().clone();
                 self.meshes
-                    .insert(block_id, (BlockMesh::ModelCube(objects_container), 3.0 / icon_size));
+                    .insert(block_id, (BlockMesh::ModelCube(obj), 3.0 / icon_size));
             }
         }
     }
@@ -88,11 +87,11 @@ impl BlockMeshStorage {
         material: &Gd<Material>,
         resource_manager: &ResourceManager,
         texture_mapper: &TextureMapper,
-    ) -> Self {
+    ) -> Gd<Self> {
         let mut storage: Self = Default::default();
 
         for (block_id, block_type) in block_storage.iter() {
-            storage.generate_icon(
+            storage.generate_block_mesh(
                 *block_id,
                 block_type,
                 material,
@@ -101,22 +100,41 @@ impl BlockMeshStorage {
                 &*resource_manager.get_resources_storage(),
             );
         }
-        storage
+
+        Gd::<Self>::from_init_fn(|_base| storage)
     }
 
     pub fn get_icon(&self, block_id: &BlockIndexType) -> Option<Gd<BlockIcon>> {
-        let Some((mesh, camera_size)) = self.meshes.get(block_id) else {
+        let Some((_mesh, camera_size)) = self.meshes.get(block_id) else {
             return None;
         };
         let mut icon = BlockIcon::create();
         icon.bind_mut().set_block_id(block_id.clone());
 
         icon.bind_mut().set_camera_size(camera_size.clone());
-        match mesh {
-            BlockMesh::Texture(gd) => icon.bind_mut().add_component(gd),
-            BlockMesh::ModelCube(gd) => icon.bind_mut().add_component(gd),
-        }
+
+        let obj = self.get_mesh(block_id);
+        icon.bind_mut().add_component(&obj);
 
         Some(icon)
+    }
+
+    pub fn get_mesh(&self, block_id: &BlockIndexType) -> Gd<Node3D> {
+        let Some((mesh, _camera_size)) = self.meshes.get(block_id) else {
+            panic!("block_id {} not found", block_id);
+        };
+
+        match mesh {
+            BlockMesh::Texture(gd) => {
+                let mut obj = gd.duplicate().unwrap().cast::<Node3D>();
+                obj.set_position(Vector3::new(-1.5, -1.5, -1.5));
+                obj
+            }
+            BlockMesh::ModelCube(gd) => {
+                let mut obj = gd.bind().get_content().duplicate().unwrap().cast::<Node3D>();
+                obj.set_position(Vector3::new(-0.5, -0.5, -0.5));
+                obj
+            }
+        }
     }
 }

@@ -53,6 +53,11 @@ impl CustomObject {
             collider.remove();
         }
     }
+
+    pub fn get_content(&self) -> Gd<Node3D> {
+        let obj = self.base().get_children().iter_shared().next().unwrap();
+        obj.cast::<Node3D>()
+    }
 }
 
 /// Container for custom objects of map per chunk section
@@ -64,6 +69,11 @@ pub struct ObjectsContainer {
 }
 
 impl ObjectsContainer {
+    // Specifically for icons
+    pub fn get_first(&self) -> &Gd<CustomObject> {
+        self.blocks.values().next().unwrap()
+    }
+
     pub fn setup(
         &mut self,
         y: u32,

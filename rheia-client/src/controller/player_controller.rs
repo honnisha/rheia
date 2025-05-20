@@ -5,6 +5,7 @@ use super::entity_movement::EntityMovement;
 use super::enums::controller_actions::ControllerActions;
 use super::look_at::LookAt;
 use super::player_action::{PlayerAction, PlayerActionType};
+use super::selected_item::{SelectedItem, SelectedItemGd};
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::scenes::components::block_icon::BlockIconSelect;
@@ -12,7 +13,7 @@ use crate::scenes::components::block_menu::BlockMenu;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::world::physics::{PhysicsProxy, PhysicsType};
 use crate::world::worlds_manager::WorldsManager;
-use common::blocks::block_info::BlockIndexType;
+use common::blocks::block_info::BlockInfo;
 use common::chunks::rotation::Rotation;
 use godot::classes::input::MouseMode;
 use godot::classes::{Engine, Input};
@@ -37,27 +38,6 @@ pub(crate) const CONTROLLER_CAMERA_OFFSET_VERTICAL: f32 = CONTROLLER_HEIGHT * 0.
 const CONTROLLER_HEIGHT: f32 = 1.8;
 const CONTROLLER_RADIUS: f32 = 0.4;
 const CONTROLLER_MASS: f32 = 3.0;
-
-#[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
-#[class(no_init)]
-pub struct SelectedItemGd {
-    item: Option<SelectedItem>,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum SelectedItem {
-    BlockPlacing(BlockIndexType),
-    BlockDestroy,
-}
-impl SelectedItemGd {
-    pub fn create(item: Option<SelectedItem>) -> Self {
-        Self { item }
-    }
-
-    pub fn get_selected_item(&self) -> Option<&SelectedItem> {
-        self.item.as_ref()
-    }
-}
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node3D)]
@@ -139,7 +119,8 @@ impl PlayerController {
     }
 
     pub fn set_selected_item(&mut self, new_item: Option<SelectedItem>) {
-        self.selected_item = new_item;
+        self.selected_item = new_item.clone();
+        self.building_visualizer.bind_mut().set_selected_item(new_item);
     }
 
     pub fn get_selected_item(&self) -> &Option<SelectedItem> {
@@ -242,7 +223,7 @@ impl PlayerController {
 
     fn get_movement(&mut self, delta: f64) -> Vector3 {
         let Some(entity) = self.entity.as_mut() else {
-            panic!("get_movement available onlt with entity");
+            panic!("get_movement available only with entity");
         };
 
         let mut movement = Vector3::ZERO;
@@ -399,9 +380,14 @@ impl PlayerController {
     pub fn set_blocks(&mut self, worlds_manager: &WorldsManager) {
         let block_storage = worlds_manager.get_block_storage();
 
+        let block_mesh_storage = worlds_manager.get_block_mesh_storage().unwrap();
         self.block_menu
             .bind_mut()
-            .set_blocks(worlds_manager.get_block_mesh_storage().unwrap(), &*block_storage);
+            .set_blocks(&*block_mesh_storage.bind(), &*block_storage);
+
+        self.building_visualizer
+            .bind_mut()
+            .set_block_mesh_storage(block_mesh_storage.clone());
     }
 }
 
@@ -418,7 +404,8 @@ impl PlayerController {
 
     #[func]
     fn on_block_selected(&mut self, block: Gd<BlockIconSelect>) {
-        self.set_selected_item(Some(SelectedItem::BlockPlacing(*block.bind().get_block_id())));
+        let block_info = BlockInfo::create(*block.bind().get_block_id(), None);
+        self.set_selected_item(Some(SelectedItem::BlockPlacing(block_info)));
     }
 
     #[func]

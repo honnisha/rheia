@@ -6,3 +6,4 @@ pub mod enums;
 pub mod player_action;
 pub mod building_visualizer;
 pub mod look_at;
+pub mod selected_item;
