@@ -1,4 +1,3 @@
-use super::components::block_icon::BlockIconSelect;
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::entity_movement::EntityMovement;

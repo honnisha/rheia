@@ -1,4 +1,4 @@
-use ahash::{HashMap, HashSet};
+use ahash::HashMap;
 use common::blocks::block_info::BlockIndexType;
 use godot::classes::control::{LayoutPreset, SizeFlags};
 use godot::classes::{FlowContainer, ScrollContainer, Theme};

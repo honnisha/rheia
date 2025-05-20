@@ -90,6 +90,8 @@ pub struct PlayerController {
 
     // To prevent actions after ui windows closed
     ui_lock: f32,
+
+    window_focus: bool,
 }
 
 impl PlayerController {
@@ -131,6 +133,8 @@ impl PlayerController {
             block_menu: block_menu,
 
             ui_lock: 0.0,
+
+            window_focus: true,
         }
     }
 
@@ -346,7 +350,7 @@ impl PlayerController {
                     PlayerAction::create(hit, action_type, world_slug.clone())
                 });
                 let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
-                if captured && self.ui_lock <= 0.0 {
+                if captured && self.ui_lock <= 0.0 && self.window_focus {
                     let selected_item = Gd::<SelectedItemGd>::from_init_fn(|_base| {
                         SelectedItemGd::create(self.get_selected_item().clone())
                     });
@@ -421,6 +425,17 @@ impl PlayerController {
     fn on_block_menu_closed(&mut self) {
         self.ui_lock = 0.1;
     }
+
+    #[func]
+    fn on_window_focus_entered(&mut self) {
+        self.window_focus = true;
+        self.ui_lock = 0.1;
+    }
+
+    #[func]
+    fn on_window_focus_exited(&mut self) {
+        self.window_focus = false;
+    }
 }
 
 #[godot_api]
@@ -428,6 +443,20 @@ impl INode3D for PlayerController {
     fn ready(&mut self) {
         let camera_controller = self.camera_controller.clone();
         self.base_mut().add_child(&camera_controller);
+
+        self.base()
+            .get_window()
+            .unwrap()
+            .signals()
+            .focus_entered()
+            .connect_obj(&self.to_gd(), PlayerController::on_window_focus_entered);
+
+        self.base()
+            .get_window()
+            .unwrap()
+            .signals()
+            .focus_exited()
+            .connect_obj(&self.to_gd(), PlayerController::on_window_focus_exited);
 
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
