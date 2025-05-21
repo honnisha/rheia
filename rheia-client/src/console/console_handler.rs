@@ -1,17 +1,16 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
-
 use chrono::Local;
 use common::utils::colors::parse_to_console_godot;
-use flume::{bounded, unbounded, Drain};
+use flume::{Drain, bounded, unbounded};
 use flume::{Receiver, Sender};
 use godot::{
-    classes::{input::MouseMode, IMarginContainer, Input, LineEdit, MarginContainer, RichTextLabel, TextureButton},
+    classes::{IMarginContainer, Input, LineEdit, MarginContainer, RichTextLabel, TextureButton, input::MouseMode},
     prelude::*,
 };
 use lazy_static::lazy_static;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 
 const TEXT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText";
 const INPUT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput";
@@ -166,7 +165,7 @@ impl IMarginContainer for Console {
 
     fn process(&mut self, _delta: f64) {
         #[cfg(feature = "trace")]
-        let _span = tracing::span!(tracing::Level::INFO, "console_handler").entered();
+        let _span = tracy_client::span!("console_handler");
 
         for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
             self.append_text(message);

@@ -162,6 +162,9 @@ impl IControl for MainMenu {
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 
+        #[cfg(feature = "trace")]
+        log::info!(target: "main", "&6Tracy enabled");
+
         Engine::singleton().set_max_fps(60);
 
         let mut text_screen = self.text_screen_scene.as_mut().unwrap().instantiate_as::<TextScreen>();
@@ -203,5 +206,10 @@ impl IControl for MainMenu {
             .set_text(&format!("Version: {}", VERSION));
 
         self.read_settings();
+    }
+
+    fn process(&mut self, _delta: f64) {
+        #[cfg(feature = "trace")]
+        let _span = tracy_client::span!("main_menu");
     }
 }

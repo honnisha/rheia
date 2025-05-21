@@ -1,6 +1,6 @@
 use super::{look_at::LookAt, selected_item::SelectedItem};
 use crate::{
-    scenes::components::block_mesh_storage::{BlockMesh, BlockMeshStorage},
+    scenes::components::block_mesh_storage::BlockMeshStorage,
     utils::{
         bridge::IntoGodotVector,
         primitives::{generate_lines, get_face_vector},

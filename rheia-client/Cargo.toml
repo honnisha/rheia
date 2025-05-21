@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 [features]
 default = []
 
-trace = ["tracing", "tracing-tracy", "tracy-client"]
+trace = ["tracing", "tracing-tracy", "tracy-client", "tracy-client-sys"]
 
 [dependencies]
 common = { path = "../rheia-common" }
@@ -69,5 +69,6 @@ fastnbt = "2"
 image = "0.25.2"
 
 tracing = { version = "0.1", optional = true }
-tracing-tracy = { version = "=0.11.1", optional = true }
-tracy-client = { version = "=0.17.1", optional = true }
+tracing-tracy = { version = "=0.11.4", optional = true }
+tracy-client = { version = "=0.18.0", optional = true }
+tracy-client-sys = { version = "=0.24.3", optional = true }

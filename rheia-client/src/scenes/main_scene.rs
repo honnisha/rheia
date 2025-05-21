@@ -25,11 +25,6 @@ pub type FloatType = f32;
 
 pub const DEFAULT_THEME_PATH: &str = "res://assets/gui/default_theme.tres";
 
-#[cfg(feature = "trace")]
-#[global_allocator]
-static GLOBAL: tracy_client::ProfiledAllocator<std::alloc::System> =
-    tracy_client::ProfiledAllocator::new(std::alloc::System, 100);
-
 pub type ResourceManagerType = Rc<RefCell<ResourceManager>>;
 
 #[derive(GodotClass)]
@@ -310,7 +305,7 @@ impl INode for MainScene {
 
     fn process(&mut self, _delta: f64) {
         #[cfg(feature = "trace")]
-        let _span = tracing::span!(tracing::Level::INFO, "main_scene").entered();
+        let _span = tracy_client::span!("main_scene");
 
         if self.network.is_some() {
             let network_info = match handle_network_events(self) {

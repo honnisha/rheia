@@ -298,7 +298,7 @@ impl PlayerController {
 
     pub fn custom_process(&mut self, delta: f64, chunk_loaded: bool, world_slug: &String) {
         #[cfg(feature = "trace")]
-        let _span = tracing::span!(tracing::Level::INFO, "player_controller").entered();
+        let _span = tracy_client::span!("player_controller");
 
         // Set lock if chunk is in loading
         self.collider.set_enabled(chunk_loaded);

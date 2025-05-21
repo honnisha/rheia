@@ -185,6 +185,13 @@ impl WorldsManager {
 impl INode for WorldsManager {
     fn ready(&mut self) {}
 
+    fn physics_process(&mut self, delta: f64) {
+        if self.get_world().is_some() {
+            let mut world = self.get_world_mut().unwrap().clone();
+            world.bind_mut().physics_process(delta);
+        }
+    }
+
     fn process(&mut self, delta: f64) {
         if self.get_world().is_some() {
             let mut world = self.get_world_mut().unwrap().clone();

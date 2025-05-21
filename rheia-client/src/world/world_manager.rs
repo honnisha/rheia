@@ -111,11 +111,16 @@ impl WorldManager {
             .edit_block(position, block_storage, new_block_info, &self.physics, resource_storage)
     }
 
-    pub fn custom_process(&mut self, delta: f64, resource_manager: &ResourceManager) {
+    pub fn physics_process(&mut self, delta: f64) {
         #[cfg(feature = "trace")]
-        let _span = tracing::span!(tracing::Level::INFO, "world_manager").entered();
+        let _span = tracy_client::span!("physics_step");
 
         self.physics.step(delta as f32);
+    }
+
+    pub fn custom_process(&mut self, _delta: f64, resource_manager: &ResourceManager) {
+        #[cfg(feature = "trace")]
+        let _span = tracy_client::span!("world_manager");
 
         let mut map = self.chunk_map.bind_mut();
         map.send_chunks_to_load(
