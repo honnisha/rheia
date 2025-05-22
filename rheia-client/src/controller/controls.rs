@@ -27,8 +27,11 @@ pub(crate) struct Controls {
     // Joyaxis velocity
     joyaxis_right: Vector2,
     joyaxis_left: Vector2,
+
+    window_focus: bool,
 }
 
+#[godot_api]
 impl Controls {
     pub fn get_movement_vector(&self) -> &Vector3 {
         return &self.movement;
@@ -52,6 +55,16 @@ impl Controls {
         let input = Input::singleton();
         input.is_action_just_pressed(&ControllerActions::ActionSecond.to_string())
     }
+
+    #[func]
+    fn on_window_focus_entered(&mut self) {
+        self.window_focus = true;
+    }
+
+    #[func]
+    fn on_window_focus_exited(&mut self) {
+        self.window_focus = false;
+    }
 }
 
 fn deadzone_threshold(value: f32) -> f32 {
@@ -70,10 +83,32 @@ impl INode for Controls {
             joyaxis_right: Vector2::ZERO,
             movement: Default::default(),
             joyaxis_left: Default::default(),
+            window_focus: true,
         }
     }
 
+    fn ready(&mut self) {
+        self.base()
+            .get_window()
+            .unwrap()
+            .signals()
+            .focus_entered()
+            .connect_obj(&self.to_gd(), Self::on_window_focus_entered);
+
+        self.base()
+            .get_window()
+            .unwrap()
+            .signals()
+            .focus_exited()
+            .connect_obj(&self.to_gd(), Self::on_window_focus_exited);
+    }
+
     fn process(&mut self, delta: f64) {
+        let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+        if !self.window_focus || !captured {
+            return;
+        }
+
         self.cam_rot.x += self.joyaxis_right.x * delta as f32 * JOYAXIS_SENSITIVITY;
         self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
 
@@ -99,6 +134,11 @@ impl INode for Controls {
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
+        let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+        if !self.window_focus || !captured {
+            return;
+        }
+
         if let Ok(event) = event.clone().try_cast::<InputEventJoypadMotion>() {
             // Right stick
             if event.get_axis() == JoyAxis::RIGHT_X {

@@ -65,13 +65,15 @@ impl ResourceInstance {
             image.load_png_from_buffer(&pba);
 
             let mut texture = PortableCompressedTexture2D::new_gd();
+            image.set_name(&format!("Image \"{}\"", media_slug));
             texture.create_from_image(&image, CompressionMode::LOSSY);
             MediaResource::Texture(texture.upcast())
         } else if media_slug.ends_with(".glb") {
-            let glb = match glb_import(data) {
+            let mut glb = match glb_import(data) {
                 Ok(g) => g,
                 Err(e) => return Err(e),
             };
+            glb.set_name(&format!("GLB model \"{}\"", media_slug));
             MediaResource::GLB(glb)
         } else {
             return Err("this filetype is not supported".to_string());

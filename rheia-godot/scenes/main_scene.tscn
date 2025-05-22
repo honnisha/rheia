@@ -12,8 +12,10 @@
 background_mode = 1
 background_color = Color(0.484863, 0.694348, 0.996564, 1)
 sky = SubResource("Sky_7db6b")
-ambient_light_source = 1
+ambient_light_source = 2
+ambient_light_color = Color(0.556953, 0.556953, 0.556953, 1)
 reflected_light_source = 1
+ssao_enabled = true
 fog_mode = 1
 fog_density = 1.0
 
@@ -35,8 +37,7 @@ environment = SubResource("Environment_8w0cv")
 camera_attributes = SubResource("CameraAttributesPractical_cqqg4")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 0, 0)
-light_angular_distance = 80.0
+transform = Transform3D(1, 0, 0, 0, 0.513062, 0.858352, 0, -0.858352, 0.513062, 0, 22.9767, 0)
 light_bake_mode = 0
 directional_shadow_mode = 0
 sky_mode = 1

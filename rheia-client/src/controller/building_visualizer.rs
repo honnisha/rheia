@@ -7,7 +7,10 @@ use crate::{
     },
     world::physics::{PhysicsType, get_degrees_from_normal},
 };
-use godot::prelude::*;
+use godot::{
+    classes::{base_material_3d::{BlendMode, Feature, Transparency}, BaseMaterial3D, GeometryInstance3D, MeshInstance3D},
+    prelude::*,
+};
 
 #[derive(GodotClass)]
 #[class(no_init, base=Node)]
@@ -26,12 +29,14 @@ pub struct BuildingVisualizer {
 impl BuildingVisualizer {
     pub fn create(base: Base<Node>) -> Self {
         let mut selection = Node3D::new_alloc();
+        selection.set_name("Selection");
 
         let mesh = generate_lines(get_face_vector(), Color::from_rgb(0.0, 0.0, 0.0));
         selection.add_child(&mesh);
         selection.set_visible(false);
 
-        let block_preview_anchor = Node3D::new_alloc();
+        let mut block_preview_anchor = Node3D::new_alloc();
+        block_preview_anchor.set_name("BlockPreviewAnchor");
 
         Self {
             base,
@@ -98,6 +103,7 @@ impl BuildingVisualizer {
                     let block_mesh_storage = self.block_mesh_storage.as_ref().unwrap();
                     let block_mesh_storage = block_mesh_storage.bind();
                     let mesh = block_mesh_storage.get_mesh(&block_info.get_id());
+                    BuildingVisualizer::walk_change_color(mesh.clone(), Color::from_rgba(0.0, 1.0, 0.0, 0.8));
                     self.block_preview_anchor.add_child(&mesh);
                 }
                 SelectedItem::BlockDestroy => {
@@ -109,6 +115,52 @@ impl BuildingVisualizer {
             }
         }
         self.selected_item = new_item;
+    }
+
+    fn change_color(obj: Gd<Node3D>, color: Color) -> bool {
+        if let Ok(mut obj) = obj.clone().try_cast::<GeometryInstance3D>() {
+            obj.set_transparency(0.5);
+            if let Some(material) = obj.get_material_overlay() {
+                if let Ok(base_material) = material.try_cast::<BaseMaterial3D>() {
+                    let mut new_material = base_material.duplicate().unwrap().cast::<BaseMaterial3D>();
+
+                    new_material.set_feature(Feature::DETAIL, true);
+                    new_material.set_detail_blend_mode(BlendMode::SUB);
+
+                    new_material.set_albedo(color.clone());
+                    new_material.set_transparency(Transparency::DISABLED);
+                    obj.set_material_overlay(&new_material);
+                    return true;
+                }
+            }
+        }
+
+        if let Ok(obj) = obj.clone().try_cast::<MeshInstance3D>() {
+            if let Some(mut mesh) = obj.get_mesh() {
+                if let Some(material) = mesh.surface_get_material(0) {
+                    if let Ok(base_material) = material.try_cast::<BaseMaterial3D>() {
+
+                        let mut new_material = base_material.duplicate().unwrap().cast::<BaseMaterial3D>();
+                        new_material.set_albedo(color.clone());
+                        new_material.set_transparency(Transparency::ALPHA);
+                        mesh.surface_set_material(0, &new_material);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    fn walk_change_color(obj: Gd<Node3D>, color: Color) {
+        if BuildingVisualizer::change_color(obj.clone(), color) {
+            return;
+        }
+        for child in obj.clone().get_children().iter_shared() {
+            if let Ok(child) = child.try_cast::<Node3D>() {
+                BuildingVisualizer::walk_change_color(child.clone(), color);
+            }
+        }
     }
 
     fn clear_block_preview_anchor(&mut self) {

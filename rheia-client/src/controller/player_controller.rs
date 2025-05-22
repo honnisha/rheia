@@ -244,7 +244,11 @@ impl PlayerController {
             // Update skin rotation for visual display
             let mut skin_rotation = entity.bind().get_rotation();
             skin_rotation.y = new_yaw;
-            entity.bind_mut().set_rotation(skin_rotation);
+
+            let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
+            if self.window_focus && captured {
+                entity.bind_mut().set_rotation(skin_rotation);
+            }
 
             movement = entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
         }

@@ -57,6 +57,7 @@ impl BlockMeshStorage {
                 let geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data, &block_storage);
 
                 let mut mesh = MeshInstance3D::new_alloc();
+                mesh.set_name(&format!("BlockTexture #{}", block_info.get_id()));
                 mesh.set_mesh(&geometry.mesh_ist);
 
                 mesh.set_material_overlay(material);
@@ -65,6 +66,7 @@ impl BlockMeshStorage {
             }
             BlockContent::ModelCube { model: _, icon_size } => {
                 let mut objects_container = ObjectsContainer::new_alloc();
+                objects_container.set_name(&format!("ObjectsContainer #{}", block_id));
                 let position = BlockPosition::new(0, 0, 0);
                 objects_container
                     .bind_mut()
