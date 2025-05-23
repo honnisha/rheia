@@ -1,5 +1,5 @@
 use godot::{
-    classes::{Button, Control, IControl, RichTextLabel},
+    classes::{Button, Control, IControl, Input, RichTextLabel, input::MouseMode},
     meta::AsObjectArg,
     prelude::*,
 };
@@ -40,6 +40,12 @@ impl WindowUIComponent {
 
     pub fn toggle(&mut self, state: bool) {
         self.base_mut().set_visible(state);
+
+        if state {
+            Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
+        } else {
+            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
+        }
     }
 
     pub fn is_visible(&self) -> bool {
@@ -62,10 +68,7 @@ impl IControl for WindowUIComponent {
     fn ready(&mut self) {
         let gd = self.base().to_godot();
         if let Some(close_button) = self.close_button.as_mut() {
-            close_button.connect(
-                "pressed",
-                &Callable::from_object_method(&gd, "on_close_button_pressed"),
-            );
+            close_button.connect("pressed", &Callable::from_object_method(&gd, "on_close_button_pressed"));
             close_button.set_visible(self.show_button_close);
         }
     }

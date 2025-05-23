@@ -5,6 +5,7 @@ use godot::{
 
 pub fn glb_import(b: Vec<u8>) -> Result<Gd<Node3D>, String> {
     let mut gltf = GltfDocument::new_gd();
+    gltf.set_local_to_scene(true);
 
     let mut pba = PackedByteArray::new();
     pba.extend(b);

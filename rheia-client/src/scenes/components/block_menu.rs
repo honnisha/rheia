@@ -2,11 +2,8 @@ use ahash::HashMap;
 use common::blocks::block_info::BlockIndexType;
 use godot::classes::control::{LayoutPreset, SizeFlags};
 use godot::classes::{FlowContainer, ScrollContainer, Theme};
+use godot::obj::Gd;
 use godot::prelude::*;
-use godot::{
-    classes::{Input, input::MouseMode},
-    obj::Gd,
-};
 
 use crate::scenes::main_scene::DEFAULT_THEME_PATH;
 use crate::ui::tabs::tabs_component::TabsUIComponent;
@@ -68,12 +65,6 @@ impl BlockMenu {
 
         for (_block_id, icon) in self.icons.iter_mut() {
             icon.bind_mut().toggle_selected(false);
-        }
-
-        if state {
-            Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
-        } else {
-            Input::singleton().set_mouse_mode(MouseMode::CAPTURED);
         }
     }
 
