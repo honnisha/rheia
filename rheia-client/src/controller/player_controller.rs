@@ -13,7 +13,7 @@ use crate::scenes::components::block_menu::BlockMenu;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::world::physics::{PhysicsProxy, PhysicsType};
 use crate::world::worlds_manager::WorldsManager;
-use common::blocks::block_info::BlockInfo;
+use common::blocks::block_info::{BlockFace, BlockInfo};
 use common::chunks::rotation::Rotation;
 use godot::classes::input::MouseMode;
 use godot::classes::{Engine, Input};
@@ -480,6 +480,34 @@ impl INode3D for PlayerController {
                 let is_active = self.block_menu.bind().is_active();
                 self.block_menu.bind_mut().toggle(!is_active);
             }
+        }
+
+        // Rotation of the selected object
+        let mut selected_item_updated = false;
+        if let Some(selected_item) = self.selected_item.as_mut() {
+            match selected_item {
+                SelectedItem::BlockPlacing(block_info) => {
+                    let face = match block_info.get_face() {
+                        Some(f) => f.clone(),
+                        None => BlockFace::default(),
+                    };
+                    if self.controls.bind().is_rotate_left() {
+                        block_info.set_face(Some(face.rotate_left()));
+                        selected_item_updated = true;
+                    }
+                    if self.controls.bind().is_rotate_right() {
+                        block_info.set_face(Some(face.rotate_right()));
+                        selected_item_updated = true;
+                    }
+                }
+            }
+        }
+        if self.controls.bind().is_cancel_selection() || self.controls.bind().is_escape() {
+            self.selected_item = None;
+            selected_item_updated = true;
+        }
+        if selected_item_updated {
+            self.set_selected_item(self.selected_item.clone());
         }
     }
 }

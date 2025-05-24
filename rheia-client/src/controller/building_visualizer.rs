@@ -40,6 +40,7 @@ impl BuildingVisualizer {
 
         let mut block_preview_anchor = Node3D::new_alloc();
         block_preview_anchor.set_name("BlockPreviewAnchor");
+        block_preview_anchor.set_visible(false);
 
         Self {
             base,
@@ -64,19 +65,24 @@ impl BuildingVisualizer {
         match new_look.get_physics_type() {
             PhysicsType::ChunkMeshCollider(_chunk_position) => {
                 // Activate block selection
-                if self.selected_item.is_some() {
-                    let selected_block = new_look.get_cast_result().get_selected_block();
-                    self.block_selection.set_visible(true);
-                    self.block_selection
-                        .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
-                    self.block_selection
-                        .set_rotation_degrees(get_degrees_from_normal(new_look.get_cast_result().normal.to_godot()));
-                }
-                self.block_preview_anchor.set_visible(true);
-                let selected_block = new_look.get_cast_result().get_place_block();
-                self.block_preview_anchor.set_visible(true);
-                self.block_preview_anchor
+
+                let selected_block = new_look.get_cast_result().get_selected_block();
+                self.block_selection.set_visible(true);
+                // +0.5 to place it on center of the block
+                self.block_selection
                     .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
+                self.block_selection
+                    .set_rotation_degrees(get_degrees_from_normal(new_look.get_cast_result().normal.to_godot()));
+
+                // Block preview
+                if self.selected_item.is_some() {
+                    self.block_preview_anchor.set_visible(true);
+                    let selected_block = new_look.get_cast_result().get_place_block();
+
+                    // +0.5 to place it on center of the block
+                    self.block_preview_anchor
+                        .set_global_position(selected_block.get_position().to_godot() + Vector3::new(0.5, 0.5, 0.5));
+                }
             }
             PhysicsType::EntityCollider(_) => (),
         }
@@ -92,12 +98,20 @@ impl BuildingVisualizer {
                                 if old_block_info.get_id() == block_info.get_id() {
                                     if old_block_info.get_face() != block_info.get_face() {
                                         // Rotate existing object
-                                        todo!();
+                                        let obj =
+                                            self.block_preview_anchor.get_children().iter_shared().next().unwrap();
+                                        let mut obj = obj.cast::<Node3D>();
+                                        if let Some(face) = block_info.get_face() {
+                                            let rotation = face.get_rotation();
+                                            let mut r = obj.get_rotation_degrees();
+                                            r.x = rotation.yaw % 360.0;
+                                            r.y = rotation.pitch % 360.0;
+                                            obj.set_rotation_degrees(r);
+                                        }
                                     }
                                     return;
                                 }
                             }
-                            SelectedItem::BlockDestroy => (),
                         }
                     }
 
@@ -108,9 +122,6 @@ impl BuildingVisualizer {
                     let mesh = block_mesh_storage.get_mesh(&block_info.get_id());
                     BuildingVisualizer::walk_change_color(mesh.clone(), Color::from_rgb(0.0, 1.0, 0.0), 0.5);
                     self.block_preview_anchor.add_child(&mesh);
-                }
-                SelectedItem::BlockDestroy => {
-                    self.clear_block_preview_anchor();
                 }
             },
             None => {

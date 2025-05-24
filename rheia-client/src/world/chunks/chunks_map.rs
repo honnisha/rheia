@@ -9,13 +9,13 @@ use crate::{
 };
 use ahash::{AHashMap, HashSet};
 use common::{
+    CHUNK_SIZE, VERTICAL_SECTIONS,
     blocks::{block_info::BlockInfo, block_type::BlockContent},
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_data::ChunkData,
         chunk_position::ChunkPosition,
     },
-    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::prelude::*;
 use parking_lot::RwLock;
@@ -30,7 +30,7 @@ use super::{
     mesh::mesh_generator::generate_chunk_geometry,
     near_chunk_data::NearChunksData,
 };
-use flume::{unbounded, Receiver, Sender};
+use flume::{Receiver, Sender, unbounded};
 
 pub type ChunkLock = Arc<RwLock<ChunkColumn>>;
 pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
@@ -244,7 +244,13 @@ impl ChunkMap {
                     let objects_container = cs.get_objects_container_mut();
                     objects_container
                         .bind_mut()
-                        .create_block_model(&position, new_block_type, Some(physics), resource_storage)
+                        .create_block_model(
+                            &position,
+                            new_block_type,
+                            Some(physics),
+                            resource_storage,
+                            new_block_info.get_face(),
+                        )
                         .unwrap();
                 }
             }

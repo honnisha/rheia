@@ -35,6 +35,13 @@ impl PlayerAction {
         }
     }
 
+    pub fn _is_second_type(&self) -> bool {
+        match self.action_type {
+            PlayerActionType::Main => false,
+            PlayerActionType::Second => true,
+        }
+    }
+
     pub fn get_world_slug(&self) -> &String {
         &self.world_slug
     }

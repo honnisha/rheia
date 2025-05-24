@@ -10,7 +10,6 @@ pub struct SelectedItemGd {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SelectedItem {
     BlockPlacing(BlockInfo),
-    BlockDestroy,
 }
 impl SelectedItemGd {
     pub fn create(item: Option<SelectedItem>) -> Self {

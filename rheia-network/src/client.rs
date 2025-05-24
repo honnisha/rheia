@@ -12,7 +12,6 @@ use trust_dns_resolver::{
 #[derive(Default, Clone)]
 pub struct NetworkInfo {
     pub is_disconnected: bool,
-    pub bytes_received_per_second: f64,
     pub bytes_received_per_sec: f64,
     pub bytes_sent_per_sec: f64,
     pub packet_loss: f64,

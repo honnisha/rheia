@@ -1,15 +1,18 @@
 use std::borrow::BorrowMut;
 
 use common::{
-    blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE,
-    CHUNK_SIZE_BOUNDARY,
+    CHUNK_SIZE, CHUNK_SIZE_BOUNDARY, blocks::chunk_collider_info::ChunkColliderInfo,
+    chunks::chunk_position::ChunkPosition,
 };
 use godot::{
     classes::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
-use physics::{physics::{IPhysicsCollider, IPhysicsColliderBuilder}, PhysicsCollider};
+use physics::{
+    PhysicsCollider,
+    physics::{IPhysicsCollider, IPhysicsColliderBuilder},
+};
 
 use crate::{
     utils::bridge::{GodotPositionConverter, IntoNetworkVector},
@@ -77,9 +80,9 @@ impl ChunkSection {
 
     pub fn get_section_position(&self) -> Vector3 {
         Vector3::new(
-            self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
-            GodotPositionConverter::get_chunk_y_local(self.y) - 1_f32,
-            self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
+            self.chunk_position.x as f32 * CHUNK_SIZE as f32,
+            GodotPositionConverter::get_chunk_y_local(self.y),
+            self.chunk_position.z as f32 * CHUNK_SIZE as f32,
         )
     }
 
@@ -116,8 +119,7 @@ impl ChunkSection {
         if let Some(colider_builder) = self.colider_builder.take() {
             if let Some(collider) = self.collider.as_mut() {
                 collider.set_shape(colider_builder.get_shape());
-            }
-            else {
+            } else {
                 let mut collider = physics.create_collider(
                     colider_builder,
                     Some(PhysicsType::ChunkMeshCollider(self.chunk_position.clone())),
@@ -126,8 +128,7 @@ impl ChunkSection {
                 collider.set_position(pos.to_network());
                 self.collider = Some(collider);
             }
-        }
-        else {
+        } else {
             // Remove old collider if exists
             if let Some(mut collider) = self.collider.take() {
                 collider.remove();

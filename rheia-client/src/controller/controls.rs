@@ -1,7 +1,7 @@
 pub(crate) use godot::builtin::Vector2;
 use godot::classes::input::MouseMode;
 use godot::classes::{Input, InputEvent, InputEventJoypadMotion, InputEventMouseMotion};
-use godot::global::JoyAxis;
+use godot::global::{JoyAxis, Key};
 use godot::prelude::Vector3;
 use godot::prelude::*;
 use std::string::ToString;
@@ -54,6 +54,38 @@ impl Controls {
     pub fn is_second_action(&self) -> bool {
         let input = Input::singleton();
         input.is_action_just_pressed(&ControllerActions::ActionSecond.to_string())
+    }
+
+    pub fn is_rotate_left(&self) -> bool {
+        let input = Input::singleton();
+        if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) && input.is_key_pressed(Key::SHIFT) {
+            return true;
+        }
+        else if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn is_rotate_right(&self) -> bool {
+        let input = Input::singleton();
+        if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) && input.is_key_pressed(Key::SHIFT) {
+            return true;
+        }
+        else if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) {
+            return true;
+        }
+        return false;
+    }
+
+    pub fn is_cancel_selection(&self) -> bool {
+        let input = Input::singleton();
+        input.is_action_just_pressed(&ControllerActions::CancelSelection.to_string())
+    }
+
+    pub fn is_escape(&self) -> bool {
+        let input = Input::singleton();
+        input.is_action_just_pressed(&ControllerActions::Escape.to_string())
     }
 
     #[func]

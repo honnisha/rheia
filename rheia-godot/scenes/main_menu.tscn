@@ -1,10 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://cihth3ka1wf05"]
+[gd_scene load_steps=7 format=3 uid="uid://cihth3ka1wf05"]
 
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="1_bl486"]
 [ext_resource type="Texture2D" uid="uid://dl0enn5gojofm" path="res://assets/godot_logo.png" id="2_x5xk6"]
 [ext_resource type="PackedScene" uid="uid://bpi7q8ph1tlrj" path="res://scenes/connect_screen.tscn" id="3_8ft6b"]
 [ext_resource type="PackedScene" uid="uid://0jv33c5spadv" path="res://scenes/components/menu_button.tscn" id="3_frrkb"]
-[ext_resource type="PackedScene" uid="uid://c5l1r11gi0tet" path="res://scenes/main_scene.tscn" id="4_bf2yc"]
 [ext_resource type="FontFile" uid="uid://br4msw8gckd6n" path="res://assets/gui/fonts/Monocraft/Monocraft.ttf" id="4_munq4"]
 [ext_resource type="Texture2D" uid="uid://cceb816pbun8a" path="res://assets/gui/textures/menu_background.png" id="5_ctpdy"]
 
@@ -15,7 +14,6 @@ bottom_text = NodePath("GUI/VBoxContainer/BottomHalf/MarginContainer/BottomText"
 menu_button = ExtResource("3_frrkb")
 text_screen_scene = ExtResource("1_bl486")
 connect_screen_scene = ExtResource("3_8ft6b")
-main_scene_scene = ExtResource("4_bf2yc")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

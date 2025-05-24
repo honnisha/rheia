@@ -7,6 +7,12 @@ pub enum ControllerActions {
     MoveForward,
     MoveBackwards,
 
+    RotateLeft,
+    RotateRight,
+
+    CancelSelection,
+    Escape,
+
     ToggleDebug,
     ToggleConsole,
     ToggleBlockSelection,
@@ -23,6 +29,12 @@ impl ToString for ControllerActions {
             Self::MoveLeft => "move_left",
             Self::MoveForward => "move_forward",
             Self::MoveBackwards => "move_backwards",
+
+            Self::RotateLeft => "rotate_left",
+            Self::RotateRight => "rotate_right",
+
+            Self::CancelSelection => "cancel_selection",
+            Self::Escape => "escape",
 
             Self::ToggleDebug => "toggle_debug",
             Self::ToggleConsole => "toggle_console",

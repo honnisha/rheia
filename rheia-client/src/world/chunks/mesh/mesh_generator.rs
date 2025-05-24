@@ -1,31 +1,32 @@
 use crate::{
     scenes::main_scene::FloatType,
-    utils::textures::texture_mapper::TextureMapper,
+    utils::{bridge::IntoNetworkVector, textures::texture_mapper::TextureMapper},
     world::{
         block_storage::BlockStorage,
         chunks::chunk_section::{ChunkBordersShape, ChunkColliderDataBordered},
     },
 };
 use common::{
+    CHUNK_SIZE,
     blocks::{block_info::BlockInfo, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
     chunks::position::Vector3 as NetworkVector3,
     utils::block_mesh::{
+        QuadBuffer, RIGHT_HANDED_Y_UP_CONFIG, UnorientedQuad,
         buffer::UnitQuadBuffer,
-        greedy::{greedy_quads, GreedyQuadsBuffer},
-        visible_block_faces, QuadBuffer, UnorientedQuad, RIGHT_HANDED_Y_UP_CONFIG,
+        greedy::{GreedyQuadsBuffer, greedy_quads},
+        visible_block_faces,
     },
-    CHUNK_SIZE,
 };
 use godot::{
     classes::{
-        mesh::{ArrayType, PrimitiveType},
         ArrayMesh,
+        mesh::{ArrayType, PrimitiveType},
     },
     obj::{EngineEnum, NewGd},
     prelude::{Array, Gd, PackedInt32Array, PackedVector2Array, PackedVector3Array, Variant, Vector2, Vector3},
 };
 use ndshape::ConstShape;
-use physics::{physics::IPhysicsColliderBuilder, PhysicsColliderBuilder};
+use physics::{PhysicsColliderBuilder, physics::IPhysicsColliderBuilder};
 
 pub(crate) fn _get_test_sphere(radius: f32, block_info: BlockInfo) -> ChunkColliderDataBordered {
     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
@@ -111,8 +112,11 @@ pub fn generate_chunk_geometry(
 
             let voxel_size = 1.0;
             let v = face.quad_corners(&quad.clone().into(), true).map(|c| {
-                collider_verts.push(NetworkVector3::new(c.x as f32, c.y as f32, c.z as f32));
-                Vector3::new(c.x as f32, c.y as f32, c.z as f32) * voxel_size
+                // magic: Offset -1 because of chunk mesh one block boundary
+                let vert_pos = Vector3::new(c.x as f32, c.y as f32, c.z as f32) - Vector3::new(1.0, 1.0, 1.0);
+
+                collider_verts.push(vert_pos.to_network());
+                vert_pos * voxel_size
             });
             verts.extend(v);
 

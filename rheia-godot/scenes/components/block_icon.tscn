@@ -79,7 +79,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
 keep_aspect = 0
 projection = 1
 current = true
-size = 1.528
+size = 2.0
 far = 100.0
 
 [node name="Anchor" type="Node3D" parent="SubViewportContainer/SubViewport"]

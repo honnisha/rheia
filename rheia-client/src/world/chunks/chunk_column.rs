@@ -1,17 +1,17 @@
 use common::{
+    CHUNK_SIZE, VERTICAL_SECTIONS,
     blocks::block_info::BlockInfo,
     chunks::{
         block_position::{BlockPosition, ChunkBlockPosition},
         chunk_data::ChunkData,
         chunk_position::ChunkPosition,
     },
-    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::{classes::Material, prelude::*};
 use parking_lot::RwLock;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 
 use super::chunk_section::ChunkSection;
@@ -143,9 +143,9 @@ impl ChunkColumn {
 
     pub fn get_position(&self) -> Vector3 {
         Vector3::new(
-            self.chunk_position.x as f32 * CHUNK_SIZE as f32 - 1_f32,
-            -1_f32,
-            self.chunk_position.z as f32 * CHUNK_SIZE as f32 - 1_f32,
+            self.chunk_position.x as f32 * CHUNK_SIZE as f32,
+            0.0,
+            self.chunk_position.z as f32 * CHUNK_SIZE as f32,
         )
     }
 

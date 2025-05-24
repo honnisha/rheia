@@ -1,10 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=8 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
 [ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
 [ext_resource type="Material" uid="uid://8t3qd3k1d8od" path="res://assets/terrain_material.tres" id="5_tt6yv"]
-[ext_resource type="PackedScene" uid="uid://b205afj08rdbg" path="res://scenes/ui/window.tscn" id="6_mkul8"]
 
 [sub_resource type="Sky" id="Sky_7db6b"]
 
@@ -48,6 +47,3 @@ anchor_left = 0.25
 anchor_top = 0.88
 anchor_right = 0.75
 anchor_bottom = 0.98
-
-[node name="Window" parent="." instance=ExtResource("6_mkul8")]
-visible = false

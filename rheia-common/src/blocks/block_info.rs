@@ -1,13 +1,48 @@
 use serde::{Deserialize, Serialize};
 
+use crate::chunks::rotation::Rotation;
+
 #[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize, PartialEq)]
 pub enum BlockFace {
-    Down,
     East,
     North,
     South,
-    Up,
     West,
+}
+
+impl Default for BlockFace {
+    fn default() -> Self {
+        BlockFace::South
+    }
+}
+
+impl BlockFace {
+    pub fn rotate_left(&self) -> BlockFace {
+        match *self {
+            BlockFace::East => BlockFace::South,
+            BlockFace::North => BlockFace::East,
+            BlockFace::South => BlockFace::West,
+            BlockFace::West => BlockFace::North,
+        }
+    }
+
+    pub fn rotate_right(&self) -> BlockFace {
+        match *self {
+            BlockFace::East => BlockFace::North,
+            BlockFace::North => BlockFace::West,
+            BlockFace::South => BlockFace::East,
+            BlockFace::West => BlockFace::South,
+        }
+    }
+
+    pub fn get_rotation(&self) -> Rotation {
+        match *self {
+            BlockFace::East => Rotation::new(0.0, 270.0),
+            BlockFace::North => Rotation::new(0.0, 180.0),
+            BlockFace::South => Rotation::new(0.0, 0.0),
+            BlockFace::West => Rotation::new(0.0, 90.0),
+        }
+    }
 }
 
 pub type BlockIndexType = u16;
@@ -39,6 +74,10 @@ impl BlockInfo {
 
     pub fn get_face(&self) -> Option<&BlockFace> {
         self.face.as_ref()
+    }
+
+    pub fn set_face(&mut self, face: Option<BlockFace>) {
+        self.face = face;
     }
 }
 

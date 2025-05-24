@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use ahash::AHashMap;
-use common::chunks::{chunk_data::ChunkSectionData, position::Vector3 as NetworkVector3};
+use common::{blocks::block_info::BlockFace, chunks::{chunk_data::ChunkSectionData, position::Vector3 as NetworkVector3}};
 use common::{
     blocks::block_type::{BlockContent, BlockType},
     chunks::{
@@ -17,8 +17,8 @@ use common::{
 };
 use godot::prelude::*;
 use physics::{
-    physics::{IPhysicsCollider, IPhysicsColliderBuilder},
     PhysicsCollider, PhysicsColliderBuilder,
+    physics::{IPhysicsCollider, IPhysicsColliderBuilder},
 };
 
 #[derive(GodotClass)]
@@ -33,10 +33,26 @@ impl CustomObject {
         Self { base, collider: None }
     }
 
-    pub fn attach_glb(&mut self, glb: &Gd<Node3D>) {
-        let mut glb = glb.duplicate().unwrap().cast::<Node3D>();
-        glb.set_position(Vector3::new(1.0, 1.0, 1.0));
-        self.base_mut().add_child(&glb);
+    pub fn attach_glb(&mut self, glb: &Gd<Node3D>, block_face: Option<&BlockFace>) {
+        let mut obj = glb.duplicate().unwrap().cast::<Node3D>();
+
+        // magic: locate it on center of block
+        obj.set_position(Vector3::new(-0.5, -0.5, -0.5));
+
+        let mut obj_holder = Node3D::new_alloc();
+        obj_holder.add_child(&obj);
+
+        let block_face = match block_face {
+            Some(f) => f.clone(),
+            None => BlockFace::default(),
+        };
+        let rotation = block_face.get_rotation();
+        let mut r = obj.get_rotation_degrees();
+        r.x = rotation.yaw % 360.0;
+        r.y = rotation.pitch % 360.0;
+        obj_holder.set_rotation_degrees(r);
+
+        self.base_mut().add_child(&obj_holder);
     }
 
     pub fn create_collider(&mut self, position: &BlockPosition, physics: &PhysicsProxy) {
@@ -92,7 +108,7 @@ impl ObjectsContainer {
             let position = BlockPosition::from_chunk_position(chunk_position, &y, &chunk_block_position);
             match block_type.get_block_content() {
                 BlockContent::ModelCube { model: _, icon_size: _ } => {
-                    self.create_block_model(&position, &block_type, Some(physics), resource_storage)?;
+                    self.create_block_model(&position, &block_type, Some(physics), resource_storage, block_info.get_face())?;
                 }
                 _ => continue,
             }
@@ -122,6 +138,7 @@ impl ObjectsContainer {
         block_type: &BlockType,
         physics: Option<&PhysicsProxy>,
         resource_storage: &ResourceStorage,
+        block_face: Option<&BlockFace>,
     ) -> Result<(), String> {
         let Some(model) = block_type.get_model() else {
             return Err("update_block_model called for non model".to_string());
@@ -138,9 +155,11 @@ impl ObjectsContainer {
             object.bind_mut().create_collider(&position, physics);
         }
 
-        object.bind_mut().attach_glb(glb);
+        object.bind_mut().attach_glb(glb, block_face);
         let (_section, block_position) = position.get_block_position();
-        object.set_position(block_position.to_godot());
+
+        // +0.5 to place it on center of the block
+        object.set_position(block_position.to_godot() + Vector3::new(0.5, 0.5, 0.5));
 
         self.base_mut().add_child(&object);
         self.blocks.insert(block_position, object);

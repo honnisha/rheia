@@ -44,8 +44,6 @@ pub struct MainMenu {
     #[init(val = OnReady::manual())]
     connect_screen: OnReady<Gd<ConnectScreen>>,
 
-    #[export]
-    main_scene_scene: Option<Gd<PackedScene>>,
     main_scene: Option<Gd<MainScene>>,
 }
 
@@ -93,16 +91,13 @@ impl MainMenu {
 
         self.gui.as_mut().unwrap().set_visible(false);
 
-        let mut main_scene = self.main_scene_scene.as_mut().unwrap().instantiate_as::<MainScene>();
-        main_scene
-            .bind_mut()
-            .init_data(ip_port.to_string(), username.to_string());
+        let mut main_scene = MainScene::create(ip_port.to_string(), username.to_string(), self.game_settings.clone());
         main_scene
             .signals()
             .network_disconnect()
             .connect_obj(&self.to_gd(), MainMenu::on_network_disconnect);
-        self.main_scene = Some(main_scene.clone());
         self.base_mut().add_child(&main_scene);
+        self.main_scene = Some(main_scene);
     }
 
     #[func]

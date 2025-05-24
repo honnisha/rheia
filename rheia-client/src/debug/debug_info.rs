@@ -44,9 +44,8 @@ Look at: {}
 macro_rules! debug_network_string {
     () => {
         "Network connected: {}
-KB received per second: {:.1}
-KB received per sec: {:.1}
-KB sent per sec: {:.1}
+Received: {:.1} KB/sec
+Sent: {:.1} KB/sec
 Packet loss: {:.1}"
     };
 }
@@ -147,7 +146,6 @@ impl DebugInfo {
         let network_text = format!(
             debug_network_string!(),
             !network_info.is_disconnected,
-            network_info.bytes_received_per_second / 1024.0,
             network_info.bytes_received_per_sec / 1024.0,
             network_info.bytes_sent_per_sec / 1024.0,
             network_info.packet_loss / 1024.0,

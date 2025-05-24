@@ -4,9 +4,8 @@ use crate::{
     world::{
         block_storage::BlockStorage,
         chunks::{
-            chunk_data_formatter::generate_single_block,
-            mesh::mesh_generator::generate_chunk_geometry,
-            objects_container::{CustomObject, ObjectsContainer},
+            chunk_data_formatter::generate_single_block, mesh::mesh_generator::generate_chunk_geometry,
+            objects_container::ObjectsContainer,
         },
     },
 };
@@ -26,8 +25,8 @@ use godot::{
 use super::block_icon::BlockIcon;
 
 pub enum BlockMesh {
-    Texture(Gd<MeshInstance3D>),
-    ModelCube(Gd<CustomObject>),
+    Texture(Gd<Node3D>),
+    ModelCube(Gd<Node3D>),
 }
 
 #[derive(Default, GodotClass)]
@@ -57,12 +56,16 @@ impl BlockMeshStorage {
                 let geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data, &block_storage);
 
                 let mut mesh = MeshInstance3D::new_alloc();
-                mesh.set_name(&format!("BlockTexture #{}", block_info.get_id()));
-                mesh.set_mesh(&geometry.mesh_ist);
+                mesh.set_name("Block mesh");
 
+                mesh.set_mesh(&geometry.mesh_ist);
                 mesh.set_material_overlay(material);
 
-                self.meshes.insert(block_id, (BlockMesh::Texture(mesh), 2.0));
+                let mut obj = Node3D::new_alloc();
+                obj.set_name(&format!("BlockTexture #{}", block_info.get_id()));
+                obj.add_child(&mesh);
+
+                self.meshes.insert(block_id, (BlockMesh::Texture(obj), 2.0));
             }
             BlockContent::ModelCube { model: _, icon_size } => {
                 let mut objects_container = ObjectsContainer::new_alloc();
@@ -70,14 +73,20 @@ impl BlockMeshStorage {
                 let position = BlockPosition::new(0, 0, 0);
                 objects_container
                     .bind_mut()
-                    .create_block_model(&position, block_type, None, resource_storage)
+                    .create_block_model(&position, block_type, None, resource_storage, None)
                     .unwrap();
 
                 let icon_size = match icon_size {
                     Some(s) => s,
                     None => &1.0,
                 };
+
+                // Get first object of chunk
                 let obj = objects_container.bind().get_first().clone();
+
+                // Get content of object
+                let obj = obj.bind().get_content().duplicate().unwrap().cast::<Node3D>();
+
                 self.meshes
                     .insert(block_id, (BlockMesh::ModelCube(obj), 3.0 / icon_size));
             }
@@ -126,17 +135,21 @@ impl BlockMeshStorage {
             panic!("block_id {} not found", block_id);
         };
 
-        match mesh {
+        let gd = match mesh {
             BlockMesh::Texture(gd) => {
-                let mut obj = gd.duplicate().unwrap().cast::<Node3D>();
-                obj.set_position(Vector3::new(-1.5, -1.5, -1.5));
-                obj
+                let mut gd = gd.duplicate().unwrap().cast::<Node3D>();
+                // magic: locate it on center of block
+                gd.set_position(Vector3::new(-0.5, -0.5, -0.5));
+                gd
             }
             BlockMesh::ModelCube(gd) => {
-                let mut obj = gd.bind().get_content().duplicate().unwrap().cast::<Node3D>();
-                obj.set_position(Vector3::new(-0.5, -0.5, -0.5));
-                obj
+                let gd = gd.duplicate().unwrap().cast::<Node3D>();
+                gd
             }
-        }
+        };
+
+        let mut obj_holder = Node3D::new_alloc();
+        obj_holder.add_child(&gd);
+        obj_holder
     }
 }

@@ -9,6 +9,7 @@ use crate::logger::CONSOLE_LOGGER;
 use crate::network::client::NetworkContainer;
 use crate::network::events::handle_network_events;
 use crate::scenes::text_screen::TextScreen;
+use crate::utils::settings::GameSettings;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
@@ -23,6 +24,7 @@ use std::rc::Rc;
 
 pub type FloatType = f32;
 
+const MAIN_SCENE_PATH: &str = "res://scenes/main_scene.tscn";
 pub const DEFAULT_THEME_PATH: &str = "res://assets/gui/default_theme.tres";
 
 pub type ResourceManagerType = Rc<RefCell<ResourceManager>>;
@@ -69,12 +71,17 @@ pub struct MainScene {
 
     #[export(file = "*.json")]
     debug_world_settings: GString,
+
+    game_settings: Option<Rc<RefCell<GameSettings>>>,
 }
 
 impl MainScene {
-    pub fn init_data(&mut self, ip_port: String, login: String) {
-        self.ip_port = Some(ip_port);
-        self.login = Some(login);
+    pub fn create(ip_port: String, login: String, game_settings: Rc<RefCell<GameSettings>>) -> Gd<Self> {
+        let mut scene = load::<PackedScene>(MAIN_SCENE_PATH).instantiate_as::<Self>();
+        scene.bind_mut().ip_port = Some(ip_port);
+        scene.bind_mut().login = Some(login);
+        scene.bind_mut().game_settings = Some(game_settings);
+        scene
     }
 
     pub fn get_network(&self) -> Option<&NetworkContainer> {
@@ -82,7 +89,7 @@ impl MainScene {
     }
 
     pub fn get_login(&self) -> &String {
-        self.login.as_ref().expect("init_data is not called")
+        self.login.as_ref().unwrap()
     }
 
     pub fn get_text_screen_mut(&mut self) -> GdMut<'_, TextScreen> {
@@ -231,16 +238,15 @@ impl MainScene {
                                     };
                                     network.send_message(NetworkMessageType::Unreliable, &msg);
                                 }
-                                SelectedItem::BlockDestroy => {
-                                    let msg = ClientMessages::EditBlockRequest {
-                                        world_slug: a.get_world_slug().clone(),
-                                        position: selected_block,
-                                        new_block_info: None,
-                                    };
-                                    network.send_message(NetworkMessageType::Unreliable, &msg);
-                                }
                             }
                         }
+                    } else {
+                        let msg = ClientMessages::EditBlockRequest {
+                            world_slug: a.get_world_slug().clone(),
+                            position: selected_block,
+                            new_block_info: None,
+                        };
+                        network.send_message(NetworkMessageType::Unreliable, &msg);
                     }
                 }
                 PhysicsType::EntityCollider(_entity_id) => {}
