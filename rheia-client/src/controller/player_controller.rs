@@ -495,7 +495,7 @@ impl INode3D for PlayerController {
                         block_info.set_face(Some(face.rotate_left()));
                         selected_item_updated = true;
                     }
-                    if self.controls.bind().is_rotate_right() {
+                    else if self.controls.bind().is_rotate_right() {
                         block_info.set_face(Some(face.rotate_right()));
                         selected_item_updated = true;
                     }

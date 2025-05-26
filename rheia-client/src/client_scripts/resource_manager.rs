@@ -1,17 +1,23 @@
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
+use parking_lot::RwLock;
 use parking_lot::lock_api::RwLockReadGuard;
 use parking_lot::lock_api::RwLockWriteGuard;
-use parking_lot::RwLock;
-use rhai::exported_module;
 use rhai::Dynamic;
 use rhai::Engine;
+use rhai::exported_module;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::fs::File;
+use std::fs::create_dir_all;
 use std::io::Read;
+use std::io::Seek;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::Arc;
+
+use crate::utils::settings::GameSettings;
 
 use super::local_loader::get_local_resources;
 use super::modules::main_api;
@@ -137,6 +143,10 @@ impl ResourceManager {
         self.archive_hash = Some(archive_hash);
     }
 
+    pub fn get_archive_hash(&self) -> Option<&u64> {
+        self.archive_hash.as_ref()
+    }
+
     pub fn get_resource_scheme_count(&mut self) -> (usize, usize) {
         let mut scripts_count: usize = 0;
         let mut media_count: usize = 0;
@@ -180,9 +190,13 @@ impl ResourceManager {
         ResourceType::None
     }
 
-    pub fn load_archive(&mut self) -> Result<u32, String> {
-        let archive_data = self.archive_data.take().expect("archive_data is not set");
+    pub fn has_local_saved_resource(archive_hash: &u64) -> Result<bool, String> {
+        let path = ResourceManager::get_saved_resource_path(archive_hash).unwrap();
+        return Ok(path.exists());
+    }
 
+    pub fn check_archive_hash(&self) -> Result<(), String> {
+        let archive_data = self.archive_data.as_ref().unwrap();
         let archive_hash = calculate_hash(&archive_data);
         let original_archive_hash = self.archive_hash.as_ref().expect("archive_hash is None");
         if *original_archive_hash != archive_hash {
@@ -191,7 +205,37 @@ impl ResourceManager {
                 archive_hash, original_archive_hash
             ));
         }
+        Ok(())
+    }
 
+    pub fn get_saved_resource_path(archive_hash: &u64) -> Result<PathBuf, String> {
+        let mut path = match GameSettings::get_game_data_path() {
+            Ok(p) => p,
+            Err(e) => return Err(e),
+        };
+        path.push("resources");
+        if !path.exists() {
+            create_dir_all(path.clone()).unwrap();
+        }
+        path.push(archive_hash.to_string());
+        Ok(path)
+    }
+
+    pub fn save_resource_to_local(&mut self) -> Result<(), String> {
+        let path = ResourceManager::get_saved_resource_path(self.get_archive_hash().unwrap()).unwrap();
+        let archive_data = self.archive_data.take().expect("archive_data is not set");
+        if let Err(e) = std::fs::write(path, archive_data) {
+            return Err(format!("Error write resource file: {}", e));
+        }
+        return Ok(());
+    }
+
+    pub fn load_local_archive(&mut self, archive_hash: &u64) -> Result<u32, String> {
+        let path = ResourceManager::get_saved_resource_path(archive_hash).unwrap();
+        self.load_archive(File::open(path).unwrap())
+    }
+
+    fn load_archive<R: Read + Seek>(&mut self, reader: R) -> Result<u32, String> {
         let resources_scheme = self.resources_scheme.take().expect("resources_scheme is not set");
 
         for resource_scheme in resources_scheme.iter() {
@@ -204,8 +248,7 @@ impl ResourceManager {
         let mut resources_storage = self.get_resources_storage_mut();
 
         let mut count: u32 = 0;
-        let file = std::io::Cursor::new(&archive_data);
-        let mut zip = zip::ZipArchive::new(file).unwrap();
+        let mut zip = zip::ZipArchive::new(reader).unwrap();
         for i in 0..zip.len() {
             let mut archive_file = zip.by_index(i).unwrap();
             let file_hash = archive_file.name().to_string();

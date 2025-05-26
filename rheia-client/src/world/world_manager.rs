@@ -115,7 +115,14 @@ impl WorldManager {
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("physics_step");
 
+        let now = std::time::Instant::now();
+
         self.physics.step(delta as f32);
+
+        let elapsed = now.elapsed();
+        if elapsed >= std::time::Duration::from_secs_f32(0.1) {
+            log::info!("physics_process lag: {:.2?}", elapsed);
+        }
     }
 
     pub fn custom_process(&mut self, _delta: f64, resource_manager: &ResourceManager) {

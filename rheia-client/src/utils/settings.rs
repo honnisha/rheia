@@ -21,10 +21,11 @@ impl Default for GameSettings {
 
 impl GameSettings {
     pub fn read() -> Result<Self, String> {
-        let path = match GameSettings::get_settings_path() {
+        let mut path = match GameSettings::get_game_data_path() {
             Ok(p) => p,
             Err(e) => return Err(e),
         };
+        path.push("settings.yml");
         if !path.exists() {
             return Ok(Self::default());
         }
@@ -47,13 +48,13 @@ impl GameSettings {
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let path = match GameSettings::get_settings_path() {
+        let mut path = match GameSettings::get_game_data_path() {
             Ok(p) => p,
             Err(e) => return Err(e),
         };
+        path.push("settings.yml");
         if !path.exists() {
-            let prefix = path.parent().unwrap();
-            create_dir_all(prefix).unwrap();
+            create_dir_all(path.clone()).unwrap();
         }
         let file = File::create(path.clone()).expect("File must exists");
         if let Err(e) = serde_yaml::to_writer(file, &self) {
@@ -62,14 +63,13 @@ impl GameSettings {
         Ok(())
     }
 
-    fn get_settings_path() -> Result<PathBuf, String> {
+    pub fn get_game_data_path() -> Result<PathBuf, String> {
         let config_dir = match dirs_next::config_dir() {
             Some(c) => c,
             None => return Err("Error getting the path for the settings file".to_string()),
         };
         let mut config_path = PathBuf::from(config_dir);
         config_path.push("RheiaData");
-        config_path.push("settings.yml");
         Ok(config_path)
     }
 }

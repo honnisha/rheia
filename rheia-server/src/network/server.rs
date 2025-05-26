@@ -12,18 +12,19 @@ use bevy_ecs::{
 };
 use flume::{Receiver, Sender};
 use lazy_static::lazy_static;
+use network::NetworkServer;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use network::server::{ConnectionMessages, IServerConnection, IServerNetwork};
-use network::NetworkServer;
 
 use super::events::{
-    on_connection::{on_connection, PlayerConnectionEvent},
-    on_connection_info::{on_connection_info, PlayerConnectionInfoEvent},
-    on_disconnect::{on_disconnect, PlayerDisconnectEvent},
-    on_edit_block::{on_edit_block, EditBlockEvent},
-    on_media_loaded::{on_media_loaded, PlayerMediaLoadedEvent},
-    on_player_move::{on_player_move, PlayerMoveEvent},
-    on_settings_loaded::{on_settings_loaded, PlayerSettingsLoadedEvent},
+    on_connection::{PlayerConnectionEvent, on_connection},
+    on_connection_info::{PlayerConnectionInfoEvent, on_connection_info},
+    on_disconnect::{PlayerDisconnectEvent, on_disconnect},
+    on_edit_block::{EditBlockEvent, on_edit_block},
+    on_media_loaded::{PlayerMediaLoadedEvent, on_media_loaded},
+    on_player_move::{PlayerMoveEvent, on_player_move},
+    on_resources_has_cache::{ResourcesHasCacheEvent, on_resources_has_cache},
+    on_settings_loaded::{PlayerSettingsLoadedEvent, on_settings_loaded},
 };
 use crate::entities::entity::{IntoServerPosition, IntoServerRotation};
 use crate::entities::events::on_player_spawn::on_player_spawn;
@@ -31,7 +32,7 @@ use crate::network::chunks_sender::send_chunks;
 use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_players::PlayerSpawnEvent;
-use crate::{console::commands_executer::CommandsHandler, LaunchSettings};
+use crate::{LaunchSettings, console::commands_executer::CommandsHandler};
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
 
@@ -77,6 +78,9 @@ impl NetworkPlugin {
 
         app.add_systems(Update, console_client_command_event);
 
+        app.add_event::<ResourcesHasCacheEvent>();
+        app.add_systems(Update, on_resources_has_cache.after(handle_events_system));
+
         app.add_event::<PlayerConnectionEvent>();
         app.add_systems(Update, on_connection.after(handle_events_system));
 
@@ -112,6 +116,7 @@ fn receive_message_system(
     network_container: Res<NetworkContainer>,
     time: Res<Time>,
     clients: Res<ClientsContainer>,
+    mut resources_has_cache_events: EventWriter<ResourcesHasCacheEvent>,
     mut connection_info_events: EventWriter<PlayerConnectionInfoEvent>,
     mut player_move_events: EventWriter<PlayerMoveEvent>,
     mut edit_block_events: EventWriter<EditBlockEvent>,
@@ -138,6 +143,10 @@ fn receive_message_system(
     for (client_id, client) in clients.iter() {
         for decoded in client.get_connection().drain_client_messages() {
             match decoded {
+                ClientMessages::ResourcesHasCache { exists } => {
+                    let event = ResourcesHasCacheEvent::new(client.clone(), exists);
+                    resources_has_cache_events.write(event);
+                }
                 ClientMessages::ResourcesLoaded { last_index } => {
                     let msg = PlayerMediaLoadedEvent::new(client.clone(), Some(last_index));
                     player_media_loaded_events.write(msg);

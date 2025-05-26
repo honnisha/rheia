@@ -109,7 +109,6 @@ impl IClientNetwork for RenetClientNetwork {
         }
 
         {
-            let info = client.network_info();
             let mut network_info = self.network_info.write();
             network_info.is_disconnected = client.is_disconnected();
             network_info.bytes_received_per_sec = client.bytes_received_per_sec();

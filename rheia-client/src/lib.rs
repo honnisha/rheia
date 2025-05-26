@@ -14,6 +14,8 @@ mod world;
 
 struct Rheia;
 
+pub const LOG_LEVEL: log::LevelFilter = log::LevelFilter::Info;
+
 #[gdextension]
 unsafe impl ExtensionLibrary for Rheia {}
 

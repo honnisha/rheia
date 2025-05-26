@@ -5,6 +5,7 @@ use network::client::{IClientNetwork, NetworkInfo};
 use network::entities::EntityNetworkComponent;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
+use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::scenes::main_menu::VERSION;
 use crate::scenes::main_scene::MainScene;
@@ -95,7 +96,25 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list, archive_hash);
                 let (scripts_count, media_count) = resource_manager.get_resource_scheme_count();
-                log::info!(target: "network", "Resources scheme loaded from network (scripts:{}, media:{})", scripts_count, media_count);
+                log::info!(target: "network", "Network resources scheme (scripts:{}, media:{}, archive_hash:{})", scripts_count, media_count, archive_hash);
+
+                let has_saved = if ResourceManager::has_local_saved_resource(&archive_hash).unwrap() {
+                    match resource_manager.load_local_archive(&archive_hash) {
+                        Ok(count) => {
+                            let mut resource_names: Vec<String> = Default::default();
+                            for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
+                                resource_names.push(resource_slug.clone());
+                            }
+                            log::info!(target: "network", "Resources cache loaded: {}; media count:{}", resource_names.join(", "), count);
+                        }
+                        Err(e) => return Err(format!("Network resources cache load error: {}", e)),
+                    }
+                    true
+                } else {
+                    false
+                };
+                let msg = ClientMessages::ResourcesHasCache { exists: has_saved };
+                network.send_message(NetworkMessageType::ReliableOrdered, &msg);
             }
             ServerMessages::ResourcesPart { index, total, mut data } => {
                 {
@@ -104,7 +123,16 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
 
                     let is_last = index + 1 >= total;
                     if is_last {
-                        match resource_manager.load_archive() {
+                        resource_manager.check_archive_hash().unwrap();
+                        let archive_hash = resource_manager.get_archive_hash().unwrap().clone();
+                        let path = ResourceManager::get_saved_resource_path(&archive_hash).unwrap();
+                        match resource_manager.save_resource_to_local() {
+                            Ok(_) => {
+                                log::info!(target: "network", "Resources saved locally: &6{}", path.display().to_string())
+                            }
+                            Err(e) => return Err(format!("Network resources local save error: {}", e)),
+                        }
+                        match resource_manager.load_local_archive(&archive_hash) {
                             Ok(count) => {
                                 let mut resource_names: Vec<String> = Default::default();
                                 for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
@@ -112,7 +140,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                                 }
                                 log::info!(target: "network", "Resources loaded from network: {}; media count:{}", resource_names.join(", "), count);
                             }
-                            Err(e) => return Err(format!("Network resources download error: {}", e)),
+                            Err(e) => return Err(format!("Network resources cache load error: {}", e)),
                         }
                     }
                 }

@@ -1,3 +1,4 @@
+use crate::LOG_LEVEL;
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::Console;
 use crate::controller::entity_movement::EntityMovement;
@@ -258,6 +259,7 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
+        log::set_max_level(LOG_LEVEL);
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.resource_manager.clone().borrow_mut().load_local_resources() {
             self.send_disconnect_event(format!("Internal resources error: {}", e));

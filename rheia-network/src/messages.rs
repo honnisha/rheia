@@ -36,6 +36,9 @@ pub enum ClientMessages {
         position: BlockPosition,
         new_block_info: Option<BlockInfo>,
     },
+    ResourcesHasCache {
+        exists: bool,
+    },
     ResourcesLoaded {
         last_index: u32,
     },

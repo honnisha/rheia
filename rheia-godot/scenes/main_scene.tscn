@@ -15,8 +15,9 @@ ambient_light_source = 2
 ambient_light_color = Color(0.556953, 0.556953, 0.556953, 1)
 reflected_light_source = 1
 ssao_enabled = true
-fog_mode = 1
-fog_density = 1.0
+volumetric_fog_length = 500.0
+volumetric_fog_detail_spread = 1.46409
+volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]
 

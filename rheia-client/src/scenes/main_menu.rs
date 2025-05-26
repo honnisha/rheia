@@ -1,7 +1,7 @@
 use super::{
     connect_scene::ConnectScreen, main_menu_button::MainMenuButton, main_scene::MainScene, text_screen::TextScreen,
 };
-use crate::{logger::CONSOLE_LOGGER, utils::settings::GameSettings};
+use crate::{LOG_LEVEL, logger::CONSOLE_LOGGER, utils::settings::GameSettings};
 use godot::{
     classes::{BoxContainer, Control, Engine, IControl, RichTextLabel},
     meta::AsArg,
@@ -153,7 +153,7 @@ impl IControl for MainMenu {
         if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
             log::error!(target: "main", "log::set_logger error: {}", e)
         }
-        log::set_max_level(log::LevelFilter::Info);
+        log::set_max_level(LOG_LEVEL);
 
         log::info!(target: "main", "Loading Rheia version: {}", VERSION);
 

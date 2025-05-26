@@ -4,7 +4,6 @@ use bevy_ecs::system::Res;
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::client_resources::resources_manager::ResourceManager;
-use crate::client_resources::resources_manager::ARCHIVE_CHUNK_SIZE;
 use crate::network::client_network::ClientInfo;
 use crate::network::client_network::ClientNetwork;
 use crate::network::events::on_media_loaded::PlayerMediaLoadedEvent;
@@ -56,21 +55,13 @@ pub fn on_connection_info(
         );
 
         if resources_manager.has_any_resources() {
-            // Start sending media if necessary
+            // Sending resources schema if necessary
 
             let scheme = ServerMessages::ResourcesScheme {
                 list: resources_manager.get_resources_scheme().clone(),
                 archive_hash: resources_manager.get_archive_hash().clone(),
             };
             event.client.send_message(NetworkMessageType::ReliableOrdered, &scheme);
-
-            let total = resources_manager.get_archive_parts_count(ARCHIVE_CHUNK_SIZE);
-            let resources_part = ServerMessages::ResourcesPart {
-                index: 0,
-                total: total as u32,
-                data: resources_manager.get_archive_part(0, ARCHIVE_CHUNK_SIZE),
-            };
-            event.client.send_message(NetworkMessageType::ReliableUnordered, &resources_part);
         } else {
             // Or send player as loaded
 
