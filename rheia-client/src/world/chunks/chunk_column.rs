@@ -1,9 +1,8 @@
 use common::{
     CHUNK_SIZE, VERTICAL_SECTIONS,
-    blocks::block_info::BlockInfo,
     chunks::{
         block_position::{BlockPosition, ChunkBlockPosition},
-        chunk_data::ChunkData,
+        chunk_data::{BlockDataInfo, ChunkData},
         chunk_position::ChunkPosition,
     },
 };
@@ -153,13 +152,13 @@ impl ChunkColumn {
         &mut self,
         section: u32,
         chunk_block: &ChunkBlockPosition,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
     ) {
         let mut d = self.data.write();
         d.change_block(section, &chunk_block, new_block_info);
     }
 
-    pub fn get_block_info(&self, block_position: &BlockPosition) -> Option<BlockInfo> {
+    pub fn get_block_info(&self, block_position: &BlockPosition) -> Option<BlockDataInfo> {
         let d = self.data.read();
         d.get_block_info(block_position)
     }

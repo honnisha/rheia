@@ -8,10 +8,7 @@ use crate::{
     client_scripts::resource_manager::{ResourceManager, ResourceStorage},
     entities::entities_manager::EntitiesManager,
 };
-use common::{
-    blocks::block_info::BlockInfo,
-    chunks::{block_position::BlockPosition, chunk_data::ChunkData, chunk_position::ChunkPosition},
-};
+use common::chunks::{block_position::BlockPosition, chunk_data::{BlockDataInfo, ChunkData}, chunk_position::ChunkPosition};
 use godot::{classes::Material, prelude::*};
 
 /// Godot world
@@ -103,7 +100,7 @@ impl WorldManager {
         &self,
         position: BlockPosition,
         block_storage: &BlockStorage,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
         resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
         self.chunk_map

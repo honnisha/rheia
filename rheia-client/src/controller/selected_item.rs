@@ -1,4 +1,4 @@
-use common::blocks::block_info::BlockInfo;
+use common::chunks::chunk_data::BlockDataInfo;
 use godot::prelude::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
@@ -9,7 +9,7 @@ pub struct SelectedItemGd {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SelectedItem {
-    BlockPlacing(BlockInfo),
+    BlockPlacing(BlockDataInfo),
 }
 impl SelectedItemGd {
     pub fn create(item: Option<SelectedItem>) -> Self {

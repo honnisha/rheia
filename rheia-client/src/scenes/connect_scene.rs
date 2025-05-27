@@ -43,7 +43,7 @@ impl ConnectScreen {
     }
 
     fn set_error_msg(&mut self, error: String) {
-        let msg = format!("[center][color=#B72828]{}[/color][/center]", error);
+        let msg = format!("[color=#B72828]{}[/color]", error);
         self.error_text.as_mut().unwrap().set_text(&msg);
     }
 

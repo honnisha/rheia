@@ -1,21 +1,25 @@
-use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::{BlockContent, BlockType};
 use common::blocks::default_blocks::DEFAULT_BLOCKS;
+use common::chunks::chunk_data::BlockIndexType;
 use std::collections::{BTreeMap, HashMap};
 
 use crate::client_scripts::resource_manager::ResourceStorage;
 
 pub struct BlockStorage {
-    blocks: BTreeMap<BlockIndexType, BlockType>,
+    blocks: BTreeMap<String, BlockType>,
+    block_id_map: HashMap<BlockIndexType, String>,
 }
 
 impl Default for BlockStorage {
     fn default() -> Self {
         let mut block_storage = Self {
             blocks: Default::default(),
+            block_id_map: Default::default(),
         };
-        for (i, block_type) in DEFAULT_BLOCKS.iter() {
-            block_storage.blocks.insert(i.clone(), block_type.clone());
+        for block_type in DEFAULT_BLOCKS.iter() {
+            block_storage
+                .blocks
+                .insert(block_type.get_slug().clone(), block_type.clone());
         }
         block_storage
     }
@@ -23,10 +27,28 @@ impl Default for BlockStorage {
 
 impl BlockStorage {
     pub fn get(&self, k: &BlockIndexType) -> Option<&BlockType> {
-        self.blocks.get(k)
+        let slug = self.block_id_map.get(k).expect("BlockStorage cannot find id block map");
+        self.blocks.get(slug)
     }
 
-    pub fn iter(&self) -> std::collections::btree_map::Iter<'_, BlockIndexType, BlockType> {
+    pub fn set_block_id_map(&mut self, block_id_map: HashMap<BlockIndexType, String>) {
+        self.block_id_map = block_id_map;
+    }
+
+    pub fn get_block_id(&self, slug: &String) -> Option<BlockIndexType> {
+        for (block_id, block_slug) in self.block_id_map.iter() {
+            if block_slug == slug {
+                return Some(block_id.clone());
+            }
+        }
+        None
+    }
+
+    pub fn iter_values(&self) -> std::collections::btree_map::Values<'_, String, BlockType> {
+        self.blocks.values()
+    }
+
+    pub fn iter(&self) -> std::collections::btree_map::Iter<'_, String, BlockType> {
         self.blocks.iter()
     }
 
@@ -52,11 +74,11 @@ impl BlockStorage {
     /// Saves the server-side block scheme
     pub fn load_blocks_types(
         &mut self,
-        block_types: HashMap<BlockIndexType, BlockType>,
+        block_types: Vec<BlockType>,
         resources_storage: &ResourceStorage,
     ) -> Result<(), String> {
         self.blocks.clear();
-        for (i, block_type) in block_types.iter() {
+        for block_type in block_types.iter() {
             match block_type.get_block_content() {
                 BlockContent::Texture {
                     texture,
@@ -64,22 +86,38 @@ impl BlockStorage {
                     bottom_texture,
                 } => {
                     if !resources_storage.has_media(texture) {
-                        return Err(format!("texture not found: &e\"{}\"", texture));
+                        return Err(format!(
+                            "block \"{}\" &ctexture not found: \"{}\"",
+                            block_type.get_slug(),
+                            texture
+                        ));
                     }
                     if side_texture.is_some() && !resources_storage.has_media(&side_texture.as_ref().unwrap()) {
-                        return Err(format!("texture not found: &e\"{}\"", side_texture.as_ref().unwrap()));
+                        return Err(format!(
+                            "block \"{}\" &ctexture not found: \"{}\"",
+                            block_type.get_slug(),
+                            side_texture.as_ref().unwrap()
+                        ));
                     }
                     if bottom_texture.is_some() && !resources_storage.has_media(&bottom_texture.as_ref().unwrap()) {
-                        return Err(format!("texture not found: &e\"{}\"", bottom_texture.as_ref().unwrap()));
+                        return Err(format!(
+                            "block \"{}\" &ctexture not found: \"{}\"",
+                            block_type.get_slug(),
+                            bottom_texture.as_ref().unwrap()
+                        ));
                     }
                 }
                 BlockContent::ModelCube { model, icon_size: _ } => {
                     if !resources_storage.has_media(model) {
-                        return Err(format!("model not found: &e\"{}\"", model));
+                        return Err(format!(
+                            "block \"{}\" &cmodel not found: \"{}\"",
+                            block_type.get_slug(),
+                            model
+                        ));
                     }
                 }
             }
-            self.blocks.insert(i.clone(), block_type.clone());
+            self.blocks.insert(block_type.get_slug().clone(), block_type.clone());
         }
         return Ok(());
     }

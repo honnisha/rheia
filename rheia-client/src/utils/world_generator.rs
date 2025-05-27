@@ -1,6 +1,9 @@
 use common::{
     chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition},
-    world_generator::default::{WorldGenerator, WorldGeneratorSettings},
+    world_generator::{
+        default::{WorldGenerator, WorldGeneratorSettings},
+        traits::IWorldGenerator,
+    },
 };
 use godot::obj::Gd;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};

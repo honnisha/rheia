@@ -9,6 +9,10 @@
 		"res://assets/block/stone.png",
 		"res://assets/block/sand.png",
 		"res://assets/block/water_still.png",
+		"res://assets/block/acacia_log_top.png",
+		"res://assets/block/acacia_log.png",
+		"res://assets/block/acacia_planks.png",
+		"res://assets/block/amethyst_block.png",
 
 		"res://assets/models/generic/generic.glb",
 		"res://assets/gui/textures/elements.png"

@@ -1,44 +1,41 @@
-use std::{collections::HashMap, fs::File, path::PathBuf};
-
-use bevy::prelude::{Res, ResMut, Resource};
-use common::blocks::{
-    block_info::BlockIndexType,
-    block_type::{BlockContent, BlockType}, default_blocks::DEFAULT_BLOCKS,
-};
-use serde::{Deserialize, Serialize};
-
-use crate::{
-    launch_settings::LaunchSettings,
-    network::runtime_plugin::RuntimePlugin,
-};
-
 use super::resources_manager::ResourceManager;
+use crate::{launch_settings::LaunchSettings, network::runtime_plugin::RuntimePlugin};
+use bevy::prelude::{Res, ResMut, Resource};
+use common::blocks::{block_type::BlockType, default_blocks::DEFAULT_BLOCKS};
+use network::messages::ServerMessages;
+use serde::{Deserialize, Serialize};
+use std::{fs::File, path::PathBuf};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Default, PartialEq, Debug)]
 pub struct ServerSettingsManifest {
-    pub blocks: Option<HashMap<BlockIndexType, BlockType>>,
+    blocks: Option<Vec<BlockType>>,
 }
 
 #[derive(Resource, Default)]
 pub struct ServerSettings {
-    block_types: HashMap<BlockIndexType, BlockType>,
+    blocks: Vec<BlockType>,
     loaded: bool,
 }
 
 impl ServerSettings {
-    pub fn get_block_types(&self) -> &HashMap<BlockIndexType, BlockType> {
+    pub fn get_network_settings(&self) -> ServerMessages {
         assert!(self.loaded, "server settings is not loaded");
-        &self.block_types
+        ServerMessages::Settings {
+            block_types: self.blocks.clone(),
+        }
     }
 
     fn load(&mut self, path: PathBuf, resource_manager: &ResourceManager) -> Result<(), String> {
         log::info!(target: "server_settings", "Start loading server settings &e{}", path.display());
 
-        self.block_types = DEFAULT_BLOCKS.clone();
+        for block_type in DEFAULT_BLOCKS.iter() {
+            self.blocks.push(block_type.clone());
+        }
 
         if !path.exists() {
+            // Create settings with default blocks
             let default_manifest = ServerSettingsManifest {
-                blocks: Some(self.block_types.clone()),
+                blocks: Some(DEFAULT_BLOCKS.clone()),
             };
 
             let file = File::create(path.clone()).expect("File must exists");
@@ -67,41 +64,30 @@ impl ServerSettings {
             }
         };
 
-        if let Some(block_types) = manifest_info.blocks {
-            for (i, block_type) in block_types.iter() {
-                match block_type.get_block_content() {
-                    BlockContent::Texture {
-                        texture,
-                        side_texture,
-                        bottom_texture,
-                    } => {
-                        if !resource_manager.has_media(texture) {
-                            return Err(format!("&ctexture not found: {}", texture));
-                        }
-                        if side_texture.is_some() && !resource_manager.has_media(&side_texture.as_ref().unwrap()) {
-                            return Err(format!("&ctexture not found: {}", side_texture.as_ref().unwrap()));
-                        }
-                        if bottom_texture.is_some() && !resource_manager.has_media(&bottom_texture.as_ref().unwrap()) {
-                            return Err(format!("&ctexture not found: {}", bottom_texture.as_ref().unwrap()));
-                        }
-                    }
-                    BlockContent::ModelCube { model, icon_size: _ } => {
-                        if !resource_manager.has_media(model) {
-                            return Err(format!("&cmodel not found: {}", model));
-                        }
-                    }
-                }
-                self.block_types.insert(i.clone(), block_type.clone());
+        if let Some(blocks) = manifest_info.blocks {
+            if let Err(e) = resource_manager.validate_blocks(&blocks) {
+                return Err(e);
+            }
+            for block_type in blocks.iter() {
+                self.blocks.push(block_type.clone());
             }
         }
 
         self.loaded = true;
         log::info!(target: "server_settings", "Server settings loaded successfully; &e{} blocks", self.get_blocks_count());
-        return Ok(());
+        Ok(())
+    }
+
+    pub fn get_blocks(&self) -> &Vec<BlockType> {
+        &self.blocks
+    }
+
+    pub fn add_block(&mut self, block_type: BlockType) {
+        self.blocks.push(block_type);
     }
 
     pub fn get_blocks_count(&self) -> usize {
-        self.block_types.len()
+        self.blocks.len()
     }
 }
 
@@ -110,6 +96,10 @@ pub(crate) fn rescan_server_settings(
     launch_settings: Res<LaunchSettings>,
     resource_manager: Res<ResourceManager>,
 ) {
+    if RuntimePlugin::is_stopped() {
+        return;
+    }
+
     let mut path = launch_settings.get_resources_path();
     path.push("settings.yml");
     let loaded = server_settings.load(path, &*resource_manager);

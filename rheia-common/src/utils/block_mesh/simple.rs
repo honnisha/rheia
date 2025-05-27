@@ -1,6 +1,6 @@
 use crate::blocks::voxel_visibility::{IdentityVoxel, Voxel, VoxelVisibility};
 
-use super::{bounds::assert_in_bounds, OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad};
+use super::{OrientedBlockFace, UnitQuadBuffer, UnorientedUnitQuad, bounds::assert_in_bounds};
 use ilattice::glam::UVec3;
 use ilattice::prelude::Extent;
 use ndshape::Shape;
@@ -80,7 +80,7 @@ pub fn visible_block_faces_with_voxel_view<'a, T, V, S>(
 
 #[cfg(test)]
 mod tests {
-    use crate::{blocks::block_info::BlockInfo, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+    use crate::{chunks::chunk_data::BlockDataInfo, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};
@@ -131,7 +131,7 @@ mod tests {
                 VoxelVisibility::Opaque
             }
         }
-        fn get_block_info(&self) -> &Option<BlockInfo> {
+        fn get_block_info(&self) -> &Option<BlockDataInfo> {
             unimplemented!()
         }
     }

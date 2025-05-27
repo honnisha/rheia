@@ -1,5 +1,5 @@
 use ahash::HashMap;
-use common::blocks::block_info::BlockIndexType;
+use common::chunks::chunk_data::BlockIndexType;
 use godot::classes::control::{LayoutPreset, SizeFlags};
 use godot::classes::{FlowContainer, ScrollContainer, Theme};
 use godot::obj::Gd;
@@ -90,9 +90,10 @@ impl BlockMenu {
             flow_container.set_v_size_flags(SizeFlags::EXPAND_FILL);
             flow_container.set_theme(&default_theme);
 
-            for (block_id, block_type) in block_storage.iter() {
+            for (block_slug, block_type) in block_storage.iter() {
+                let block_id = block_storage.get_block_id(block_slug).unwrap();
                 if block_type.get_category() == category {
-                    let icon = block_mesh_storage.get_icon(block_id).unwrap();
+                    let icon = block_mesh_storage.get_icon(&block_id).unwrap();
                     let mut icon = icon.clone();
                     // let mut icon = icon.duplicate().unwrap().cast::<BlockIcon>();
                     flow_container.add_child(&icon);

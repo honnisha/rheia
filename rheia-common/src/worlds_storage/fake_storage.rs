@@ -1,4 +1,10 @@
-use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
+use crate::{
+    blocks::block_type::BlockType,
+    chunks::{
+        chunk_data::{BlockIndexType, ChunkData},
+        chunk_position::ChunkPosition,
+    },
+};
 
 use super::taits::{IWorldStorage, WorldInfo, WorldStorageSettings};
 
@@ -31,5 +37,13 @@ impl IWorldStorage for FakeWorldStorage {
 
     fn delete(&self, _settings: &WorldStorageSettings) -> Result<(), String> {
         Ok(())
+    }
+
+    fn update_block_id_map(
+        _world_slug: String,
+        _settings: &WorldStorageSettings,
+        _blocks: &Vec<BlockType>,
+    ) -> Result<std::collections::HashMap<BlockIndexType, String>, String> {
+        todo!()
     }
 }

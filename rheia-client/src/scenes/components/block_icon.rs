@@ -1,4 +1,4 @@
-use common::blocks::block_info::BlockIndexType;
+use common::chunks::chunk_data::BlockIndexType;
 use godot::{
     classes::{Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, TextureRect},
     global::MouseButton,

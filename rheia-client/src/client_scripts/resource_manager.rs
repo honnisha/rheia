@@ -62,6 +62,7 @@ impl ResourceStorage {
         };
 
         for (resource_path, resource) in self.resources.iter() {
+            // log::info!("resource_path:{} res_path:{}", resource_path, res_path);
             if *resource_path == res_slug && resource.has_media(&res_path) {
                 return true;
             }

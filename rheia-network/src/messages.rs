@@ -1,13 +1,11 @@
-use std::collections::HashMap;
-
-use common::blocks::block_info::BlockIndexType;
 use common::blocks::block_type::BlockType;
-use common::chunks::chunk_data::ChunkData;
+use common::chunks::block_position::BlockPosition;
+use common::chunks::chunk_data::{BlockDataInfo, BlockIndexType, ChunkData};
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
-use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use strum_macros::Display;
 
 use crate::entities::entity_tag::EntityTag;
@@ -34,7 +32,7 @@ pub enum ClientMessages {
     EditBlockRequest {
         world_slug: String,
         position: BlockPosition,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
     },
     ResourcesHasCache {
         exists: bool,
@@ -80,11 +78,12 @@ pub enum ServerMessages {
         data: Vec<u8>,
     },
     Settings {
-        block_types: HashMap<BlockIndexType, BlockType>,
+        block_types: Vec<BlockType>,
     },
 
     SpawnWorld {
         world_slug: String,
+        block_id_map: HashMap<BlockIndexType, String>,
     },
     UpdatePlayerComponent {
         component: EntityNetworkComponent,
@@ -138,7 +137,7 @@ pub enum ServerMessages {
     EditBlock {
         world_slug: String,
         position: BlockPosition,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
     },
 }
 

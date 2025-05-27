@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::chunks::rotation::Rotation;
+use crate::chunks::{chunk_data::BlockIndexType, rotation::Rotation};
+
+use super::block_type::BlockType;
 
 #[derive(Debug, Clone, Copy, Eq, Serialize, Deserialize, PartialEq)]
 pub enum BlockFace {
@@ -45,44 +47,9 @@ impl BlockFace {
     }
 }
 
-pub type BlockIndexType = u16;
-
-#[derive(Clone, Copy, Eq, Serialize, Deserialize)]
-pub struct BlockInfo {
-    id: BlockIndexType,
-    face: Option<BlockFace>,
-}
-
-impl std::fmt::Debug for BlockInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        let face = match self.face {
-            Some(f) => format!(" face:{:?}", f),
-            None => "".to_string(),
-        };
-        write!(f, "b#{}{}", self.id, face)
-    }
-}
-
-impl BlockInfo {
-    pub fn create(id: BlockIndexType, face: Option<BlockFace>) -> BlockInfo {
-        BlockInfo { id, face }
-    }
-
-    pub fn get_id(&self) -> BlockIndexType {
-        self.id
-    }
-
-    pub fn get_face(&self) -> Option<&BlockFace> {
-        self.face.as_ref()
-    }
-
-    pub fn set_face(&mut self, face: Option<BlockFace>) {
-        self.face = face;
-    }
-}
-
-impl PartialEq for BlockInfo {
-    fn eq(&self, other: &BlockInfo) -> bool {
-        self.id == other.id && self.face == other.face
+pub fn generate_block_id(_block_type: &BlockType, last_id: Option<BlockIndexType>) -> BlockIndexType {
+    match last_id {
+        Some(id) => id + 1,
+        None => 0,
     }
 }

@@ -1,6 +1,8 @@
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
+use common::blocks::block_type::BlockContent;
+use common::blocks::block_type::BlockType;
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
@@ -11,9 +13,11 @@ use std::path::PathBuf;
 use zip::DateTime;
 
 use crate::LaunchSettings;
+use crate::network::runtime_plugin::RuntimePlugin;
 
 use super::default_resources::DEFAULT_MEDIA;
 use super::resource_instance::ResourceInstance;
+use super::server_settings::ServerSettings;
 
 pub const ARCHIVE_CHUNK_SIZE: usize = 1024 * 1024;
 
@@ -95,15 +99,14 @@ impl ResourceManager {
         return false;
     }
 
-    pub fn rescan_resources(&mut self, path: PathBuf) {
+    pub fn rescan_resources(&mut self, path: PathBuf, server_settings: &mut ServerSettings) -> Result<(), String> {
         let path_str = path.into_os_string().into_string().unwrap();
         log::info!(target: "resources", "▼ Rescan resources folders inside: &e{}", path_str);
 
         let resource_paths = match fs::read_dir(path_str.clone()) {
             Ok(p) => p,
             Err(e) => {
-                log::info!(target: "resources", "□ read directory &e\"{}\"&r error: &c{}", path_str, e);
-                return ();
+                return Err(format!("read directory &e\"{}\"&r error: &c{}", path_str, e));
             }
         };
 
@@ -119,22 +122,68 @@ impl ResourceManager {
             let resource_instance = match ResourceInstance::from_manifest(resource_path.clone()) {
                 Ok(i) => i,
                 Err(e) => {
-                    log::error!(target: "resources", "□ error with resource {}: &c{}", resource_path.display(), e);
-                    continue;
+                    return Err(format!("resource {}: {}", resource_path.display().to_string(), e));
                 }
             };
+            let resource_slug = resource_instance.get_slug().clone();
+
+            if self.resources.contains_key(&resource_slug) {
+                return Err(format!("&cresource &4\"{}\"&c slug &4\"{}\"&c already exists", resource_path.display().to_string(), resource_slug));
+            }
+
+            let blocks = resource_instance.get_blocks();
+            for block_type in blocks.iter() {
+                server_settings.add_block(block_type.clone());
+            }
+
             log::info!(
                 target: "resources",
-                "□ Resource &2\"{}\"&r successfully loaded; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{} Media:{}",
+                "□ Resource &2\"{}\"&r loaded; Title:\"{}\" v\"{}\" Author:\"{}\" Scripts:{} Media:{} Blocks:{}",
                 resource_instance.get_slug(),
                 resource_instance.get_title(),
                 resource_instance.get_version(),
                 resource_instance.get_autor(),
                 resource_instance.get_scripts_count(),
                 resource_instance.get_media_count(),
+                blocks.len(),
             );
             self.add_resource(resource_instance.get_slug().clone(), resource_instance);
+
+            if let Err(e) = self.validate_blocks(&blocks) {
+                return Err(format!("resource &6\"{}\"&r: {}", resource_slug, e));
+            }
         }
+        log::info!(target: "resources", "All resources have been successfully loaded: {}", self.resources.len());
+        Ok(())
+    }
+
+    pub fn validate_blocks(&self, blocks: &Vec<BlockType>) -> Result<(), String> {
+        for block_type in blocks.iter() {
+            let block_slug = block_type.get_slug().clone();
+            match block_type.get_block_content() {
+                BlockContent::Texture {
+                    texture,
+                    side_texture,
+                    bottom_texture,
+                } => {
+                    if !self.has_media(texture) {
+                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, texture));
+                    }
+                    if side_texture.is_some() && !self.has_media(&side_texture.as_ref().unwrap()) {
+                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, side_texture.as_ref().unwrap()));
+                    }
+                    if bottom_texture.is_some() && !self.has_media(&bottom_texture.as_ref().unwrap()) {
+                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, bottom_texture.as_ref().unwrap()));
+                    }
+                }
+                BlockContent::ModelCube { model, icon_size: _ } => {
+                    if !self.has_media(model) {
+                        return Err(format!("block \"{}\" &cmodel not found: {}", block_slug, model));
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn add_resource(&mut self, slug: String, resource: ResourceInstance) {
@@ -199,8 +248,17 @@ impl ResourceManager {
     }
 }
 
-pub(crate) fn rescan_resources(mut resource_manager: ResMut<ResourceManager>, launch_settings: Res<LaunchSettings>) {
-    resource_manager.rescan_resources(launch_settings.get_resources_path());
+pub(crate) fn rescan_resources(
+    mut resource_manager: ResMut<ResourceManager>,
+    launch_settings: Res<LaunchSettings>,
+    mut server_settings: ResMut<ServerSettings>,
+) {
+    if let Err(e) = resource_manager.rescan_resources(launch_settings.get_resources_path(), &mut *server_settings) {
+        log::error!(target: "resources", "&cResources loading error:");
+        log::error!(target: "resources", "{}", e);
+        RuntimePlugin::stop();
+        return;
+    }
     resource_manager.generate_archive();
     resource_manager.generate_resources_scheme();
 }

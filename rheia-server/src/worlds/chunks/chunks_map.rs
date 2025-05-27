@@ -1,24 +1,27 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
 use common::{
-    blocks::block_info::BlockInfo,
+    VERTICAL_SECTIONS, WorldStorageManager,
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
+        chunk_data::BlockDataInfo,
         chunk_position::ChunkPosition,
     },
     utils::vec_remove_item,
-    world_generator::default::{WorldGenerator, WorldGeneratorSettings},
+    world_generator::{
+        default::{WorldGenerator, WorldGeneratorSettings},
+        traits::IWorldGenerator,
+    },
     worlds_storage::taits::IWorldStorage,
-    WorldStorageManager, VERTICAL_SECTIONS,
 };
 use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
+    CHUNKS_DESPAWN_TIMER,
     network::runtime_plugin::RuntimePlugin,
     worlds::{chunks::chunk_column::load_chunk, world_manager::ChunkChanged},
-    CHUNKS_DESPAWN_TIMER,
 };
 
 use super::{chunk_column::ChunkColumn, chunks_load_state::ChunksLoadState};
@@ -244,7 +247,7 @@ impl ChunkMap {
         }
     }
 
-    pub fn edit_block(&self, position: BlockPosition, new_block_info: Option<BlockInfo>) -> Result<(), String> {
+    pub fn edit_block(&self, position: BlockPosition, new_block_info: Option<BlockDataInfo>) -> Result<(), String> {
         let Some(chunk_column) = self.chunks.get(&position.get_chunk_position()) else {
             return Err(format!(
                 "edit_block chunk {} is not found",
@@ -281,9 +284,9 @@ impl ChunkMap {
 mod tests {
     use bevy::prelude::Entity;
     use common::{
+        WorldStorageManager,
         world_generator::default::WorldGeneratorSettings,
         worlds_storage::taits::{IWorldStorage, WorldStorageSettings},
-        WorldStorageManager,
     };
     use std::time::Duration;
 

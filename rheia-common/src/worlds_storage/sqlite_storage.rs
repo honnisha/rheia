@@ -3,9 +3,15 @@ use std::{
     io::{Seek, SeekFrom, Write},
 };
 
-use rusqlite::{blob::ZeroBlob, Connection, DatabaseName, OptionalExtension};
+use rusqlite::{Connection, DatabaseName, OptionalExtension, blob::ZeroBlob};
 
-use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
+use crate::{
+    blocks::{block_info::generate_block_id, block_type::BlockType},
+    chunks::{
+        chunk_data::{BlockIndexType, ChunkData},
+        chunk_position::ChunkPosition,
+    },
+};
 
 use super::taits::{IWorldStorage, WorldInfo, WorldStorageSettings};
 
@@ -22,6 +28,16 @@ const SQL_READ_SEED: &str = "SELECT seed FROM world_info;";
 const SQL_SELECT_CHUNK_ID: &str = "SELECT id FROM chunks WHERE x=?1 AND z=?2;";
 const SQL_INSERT_CHUNK: &str = "INSERT INTO chunks (x, z, sections_data) VALUES (?1, ?2, ?3);";
 const SQL_UPDATE_CHUNK: &str = "UPDATE chunks SET sections_data = ?2 WHERE id=?1";
+
+const SQL_CREATE_TABLE_IDS: &str =
+    "CREATE TABLE IF NOT EXISTS world_block_ids (block_id INTEGER UNIQUE, block_slug STRING);";
+const SQL_SELECT_IDS: &str = "SELECT block_id, block_slug FROM world_block_ids ORDER BY block_id;";
+const SQL_INSERT_ID: &str = "INSERT INTO world_block_ids (block_id, block_slug) VALUES (?1, ?2);";
+
+struct BlockId {
+    block_id: BlockIndexType,
+    block_slug: String,
+}
 
 pub struct SQLiteStorage {
     db: Connection,
@@ -108,7 +124,7 @@ impl IWorldStorage for SQLiteStorage {
                     e,
                     encoded_len,
                     blob.size()
-                ))
+                ));
             }
         };
         Ok(sections)
@@ -204,6 +220,74 @@ impl IWorldStorage for SQLiteStorage {
         log::info!(target: "worlds", "World db &e\"{}\"&r deleted", path.to_str().unwrap());
         Ok(())
     }
+
+    fn update_block_id_map(
+        world_slug: String,
+        settings: &WorldStorageSettings,
+        blocks: &Vec<BlockType>,
+    ) -> Result<std::collections::HashMap<BlockIndexType, String>, String> {
+        let mut path = settings.get_data_path().clone();
+        path.push("worlds");
+        path.push(format!("{}.db", world_slug));
+        let path = path.as_os_str();
+
+        let db = match Connection::open(path) {
+            Ok(c) => c,
+            Err(e) => return Err(format!("Database creation error: {}", e)),
+        };
+
+        if let Err(e) = db.execute(SQL_CREATE_TABLE_IDS, ()) {
+            return Err(format!("World block ids table create error: &c{}", e));
+        }
+
+        let mut stmt = db.prepare(SQL_SELECT_IDS).unwrap();
+        let ids_result = stmt
+            .query_map([], |row| {
+                Ok(BlockId {
+                    block_id: row.get(0).unwrap(),
+                    block_slug: row.get(1).unwrap(),
+                })
+            })
+            .unwrap();
+
+        let mut last_id: Option<BlockIndexType> = None;
+
+        let mut block_id_map: std::collections::HashMap<BlockIndexType, String> = Default::default();
+        let mut existing_blocks: Vec<String> = Default::default();
+        for block_row in ids_result {
+            let block_row = block_row.unwrap();
+            last_id = Some(block_row.block_id.clone());
+            block_id_map.insert(block_row.block_id, block_row.block_slug.clone());
+            existing_blocks.push(block_row.block_slug.clone());
+
+            let mut block_exists = false;
+            for block_type in blocks.iter() {
+                if *block_type.get_slug() == block_row.block_slug {
+                    block_exists = true;
+                }
+            }
+            if !block_exists {
+                return Err(format!(
+                    "&cworld block \"{}\" doesn't exists in resources",
+                    block_row.block_slug
+                ));
+            }
+        }
+
+        for block_type in blocks.iter() {
+            if !existing_blocks.contains(block_type.get_slug()) {
+                // Block id is not exists in the world;
+                let block_id = generate_block_id(&block_type, last_id);
+                last_id = Some(block_id.clone());
+                if let Err(e) = db.execute(SQL_INSERT_ID, (block_id, block_type.get_slug().clone())) {
+                    return Err(format!("Block id insert error: &c{}", e));
+                }
+                block_id_map.insert(block_id, block_type.get_slug().clone());
+            }
+        }
+
+        Ok(block_id_map)
+    }
 }
 
 #[cfg(test)]
@@ -212,7 +296,10 @@ mod tests {
 
     use crate::{
         chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition},
-        world_generator::default::{WorldGenerator, WorldGeneratorSettings},
+        world_generator::{
+            default::{WorldGenerator, WorldGeneratorSettings},
+            traits::IWorldGenerator,
+        },
         worlds_storage::{
             sqlite_storage::SQLiteStorage,
             taits::{IWorldStorage, WorldStorageSettings},

@@ -115,6 +115,9 @@ impl ResourceInstance {
     }
 
     pub fn has_media(&self, slug: &String) -> bool {
+        // for (media_slug, _) in self.media.iter() {
+        //     log::info!("{} media_slug:{}", self.slug, media_slug);
+        // }
         self.media.contains_key(slug)
     }
 

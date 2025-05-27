@@ -1,8 +1,8 @@
-use common::blocks::block_info::BlockInfo;
 use common::chunks::block_position::ChunkBlockPosition;
-use common::chunks::chunk_data::ChunkData;
+use common::chunks::chunk_data::{BlockDataInfo, ChunkData};
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGenerator;
+use common::world_generator::traits::IWorldGenerator;
 use common::worlds_storage::taits::IWorldStorage;
 use core::fmt;
 use network::messages::ServerMessages;
@@ -55,7 +55,12 @@ impl ChunkColumn {
         self.loaded
     }
 
-    pub fn change_block(&mut self, section: u32, chunk_block: &ChunkBlockPosition, new_block_info: Option<BlockInfo>) {
+    pub fn change_block(
+        &mut self,
+        section: u32,
+        chunk_block: &ChunkBlockPosition,
+        new_block_info: Option<BlockDataInfo>,
+    ) {
         self.sections.change_block(section, &chunk_block, new_block_info);
     }
 

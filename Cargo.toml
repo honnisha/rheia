@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "rheia-client",
-    "rheia-client-bevy",
     "rheia-server",
     "rheia-common",
     "rheia-physics",

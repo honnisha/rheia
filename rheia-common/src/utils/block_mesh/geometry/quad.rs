@@ -1,4 +1,4 @@
-use crate::blocks::block_info::BlockInfo;
+use crate::chunks::chunk_data::BlockDataInfo;
 
 /// The minimum voxel and size of a quad, without an orientation. To get the
 /// actual corners of the quad, combine with an [`OrientedBlockFace`].
@@ -34,5 +34,5 @@ impl From<UnorientedUnitQuad> for UnorientedQuad {
 pub struct UnorientedUnitQuad {
     /// The minimum voxel in the quad.
     pub minimum: [u32; 3],
-    pub block_info: Option<BlockInfo>,
+    pub block_info: Option<BlockDataInfo>,
 }

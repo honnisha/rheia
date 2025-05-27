@@ -9,7 +9,7 @@ use ndshape::Shape;
 
 use crate::blocks::voxel_visibility::{Voxel, VoxelVisibility};
 
-use super::{bounds::assert_in_bounds, OrientedBlockFace, QuadBuffer, UnorientedQuad};
+use super::{OrientedBlockFace, QuadBuffer, UnorientedQuad, bounds::assert_in_bounds};
 
 pub trait MergeVoxel: Voxel {
     type MergeValue: Eq;
@@ -239,7 +239,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{blocks::block_info::BlockInfo, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
+    use crate::{chunks::chunk_data::BlockDataInfo, utils::block_mesh::RIGHT_HANDED_Y_UP_CONFIG};
 
     use super::*;
     use ndshape::{ConstShape, ConstShape3u32};
@@ -291,7 +291,7 @@ mod tests {
             }
         }
 
-        fn get_block_info(&self) -> &Option<BlockInfo> {
+        fn get_block_info(&self) -> &Option<BlockDataInfo> {
             todo!()
         }
     }

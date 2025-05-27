@@ -317,6 +317,7 @@ impl INode for MainScene {
             let network_info = match handle_network_events(self) {
                 Ok(i) => i,
                 Err(e) => {
+                    log::error!(target: "main", "Network error: {}", e);
                     self.send_disconnect_event(format!("Network error: {}", e));
                     return;
                 }

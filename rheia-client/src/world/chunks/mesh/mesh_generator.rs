@@ -8,8 +8,8 @@ use crate::{
 };
 use common::{
     CHUNK_SIZE,
-    blocks::{block_info::BlockInfo, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
-    chunks::position::Vector3 as NetworkVector3,
+    blocks::{chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
+    chunks::{chunk_data::BlockDataInfo, position::Vector3 as NetworkVector3},
     utils::block_mesh::{
         QuadBuffer, RIGHT_HANDED_Y_UP_CONFIG, UnorientedQuad,
         buffer::UnitQuadBuffer,
@@ -28,7 +28,7 @@ use godot::{
 use ndshape::ConstShape;
 use physics::{PhysicsColliderBuilder, physics::IPhysicsColliderBuilder};
 
-pub(crate) fn _get_test_sphere(radius: f32, block_info: BlockInfo) -> ChunkColliderDataBordered {
+pub(crate) fn _get_test_sphere(radius: f32, block_info: BlockDataInfo) -> ChunkColliderDataBordered {
     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Opaque, None); ChunkBordersShape::SIZE as usize];
 
     for i in 0u32..(ChunkBordersShape::SIZE as u32) {

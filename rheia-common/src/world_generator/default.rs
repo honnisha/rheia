@@ -1,15 +1,16 @@
 use crate::{
-    blocks::block_info::BlockInfo,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
     chunks::{
         block_position::ChunkBlockPosition,
-        chunk_data::{ChunkData, ChunkSectionData},
+        chunk_data::{BlockDataInfo, ChunkData, ChunkSectionData},
         chunk_position::ChunkPosition,
     },
-    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
 use serde::{Deserialize, Serialize};
+
+use super::traits::IWorldGenerator;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WorldGeneratorSettings {
@@ -24,8 +25,10 @@ pub struct WorldGenerator {
     _settings: WorldGeneratorSettings,
 }
 
-impl WorldGenerator {
-    pub fn create(seed: Option<u64>, settings: WorldGeneratorSettings) -> Result<Self, String> {
+impl IWorldGenerator for WorldGenerator {
+    type Error = String;
+
+    fn create(seed: Option<u64>, settings: WorldGeneratorSettings) -> Result<Self, Self::Error> {
         let seed = match seed {
             Some(s) => s,
             None => {
@@ -48,7 +51,7 @@ impl WorldGenerator {
         })
     }
 
-    pub fn generate_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData {
+    fn generate_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData {
         let mut chunk_data: ChunkData = Default::default();
         for y in 0..VERTICAL_SECTIONS {
             let chunk_section = self.generate_section_data(&chunk_position, y);
@@ -56,7 +59,9 @@ impl WorldGenerator {
         }
         chunk_data
     }
+}
 
+impl WorldGenerator {
     fn generate_section_data(&self, chunk_position: &ChunkPosition, vertical_index: usize) -> ChunkSectionData {
         let mut section_data: ChunkSectionData = Default::default();
 
@@ -73,12 +78,12 @@ impl WorldGenerator {
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
-                        section_data.insert(&pos, BlockInfo::create(1, None));
+                        section_data.insert(&pos, BlockDataInfo::create(1, None));
                         // GrassBlock
                     }
 
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        section_data.insert(&pos, BlockInfo::create(1, None));
+                        section_data.insert(&pos, BlockDataInfo::create(1, None));
                         // GrassBlock
                     }
                 }

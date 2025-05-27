@@ -18,7 +18,7 @@ pub struct TextScreen {
 
 impl TextScreen {
     pub fn update_text(&mut self, text: String) {
-        let msg = format!("[center]{}[/center]", parse_to_console_godot(&text));
+        let msg = format!("{}", parse_to_console_godot(&text));
         self.text.as_mut().unwrap().set_text(&msg);
     }
 

@@ -123,6 +123,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
 
                     let is_last = index + 1 >= total;
                     if is_last {
+                        log::info!(target: "network", "Resource pack downloaded!");
                         resource_manager.check_archive_hash().unwrap();
                         let archive_hash = resource_manager.get_archive_hash().unwrap().clone();
                         let path = ResourceManager::get_saved_resource_path(&archive_hash).unwrap();
@@ -181,7 +182,17 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 main.on_server_connected();
             }
 
-            ServerMessages::SpawnWorld { world_slug } => {
+            ServerMessages::SpawnWorld {
+                world_slug,
+                block_id_map,
+            } => {
+                let worlds_manager = main.get_wm().clone();
+                let wm = worlds_manager.bind();
+                let mut block_storage = wm.get_block_storage_mut();
+
+                log::info!(target: "network", "World \"{}\" block id map is set", world_slug);
+                block_storage.set_block_id_map(block_id_map);
+
                 main.spawn_world(world_slug);
                 main.get_text_screen_mut().toggle(false);
             }

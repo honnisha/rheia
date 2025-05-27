@@ -1,11 +1,11 @@
 use arrayvec::ArrayVec;
 use common::{
-    blocks::{
-        block_info::BlockInfo, block_type::BlockType, chunk_collider_info::ChunkColliderInfo,
-        voxel_visibility::VoxelVisibility,
-    },
-    chunks::{block_position::ChunkBlockPosition, chunk_data::ChunkSectionData},
     CHUNK_SIZE, VERTICAL_SECTIONS,
+    blocks::{block_type::BlockType, chunk_collider_info::ChunkColliderInfo, voxel_visibility::VoxelVisibility},
+    chunks::{
+        block_position::ChunkBlockPosition,
+        chunk_data::{BlockDataInfo, ChunkSectionData},
+    },
 };
 use ndshape::ConstShape;
 
@@ -17,7 +17,7 @@ use super::{
     near_chunk_data::NearChunksData,
 };
 
-fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorage) -> Result<ChunkColliderInfo, String> {
+fn get_collider(info: Option<&BlockDataInfo>, block_storage: &BlockStorage) -> Result<ChunkColliderInfo, String> {
     let collider = match info {
         Some(block_info) => {
             let block_type = match block_storage.get(&block_info.get_id()) {
@@ -37,7 +37,7 @@ fn get_collider(info: Option<&BlockInfo>, block_storage: &BlockStorage) -> Resul
     Ok(collider)
 }
 
-pub fn generate_single_block(block_type: &BlockType, block_info: &BlockInfo) -> ChunkColliderDataBordered {
+pub fn generate_single_block(block_type: &BlockType, block_info: &BlockDataInfo) -> ChunkColliderDataBordered {
     let mut b_chunk = [ChunkColliderInfo::create(VoxelVisibility::Empty, None); ChunkBordersShape::SIZE as usize];
 
     let collider = ChunkColliderInfo::create(block_type.get_voxel_visibility().clone(), Some(block_info.clone()));

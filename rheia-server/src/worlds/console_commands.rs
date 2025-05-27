@@ -2,6 +2,7 @@ use bevy_ecs::world::World;
 use bracket_lib::random::RandomNumberGenerator;
 use common::world_generator::default::WorldGeneratorSettings;
 
+use crate::client_resources::server_settings::ServerSettings;
 use crate::console::command::{Arg, Command, CommandMatch};
 use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
@@ -30,6 +31,9 @@ pub(crate) fn command_world(
 ) -> Result<(), CommandError> {
     let launch_settings = world.get_resource::<LaunchSettings>().unwrap();
     let world_storage_settings = launch_settings.get_world_storage_settings();
+
+    let server_settings = world.get_resource::<ServerSettings>().unwrap();
+    let blocks = server_settings.get_blocks().clone();
 
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
 
@@ -70,6 +74,7 @@ pub(crate) fn command_world(
                     seed,
                     WorldGeneratorSettings::default(),
                     &world_storage_settings,
+                    &blocks,
                 );
                 match world {
                     Ok(_) => {

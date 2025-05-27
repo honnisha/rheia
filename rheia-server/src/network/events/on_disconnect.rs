@@ -54,7 +54,7 @@ pub fn on_disconnect(
 
                 world_manager.despawn_player(&c);
             }
-            None => return,
+            None => (),
         };
         clients.remove(&event.client.get_client_id());
     }

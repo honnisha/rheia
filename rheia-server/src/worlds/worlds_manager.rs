@@ -5,8 +5,10 @@ use bevy::prelude::Resource;
 use bevy::time::Time;
 use bevy_ecs::system::Res;
 use common::{
-    world_generator::default::WorldGeneratorSettings, worlds_storage::taits::IWorldStorage,
-    worlds_storage::taits::WorldStorageSettings, WorldStorageManager,
+    WorldStorageManager,
+    blocks::block_type::BlockType,
+    world_generator::default::WorldGeneratorSettings,
+    worlds_storage::taits::{IWorldStorage, WorldStorageSettings},
 };
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -29,7 +31,11 @@ impl Default for WorldsManager {
 }
 
 impl WorldsManager {
-    pub fn scan_worlds(&mut self, world_storage_settings: &WorldStorageSettings) -> Result<(), String> {
+    pub fn scan_worlds(
+        &mut self,
+        world_storage_settings: &WorldStorageSettings,
+        blocks: &Vec<BlockType>,
+    ) -> Result<(), String> {
         let worlds_info = match WorldStorageManager::scan_worlds(world_storage_settings) {
             Ok(w) => w,
             Err(e) => {
@@ -42,6 +48,7 @@ impl WorldsManager {
                 world_info.seed,
                 WorldGeneratorSettings::default(),
                 &world_storage_settings,
+                blocks,
             )
             .unwrap();
             log::info!(target: "worlds", "World &a\"{}\"&r loaded", world_info.slug);
@@ -66,11 +73,12 @@ impl WorldsManager {
         seed: u64,
         world_settings: WorldGeneratorSettings,
         world_storage_settings: &WorldStorageSettings,
+        blocks: &Vec<BlockType>,
     ) -> Result<(), String> {
         if self.worlds.contains_key(&slug) {
             return Err(format!("World with slug \"{}\" already exists", slug));
         }
-        let world = match WorldManager::new(slug.clone(), seed, world_settings, world_storage_settings) {
+        let world = match WorldManager::new(slug.clone(), seed, world_settings, world_storage_settings, blocks) {
             Ok(w) => w,
             Err(e) => return Err(format!("World error: \"{}\"", e)),
         };

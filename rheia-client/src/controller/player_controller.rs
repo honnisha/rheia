@@ -13,7 +13,8 @@ use crate::scenes::components::block_menu::BlockMenu;
 use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector, IntoNetworkVector};
 use crate::world::physics::{PhysicsProxy, PhysicsType};
 use crate::world::worlds_manager::WorldsManager;
-use common::blocks::block_info::{BlockFace, BlockInfo};
+use common::blocks::block_info::BlockFace;
+use common::chunks::chunk_data::BlockDataInfo;
 use common::chunks::rotation::Rotation;
 use godot::classes::input::MouseMode;
 use godot::classes::{Engine, Input};
@@ -408,7 +409,7 @@ impl PlayerController {
 
     #[func]
     fn on_block_selected(&mut self, block: Gd<BlockIconSelect>) {
-        let block_info = BlockInfo::create(*block.bind().get_block_id(), None);
+        let block_info = BlockDataInfo::create(*block.bind().get_block_id(), None);
         self.set_selected_item(Some(SelectedItem::BlockPlacing(block_info)));
     }
 
@@ -494,8 +495,7 @@ impl INode3D for PlayerController {
                     if self.controls.bind().is_rotate_left() {
                         block_info.set_face(Some(face.rotate_left()));
                         selected_item_updated = true;
-                    }
-                    else if self.controls.bind().is_rotate_right() {
+                    } else if self.controls.bind().is_rotate_right() {
                         block_info.set_face(Some(face.rotate_right()));
                         selected_item_updated = true;
                     }

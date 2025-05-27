@@ -4,7 +4,7 @@ use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
     client_resources::{
-        resources_manager::{ResourceManager, ARCHIVE_CHUNK_SIZE},
+        resources_manager::{ARCHIVE_CHUNK_SIZE, ResourceManager},
         server_settings::ServerSettings,
     },
     network::client_network::ClientNetwork,
@@ -53,9 +53,9 @@ pub fn on_media_loaded(
         }
 
         // Send server settings
-        let msg = ServerMessages::Settings {
-            block_types: server_settings.get_block_types().clone(),
-        };
-        event.client.send_message(NetworkMessageType::ReliableOrdered, &msg);
+        event.client.send_message(
+            NetworkMessageType::ReliableOrdered,
+            &server_settings.get_network_settings(),
+        );
     }
 }

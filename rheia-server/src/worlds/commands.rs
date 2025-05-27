@@ -54,6 +54,7 @@ impl Command for SpawnPlayer {
             // Send world creation message
             let spawn_world = ServerMessages::SpawnWorld {
                 world_slug: self.world_slug.clone(),
+                block_id_map: world_manager.get_block_id_map().clone(),
             };
             self.client
                 .send_message(NetworkMessageType::ReliableOrdered, &spawn_world);

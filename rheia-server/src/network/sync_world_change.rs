@@ -1,6 +1,6 @@
-use common::{
-    blocks::block_info::BlockInfo,
-    chunks::block_position::{BlockPosition, BlockPositionTrait},
+use common::chunks::{
+    block_position::{BlockPosition, BlockPositionTrait},
+    chunk_data::BlockDataInfo,
 };
 use network::messages::{NetworkMessageType, ServerMessages};
 
@@ -11,7 +11,7 @@ use super::client_network::ClientNetwork;
 pub fn sync_world_block_change(
     world_manager: &WorldManager,
     position: BlockPosition,
-    new_block_info: Option<BlockInfo>,
+    new_block_info: Option<BlockDataInfo>,
 ) {
     let ecs = world_manager.get_ecs();
 

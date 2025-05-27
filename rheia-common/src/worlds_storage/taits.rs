@@ -1,6 +1,11 @@
+use crate::{
+    blocks::block_type::BlockType,
+    chunks::{
+        chunk_data::{BlockIndexType, ChunkData},
+        chunk_position::ChunkPosition,
+    },
+};
 use std::path::PathBuf;
-
-use crate::chunks::{chunk_data::ChunkData, chunk_position::ChunkPosition};
 
 #[derive(Default)]
 pub struct WorldStorageSettings {
@@ -33,4 +38,10 @@ pub trait IWorldStorage: Sized {
     fn delete(&self, settings: &WorldStorageSettings) -> Result<(), String>;
 
     fn scan_worlds(settings: &WorldStorageSettings) -> Result<Vec<WorldInfo>, String>;
+
+    fn update_block_id_map(
+        world_slug: String,
+        settings: &WorldStorageSettings,
+        blocks: &Vec<BlockType>,
+    ) -> Result<std::collections::HashMap<BlockIndexType, String>, String>;
 }

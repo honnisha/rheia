@@ -14,7 +14,7 @@ pub fn generate_texture(
     let size = 16 * 32;
     let mut img: RgbaImage = ImageBuffer::new(size, size);
 
-    for (_index, block_type) in block_storage.iter() {
+    for block_type in block_storage.iter_values() {
         match block_type.get_block_content() {
             BlockContent::Texture {
                 texture,

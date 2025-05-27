@@ -1,23 +1,37 @@
-use std::collections::HashMap;
-
 use crate::{
-    blocks::block_info::BlockInfo,
-    chunks::{block_position::ChunkBlockPosition, chunk_position::ChunkPosition},
-    CHUNK_SIZE,
+    CHUNK_SIZE, VERTICAL_SECTIONS,
+    chunks::{
+        block_position::ChunkBlockPosition,
+        chunk_data::{BlockDataInfo, ChunkData, ChunkSectionData},
+        chunk_position::ChunkPosition,
+    },
 };
 
-use super::ChunkDataType;
+use super::{default::WorldGeneratorSettings, traits::IWorldGenerator};
 
 #[derive(Default)]
 pub struct SphereWorldGenerator {}
 
-impl SphereWorldGenerator {
-    pub fn new(_seed: u64) -> Self {
-        Self {}
+impl IWorldGenerator for SphereWorldGenerator {
+    type Error = String;
+
+    fn create(_seed: Option<u64>, _settings: WorldGeneratorSettings) -> Result<Self, Self::Error> {
+        Ok(Self {})
     }
 
-    pub fn generate_chunk_data(&self, _chunk_position: &ChunkPosition, _vertical_index: usize) -> ChunkDataType {
-        let mut chunk_data: ChunkDataType = HashMap::new();
+    fn generate_chunk_data(&self, chunk_position: &ChunkPosition) -> ChunkData {
+        let mut chunk_data: ChunkData = Default::default();
+        for y in 0..VERTICAL_SECTIONS {
+            let chunk_section = self.generate_section_data(&chunk_position, y);
+            chunk_data.push_section(chunk_section);
+        }
+        chunk_data
+    }
+}
+
+impl SphereWorldGenerator {
+    fn generate_section_data(&self, _chunk_position: &ChunkPosition, _vertical_index: usize) -> ChunkSectionData {
+        let mut section_data: ChunkSectionData = Default::default();
 
         let center = CHUNK_SIZE as f32 / 2.0;
 
@@ -31,11 +45,11 @@ impl SphereWorldGenerator {
 
                     if d < 10.0 {
                         let pos = ChunkBlockPosition::new(x, y, z);
-                        chunk_data.insert(pos, BlockInfo::create(1, None));
+                        section_data.insert(&pos, BlockDataInfo::create(1, None));
                     };
                 }
             }
         }
-        chunk_data
+        section_data
     }
 }

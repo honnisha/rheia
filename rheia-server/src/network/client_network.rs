@@ -49,7 +49,7 @@ impl WorldEntity {
 pub struct ClientInfo {
     login: String,
     version: String,
-    architecture: String,
+    _architecture: String,
     _rendering_device: String,
 }
 
@@ -58,7 +58,7 @@ impl ClientInfo {
         Self {
             login: event.login.clone(),
             version: event.version.clone(),
-            architecture: event.architecture.clone(),
+            _architecture: event.architecture.clone(),
             _rendering_device: event.rendering_device.clone(),
         }
     }
@@ -71,8 +71,8 @@ impl ClientInfo {
         &self.version
     }
 
-    pub fn get_architecture(&self) -> &String {
-        &self.architecture
+    pub fn _get_architecture(&self) -> &String {
+        &self._architecture
     }
 }
 

@@ -11,11 +11,11 @@ use crate::{
 };
 use ahash::HashMap;
 use common::{
-    blocks::{
-        block_info::{BlockIndexType, BlockInfo},
-        block_type::{BlockContent, BlockType},
+    blocks::block_type::{BlockContent, BlockType},
+    chunks::{
+        block_position::BlockPosition,
+        chunk_data::{BlockDataInfo, BlockIndexType},
     },
-    chunks::block_position::BlockPosition,
 };
 use godot::{
     classes::{Material, MeshInstance3D},
@@ -51,7 +51,7 @@ impl BlockMeshStorage {
                 side_texture: _,
                 bottom_texture: _,
             } => {
-                let block_info = BlockInfo::create(block_id, None);
+                let block_info = BlockDataInfo::create(block_id, None);
                 let bordered_chunk_data = generate_single_block(&block_type, &block_info);
                 let geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data, &block_storage);
 
@@ -101,9 +101,13 @@ impl BlockMeshStorage {
     ) -> Gd<Self> {
         let mut storage: Self = Default::default();
 
-        for (block_id, block_type) in block_storage.iter() {
+        for (block_slug, block_type) in block_storage.iter() {
+            let block_id = match block_storage.get_block_id(block_slug) {
+                Some(i) => i,
+                None => panic!("block_slug \"{}\" id not found", block_slug),
+            };
             storage.generate_block_mesh(
-                *block_id,
+                block_id,
                 block_type,
                 material,
                 texture_mapper,

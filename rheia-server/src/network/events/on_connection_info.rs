@@ -46,12 +46,11 @@ pub fn on_connection_info(
         let client_info = event.client.get_client_info().unwrap();
         log::info!(
             target: "network",
-            "Connected ip:&e{}&r login:&a{}&r id:&e{}&r version:&e{}&r os:&e{}",
+            "Connected ip:&e{}&r login:&a{}&r id:&e{}&r version:&e{}&r",
             event.client.get_client_ip(),
             client_info.get_login(),
             event.client.get_client_id(),
             client_info.get_version(),
-            client_info.get_architecture(),
         );
 
         if resources_manager.has_any_resources() {

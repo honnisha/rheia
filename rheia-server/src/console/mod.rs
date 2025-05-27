@@ -1,6 +1,8 @@
 use bevy_app::{App, Plugin, Update, Startup};
 use bevy_ecs::{system::ResMut, world::World};
 
+use crate::network::runtime_plugin::RuntimePlugin;
+
 use self::{console_handler::ConsoleHandler, commands_executer::CommandsHandler, console_sender::Console, completer::{CustomCompleter, CompleteResponse}};
 
 pub mod commands_executer;
@@ -45,5 +47,8 @@ fn handler_console_complete(world: &mut World) {
 }
 
 fn run_handler(mut console_handler: ResMut<ConsoleHandler>) {
+    if RuntimePlugin::is_stopped() {
+        return;
+    }
     console_handler.run_handler();
 }

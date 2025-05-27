@@ -1,3 +1,4 @@
+use common::blocks::block_type::{BlockContent, BlockType};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Iter;
 use std::{collections::HashMap, path::PathBuf};
@@ -12,6 +13,8 @@ pub struct ResourceManifest {
     pub version: Option<String>,
     pub client_scripts: Option<Vec<String>>,
     pub media: Option<Vec<String>>,
+
+    pub blocks: Option<Vec<BlockType>>,
 }
 
 /// scripts: short_path, code
@@ -22,6 +25,8 @@ pub struct ResourceInstance {
     version: Option<String>,
     scripts: HashMap<String, String>,
     media: HashMap<String, Vec<u8>>,
+
+    blocks: Vec<BlockType>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -76,6 +81,7 @@ impl ResourceInstance {
             version: None,
             scripts: Default::default(),
             media: Default::default(),
+            blocks: Default::default(),
         }
     }
 
@@ -83,7 +89,7 @@ impl ResourceInstance {
         let mut manifest_path = resource_path.clone();
         manifest_path.push("manifest.yml");
 
-        log::info!(target: "resources", "Start loading manifest &e\"{}\"", manifest_path.display());
+        log::debug!(target: "resources", "Start loading &e\"{}\"", manifest_path.display());
 
         let manifest_data = match std::fs::read_to_string(manifest_path.clone()) {
             Ok(d) => d,
@@ -104,6 +110,11 @@ impl ResourceInstance {
             Some(t) => t.clone(),
             None => manifest.slug.clone(),
         };
+        let blocks = match manifest.blocks {
+            Some(b) => b,
+            None => Default::default(),
+        };
+
         let mut inst = ResourceInstance {
             slug: manifest.slug.clone(),
             title: title,
@@ -111,6 +122,7 @@ impl ResourceInstance {
             version: manifest.version.clone(),
             scripts: HashMap::new(),
             media: HashMap::new(),
+            blocks: blocks,
         };
         if let Some(client_scripts) = &manifest.client_scripts {
             for client_script in client_scripts.iter() {
@@ -129,7 +141,6 @@ impl ResourceInstance {
         }
         if let Some(media_list) = &manifest.media {
             for media in media_list.iter() {
-
                 if !ResourceInstance::is_media_allowed(&media) {
                     return Err(format!("file extension is not supported &c{}", media));
                 }
@@ -140,14 +151,48 @@ impl ResourceInstance {
                 let data = match std::fs::read(media_path.clone()) {
                     Ok(v) => v,
                     Err(e) => {
-                        log::error!(target: "resources", "□ media content file &e\"{}\"&r error: &c{:?}", media_path.display(), e);
-                        continue;
+                        return Err(format!(
+                            "media content file &e\"{}\"&r error: &c{:?}",
+                            media_path.display(),
+                            e
+                        ));
                     }
                 };
                 inst.add_media(media.clone(), data);
             }
         }
+
         Ok(inst)
+    }
+
+    pub(crate) fn get_blocks(&self) -> Vec<BlockType> {
+        let mut blocks = self.blocks.clone();
+
+        for block_type in blocks.iter_mut() {
+            match block_type.get_block_content_mut() {
+                BlockContent::Texture {
+                    texture,
+                    side_texture,
+                    bottom_texture,
+                } => {
+                    *texture = self.local_to_global_path(&texture);
+                    if let Some(texture) = side_texture {
+                        *texture = self.local_to_global_path(texture);
+                    }
+                    if let Some(texture) = bottom_texture {
+                        *texture = self.local_to_global_path(texture);
+                    }
+                }
+                BlockContent::ModelCube { model, icon_size: _ } => {
+                    *model = self.local_to_global_path(model);
+                }
+            }
+        }
+        blocks
+    }
+
+    pub fn local_to_global_path(&self, path: &String) -> String {
+        format!("{}://{}", self.get_slug(), path)
     }
 
     fn is_media_allowed(media: &str) -> bool {

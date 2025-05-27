@@ -1,18 +1,14 @@
-use crate::utils::block_mesh::greedy::MergeVoxel;
-
-use super::{
-    block_info::BlockInfo,
-    voxel_visibility::{Voxel, VoxelVisibility},
-};
+use super::voxel_visibility::{Voxel, VoxelVisibility};
+use crate::{chunks::chunk_data::BlockDataInfo, utils::block_mesh::greedy::MergeVoxel};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ChunkColliderInfo {
     voxel_visibility: VoxelVisibility,
-    block_info: Option<BlockInfo>,
+    block_info: Option<BlockDataInfo>,
 }
 
 impl ChunkColliderInfo {
-    pub fn create(voxel_visibility: VoxelVisibility, block_info: Option<BlockInfo>) -> Self {
+    pub fn create(voxel_visibility: VoxelVisibility, block_info: Option<BlockDataInfo>) -> Self {
         Self {
             voxel_visibility,
             block_info,
@@ -44,7 +40,7 @@ impl Voxel for ChunkColliderInfo {
         self.voxel_visibility.clone()
     }
 
-    fn get_block_info(&self) -> &Option<BlockInfo> {
+    fn get_block_info(&self) -> &Option<BlockDataInfo> {
         &self.block_info
     }
 }

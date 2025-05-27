@@ -1,6 +1,6 @@
 use bevy::prelude::{Event, ResMut};
 use bevy_ecs::prelude::EventReader;
-use common::{blocks::block_info::BlockInfo, chunks::block_position::BlockPosition};
+use common::chunks::{block_position::BlockPosition, chunk_data::BlockDataInfo};
 use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
@@ -13,7 +13,7 @@ pub struct EditBlockEvent {
     client: ClientNetwork,
     world_slug: String,
     position: BlockPosition,
-    new_block_info: Option<BlockInfo>,
+    new_block_info: Option<BlockDataInfo>,
 }
 
 impl EditBlockEvent {
@@ -21,7 +21,7 @@ impl EditBlockEvent {
         client: ClientNetwork,
         world_slug: String,
         position: BlockPosition,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
     ) -> Self {
         Self {
             client,

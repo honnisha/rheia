@@ -10,10 +10,10 @@ use crate::{
 use ahash::{AHashMap, HashSet};
 use common::{
     CHUNK_SIZE, VERTICAL_SECTIONS,
-    blocks::{block_info::BlockInfo, block_type::BlockContent},
+    blocks::block_type::BlockContent,
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
-        chunk_data::ChunkData,
+        chunk_data::{BlockDataInfo, ChunkData},
         chunk_position::ChunkPosition,
     },
 };
@@ -176,7 +176,7 @@ impl ChunkMap {
         &self,
         position: BlockPosition,
         block_storage: &BlockStorage,
-        new_block_info: Option<BlockInfo>,
+        new_block_info: Option<BlockDataInfo>,
         physics: &PhysicsProxy,
         resource_storage: &ResourceStorage,
     ) -> Result<(), String> {
