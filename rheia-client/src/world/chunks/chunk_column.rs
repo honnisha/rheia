@@ -137,7 +137,7 @@ impl ChunkColumn {
         self.loaded.store(true, Ordering::Relaxed);
     }
 
-    pub fn _get_chunk_position(&self) -> &ChunkPosition {
+    pub fn get_chunk_position(&self) -> &ChunkPosition {
         &self.chunk_position
     }
 

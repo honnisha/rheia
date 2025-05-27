@@ -32,6 +32,8 @@ pub(crate) fn generate_chunk(
     rayon::spawn(move || {
         let data = chunk_column.read().get_data_lock().clone();
 
+        let chunk_position = chunk_column.read().get_chunk_position().clone();
+
         chunk_column.read().spawn_sections(&material_instance_id);
         for y in 0..VERTICAL_SECTIONS {
             let (bordered_chunk_data, mesh_count) =
@@ -45,7 +47,6 @@ pub(crate) fn generate_chunk(
                 chunk_section.bind_mut().set_new_geometry(geometry);
 
                 let mut cs = chunk_section.bind_mut();
-                let chunk_position = cs.get_chunk_position().clone();
                 let objects_container = cs.get_objects_container_mut();
 
                 let d = data.read();

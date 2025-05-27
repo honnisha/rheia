@@ -54,6 +54,50 @@ lazy_static! {
                 },
             ),
         );
+        m.insert(
+            5,
+            BlockType::new(
+                VoxelVisibility::Opaque,
+                BlockContent::Texture {
+                    texture: "default://assets/block/acacia_log_top.png".to_string(),
+                    side_texture: Some("default://assets/block/acacia_log.png".to_string()),
+                    bottom_texture: None,
+                },
+            ),
+        );
+        m.insert(
+            6,
+            BlockType::new(
+                VoxelVisibility::Opaque,
+                BlockContent::Texture {
+                    texture: "default://assets/block/acacia_log_top.png".to_string(),
+                    side_texture: None,
+                    bottom_texture: None,
+                },
+            ),
+        );
+        m.insert(
+            7,
+            BlockType::new(
+                VoxelVisibility::Translucent,
+                BlockContent::Texture {
+                    texture: "default://assets/block/acacia_planks.png".to_string(),
+                    side_texture: None,
+                    bottom_texture: None,
+                },
+            ),
+        );
+        m.insert(
+            8,
+            BlockType::new(
+                VoxelVisibility::Translucent,
+                BlockContent::Texture {
+                    texture: "default://assets/block/amethyst_block.png".to_string(),
+                    side_texture: None,
+                    bottom_texture: None,
+                },
+            ),
+        );
         m
     };
 }

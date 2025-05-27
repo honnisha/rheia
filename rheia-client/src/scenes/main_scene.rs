@@ -271,8 +271,6 @@ impl INode for MainScene {
             if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
                 log::error!(target: "main", "log::set_logger error: {}", e)
             }
-
-            self.regenerate_debug_world(false);
         } else {
             // Debug
             let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();

@@ -29,7 +29,8 @@ pub fn generate_chunks(
 
     // Generate chunks using rayon paralelism
     chunks.par_iter_mut().for_each(|(chunk_pos, data)| {
-        *data = Some(generate_chunk(&world_generator, &chunk_pos));
+        let sections = world_generator.generate_chunk_data(&chunk_pos);
+        *data = Some(sections);
     });
 
     for (chunk_pos, data) in chunks {
@@ -37,8 +38,4 @@ pub fn generate_chunks(
     }
 
     log::info!(target: "world_generator", "Chunks generated (executed:{:.2?})", now.elapsed());
-}
-
-fn generate_chunk(world_generator: &WorldGenerator, chunk_position: &ChunkPosition) -> ChunkData {
-    world_generator.generate_chunk_data(&chunk_position)
 }

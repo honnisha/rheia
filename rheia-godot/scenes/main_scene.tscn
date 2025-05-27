@@ -26,7 +26,7 @@ worlds_manager = NodePath("WorldsManager")
 console_scene = ExtResource("1_rga66")
 text_screen_scene = ExtResource("2_773ro")
 debug_info_scene = ExtResource("3_qwjw3")
-debug_render_distance = 14
+debug_render_distance = 16
 debug_world_settings = "res://assets/world_settings.json"
 
 [node name="WorldsManager" type="WorldsManager" parent="."]

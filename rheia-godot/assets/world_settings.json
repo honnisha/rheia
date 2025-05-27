@@ -1,6 +1,6 @@
 {
 	"fractal_type": 1,
-	"fractal_gain": 3.0,
+	"fractal_gain": 1.0,
 	"fractal_lacunarity": 1.0,
 	"frequency": 3.0
 }
