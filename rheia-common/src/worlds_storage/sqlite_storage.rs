@@ -1,16 +1,14 @@
 use std::{
+    collections::BTreeMap,
     fs::{create_dir_all, read_dir, remove_file},
     io::{Seek, SeekFrom, Write},
 };
 
 use rusqlite::{Connection, DatabaseName, OptionalExtension, blob::ZeroBlob};
 
-use crate::{
-    blocks::{block_info::generate_block_id, block_type::BlockType},
-    chunks::{
-        chunk_data::{BlockIndexType, ChunkData},
-        chunk_position::ChunkPosition,
-    },
+use crate::chunks::{
+    chunk_data::{BlockIndexType, ChunkData},
+    chunk_position::ChunkPosition,
 };
 
 use super::taits::{IWorldStorage, WorldInfo, WorldStorageSettings};
@@ -221,11 +219,11 @@ impl IWorldStorage for SQLiteStorage {
         Ok(())
     }
 
-    fn update_block_id_map(
+    fn validate_block_id_map(
         world_slug: String,
         settings: &WorldStorageSettings,
-        blocks: &Vec<BlockType>,
-    ) -> Result<std::collections::HashMap<BlockIndexType, String>, String> {
+        block_id_map: &BTreeMap<BlockIndexType, String>,
+    ) -> Result<(), String> {
         let mut path = settings.get_data_path().clone();
         path.push("worlds");
         path.push(format!("{}.db", world_slug));
@@ -250,43 +248,45 @@ impl IWorldStorage for SQLiteStorage {
             })
             .unwrap();
 
-        let mut last_id: Option<BlockIndexType> = None;
-
-        let mut block_id_map: std::collections::HashMap<BlockIndexType, String> = Default::default();
         let mut existing_blocks: Vec<String> = Default::default();
         for block_row in ids_result {
             let block_row = block_row.unwrap();
-            last_id = Some(block_row.block_id.clone());
-            block_id_map.insert(block_row.block_id, block_row.block_slug.clone());
-            existing_blocks.push(block_row.block_slug.clone());
 
+            // Check that saved id map contains all block from world
             let mut block_exists = false;
-            for block_type in blocks.iter() {
-                if *block_type.get_slug() == block_row.block_slug {
+            for (block_id, block_slug) in block_id_map.iter() {
+                if *block_slug == block_row.block_slug {
+                    if *block_id != block_row.block_id {
+                        return Err(format!(
+                            "&cblock &4\"{}\"&c id is not match; world_id:{} saved_id:{}",
+                            block_slug, block_row.block_id, block_id
+                        ));
+                    }
                     block_exists = true;
                 }
             }
             if !block_exists {
                 return Err(format!(
-                    "&cworld block \"{}\" doesn't exists in resources",
+                    "&cblock &4\"{}\"&c doesn't exists in resources",
                     block_row.block_slug
                 ));
             }
+            existing_blocks.push(block_row.block_slug.clone());
         }
 
-        for block_type in blocks.iter() {
-            if !existing_blocks.contains(block_type.get_slug()) {
+        // Check that all blocks exists inside world and write if not
+        for (block_id, block_slug) in block_id_map.iter() {
+            if !existing_blocks.contains(&block_slug) {
                 // Block id is not exists in the world;
-                let block_id = generate_block_id(&block_type, last_id);
-                last_id = Some(block_id.clone());
-                if let Err(e) = db.execute(SQL_INSERT_ID, (block_id, block_type.get_slug().clone())) {
-                    return Err(format!("Block id insert error: &c{}", e));
+                if let Err(e) = db.execute(SQL_INSERT_ID, (block_id.clone(), block_slug.clone())) {
+                    return Err(format!(
+                        "Block id #{} \"{}\" insert error: &c{}",
+                        block_id, block_slug, e
+                    ));
                 }
-                block_id_map.insert(block_id, block_type.get_slug().clone());
             }
         }
-
-        Ok(block_id_map)
+        Ok(())
     }
 }
 

@@ -1,21 +1,3 @@
-use std::thread;
-
-use bevy::time::Time;
-use bevy_app::{App, Update};
-use bevy_ecs::change_detection::Mut;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::schedule::IntoScheduleConfigs;
-use bevy_ecs::{
-    prelude::EventWriter,
-    system::{Res, ResMut},
-    world::World,
-};
-use flume::{Receiver, Sender};
-use lazy_static::lazy_static;
-use network::NetworkServer;
-use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
-use network::server::{ConnectionMessages, IServerConnection, IServerNetwork};
-
 use super::events::{
     on_connection::{PlayerConnectionEvent, on_connection},
     on_connection_info::{PlayerConnectionInfoEvent, on_connection_info},
@@ -33,6 +15,22 @@ use crate::network::client_network::ClientNetwork;
 use crate::network::clients_container::ClientsContainer;
 use crate::network::sync_players::PlayerSpawnEvent;
 use crate::{LaunchSettings, console::commands_executer::CommandsHandler};
+use bevy::time::Time;
+use bevy_app::{App, Update};
+use bevy_ecs::change_detection::Mut;
+use bevy_ecs::resource::Resource;
+use bevy_ecs::schedule::IntoScheduleConfigs;
+use bevy_ecs::{
+    prelude::EventWriter,
+    system::{Res, ResMut},
+    world::World,
+};
+use flume::{Receiver, Sender};
+use lazy_static::lazy_static;
+use network::NetworkServer;
+use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use network::server::{ConnectionMessages, IServerConnection, IServerNetwork};
+use std::thread;
 
 const MIN_TICK_TIME: std::time::Duration = std::time::Duration::from_millis(50);
 
@@ -67,7 +65,7 @@ impl NetworkPlugin {
         let server_settings = app.world().get_resource::<LaunchSettings>().unwrap();
         let ip_port = format!("{}:{}", server_settings.get_args().ip, server_settings.get_args().port);
 
-        log::info!(target: "network", "Starting server on {}", ip_port);
+        log::info!(target: "network", "Starting server on &6{}", ip_port);
 
         app.insert_resource(NetworkContainer::new(ip_port));
         app.insert_resource(ClientsContainer::default());

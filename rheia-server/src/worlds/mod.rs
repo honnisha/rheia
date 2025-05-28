@@ -1,12 +1,16 @@
 use bevy_app::{App, Plugin, Startup, Update};
+use bevy_ecs::schedule::IntoScheduleConfigs;
 pub mod commands;
 pub mod load_worlds;
 
-use crate::console::commands_executer::{CommandExecuter, CommandsHandler};
+use crate::{
+    client_resources::server_settings::rescan_server_settings,
+    console::commands_executer::{CommandExecuter, CommandsHandler},
+};
 
 use self::{
     console_commands::{command_parser_teleport, command_parser_world, command_teleport, command_world},
-    worlds_manager::{update_world_chunks, WorldsManager},
+    worlds_manager::{WorldsManager, update_world_chunks},
 };
 
 pub mod chunks;
@@ -33,7 +37,7 @@ impl Plugin for WorldsHandlerPlugin {
         let worlds_manager = WorldsManager::default();
         app.insert_resource(worlds_manager);
 
-        app.add_systems(Startup, load_worlds::load_worlds);
+        app.add_systems(Startup, load_worlds::load_worlds.after(rescan_server_settings));
         app.add_systems(Update, update_world_chunks);
         app.add_systems(Update, on_chunk_loaded::on_chunk_loaded);
     }

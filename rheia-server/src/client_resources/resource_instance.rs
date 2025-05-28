@@ -1,9 +1,21 @@
 use common::blocks::block_type::{BlockContent, BlockType};
+use common::blocks::voxel_visibility::VoxelVisibility;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Iter;
 use std::{collections::HashMap, path::PathBuf};
 
 const ALLOWED_FILES_EXT: &'static [&'static str] = &[".png", ".glb"];
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BlockTypeManifest {
+    slug: String,
+
+    #[serde(default)]
+    voxel_visibility: VoxelVisibility,
+
+    block_content: BlockContent,
+    category: Option<String>,
+}
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ResourceManifest {
@@ -14,7 +26,7 @@ pub struct ResourceManifest {
     pub client_scripts: Option<Vec<String>>,
     pub media: Option<Vec<String>>,
 
-    pub blocks: Option<Vec<BlockType>>,
+    pub blocks: Option<Vec<BlockTypeManifest>>,
 }
 
 /// scripts: short_path, code
@@ -110,10 +122,6 @@ impl ResourceInstance {
             Some(t) => t.clone(),
             None => manifest.slug.clone(),
         };
-        let blocks = match manifest.blocks {
-            Some(b) => b,
-            None => Default::default(),
-        };
 
         let mut inst = ResourceInstance {
             slug: manifest.slug.clone(),
@@ -122,8 +130,23 @@ impl ResourceInstance {
             version: manifest.version.clone(),
             scripts: HashMap::new(),
             media: HashMap::new(),
-            blocks: blocks,
+            blocks: Default::default(),
         };
+
+        let manifest_blocks = match manifest.blocks {
+            Some(b) => b,
+            None => Default::default(),
+        };
+        for block in manifest_blocks.iter() {
+            let category = match block.category.clone() {
+                Some(c) => c,
+                None => inst.slug.clone(),
+            };
+            let b = BlockType::new(block.slug.clone(), block.voxel_visibility, block.block_content.clone())
+                .category(category);
+            inst.blocks.push(b);
+        }
+
         if let Some(client_scripts) = &manifest.client_scripts {
             for client_script in client_scripts.iter() {
                 let mut script_path = resource_path.clone();

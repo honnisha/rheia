@@ -1,13 +1,13 @@
 use common::blocks::block_type::{BlockContent, BlockType};
 use common::blocks::default_blocks::DEFAULT_BLOCKS;
 use common::chunks::chunk_data::BlockIndexType;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use crate::client_scripts::resource_manager::ResourceStorage;
 
 pub struct BlockStorage {
     blocks: BTreeMap<String, BlockType>,
-    block_id_map: HashMap<BlockIndexType, String>,
+    block_id_map: BTreeMap<BlockIndexType, String>,
 }
 
 impl Default for BlockStorage {
@@ -27,11 +27,13 @@ impl Default for BlockStorage {
 
 impl BlockStorage {
     pub fn get(&self, k: &BlockIndexType) -> Option<&BlockType> {
-        let slug = self.block_id_map.get(k).expect("BlockStorage cannot find id block map");
+        let Some(slug) = self.block_id_map.get(k) else {
+            panic!("BlockStorage can't find block id #{} in block_id_map", k);
+        };
         self.blocks.get(slug)
     }
 
-    pub fn set_block_id_map(&mut self, block_id_map: HashMap<BlockIndexType, String>) {
+    pub fn set_block_id_map(&mut self, block_id_map: BTreeMap<BlockIndexType, String>) {
         self.block_id_map = block_id_map;
     }
 

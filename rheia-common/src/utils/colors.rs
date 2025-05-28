@@ -62,7 +62,7 @@ impl Color {
             Color::DarkRed => "31".into(),
             Color::DarkPurple => "35".into(),
             Color::Gold => "33".into(),
-            Color::Gray => "37".into(),
+            Color::Gray => "90".into(),
             Color::DarkGray => "90".into(),
             Color::Blue => "94".into(),
             Color::Green => "92".into(),

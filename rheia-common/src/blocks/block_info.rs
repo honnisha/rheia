@@ -47,9 +47,6 @@ impl BlockFace {
     }
 }
 
-pub fn generate_block_id(_block_type: &BlockType, last_id: Option<BlockIndexType>) -> BlockIndexType {
-    match last_id {
-        Some(id) => id + 1,
-        None => 0,
-    }
+pub fn generate_block_id(_block_type: &BlockType, last_id: BlockIndexType) -> BlockIndexType {
+    last_id + 1
 }

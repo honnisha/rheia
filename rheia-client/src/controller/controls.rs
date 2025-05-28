@@ -58,10 +58,10 @@ impl Controls {
 
     pub fn is_rotate_left(&self) -> bool {
         let input = Input::singleton();
-        if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) && input.is_key_pressed(Key::SHIFT) {
+        if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) && input.is_key_pressed(Key::SHIFT)
+        {
             return true;
-        }
-        else if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) {
+        } else if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) {
             return true;
         }
         return false;
@@ -69,10 +69,10 @@ impl Controls {
 
     pub fn is_rotate_right(&self) -> bool {
         let input = Input::singleton();
-        if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) && input.is_key_pressed(Key::SHIFT) {
+        if input.is_action_just_pressed(&ControllerActions::RotateLeft.to_string()) && input.is_key_pressed(Key::SHIFT)
+        {
             return true;
-        }
-        else if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) {
+        } else if input.is_action_just_pressed(&ControllerActions::RotateRight.to_string()) {
             return true;
         }
         return false;
@@ -137,12 +137,10 @@ impl INode for Controls {
 
     fn process(&mut self, delta: f64) {
         let captured = Input::singleton().get_mouse_mode() == MouseMode::CAPTURED;
-        if !self.window_focus || !captured {
-            return;
+        if self.window_focus && captured {
+            self.cam_rot.x += self.joyaxis_right.x * delta as f32 * JOYAXIS_SENSITIVITY;
+            self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
         }
-
-        self.cam_rot.x += self.joyaxis_right.x * delta as f32 * JOYAXIS_SENSITIVITY;
-        self.cam_rot.y += self.joyaxis_right.y * delta as f32 * JOYAXIS_SENSITIVITY;
 
         self.cam_rot.y = self.cam_rot.y.clamp(MIN_PITCH, MAX_PITCH);
 
@@ -196,5 +194,6 @@ impl INode for Controls {
                 self.cam_rot.y += event.get_relative().y * SENSITIVITY * -1.0;
             }
         }
+        self.cam_rot.y = self.cam_rot.y.clamp(MIN_PITCH, MAX_PITCH);
     }
 }

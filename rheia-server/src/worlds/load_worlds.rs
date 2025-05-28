@@ -20,9 +20,9 @@ pub(crate) fn load_worlds(
 
     let world_storage_settings = launch_settings.get_world_storage_settings();
 
-    if let Err(e) = worlds_manager.scan_worlds(&world_storage_settings, server_settings.get_blocks()) {
+    if let Err(e) = worlds_manager.scan_worlds(&world_storage_settings, server_settings.get_block_id_map()) {
         log::error!(target: "worlds", "&cWorlds loading error!");
-        log::error!(target: "worlds", "Error: {}", e);
+        log::error!(target: "worlds", "{}", e);
         RuntimePlugin::stop();
         return;
     }
@@ -37,7 +37,7 @@ pub(crate) fn load_worlds(
             seed,
             WorldGeneratorSettings::default(),
             &world_storage_settings,
-            server_settings.get_blocks(),
+            server_settings.get_block_id_map(),
         );
         match world {
             Ok(_) => {

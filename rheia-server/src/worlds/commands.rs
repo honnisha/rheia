@@ -5,8 +5,8 @@ use network::messages::{NetworkMessageType, ServerMessages};
 
 use crate::{
     entities::{
-        entity::{Position, Rotation},
         EntityComponent,
+        entity::{Position, Rotation},
     },
     network::{client_network::ClientNetwork, sync_players::PlayerSpawnEvent},
 };
@@ -54,7 +54,6 @@ impl Command for SpawnPlayer {
             // Send world creation message
             let spawn_world = ServerMessages::SpawnWorld {
                 world_slug: self.world_slug.clone(),
-                block_id_map: world_manager.get_block_id_map().clone(),
             };
             self.client
                 .send_message(NetworkMessageType::ReliableOrdered, &spawn_world);

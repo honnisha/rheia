@@ -73,17 +73,17 @@ impl BlockType {
         }
     }
 
+    pub fn category(mut self, category: String) -> Self {
+        self.category = category;
+        self
+    }
+
     pub fn get_slug(&self) -> &String {
         &self.slug
     }
 
     pub fn get_category(&self) -> &String {
         &self.category
-    }
-
-    pub fn category(mut self, category: String) -> Self {
-        self.category = category;
-        self
     }
 
     pub fn get_voxel_visibility(&self) -> &VoxelVisibility {

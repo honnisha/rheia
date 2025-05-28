@@ -152,7 +152,10 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 main.get_text_screen_mut()
                     .update_text(format!("Media downloading {}/{}", index + 1, total));
             }
-            ServerMessages::Settings { block_types } => {
+            ServerMessages::Settings {
+                block_types,
+                block_id_map,
+            } => {
                 log::info!(target: "network", "Recieved settings from the network");
 
                 {
@@ -162,6 +165,10 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                     {
                         let wm = worlds_manager.bind();
                         let mut block_storage = wm.get_block_storage_mut();
+
+                        block_storage.set_block_id_map(block_id_map);
+                        log::info!(target: "network", "Block id map is set");
+
                         if let Err(e) =
                             block_storage.load_blocks_types(block_types, &*resource_manager.get_resources_storage())
                         {
@@ -182,17 +189,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 main.on_server_connected();
             }
 
-            ServerMessages::SpawnWorld {
-                world_slug,
-                block_id_map,
-            } => {
-                let worlds_manager = main.get_wm().clone();
-                let wm = worlds_manager.bind();
-                let mut block_storage = wm.get_block_storage_mut();
-
-                log::info!(target: "network", "World \"{}\" block id map is set", world_slug);
-                block_storage.set_block_id_map(block_id_map);
-
+            ServerMessages::SpawnWorld { world_slug } => {
                 main.spawn_world(world_slug);
                 main.get_text_screen_mut().toggle(false);
             }

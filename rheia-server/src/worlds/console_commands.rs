@@ -33,7 +33,7 @@ pub(crate) fn command_world(
     let world_storage_settings = launch_settings.get_world_storage_settings();
 
     let server_settings = world.get_resource::<ServerSettings>().unwrap();
-    let blocks = server_settings.get_blocks().clone();
+    let block_id_map = server_settings.get_block_id_map().clone();
 
     let mut worlds_manager = world.resource_mut::<WorldsManager>();
 
@@ -74,7 +74,7 @@ pub(crate) fn command_world(
                     seed,
                     WorldGeneratorSettings::default(),
                     &world_storage_settings,
-                    &blocks,
+                    &block_id_map,
                 );
                 match world {
                     Ok(_) => {

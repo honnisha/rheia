@@ -1,20 +1,40 @@
 use super::resources_manager::ResourceManager;
 use crate::{launch_settings::LaunchSettings, network::runtime_plugin::RuntimePlugin};
 use bevy::prelude::{Res, ResMut, Resource};
-use common::blocks::{block_type::BlockType, default_blocks::DEFAULT_BLOCKS};
+use common::{
+    blocks::{block_info::generate_block_id, block_type::BlockType, default_blocks::DEFAULT_BLOCKS},
+    chunks::chunk_data::BlockIndexType,
+};
 use network::messages::ServerMessages;
 use serde::{Deserialize, Serialize};
-use std::{fs::File, path::PathBuf};
+use std::{collections::BTreeMap, fs::File, path::PathBuf};
 
 #[derive(Serialize, Deserialize, Default, PartialEq, Debug)]
 pub struct ServerSettingsManifest {
-    blocks: Option<Vec<BlockType>>,
+    block_id_map: Option<BTreeMap<BlockIndexType, String>>,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 pub struct ServerSettings {
     blocks: Vec<BlockType>,
     loaded: bool,
+
+    block_id_map: Option<BTreeMap<BlockIndexType, String>>,
+}
+
+impl Default for ServerSettings {
+    fn default() -> Self {
+        let mut server_settings = Self {
+            blocks: Default::default(),
+            loaded: false,
+            block_id_map: Default::default(),
+        };
+
+        for block_type in DEFAULT_BLOCKS.iter() {
+            server_settings.blocks.push(block_type.clone());
+        }
+        server_settings
+    }
 }
 
 impl ServerSettings {
@@ -22,21 +42,16 @@ impl ServerSettings {
         assert!(self.loaded, "server settings is not loaded");
         ServerMessages::Settings {
             block_types: self.blocks.clone(),
+            block_id_map: self.block_id_map.as_ref().unwrap().clone(),
         }
     }
 
-    fn load(&mut self, path: PathBuf, resource_manager: &ResourceManager) -> Result<(), String> {
+    fn load(&mut self, path: PathBuf, _resource_manager: &ResourceManager) -> Result<(), String> {
         log::info!(target: "server_settings", "Start loading server settings &e{}", path.display());
-
-        for block_type in DEFAULT_BLOCKS.iter() {
-            self.blocks.push(block_type.clone());
-        }
 
         if !path.exists() {
             // Create settings with default blocks
-            let default_manifest = ServerSettingsManifest {
-                blocks: Some(DEFAULT_BLOCKS.clone()),
-            };
+            let default_manifest = ServerSettingsManifest { block_id_map: None };
 
             let file = File::create(path.clone()).expect("File must exists");
             serde_yaml::to_writer(file, &default_manifest).unwrap();
@@ -64,22 +79,45 @@ impl ServerSettings {
             }
         };
 
-        if let Some(blocks) = manifest_info.blocks {
-            if let Err(e) = resource_manager.validate_blocks(&blocks) {
-                return Err(e);
+        let mut block_id_map = match manifest_info.block_id_map {
+            Some(m) => m,
+            None => Default::default(),
+        };
+
+        for block_type in self.blocks.iter() {
+            let mut existed = false;
+            for (_block_id, block_slug) in block_id_map.iter() {
+                if block_slug == block_type.get_slug() {
+                    existed = true;
+                }
             }
-            for block_type in blocks.iter() {
-                self.blocks.push(block_type.clone());
+
+            let mut last_id: BlockIndexType = 0;
+            for (block_id, _block_slug) in block_id_map.iter() {
+                last_id = *block_id.max(&last_id);
+            }
+
+            if !existed {
+                let block_id = generate_block_id(&block_type, last_id);
+                block_id_map.insert(block_id, block_type.get_slug().clone());
             }
         }
+
+        self.block_id_map = Some(block_id_map.clone());
+
+        let manifest = ServerSettingsManifest {
+            block_id_map: Some(block_id_map),
+        };
+        let file = File::create(path.clone()).expect("File must exists");
+        serde_yaml::to_writer(file, &manifest).unwrap();
 
         self.loaded = true;
         log::info!(target: "server_settings", "Server settings loaded successfully; &e{} blocks", self.get_blocks_count());
         Ok(())
     }
 
-    pub fn get_blocks(&self) -> &Vec<BlockType> {
-        &self.blocks
+    pub fn get_block_id_map(&self) -> &BTreeMap<u16, String> {
+        self.block_id_map.as_ref().expect("block_id_map is not set")
     }
 
     pub fn add_block(&mut self, block_type: BlockType) {
@@ -102,9 +140,8 @@ pub(crate) fn rescan_server_settings(
 
     let mut path = launch_settings.get_resources_path();
     path.push("settings.yml");
-    let loaded = server_settings.load(path, &*resource_manager);
 
-    if let Some(e) = loaded.err() {
+    if let Err(e) = server_settings.load(path, &*resource_manager) {
         log::error!(target: "server_settings", "Error loading server settings: {e}");
         RuntimePlugin::stop();
     };

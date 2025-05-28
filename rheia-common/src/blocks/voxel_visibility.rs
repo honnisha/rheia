@@ -14,6 +14,12 @@ pub enum VoxelVisibility {
     Opaque,
 }
 
+impl Default for VoxelVisibility {
+    fn default() -> Self {
+        Self::Translucent
+    }
+}
+
 /// Implement on your voxel types to inform the library
 /// how to generate geometry for this voxel.
 pub trait Voxel {

@@ -5,7 +5,7 @@ use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use strum_macros::Display;
 
 use crate::entities::entity_tag::EntityTag;
@@ -79,11 +79,11 @@ pub enum ServerMessages {
     },
     Settings {
         block_types: Vec<BlockType>,
+        block_id_map: BTreeMap<BlockIndexType, String>,
     },
 
     SpawnWorld {
         world_slug: String,
-        block_id_map: HashMap<BlockIndexType, String>,
     },
     UpdatePlayerComponent {
         component: EntityNetworkComponent,

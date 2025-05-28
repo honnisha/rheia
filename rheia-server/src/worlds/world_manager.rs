@@ -6,13 +6,13 @@ use crate::network::client_network::WorldEntity;
 use crate::worlds::chunks::chunks_map::ChunkMap;
 use bevy_ecs::bundle::Bundle;
 use common::WorldStorageManager;
-use common::blocks::block_type::BlockType;
 use common::chunks::block_position::BlockPositionTrait;
 use common::chunks::chunk_data::BlockIndexType;
 use common::chunks::chunk_position::ChunkPosition;
 use common::world_generator::default::WorldGeneratorSettings;
 use common::worlds_storage::taits::{IWorldStorage, WorldStorageSettings};
 use network::messages::ServerMessages;
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 pub struct ChunkChanged {
@@ -26,8 +26,6 @@ pub struct WorldManager {
     slug: String,
     ecs: Ecs,
     chunks_map: ChunkMap,
-
-    block_id_map: std::collections::HashMap<BlockIndexType, String>,
 }
 
 impl WorldManager {
@@ -36,27 +34,20 @@ impl WorldManager {
         seed: u64,
         world_settings: WorldGeneratorSettings,
         world_storage_settings: &WorldStorageSettings,
-        blocks: &Vec<BlockType>,
+        block_id_map: &BTreeMap<BlockIndexType, String>,
     ) -> Result<Self, String> {
         let storage = match WorldStorageManager::create(slug.clone(), seed.clone(), world_storage_settings) {
             Ok(s) => s,
             Err(e) => return Err(e),
         };
-        let block_id_map = match WorldStorageManager::update_block_id_map(slug.clone(), world_storage_settings, blocks)
-        {
-            Ok(s) => s,
-            Err(e) => return Err(e),
-        };
+        if let Err(e) = WorldStorageManager::validate_block_id_map(slug.clone(), world_storage_settings, block_id_map) {
+            return Err(e);
+        }
         Ok(WorldManager {
             slug: slug,
             ecs: Ecs::new(),
             chunks_map: ChunkMap::new(seed, world_settings, storage),
-            block_id_map,
         })
-    }
-
-    pub fn get_block_id_map(&self) -> &std::collections::HashMap<BlockIndexType, String> {
-        &self.block_id_map
     }
 
     pub fn get_ecs(&self) -> &Ecs {
