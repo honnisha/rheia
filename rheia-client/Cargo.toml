@@ -17,8 +17,7 @@ common = { path = "../rheia-common" }
 network = { path = "../rheia-network" }
 physics = { path = "../rheia-physics" }
 
-# godot = { version = "0.2.4", features = ["experimental-threads"] }
-godot = { git = "https://github.com/godot-rust/gdext", branch = "master", features = ["experimental-threads"] }
+godot = { version = "0.3", features = ["experimental-threads"] }
 
 rand = "0.9"
 lazy_static = "1.5"

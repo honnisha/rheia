@@ -118,7 +118,7 @@ impl INode for BlockMenu {
         window
             .signals()
             .closed()
-            .connect_obj(&self.to_gd().clone(), BlockMenu::on_window_closed);
+            .connect_other(&self.to_gd().clone(), BlockMenu::on_window_closed);
 
         self.base_mut().add_child(&window);
         self.toggle(false);

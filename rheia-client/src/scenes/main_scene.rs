@@ -170,12 +170,12 @@ impl MainScene {
             player_controller
                 .signals()
                 .on_player_move()
-                .connect_obj(&self.to_gd(), MainScene::handler_player_move);
+                .connect_other(&self.to_gd(), MainScene::handler_player_move);
 
             player_controller
                 .signals()
                 .on_player_action()
-                .connect_obj(&self.to_gd(), MainScene::handler_player_action);
+                .connect_other(&self.to_gd(), MainScene::handler_player_action);
 
             player_controller.bind_mut().set_blocks(&*worlds_manager);
         }

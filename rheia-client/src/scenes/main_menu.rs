@@ -95,7 +95,7 @@ impl MainMenu {
         main_scene
             .signals()
             .network_disconnect()
-            .connect_obj(&self.to_gd(), MainMenu::on_network_disconnect);
+            .connect_other(&self.to_gd(), MainMenu::on_network_disconnect);
         self.base_mut().add_child(&main_scene);
         self.main_scene = Some(main_scene);
     }

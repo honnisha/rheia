@@ -438,14 +438,14 @@ impl INode3D for PlayerController {
             .unwrap()
             .signals()
             .focus_entered()
-            .connect_obj(&self.to_gd(), PlayerController::on_window_focus_entered);
+            .connect_other(&self.to_gd(), PlayerController::on_window_focus_entered);
 
         self.base()
             .get_window()
             .unwrap()
             .signals()
             .focus_exited()
-            .connect_obj(&self.to_gd(), PlayerController::on_window_focus_exited);
+            .connect_other(&self.to_gd(), PlayerController::on_window_focus_exited);
 
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
@@ -456,16 +456,16 @@ impl INode3D for PlayerController {
         block_menu
             .signals()
             .closed()
-            .connect_obj(&self.to_gd(), PlayerController::on_block_menu_closed);
+            .connect_other(&self.to_gd(), PlayerController::on_block_menu_closed);
         block_menu
             .signals()
             .block_clicked()
-            .connect_obj(&self.to_gd(), PlayerController::on_block_selected);
+            .connect_other(&self.to_gd(), PlayerController::on_block_selected);
 
         let building_visualizer = self.building_visualizer.clone();
         self.signals()
             .look_at_update()
-            .connect_obj(&building_visualizer, BuildingVisualizer::on_look_at_update);
+            .connect_other(&building_visualizer, BuildingVisualizer::on_look_at_update);
         self.base_mut().add_child(&building_visualizer);
     }
 

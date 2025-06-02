@@ -125,14 +125,14 @@ impl INode for Controls {
             .unwrap()
             .signals()
             .focus_entered()
-            .connect_obj(&self.to_gd(), Self::on_window_focus_entered);
+            .connect_other(&self.to_gd(), Self::on_window_focus_entered);
 
         self.base()
             .get_window()
             .unwrap()
             .signals()
             .focus_exited()
-            .connect_obj(&self.to_gd(), Self::on_window_focus_exited);
+            .connect_other(&self.to_gd(), Self::on_window_focus_exited);
     }
 
     fn process(&mut self, delta: f64) {
