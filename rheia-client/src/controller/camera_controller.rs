@@ -48,8 +48,8 @@ impl CameraController {
 
     pub fn rotate(&mut self, rotation: Rotation) {
         let mut r = self.base().get_rotation_degrees();
-        r.x = rotation.yaw % 360.0;
-        r.y = rotation.pitch % 360.0;
+        r.y = rotation.yaw % 360.0;
+        r.x = rotation.pitch % 360.0;
         self.base_mut().set_rotation_degrees(r);
     }
 
@@ -108,7 +108,7 @@ impl INode3D for CameraController {
             controls.get_camera_rotation().clone()
         };
 
-        let rotation = Rotation::new(cam_rot.y, cam_rot.x);
+        let rotation = Rotation::new(cam_rot.x, cam_rot.y);
         self.rotate(rotation);
         self.signals().on_camera_rotation().emit(rotation.yaw, rotation.pitch);
     }

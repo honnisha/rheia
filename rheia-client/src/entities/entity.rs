@@ -112,6 +112,10 @@ impl Entity {
         self.base_mut().set_rotation_degrees(r);
     }
 
+    pub fn set_pitch(&mut self, new_pitch: f32) {
+        self.pitch = new_pitch;
+    }
+
     pub fn get_transform(&self) -> Transform3D {
         self.base().get_transform()
     }

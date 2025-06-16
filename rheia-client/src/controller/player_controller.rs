@@ -468,12 +468,17 @@ impl PlayerController {
     /// Handle camera rotation from Rotation object
     #[func]
     fn on_camera_rotation(&mut self, yaw: f32, pitch: f32) {
-        if self.camera_mode == CameraMode::FirstPerson {
-            if let Some(entity) = self.entity.as_mut() {
-                entity.bind_mut().rotate(Rotation::new(yaw, pitch));
+        if let Some(entity) = self.entity.as_mut() {
+            match self.camera_mode {
+                CameraMode::FirstPerson => {
+                    entity.bind_mut().rotate(Rotation::new(yaw, pitch));
+                },
+                CameraMode::ThirdPerson => {
+                    entity.bind_mut().set_pitch(pitch);
+                },
             }
-            self.update_cache_movement();
         }
+        self.update_cache_movement();
     }
 }
 

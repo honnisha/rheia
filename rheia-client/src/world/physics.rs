@@ -117,6 +117,6 @@ pub fn get_degrees_from_normal(normal: Vector3) -> Vector3 {
         return Vector3::new(-90.0, 0.0, 0.0);
     };
 
-    println!("get_degrees_from_normal is not support normal:{normal}");
+    log::error!("get_degrees_from_normal is not support normal:{normal}");
     return Vector3::new(33.0, 33.0, 33.0);
 }
