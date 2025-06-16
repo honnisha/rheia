@@ -70,7 +70,7 @@ impl ChunkSection {
         }
     }
 
-    pub fn get_chunk_position(&self) -> &ChunkPosition {
+    pub fn _get_chunk_position(&self) -> &ChunkPosition {
         &self.chunk_position
     }
 

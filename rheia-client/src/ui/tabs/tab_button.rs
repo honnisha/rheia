@@ -1,4 +1,7 @@
-use godot::{classes::{Button, TextureRect}, prelude::*};
+use godot::{
+    classes::{Button, IButton, TextureRect},
+    prelude::*,
+};
 
 const TAB_BUTTON_SCENE: &str = "res://scenes/ui/tab_button_component.tscn";
 
@@ -20,10 +23,7 @@ impl TabUIButton {
         result.bind_mut().tab_key = tab_key;
 
         let gd = result.bind().base().to_godot();
-        result.connect(
-            "pressed",
-            &Callable::from_object_method(&gd, "on_pressed"),
-        );
+        result.connect("pressed", &Callable::from_object_method(&gd, "on_pressed"));
 
         result
     }
@@ -45,4 +45,13 @@ impl TabUIButton {
 
     #[signal]
     fn tab_pressed();
+}
+
+#[godot_api]
+impl IButton for TabUIButton {
+    fn ready(&mut self) {
+        if let Some(selected_texture) = self.selected_texture.as_mut() {
+            selected_texture.set_visible(false);
+        }
+    }
 }

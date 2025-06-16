@@ -102,7 +102,7 @@ impl DebugInfo {
                 let world = w.bind();
                 let controller_pos = player_controller.get_position();
                 let controller_positioin = format!(
-                    "{:.2} {:.2} {:.2} yaw:{:.2} pitch:{:.2}",
+                    "{:.1} {:.1} {:.1} yaw:{:.1} pitch:{:.1}",
                     controller_pos.x,
                     controller_pos.y,
                     controller_pos.z,

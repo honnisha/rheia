@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Default)]
 pub struct Rotation {
-    // vertical angle
+    /// Horisontal degrees (left-right)
     pub yaw: f32,
 
-    // horizontal angle
+    // Vertical degrees (up-down)
     pub pitch: f32,
 }
 impl Display for Rotation {

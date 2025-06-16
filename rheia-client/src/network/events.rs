@@ -105,7 +105,7 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                             for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
                                 resource_names.push(resource_slug.clone());
                             }
-                            log::info!(target: "network", "Resources cache loaded: {}; media count:{}", resource_names.join(", "), count);
+                            log::info!(target: "network", "Resources cache loaded: &e{}&r; media count:{}", resource_names.join(", "), count);
                         }
                         Err(e) => return Err(format!("Network resources cache load error: {}", e)),
                     }

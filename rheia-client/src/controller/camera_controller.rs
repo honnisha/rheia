@@ -2,10 +2,7 @@ use common::chunks::rotation::Rotation;
 use godot::classes::{Camera3D, Sprite2D};
 use godot::prelude::*;
 
-use super::{
-    controls::Controls,
-    player_controller::{CAMERA_DISTANCE, CONTROLLER_CAMERA_OFFSET_RIGHT},
-};
+use super::controls::Controls;
 
 const CROSS_SCENE: &str = "res://scenes/cross.tscn";
 
@@ -41,7 +38,7 @@ impl CameraController {
     }
 
     /// Vertical degrees
-    pub fn _get_pitch(&self) -> f32 {
+    pub fn get_pitch(&self) -> f32 {
         self.base().get_rotation_degrees().x
     }
 
@@ -66,10 +63,20 @@ impl CameraController {
         let (dir, max_toi) = (dir.normalized(), dir.length());
         RayDirection { dir, from, max_toi }
     }
+
+    pub fn set_camera_distance(&mut self, distance: f32, offset_right: f32) {
+        let mut t = self.camera.get_transform();
+        t.origin.z = distance;
+        t.origin.x = offset_right;
+        self.camera.set_transform(t);
+    }
 }
 
 #[godot_api]
 impl CameraController {
+    #[signal]
+    pub fn on_camera_rotation(yaw: f32, pitch: f32);
+
     #[func]
     fn on_viewport_size_changed(&mut self) {
         let screen = self.camera.get_viewport().unwrap().get_visible_rect().size;
@@ -93,11 +100,6 @@ impl INode3D for CameraController {
             "size_changed",
             &Callable::from_object_method(&self.base().to_godot(), "on_viewport_size_changed"),
         );
-
-        let mut t = self.camera.get_transform();
-        t.origin.z = CAMERA_DISTANCE;
-        t.origin.x = CONTROLLER_CAMERA_OFFSET_RIGHT;
-        self.camera.set_transform(t);
     }
 
     fn process(&mut self, _delta: f64) {
@@ -106,6 +108,8 @@ impl INode3D for CameraController {
             controls.get_camera_rotation().clone()
         };
 
-        self.rotate(Rotation::new(cam_rot.y, cam_rot.x));
+        let rotation = Rotation::new(cam_rot.y, cam_rot.x);
+        self.rotate(rotation);
+        self.signals().on_camera_rotation().emit(rotation.yaw, rotation.pitch);
     }
 }

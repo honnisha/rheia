@@ -2,7 +2,7 @@ use super::building_visualizer::BuildingVisualizer;
 use super::camera_controller::{CameraController, RayDirection};
 use super::controls::Controls;
 use super::entity_movement::EntityMovement;
-use super::enums::controller_actions::ControllerActions;
+use super::enums::camera_mode::CameraMode;
 use super::look_at::LookAt;
 use super::player_action::{PlayerAction, PlayerActionType};
 use super::selected_item::{SelectedItem, SelectedItemGd};
@@ -16,8 +16,8 @@ use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockFace;
 use common::chunks::chunk_data::BlockDataInfo;
 use common::chunks::rotation::Rotation;
+use godot::classes::Input;
 use godot::classes::input::MouseMode;
-use godot::classes::{Engine, Input};
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 use network::entities::EntityNetworkComponent;
@@ -73,6 +73,8 @@ pub struct PlayerController {
     ui_lock: f32,
 
     window_focus: bool,
+
+    camera_mode: CameraMode,
 }
 
 impl PlayerController {
@@ -80,6 +82,8 @@ impl PlayerController {
         let controls = Controls::new_alloc();
         let mut camera_controller =
             Gd::<CameraController>::from_init_fn(|base| CameraController::create(base, controls.clone()));
+
+        // Change vertical offset
         camera_controller.set_position(Vector3::new(0.0, CONTROLLER_CAMERA_OFFSET_VERTICAL, 0.0));
 
         let collider_builder = PhysicsColliderBuilder::cylinder(CONTROLLER_HEIGHT / 2.0, CONTROLLER_RADIUS);
@@ -116,6 +120,7 @@ impl PlayerController {
             ui_lock: 0.0,
 
             window_focus: true,
+            camera_mode: CameraMode::FirstPerson,
         }
     }
 
@@ -136,8 +141,13 @@ impl PlayerController {
                 }
                 None => {
                     let components = vec![EntityNetworkComponent::Skin(Some(skin))];
-                    let entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, components));
+                    let mut entity = Gd::<Entity>::from_init_fn(|base| Entity::create(base, components));
                     self.base_mut().add_child(&entity);
+                    let entity_visible = match self.camera_mode {
+                        CameraMode::FirstPerson => false,
+                        CameraMode::ThirdPerson => true,
+                    };
+                    entity.set_visible(entity_visible);
                     self.entity = Some(entity);
                 }
             },
@@ -165,7 +175,7 @@ impl PlayerController {
     pub fn get_yaw(&self) -> f32 {
         match self.entity.as_ref() {
             Some(entity) => entity.bind().get_yaw(),
-            None => self.base().get_rotation_degrees().y,
+            None => self.camera_controller.bind().get_yaw(),
         }
     }
 
@@ -173,7 +183,7 @@ impl PlayerController {
     pub fn get_pitch(&self) -> f32 {
         match self.entity.as_ref() {
             Some(entity) => entity.bind().get_pitch(),
-            None => self.base().get_rotation_degrees().x,
+            None => self.camera_controller.bind().get_pitch(),
         }
     }
 
@@ -184,6 +194,24 @@ impl PlayerController {
         // So it shifts to half the height
         let physics_pos = Vector3::new(position.x, position.y + CONTROLLER_HEIGHT / 2.0, position.z);
         self.collider.set_position(physics_pos.to_network());
+    }
+
+    pub fn change_camera_mode(&mut self, camera_mode: CameraMode) {
+        self.camera_mode = camera_mode;
+        if let Some(entity) = self.entity.as_mut() {
+            let entity_visible = match self.camera_mode {
+                CameraMode::FirstPerson => false,
+                CameraMode::ThirdPerson => true,
+            };
+            entity.set_visible(entity_visible);
+        }
+        match self.camera_mode {
+            CameraMode::FirstPerson => self.camera_controller.bind_mut().set_camera_distance(0.0, 0.0),
+            CameraMode::ThirdPerson => self
+                .camera_controller
+                .bind_mut()
+                .set_camera_distance(CAMERA_DISTANCE, CONTROLLER_CAMERA_OFFSET_RIGHT),
+        }
     }
 
     pub fn set_rotation(&mut self, rotation: Rotation) {
@@ -226,31 +254,38 @@ impl PlayerController {
         let Some(entity) = self.entity.as_mut() else {
             panic!("get_movement available only with entity");
         };
-
-        let mut movement = Vector3::ZERO;
-
         let controls = self.controls.bind();
         let mut direction = *controls.get_movement_vector();
 
+        let mut movement = Vector3::ZERO;
+
         // Get camera vertical rotation
         let camera_yaw = self.camera_controller.bind().get_yaw();
+        let camera_pitch = self.camera_controller.bind().get_pitch();
+
+        // Привязано ли движение к фиксации по направлению к камере
+        // Is the movement tied to the fixation towards the camera
+        let camera_locked = match self.camera_mode {
+            CameraMode::FirstPerson => true,
+            CameraMode::ThirdPerson => false,
+        };
 
         // Rotate movement direction according to the camera
         direction = direction.rotated(Vector3::UP, deg_to_rad(camera_yaw as f64) as f32);
 
-        if direction != Vector3::ZERO {
-            let mut new_yaw = -direction.x.atan2(-direction.z) % 360.0;
-            new_yaw = lerp_angle(entity.get_rotation().y as f64, new_yaw as f64, TURN_SPEED * delta) as f32;
+        if camera_locked {
+            movement = direction * MOVEMENT_SPEED;
+        } else {
+            if direction != Vector3::ZERO {
+                let mut new_rotate = -direction.x.atan2(-direction.z) % 360.0;
+                new_rotate = lerp_angle(entity.get_rotation().y as f64, new_rotate as f64, TURN_SPEED * delta) as f32;
 
-            // Update skin rotation for visual display
-            let mut skin_rotation = entity.bind().get_rotation();
-            skin_rotation.y = new_yaw;
+                // Update skin rotation for visual display
+                entity.bind_mut().rotate(Rotation::new(new_rotate.to_degrees(), camera_pitch));
 
-            entity.bind_mut().set_rotation(skin_rotation);
-
-            movement = entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
+                movement = entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
+            }
         }
-
         if self.grounded_timer > 0.0 {
             self.vertical_movement = 0.0;
         } else {
@@ -351,6 +386,10 @@ impl PlayerController {
             physics_pos.z,
         ));
 
+        self.update_cache_movement();
+    }
+
+    fn update_cache_movement(&mut self) {
         // Handle player movement
         let new_movement = Gd::<EntityMovement>::from_init_fn(|_base| {
             EntityMovement::create(self.get_position(), Rotation::new(self.get_yaw(), self.get_pitch()))
@@ -425,12 +464,27 @@ impl PlayerController {
     fn on_window_focus_exited(&mut self) {
         self.window_focus = false;
     }
+
+    /// Handle camera rotation from Rotation object
+    #[func]
+    fn on_camera_rotation(&mut self, yaw: f32, pitch: f32) {
+        if self.camera_mode == CameraMode::FirstPerson {
+            if let Some(entity) = self.entity.as_mut() {
+                entity.bind_mut().rotate(Rotation::new(yaw, pitch));
+            }
+            self.update_cache_movement();
+        }
+    }
 }
 
 #[godot_api]
 impl INode3D for PlayerController {
     fn ready(&mut self) {
         let camera_controller = self.camera_controller.clone();
+        camera_controller
+            .signals()
+            .on_camera_rotation()
+            .connect_other(&self.to_gd(), Self::on_camera_rotation);
         self.base_mut().add_child(&camera_controller);
 
         self.base()
@@ -450,7 +504,7 @@ impl INode3D for PlayerController {
         let controls = self.controls.clone();
         self.base_mut().add_child(&controls);
 
-        let mut block_menu = self.block_menu.clone();
+        let block_menu = self.block_menu.clone();
         self.base_mut().add_child(&block_menu);
 
         block_menu
@@ -467,17 +521,24 @@ impl INode3D for PlayerController {
             .look_at_update()
             .connect_other(&building_visualizer, BuildingVisualizer::on_look_at_update);
         self.base_mut().add_child(&building_visualizer);
+
+        self.change_camera_mode(self.camera_mode.clone())
     }
 
     fn process(&mut self, delta: f64) {
         self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
 
-        if !Engine::singleton().is_editor_hint() {
-            let input = Input::singleton();
-            if input.is_action_just_pressed(&ControllerActions::ToggleBlockSelection.to_string()) {
-                let is_active = self.block_menu.bind().is_active();
-                self.block_menu.bind_mut().toggle(!is_active);
-            }
+        if self.controls.bind().is_toggle_block_selection() {
+            let is_active = self.block_menu.bind().is_active();
+            self.block_menu.bind_mut().toggle(!is_active);
+        }
+
+        if self.controls.bind().is_switch_camera_mode() {
+            let new_mode = match self.camera_mode {
+                CameraMode::FirstPerson => CameraMode::ThirdPerson,
+                CameraMode::ThirdPerson => CameraMode::FirstPerson,
+            };
+            self.change_camera_mode(new_mode);
         }
 
         // Rotation of the selected object

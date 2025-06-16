@@ -2,6 +2,8 @@ pub enum ControllerActions {
     ActionMain,
     ActionSecond,
 
+    SwitchCameraMode,
+
     MoveRight,
     MoveLeft,
     MoveForward,
@@ -24,6 +26,8 @@ impl ToString for ControllerActions {
         let s = match self {
             Self::ActionMain => "action_main",
             Self::ActionSecond => "action_second",
+
+            Self::SwitchCameraMode => "switch_camera_mode",
 
             Self::MoveRight => "move_right",
             Self::MoveLeft => "move_left",

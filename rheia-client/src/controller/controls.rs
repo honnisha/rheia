@@ -12,7 +12,7 @@ const SENSITIVITY: f32 = 0.2;
 const JOYAXIS_SENSITIVITY: f32 = 150.0;
 const JOYAXIS_DEADZONE: f32 = 0.3;
 const MIN_PITCH: f32 = -90.0;
-const MAX_PITCH: f32 = 75.0;
+const MAX_PITCH: f32 = 90.0;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
@@ -54,6 +54,16 @@ impl Controls {
     pub fn is_second_action(&self) -> bool {
         let input = Input::singleton();
         input.is_action_just_pressed(&ControllerActions::ActionSecond.to_string())
+    }
+
+    pub fn is_toggle_block_selection(&self) -> bool {
+        let input = Input::singleton();
+        input.is_action_just_pressed(&ControllerActions::ToggleBlockSelection.to_string())
+    }
+
+    pub fn is_switch_camera_mode(&self) -> bool {
+        let input = Input::singleton();
+        input.is_action_just_pressed(&ControllerActions::SwitchCameraMode.to_string())
     }
 
     pub fn is_rotate_left(&self) -> bool {
@@ -161,6 +171,9 @@ impl INode for Controls {
         if self.movement != Vector3::ZERO {
             self.movement = self.movement.normalized();
         }
+
+        self.cam_rot.x = self.cam_rot.x % 360.0;
+        self.cam_rot.y = self.cam_rot.y % 360.0;
     }
 
     fn input(&mut self, event: Gd<InputEvent>) {
@@ -194,6 +207,7 @@ impl INode for Controls {
                 self.cam_rot.y += event.get_relative().y * SENSITIVITY * -1.0;
             }
         }
+        self.cam_rot.x = self.cam_rot.x % 360.0;
         self.cam_rot.y = self.cam_rot.y.clamp(MIN_PITCH, MAX_PITCH);
     }
 }

@@ -16,6 +16,8 @@ enum EntitySkinContainer {
 pub struct Entity {
     pub base: Base<Node3D>,
 
+    pitch: f32,
+
     skin: EntitySkinContainer,
     tag: Option<Gd<EntityTag>>,
     target_position: Option<Vector3>,
@@ -47,6 +49,7 @@ impl Entity {
         };
         Self {
             base,
+            pitch: 0.0,
             skin: skin_container,
             tag,
             target_position: Default::default(),
@@ -66,7 +69,7 @@ impl Entity {
 
     /// Vertical degrees of character look
     pub fn get_pitch(&self) -> f32 {
-        self.base().get_rotation_degrees().x
+        self.pitch.clone()
     }
 
     pub fn change_tag(&mut self, tag: Option<NetworkEntityTag>) {
@@ -104,17 +107,9 @@ impl Entity {
 
     pub fn rotate(&mut self, rotation: Rotation) {
         let mut r = self.base().get_rotation_degrees();
-        r.x = rotation.yaw % 360.0;
-        r.y = rotation.pitch % 360.0;
+        r.y = rotation.yaw % 360.0;
+        self.pitch = rotation.pitch;
         self.base_mut().set_rotation_degrees(r);
-    }
-
-    pub fn get_rotation(&self) -> Vector3 {
-        self.base().get_rotation()
-    }
-
-    pub fn set_rotation(&mut self, euler_radians: Vector3) {
-        self.base_mut().set_rotation(euler_radians)
     }
 
     pub fn get_transform(&self) -> Transform3D {
