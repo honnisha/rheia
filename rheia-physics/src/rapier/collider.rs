@@ -75,8 +75,7 @@ impl IPhysicsCollider<RapierPhysicsShape> for RapierPhysicsCollider {
         let physics_container = self.physics_container.clone();
         let collider = physics_container
             .get_collider(&self.collider_handle)
-            .unwrap()
-            .clone();
+            .unwrap();
         RapierPhysicsShape::create(collider.shape())
     }
 
@@ -90,9 +89,8 @@ impl IPhysicsCollider<RapierPhysicsShape> for RapierPhysicsCollider {
     fn set_sensor(&self, is_sensor: bool) {
         let physics_container = self.physics_container.clone();
         let mut collider = physics_container
-            .get_collider(&self.collider_handle)
-            .unwrap()
-            .clone();
+            .get_collider_mut(&self.collider_handle)
+            .unwrap();
         collider.set_sensor(is_sensor);
     }
 }

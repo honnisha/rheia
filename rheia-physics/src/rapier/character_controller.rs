@@ -1,6 +1,6 @@
 use crate::physics::IPhysicsCharacterController;
 
-use super::bridge::{na_to_network, IntoNaVector3};
+use super::bridge::{IntoNaVector3, na_to_network};
 use super::collider::{RapierPhysicsCollider, RapierPhysicsShape};
 use super::query_filter::RapierQueryFilter;
 use common::chunks::position::Vector3;
@@ -84,7 +84,9 @@ impl<'a> IPhysicsCharacterController<RapierPhysicsShape, RapierPhysicsCollider, 
 #[cfg(test)]
 mod tests {
     use crate::{
-        physics::{IPhysicsCharacterController, IPhysicsColliderBuilder, IPhysicsContainer},
+        physics::{
+            IPhysicsCharacterController, IPhysicsCollider, IPhysicsColliderBuilder, IPhysicsContainer, IQueryFilter,
+        },
         rapier::{
             character_controller::RapierPhysicsCharacterController, collider_builder::RapierPhysicsColliderBuilder,
             container::RapierPhysicsContainer, query_filter::RapierQueryFilter,
@@ -103,5 +105,28 @@ mod tests {
 
         let result = character_controller.move_shape(&collider, filter, 0.5, Vector3::new(0.0, 1.0, 0.0));
         assert_eq!(result, Vector3::new(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn test_raycast_ignore_sensor() {
+        let physics = RapierPhysicsContainer::default();
+
+        let collider_builder = RapierPhysicsColliderBuilder::cuboid(0.5, 0.5, 0.5);
+        let mut collider = physics.spawn_collider(collider_builder);
+        collider.set_position(Vector3::new(0.0, 5.0, 0.0));
+
+        let collider_builder_2 = RapierPhysicsColliderBuilder::cuboid(0.5, 0.5, 0.5);
+        let mut collider_2 = physics.spawn_collider(collider_builder_2);
+        collider_2.set_position(Vector3::new(0.0, 4.0, 0.0));
+        collider_2.set_sensor(true);
+
+        physics.step(0.1);
+
+        let mut filter = RapierQueryFilter::default();
+        filter.exclude_sensors();
+
+        let cast_ray = physics.cast_ray(Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0), 10.0, filter);
+        assert!(cast_ray.is_some());
+        assert_eq!(cast_ray.unwrap().collider_id, collider.get_index());
     }
 }

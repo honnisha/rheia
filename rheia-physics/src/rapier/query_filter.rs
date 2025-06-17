@@ -11,7 +11,7 @@ pub struct RapierQueryFilter<'a> {
 
 impl<'a> IQueryFilter<RapierPhysicsShape, RapierPhysicsCollider> for RapierQueryFilter<'a> {
     fn exclude_collider(&mut self, collider: &RapierPhysicsCollider) {
-        self.filter = self.filter.exclude_collider(collider.collider_handle.clone())
+        self.filter = self.filter.exclude_collider(collider.collider_handle.clone());
     }
 
     fn exclude_sensors(&mut self) {
