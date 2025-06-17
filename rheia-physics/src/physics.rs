@@ -2,6 +2,7 @@ use common::chunks::{block_position::BlockPosition, position::Vector3};
 
 pub trait IQueryFilter<S: IPhysicsShape, C: IPhysicsCollider<S>>: Default {
     fn exclude_collider(&mut self, collider: &C);
+    fn exclude_sensors(&mut self);
 }
 
 pub trait IPhysicsShape {}
@@ -14,6 +15,7 @@ pub trait IPhysicsCollider<S: IPhysicsShape> {
     fn remove(&mut self);
     fn get_shape(&self) -> S;
     fn set_shape(&mut self, shape: S);
+    fn set_sensor(&self, is_sensor: bool);
 }
 
 pub trait IPhysicsCharacterController<S: IPhysicsShape, C: IPhysicsCollider<S>, F: IQueryFilter<S, C>> {

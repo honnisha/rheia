@@ -206,7 +206,7 @@ impl ResourceInstance {
                         *texture = self.local_to_global_path(texture);
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _ } => {
+                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
                     *model = self.local_to_global_path(model);
                 }
             }

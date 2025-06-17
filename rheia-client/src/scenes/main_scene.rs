@@ -313,6 +313,8 @@ impl INode for MainScene {
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("main_scene");
 
+        let now = std::time::Instant::now();
+
         if self.network.is_some() {
             let network_info = match handle_network_events(self) {
                 Ok(i) => i,
@@ -335,6 +337,11 @@ impl INode for MainScene {
             if input.is_action_just_pressed(&ControllerActions::ToggleDebug.to_string()) {
                 self.debug_info.bind_mut().toggle(!DebugInfo::is_active());
             }
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed >= std::time::Duration::from_secs_f32(0.1) {
+            log::info!(target: "main", "main_scene lag: {:.2?}", elapsed);
         }
     }
 

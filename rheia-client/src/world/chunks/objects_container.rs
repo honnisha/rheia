@@ -7,13 +7,16 @@ use crate::{
     },
 };
 use ahash::AHashMap;
-use common::{blocks::block_info::BlockFace, chunks::{chunk_data::ChunkSectionData, position::Vector3 as NetworkVector3}};
 use common::{
-    blocks::block_type::{BlockContent, BlockType},
+    blocks::block_type::BlockContent,
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait, ChunkBlockPosition},
         chunk_position::ChunkPosition,
     },
+};
+use common::{
+    blocks::{block_info::BlockFace, block_type::ColliderType},
+    chunks::{chunk_data::ChunkSectionData, position::Vector3 as NetworkVector3},
 };
 use godot::prelude::*;
 use physics::{
@@ -55,11 +58,14 @@ impl CustomObject {
         self.base_mut().add_child(&obj_holder);
     }
 
-    pub fn create_collider(&mut self, position: &BlockPosition, physics: &PhysicsProxy) {
+    pub fn create_collider(&mut self, position: &BlockPosition, physics: &PhysicsProxy, is_sensor: bool) {
         let physics_type = PhysicsType::ChunkMeshCollider(position.get_chunk_position());
         let collider_builder = PhysicsColliderBuilder::cuboid(1.0, 1.0, 1.0);
         let mut collider = physics.create_collider(collider_builder, Some(physics_type));
         collider.set_position(position.get_position() + NetworkVector3::new(0.5, 0.5, 0.5));
+        if is_sensor {
+            collider.set_sensor(is_sensor);
+        }
 
         self.collider = Some(collider);
     }
@@ -107,8 +113,19 @@ impl ObjectsContainer {
 
             let position = BlockPosition::from_chunk_position(chunk_position, &y, &chunk_block_position);
             match block_type.get_block_content() {
-                BlockContent::ModelCube { model: _, icon_size: _ } => {
-                    self.create_block_model(&position, &block_type, Some(physics), resource_storage, block_info.get_face())?;
+                BlockContent::ModelCube {
+                    model,
+                    icon_size: _,
+                    collider_type,
+                } => {
+                    self.create_block_model(
+                        &position,
+                        model,
+                        collider_type,
+                        Some(physics),
+                        resource_storage,
+                        block_info.get_face(),
+                    )?;
                 }
                 _ => continue,
             }
@@ -135,14 +152,12 @@ impl ObjectsContainer {
     pub fn create_block_model(
         &mut self,
         position: &BlockPosition,
-        block_type: &BlockType,
+        model: &String,
+        collider_type: &ColliderType,
         physics: Option<&PhysicsProxy>,
         resource_storage: &ResourceStorage,
         block_face: Option<&BlockFace>,
     ) -> Result<(), String> {
-        let Some(model) = block_type.get_model() else {
-            return Err("update_block_model called for non model".to_string());
-        };
         let Some(media) = resource_storage.get_media(model) else {
             return Err(format!("model:{} is not found", model));
         };
@@ -152,7 +167,9 @@ impl ObjectsContainer {
         let mut object = Gd::<CustomObject>::from_init_fn(|base| CustomObject::create(base));
 
         if let Some(physics) = physics {
-            object.bind_mut().create_collider(&position, physics);
+            object
+                .bind_mut()
+                .create_collider(&position, physics, collider_type.is_sensor());
         }
 
         object.bind_mut().attach_glb(glb, block_face);

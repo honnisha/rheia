@@ -109,7 +109,7 @@ impl BlockStorage {
                         ));
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _ } => {
+                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
                     if !resources_storage.has_media(model) {
                         return Err(format!(
                             "block \"{}\" &cmodel not found: \"{}\"",

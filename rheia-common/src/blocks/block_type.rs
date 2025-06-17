@@ -4,6 +4,28 @@ use super::voxel_visibility::VoxelVisibility;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
+pub enum ColliderType {
+    Solid,
+    Sensor,
+}
+
+impl ColliderType {
+    pub fn is_sensor(&self) -> bool {
+        match *self {
+            ColliderType::Solid => false,
+            ColliderType::Sensor => true,
+        }
+    }
+}
+
+impl Default for ColliderType {
+    fn default() -> Self {
+        Self::Solid
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
 pub enum BlockContent {
     Texture {
         texture: String,
@@ -13,6 +35,9 @@ pub enum BlockContent {
     ModelCube {
         model: String,
         icon_size: Option<f32>,
+
+        #[serde(default)]
+        collider_type: ColliderType,
     },
 }
 
@@ -58,7 +83,10 @@ impl BlockContent {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BlockType {
     slug: String,
+
+    // For texturing and collider building
     voxel_visibility: VoxelVisibility,
+
     block_content: BlockContent,
     category: String,
 }
@@ -100,7 +128,7 @@ impl BlockType {
 
     pub fn get_model(&self) -> Option<&String> {
         match &self.block_content {
-            BlockContent::ModelCube { model, icon_size: _ } => {
+            BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
                 return Some(model);
             }
             _ => None,

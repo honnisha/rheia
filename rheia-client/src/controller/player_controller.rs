@@ -236,6 +236,10 @@ impl PlayerController {
         };
         let mut filter = QueryFilter::default();
         filter.exclude_collider(&self.collider);
+
+        // Only solid ground
+        filter.exclude_sensors();
+
         self.is_grounded = self
             .physics
             .cast_shape(self.collider.get_shape(), ray_direction, filter)
@@ -281,7 +285,9 @@ impl PlayerController {
                 new_rotate = lerp_angle(entity.get_rotation().y as f64, new_rotate as f64, TURN_SPEED * delta) as f32;
 
                 // Update skin rotation for visual display
-                entity.bind_mut().rotate(Rotation::new(new_rotate.to_degrees(), camera_pitch));
+                entity
+                    .bind_mut()
+                    .rotate(Rotation::new(new_rotate.to_degrees(), camera_pitch));
 
                 movement = entity.bind().get_transform().basis.col_c() * -1.0 * MOVEMENT_SPEED;
             }
@@ -345,6 +351,10 @@ impl PlayerController {
             let movement = self.get_movement(delta);
 
             let mut filter = QueryFilter::default();
+
+            // Only solid ground
+            filter.exclude_sensors();
+
             filter.exclude_collider(&self.collider);
 
             let translation =
@@ -472,13 +482,12 @@ impl PlayerController {
             match self.camera_mode {
                 CameraMode::FirstPerson => {
                     entity.bind_mut().rotate(Rotation::new(yaw, pitch));
-                },
+                }
                 CameraMode::ThirdPerson => {
                     entity.bind_mut().set_pitch(pitch);
-                },
+                }
             }
         }
-        self.update_cache_movement();
     }
 }
 

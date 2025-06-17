@@ -43,7 +43,7 @@ impl Controls {
 
     pub fn is_jumping(&self) -> bool {
         let input = Input::singleton();
-        input.is_action_just_pressed(&ControllerActions::Jump.to_string())
+        input.is_action_pressed(&ControllerActions::Jump.to_string())
     }
 
     pub fn is_main_action(&self) -> bool {

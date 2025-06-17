@@ -200,7 +200,7 @@ impl ChunkMap {
                 } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model: _, icon_size: _ } => {
+                BlockContent::ModelCube { model: _, icon_size: _, collider_type: _ } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");
@@ -232,7 +232,7 @@ impl ChunkMap {
                 } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model: _, icon_size: _ } => {
+                BlockContent::ModelCube { model, icon_size: _, collider_type } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");
@@ -246,7 +246,8 @@ impl ChunkMap {
                         .bind_mut()
                         .create_block_model(
                             &position,
-                            new_block_type,
+                            model,
+                            collider_type,
                             Some(physics),
                             resource_storage,
                             new_block_info.get_face(),

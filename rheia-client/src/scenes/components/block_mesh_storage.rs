@@ -67,13 +67,17 @@ impl BlockMeshStorage {
 
                 self.meshes.insert(block_id, (BlockMesh::Texture(obj), 2.0));
             }
-            BlockContent::ModelCube { model: _, icon_size } => {
+            BlockContent::ModelCube {
+                model,
+                icon_size,
+                collider_type,
+            } => {
                 let mut objects_container = ObjectsContainer::new_alloc();
                 objects_container.set_name(&format!("ObjectsContainer #{}", block_id));
                 let position = BlockPosition::new(0, 0, 0);
                 objects_container
                     .bind_mut()
-                    .create_block_model(&position, block_type, None, resource_storage, None)
+                    .create_block_model(&position, model, collider_type, None, resource_storage, None)
                     .unwrap();
 
                 let icon_size = match icon_size {

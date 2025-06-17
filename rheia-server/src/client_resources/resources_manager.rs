@@ -176,7 +176,7 @@ impl ResourceManager {
                         return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, bottom_texture.as_ref().unwrap()));
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _ } => {
+                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
                     if !self.has_media(model) {
                         return Err(format!("block \"{}\" &cmodel not found: {}", block_slug, model));
                     }
