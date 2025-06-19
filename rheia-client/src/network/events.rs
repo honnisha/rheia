@@ -51,7 +51,6 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
 
     // Recieve errors from network thread
     for error in network.iter_errors() {
-        log::error!(target: "network", "Network error: {}", error);
         return Err(error);
     }
 

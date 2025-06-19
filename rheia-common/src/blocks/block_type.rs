@@ -115,7 +115,17 @@ pub struct BlockTypeManifest {
 
 impl BlockTypeManifest {
     pub fn to_block(&self) -> BlockType {
-        BlockType::new(self.block_content.clone())
+        let category = match self.category.as_ref() {
+            Some(c) => c.clone(),
+            None => BlockType::default_category(),
+        };
+        let mut b = BlockType::new(self.block_content.clone())
+            .category(category)
+            .visibility(self.voxel_visibility.clone());
+        if let Some(slug) = self.slug.as_ref() {
+            b = b.set_slug(slug.clone());
+        }
+        b
     }
 }
 
@@ -124,21 +134,14 @@ pub struct BlockType {
     slug: String,
 
     // For texturing and collider building
-    #[serde(skip_serializing_if = "BlockType::is_default")]
-    #[serde(default)]
     voxel_visibility: VoxelVisibility,
 
     block_content: BlockContent,
 
-    #[serde(skip_serializing_if = "BlockType::is_base")]
-    #[serde(default = "BlockType::default_category")]
     category: String,
 }
 
 impl BlockType {
-    fn is_base(category: &String) -> bool {
-        *category == "base".to_string()
-    }
     fn is_default<T: Default + PartialEq>(attr: &T) -> bool {
         *attr == T::default()
     }
@@ -167,7 +170,7 @@ impl BlockType {
         let slug = BlockType::generate_slug(&block_content);
         Self {
             slug: slug,
-            voxel_visibility: VoxelVisibility::Opaque,
+            voxel_visibility: VoxelVisibility::default(),
             block_content,
             category: BlockType::default_category(),
         }
