@@ -193,14 +193,10 @@ impl ChunkMap {
             let old_block_type = block_storage.get(&old_block_info.get_id()).unwrap();
 
             match old_block_type.get_block_content() {
-                BlockContent::Texture {
-                    texture: _,
-                    side_texture: _,
-                    bottom_texture: _,
-                } => {
+                BlockContent::Texture { .. } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model: _, icon_size: _, collider_type: _ } => {
+                BlockContent::ModelCube { .. } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");
@@ -225,11 +221,7 @@ impl ChunkMap {
             };
 
             match new_block_type.get_block_content() {
-                BlockContent::Texture {
-                    texture: _,
-                    side_texture: _,
-                    bottom_texture: _,
-                } => {
+                BlockContent::Texture { .. } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
                 BlockContent::ModelCube { model, icon_size: _, collider_type } => {

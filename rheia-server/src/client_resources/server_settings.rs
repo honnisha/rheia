@@ -2,8 +2,9 @@ use super::resources_manager::ResourceManager;
 use crate::{launch_settings::LaunchSettings, network::runtime_plugin::RuntimePlugin};
 use bevy::prelude::{Res, ResMut, Resource};
 use common::{
-    blocks::{block_info::generate_block_id, block_type::BlockType, default_blocks::DEFAULT_BLOCKS},
+    blocks::{block_info::generate_block_id, block_type::BlockType},
     chunks::chunk_data::BlockIndexType,
+    default_blocks::DEFAULT_BLOCKS,
 };
 use network::messages::ServerMessages;
 use serde::{Deserialize, Serialize};

@@ -56,6 +56,7 @@ impl TextureMapper {
             BlockContent::Texture {
                 texture,
                 side_texture,
+                side_overlay: _,
                 bottom_texture,
             } => {
                 match side_index {
@@ -73,7 +74,7 @@ impl TextureMapper {
                     },
                 }
             }
-            BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => return None,
+            BlockContent::ModelCube { model, .. } => return None,
         };
 
         self.textures_map.iter().position(|t| t == texture)

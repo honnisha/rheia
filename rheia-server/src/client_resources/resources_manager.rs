@@ -3,6 +3,7 @@ use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use common::blocks::block_type::BlockContent;
 use common::blocks::block_type::BlockType;
+use common::default_resources::DEFAULT_RESOURCES;
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
@@ -15,7 +16,6 @@ use zip::DateTime;
 use crate::LaunchSettings;
 use crate::network::runtime_plugin::RuntimePlugin;
 
-use super::default_resources::DEFAULT_MEDIA;
 use super::resource_instance::ResourceInstance;
 use super::server_settings::ServerSettings;
 
@@ -83,7 +83,7 @@ impl ResourceManager {
     }
 
     pub fn has_media(&self, path: &String) -> bool {
-        if DEFAULT_MEDIA.contains(&path.as_str()) {
+        if DEFAULT_RESOURCES.contains(&path.as_str()) {
             return true;
         }
 
@@ -128,7 +128,11 @@ impl ResourceManager {
             let resource_slug = resource_instance.get_slug().clone();
 
             if self.resources.contains_key(&resource_slug) {
-                return Err(format!("&cresource &4\"{}\"&c slug &4\"{}\"&c already exists", resource_path.display().to_string(), resource_slug));
+                return Err(format!(
+                    "&cresource &4\"{}\"&c slug &4\"{}\"&c already exists",
+                    resource_path.display().to_string(),
+                    resource_slug
+                ));
             }
 
             let blocks = resource_instance.get_blocks();
@@ -164,19 +168,35 @@ impl ResourceManager {
                 BlockContent::Texture {
                     texture,
                     side_texture,
+                    side_overlay,
                     bottom_texture,
                 } => {
                     if !self.has_media(texture) {
                         return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, texture));
                     }
                     if side_texture.is_some() && !self.has_media(&side_texture.as_ref().unwrap()) {
-                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, side_texture.as_ref().unwrap()));
+                        return Err(format!(
+                            "block \"{}\" &cside_texture not found: {}",
+                            block_slug,
+                            side_texture.as_ref().unwrap()
+                        ));
+                    }
+                    if side_overlay.is_some() && !self.has_media(&side_overlay.as_ref().unwrap()) {
+                        return Err(format!(
+                            "block \"{}\" &cside_overlay not found: {}",
+                            block_slug,
+                            side_overlay.as_ref().unwrap()
+                        ));
                     }
                     if bottom_texture.is_some() && !self.has_media(&bottom_texture.as_ref().unwrap()) {
-                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, bottom_texture.as_ref().unwrap()));
+                        return Err(format!(
+                            "block \"{}\" &cbottom_texture not found: {}",
+                            block_slug,
+                            bottom_texture.as_ref().unwrap()
+                        ));
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
+                BlockContent::ModelCube { model, .. } => {
                     if !self.has_media(model) {
                         return Err(format!("block \"{}\" &cmodel not found: {}", block_slug, model));
                     }

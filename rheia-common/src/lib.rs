@@ -5,6 +5,8 @@ pub mod chunks;
 pub mod utils;
 pub mod world_generator;
 pub mod worlds_storage;
+pub mod default_resources;
+pub mod default_blocks;
 
 pub type WorldStorageManager = SQLiteStorage;
 

@@ -1,6 +1,6 @@
 use common::blocks::block_type::{BlockContent, BlockType};
-use common::blocks::default_blocks::DEFAULT_BLOCKS;
 use common::chunks::chunk_data::BlockIndexType;
+use common::default_blocks::DEFAULT_BLOCKS;
 use std::collections::BTreeMap;
 
 use crate::client_scripts::resource_manager::ResourceStorage;
@@ -85,6 +85,7 @@ impl BlockStorage {
                 BlockContent::Texture {
                     texture,
                     side_texture,
+                    side_overlay,
                     bottom_texture,
                 } => {
                     if !resources_storage.has_media(texture) {
@@ -96,20 +97,27 @@ impl BlockStorage {
                     }
                     if side_texture.is_some() && !resources_storage.has_media(&side_texture.as_ref().unwrap()) {
                         return Err(format!(
-                            "block \"{}\" &ctexture not found: \"{}\"",
+                            "block \"{}\" &cside_texture not found: \"{}\"",
                             block_type.get_slug(),
                             side_texture.as_ref().unwrap()
                         ));
                     }
+                    if side_overlay.is_some() && !resources_storage.has_media(&side_overlay.as_ref().unwrap()) {
+                        return Err(format!(
+                            "block \"{}\" &cside_overlay not found: \"{}\"",
+                            block_type.get_slug(),
+                            side_overlay.as_ref().unwrap()
+                        ));
+                    }
                     if bottom_texture.is_some() && !resources_storage.has_media(&bottom_texture.as_ref().unwrap()) {
                         return Err(format!(
-                            "block \"{}\" &ctexture not found: \"{}\"",
+                            "block \"{}\" &cbottom_texture not found: \"{}\"",
                             block_type.get_slug(),
                             bottom_texture.as_ref().unwrap()
                         ));
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
+                BlockContent::ModelCube { model, .. } => {
                     if !resources_storage.has_media(model) {
                         return Err(format!(
                             "block \"{}\" &cmodel not found: \"{}\"",

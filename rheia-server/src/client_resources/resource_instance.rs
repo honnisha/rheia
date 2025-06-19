@@ -1,21 +1,9 @@
-use common::blocks::block_type::{BlockContent, BlockType};
-use common::blocks::voxel_visibility::VoxelVisibility;
+use common::blocks::block_type::{BlockContent, BlockType, BlockTypeManifest};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Iter;
 use std::{collections::HashMap, path::PathBuf};
 
 const ALLOWED_FILES_EXT: &'static [&'static str] = &[".png", ".glb"];
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct BlockTypeManifest {
-    slug: String,
-
-    #[serde(default)]
-    voxel_visibility: VoxelVisibility,
-
-    block_content: BlockContent,
-    category: Option<String>,
-}
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ResourceManifest {
@@ -142,8 +130,11 @@ impl ResourceInstance {
                 Some(c) => c,
                 None => inst.slug.clone(),
             };
-            let b = BlockType::new(block.slug.clone(), block.voxel_visibility, block.block_content.clone())
-                .category(category);
+            let mut b = BlockType::new(block.block_content.clone()).category(category);
+            if let Some(slug) = block.slug.as_ref() {
+                b = b.set_slug(slug.clone());
+            }
+            b = b.visibility(block.voxel_visibility);
             inst.blocks.push(b);
         }
 
@@ -196,17 +187,21 @@ impl ResourceInstance {
                 BlockContent::Texture {
                     texture,
                     side_texture,
+                    side_overlay,
                     bottom_texture,
                 } => {
                     *texture = self.local_to_global_path(&texture);
                     if let Some(texture) = side_texture {
                         *texture = self.local_to_global_path(texture);
                     }
+                    if let Some(texture) = side_overlay {
+                        *texture = self.local_to_global_path(texture);
+                    }
                     if let Some(texture) = bottom_texture {
                         *texture = self.local_to_global_path(texture);
                     }
                 }
-                BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
+                BlockContent::ModelCube { model, .. } => {
                     *model = self.local_to_global_path(model);
                 }
             }

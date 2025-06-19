@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5vcwpmsk25kr"
-path="res://.godot/imported/grass_top.png-3fd0b6aeb3c978862a26107e929c6e5a.ctex"
+uid="uid://odwcn21u2skn"
+path="res://.godot/imported/dark_oak_planks.png-0b769a9de72bef10371917260fc48d1b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/block/grass_top.png"
-dest_files=["res://.godot/imported/grass_top.png-3fd0b6aeb3c978862a26107e929c6e5a.ctex"]
+source_file="res://assets/block/dark_oak_planks.png"
+dest_files=["res://.godot/imported/dark_oak_planks.png-0b769a9de72bef10371917260fc48d1b.ctex"]
 
 [params]
 

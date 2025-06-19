@@ -5,7 +5,6 @@ use server_settings::{rescan_server_settings, ServerSettings};
 
 use self::resources_manager::ResourceManager;
 
-pub mod default_resources;
 pub mod resource_instance;
 pub mod resources_manager;
 pub mod server_settings;

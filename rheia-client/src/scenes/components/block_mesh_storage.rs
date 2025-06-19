@@ -46,11 +46,7 @@ impl BlockMeshStorage {
         resource_storage: &ResourceStorage,
     ) {
         match block_type.get_block_content() {
-            BlockContent::Texture {
-                texture: _,
-                side_texture: _,
-                bottom_texture: _,
-            } => {
+            BlockContent::Texture { .. } => {
                 let block_info = BlockDataInfo::create(block_id, None);
                 let bordered_chunk_data = generate_single_block(&block_type, &block_info);
                 let geometry = generate_chunk_geometry(texture_mapper, &bordered_chunk_data, &block_storage);

@@ -16,7 +16,7 @@ pub enum VoxelVisibility {
 
 impl Default for VoxelVisibility {
     fn default() -> Self {
-        Self::Translucent
+        Self::Opaque
     }
 }
 

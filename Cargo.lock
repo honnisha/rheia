@@ -1355,6 +1355,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "serde_yaml",
  "strum 0.26.3",
  "strum_macros 0.26.4",
  "typetag",

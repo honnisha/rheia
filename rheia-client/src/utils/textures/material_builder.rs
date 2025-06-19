@@ -19,6 +19,7 @@ pub fn generate_texture(
             BlockContent::Texture {
                 texture,
                 side_texture,
+                side_overlay: _,
                 bottom_texture,
             } => {
                 if let Err(e) = texture_mapper.load_image(&mut img, texture, resource_storage) {

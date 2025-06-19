@@ -1,8 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://y4kca7bo7tc"]
+[gd_scene load_steps=8 format=3 uid="uid://y4kca7bo7tc"]
 
 [ext_resource type="Shader" uid="uid://cksdhtsok1kw8" path="res://assets/shaders/highlight_shine.gdshader" id="1_3wfa2"]
-[ext_resource type="Texture2D" uid="uid://b5vcwpmsk25kr" path="res://assets/block/grass_top.png" id="1_hg8sq"]
 [ext_resource type="Texture2D" uid="uid://byuam0oob22o3" path="res://assets/gui/textures/icon_outline.png" id="1_snxch"]
+[ext_resource type="Texture2D" uid="uid://wf6buhdvbjwp" path="res://assets/block/acacia_log_top.png" id="3_gdlbd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ejxoe"]
 shader = ExtResource("1_3wfa2")
@@ -18,10 +18,13 @@ shader_parameter/Position_Max = 0.5
 shader_parameter/Alpha = 1.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kme0x"]
-albedo_texture = ExtResource("1_hg8sq")
 texture_filter = 0
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t0443"]
+albedo_texture = ExtResource("3_gdlbd")
+
 [sub_resource type="BoxMesh" id="BoxMesh_axew6"]
+material = SubResource("StandardMaterial3D_t0443")
 
 [node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("block_anchor", "outline_texture", "backgroud_color", "camera")]
 block_anchor = NodePath("SubViewportContainer/SubViewport/Anchor")

@@ -113,7 +113,7 @@ impl BlockMenu {
 #[godot_api]
 impl INode for BlockMenu {
     fn ready(&mut self) {
-        let mut window = self.window.clone();
+        let window = self.window.clone();
 
         window
             .signals()

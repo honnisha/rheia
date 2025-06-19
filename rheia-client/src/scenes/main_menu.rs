@@ -91,7 +91,7 @@ impl MainMenu {
 
         self.gui.as_mut().unwrap().set_visible(false);
 
-        let mut main_scene = MainScene::create(ip_port.to_string(), username.to_string(), self.game_settings.clone());
+        let main_scene = MainScene::create(ip_port.to_string(), username.to_string(), self.game_settings.clone());
         main_scene
             .signals()
             .network_disconnect()

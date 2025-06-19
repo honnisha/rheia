@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use super::voxel_visibility::VoxelVisibility;
 
+const REGEX_FILE_NAME: &str = r"^(?:.*\/)*([a-zA-Z_0-9]+)(\.[a-zA-Z]+)";
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum ColliderType {
@@ -29,11 +31,20 @@ impl Default for ColliderType {
 pub enum BlockContent {
     Texture {
         texture: String,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
         side_texture: Option<String>,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
+        side_overlay: Option<String>,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
         bottom_texture: Option<String>,
     },
     ModelCube {
         model: String,
+
+        #[serde(skip_serializing_if = "Option::is_none")]
         icon_size: Option<f32>,
 
         #[serde(default)]
@@ -47,16 +58,18 @@ impl BlockContent {
             BlockContent::Texture {
                 texture: _,
                 side_texture: _,
+                side_overlay: _,
                 bottom_texture: _,
             } => true,
             _ => false,
         }
     }
 
-    pub fn single_texture<S: Into<String>>(texture: S) -> BlockContent {
+    pub fn single<S: Into<String>>(texture: S) -> BlockContent {
         BlockContent::Texture {
             texture: texture.into(),
             side_texture: None,
+            side_overlay: None,
             bottom_texture: None,
         }
     }
@@ -64,11 +77,16 @@ impl BlockContent {
     pub fn texture<S: Into<String>>(
         texture: S,
         side_texture: Option<S>,
+        side_overlay: Option<S>,
         bottom_texture: Option<S>,
     ) -> BlockContent {
         BlockContent::Texture {
             texture: texture.into(),
             side_texture: match side_texture {
+                Some(t) => Some(t.into()),
+                None => None,
+            },
+            side_overlay: match side_overlay {
                 Some(t) => Some(t.into()),
                 None => None,
             },
@@ -81,24 +99,88 @@ impl BlockContent {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct BlockTypeManifest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slug: Option<String>,
+
+    #[serde(skip_serializing_if = "BlockType::is_default")]
+    #[serde(default)]
+    pub voxel_visibility: VoxelVisibility,
+
+    pub block_content: BlockContent,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub category: Option<String>,
+}
+
+impl BlockTypeManifest {
+    pub fn to_block(&self) -> BlockType {
+        BlockType::new(self.block_content.clone())
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BlockType {
     slug: String,
 
     // For texturing and collider building
+    #[serde(skip_serializing_if = "BlockType::is_default")]
+    #[serde(default)]
     voxel_visibility: VoxelVisibility,
 
     block_content: BlockContent,
+
+    #[serde(skip_serializing_if = "BlockType::is_base")]
+    #[serde(default = "BlockType::default_category")]
     category: String,
 }
 
 impl BlockType {
-    pub fn new<S: Into<String>>(slug: S, voxel_visibility: VoxelVisibility, block_content: BlockContent) -> Self {
+    fn is_base(category: &String) -> bool {
+        *category == "base".to_string()
+    }
+    fn is_default<T: Default + PartialEq>(attr: &T) -> bool {
+        *attr == T::default()
+    }
+    fn default_category() -> String {
+        "base".to_string()
+    }
+}
+
+impl BlockType {
+    fn generate_slug(block_content: &BlockContent) -> String {
+        let path = match &block_content {
+            BlockContent::Texture { texture, .. } => texture.clone(),
+            BlockContent::ModelCube { model, .. } => model.clone(),
+        };
+        let re = regex::Regex::new(REGEX_FILE_NAME).unwrap();
+        let Some(re) = re.captures(&path) else {
+            panic!("Path \"{}\" regex return None", path);
+        };
+        let Some(slug) = re.get(1) else {
+            panic!("Path \"{}\" regex group not found", path);
+        };
+        slug.as_str().into()
+    }
+
+    pub fn new(block_content: BlockContent) -> Self {
+        let slug = BlockType::generate_slug(&block_content);
         Self {
-            slug: slug.into(),
-            voxel_visibility,
+            slug: slug,
+            voxel_visibility: VoxelVisibility::Opaque,
             block_content,
-            category: "base".to_string(),
+            category: BlockType::default_category(),
         }
+    }
+
+    pub fn set_slug<S: Into<String>>(mut self, slug: S) -> Self {
+        self.slug = slug.into();
+        self
+    }
+
+    pub fn visibility(mut self, voxel_visibility: VoxelVisibility) -> Self {
+        self.voxel_visibility = voxel_visibility;
+        self
     }
 
     pub fn category(mut self, category: String) -> Self {
@@ -128,7 +210,7 @@ impl BlockType {
 
     pub fn get_model(&self) -> Option<&String> {
         match &self.block_content {
-            BlockContent::ModelCube { model, icon_size: _, collider_type: _ } => {
+            BlockContent::ModelCube { model, .. } => {
                 return Some(model);
             }
             _ => None,

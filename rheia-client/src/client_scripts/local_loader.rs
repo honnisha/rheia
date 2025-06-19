@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
+use common::default_resources::DEFAULT_RESOURCES;
 use godot::{
-    classes::{file_access::ModeFlags, DirAccess, FileAccess, Resource, ResourceLoader},
+    classes::{DirAccess, FileAccess, Resource, ResourceLoader, file_access::ModeFlags},
     obj::Gd,
 };
 use serde::{Deserialize, Serialize};
@@ -30,12 +31,21 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
 
         let manifest_text: String = manifest_file.get_as_text().into();
         let manifest_result: Result<LocalResourceManifest, serde_yaml::Error> = serde_yaml::from_str(&manifest_text);
-        let manifest = match manifest_result {
+        let mut manifest = match manifest_result {
             Ok(m) => m,
             Err(e) => {
                 return Err(format!("Manifest {} error: {}", manifest_path, e));
             }
         };
+
+        if manifest.slug == "default" {
+            if let Some(media_list) = manifest.media.as_mut() {
+                for media in DEFAULT_RESOURCES {
+                    media_list.push((*media).into());
+                }
+            }
+        }
+
         let mut resource = LocalResource {
             slug: manifest.slug.clone(),
             scripts: Default::default(),
@@ -49,9 +59,9 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
                     Some(r) => r,
                     None => {
                         return Err(format!(
-                            "resource \"{}\" ResourceLoader cannot find {} file",
+                            "&cresource &4\"{}\" &cResourceLoader cannot find &4\"{}\" &cfile",
                             resource.slug, script_path
-                        ))
+                        ));
                     }
                 };
                 unimplemented!();
@@ -65,9 +75,9 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
                     Some(r) => r,
                     None => {
                         return Err(format!(
-                            "resource \"{}\" ResourceLoader cannot find {} file",
+                            "&cresource &4\"{}\" &cResourceLoader cannot find &4\"{}\" &cfile",
                             resource.slug, media_path
-                        ))
+                        ));
                     }
                 };
                 resource.media.insert(media_path.replace("res://", ""), file_resource);
