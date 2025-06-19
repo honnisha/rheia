@@ -21,67 +21,123 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/mossy_stone_bricks.png
 
 - block_content: !texture
-    texture: res://assets/block/gravel.png
+    texture: default://assets/block/gravel.png
 - block_content: !texture
-    texture: res://assets/block/coarse_dirt.png
+    texture: default://assets/block/coarse_dirt.png
 - block_content: !texture
-    texture: res://assets/block/bedrock.png
+    texture: default://assets/block/bedrock.png
 - block_content: !texture
-    texture: res://assets/block/sand.png
+    texture: default://assets/block/sand.png
 - block_content: !texture
-    texture: res://assets/block/amethyst_block.png
+    texture: default://assets/block/amethyst_block.png
 - block_content: !texture
-    texture: res://assets/block/bookshelf.png
+    texture: default://assets/block/oak_planks.png
+    side_texture: default://assets/block/bookshelf.png
 - block_content: !texture
-    texture: res://assets/block/iron_block.png
+    texture: default://assets/block/iron_block.png
 
 - block_content: !texture
     texture: default://assets/block/sandstone_top.png
     side_texture: default://assets/block/sandstone.png
     bottom_texture: default://assets/block/sandstone_bottom.png
 - block_content: !texture
-    texture: res://assets/block/chiseled_sandstone.png
+    texture: default://assets/block/chiseled_sandstone.png
 
 - block_content: !texture
     texture: default://assets/block/podzol_top.png
     side_texture: default://assets/block/podzol_side.png
 
 - block_content: !texture
-    texture: res://assets/block/blackstone.png
+    texture: default://assets/block/blackstone.png
 - block_content: !texture
-    texture: res://assets/block/polished_blackstone.png
+    texture: default://assets/block/polished_blackstone.png
 - block_content: !texture
-    texture: res://assets/block/andesite.png
+    texture: default://assets/block/andesite.png
 - block_content: !texture
-    texture: res://assets/block/deepslate.png
+    texture: default://assets/block/deepslate.png
 - block_content: !texture
-    texture: res://assets/block/deepslate_bricks.png
+    texture: default://assets/block/deepslate_bricks.png
 - block_content: !texture
-    texture: res://assets/block/cracked_deepslate_bricks.png
+    texture: default://assets/block/cracked_deepslate_bricks.png
 - block_content: !texture
-    texture: res://assets/block/polished_deepslate.png
+    texture: default://assets/block/polished_deepslate.png
 - block_content: !texture
-    texture: res://assets/block/diorite.png
+    texture: default://assets/block/diorite.png
 - block_content: !texture
-    texture: res://assets/block/polished_diorite.png
+    texture: default://assets/block/polished_diorite.png
 - block_content: !texture
-    texture: res://assets/block/granite.png
+    texture: default://assets/block/granite.png
 - block_content: !texture
-    texture: res://assets/block/polished_granite.png
+    texture: default://assets/block/polished_granite.png
 - block_content: !texture
-    texture: res://assets/block/cobblestone.png
+    texture: default://assets/block/cobblestone.png
 - block_content: !texture
-    texture: res://assets/block/mossy_cobblestone.png
+    texture: default://assets/block/mossy_cobblestone.png
 
 - block_content: !texture
-    texture: res://assets/block/acacia_log_top.png
+    texture: default://assets/block/acacia_log_top.png
     side_texture: default://assets/block/acacia_log.png
   category: trees
 - block_content: !texture
-    texture: res://assets/block/acacia_leaves.png
+    texture: default://assets/block/acacia_leaves.png
   category: trees
 - block_content: !texture
-    texture: res://assets/block/acacia_planks.png
+    texture: default://assets/block/acacia_planks.png
+  category: trees
+
+- block_content: !texture
+    texture: default://assets/block/birch_log_top.png
+    side_texture: default://assets/block/birch_log.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/birch_leaves.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/birch_planks.png
+  category: trees
+
+- block_content: !texture
+    texture: default://assets/block/dark_oak_log_top.png
+    side_texture: default://assets/block/dark_oak_log.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/dark_oak_leaves.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/dark_oak_planks.png
+  category: trees
+
+- block_content: !texture
+    texture: default://assets/block/jungle_log_top.png
+    side_texture: default://assets/block/jungle_log.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/jungle_leaves.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/jungle_planks.png
+  category: trees
+
+- block_content: !texture
+    texture: default://assets/block/oak_log_top.png
+    side_texture: default://assets/block/oak_log.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/oak_leaves.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/oak_planks.png
+  category: trees
+
+- block_content: !texture
+    texture: default://assets/block/spruce_log_top.png
+    side_texture: default://assets/block/spruce_log.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/spruce_leaves.png
+  category: trees
+- block_content: !texture
+    texture: default://assets/block/spruce_planks.png
   category: trees
 "#;
 

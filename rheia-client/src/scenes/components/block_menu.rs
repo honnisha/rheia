@@ -69,7 +69,7 @@ impl BlockMenu {
     }
 
     pub fn set_blocks(&mut self, block_mesh_storage: &BlockMeshStorage, block_storage: &BlockStorage) {
-        let gd = self.base().to_godot();
+        let gd = self.to_gd().clone();
 
         // Collect all block categories
 
@@ -94,11 +94,14 @@ impl BlockMenu {
                 let block_id = block_storage.get_block_id(block_slug).unwrap();
                 if block_type.get_category() == category {
                     let icon = block_mesh_storage.get_icon(&block_id).unwrap();
-                    let mut icon = icon.clone();
+                    let icon = icon.clone();
                     // let mut icon = icon.duplicate().unwrap().cast::<BlockIcon>();
                     flow_container.add_child(&icon);
 
-                    icon.connect("icon_clicked", &Callable::from_object_method(&gd, "on_icon_clicked"));
+                    icon.signals()
+                        .icon_clicked()
+                        .connect_other(&gd, BlockMenu::on_icon_clicked);
+
                     self.icons.insert(block_id.clone(), icon);
                 }
             }

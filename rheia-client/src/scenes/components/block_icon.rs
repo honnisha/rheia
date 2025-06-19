@@ -85,13 +85,13 @@ impl BlockIcon {
     }
 
     #[signal]
-    fn icon_clicked(icon: Gd<BlockIconSelect>);
+    pub fn icon_clicked(block: Gd<BlockIconSelect>);
 
     #[signal]
-    fn icon_mouse_entered(icon: Gd<BlockIconSelect>);
+    pub fn icon_mouse_entered(block: Gd<BlockIconSelect>);
 
     #[signal]
-    fn icon_mouse_exited(icon: Gd<BlockIconSelect>);
+    pub fn icon_mouse_exited(block: Gd<BlockIconSelect>);
 }
 
 impl BlockIcon {

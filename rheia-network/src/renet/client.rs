@@ -128,7 +128,7 @@ impl IClientNetwork for RenetClientNetwork {
                 let decoded: ServerMessages = match bincode::deserialize(&server_message) {
                     Ok(d) => d,
                     Err(e) => {
-                        self.send_network_error(e.to_string());
+                        self.send_network_error(format!("message decode error: {}", e.to_string()));
                         continue;
                     }
                 };

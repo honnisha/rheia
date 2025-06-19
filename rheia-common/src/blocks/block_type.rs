@@ -31,20 +31,14 @@ impl Default for ColliderType {
 pub enum BlockContent {
     Texture {
         texture: String,
-
-        #[serde(skip_serializing_if = "Option::is_none")]
         side_texture: Option<String>,
-
-        #[serde(skip_serializing_if = "Option::is_none")]
         side_overlay: Option<String>,
-
-        #[serde(skip_serializing_if = "Option::is_none")]
         bottom_texture: Option<String>,
     },
     ModelCube {
         model: String,
 
-        #[serde(skip_serializing_if = "Option::is_none")]
+        // #[serde(skip_serializing_if = "Option::is_none")]
         icon_size: Option<f32>,
 
         #[serde(default)]

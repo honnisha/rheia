@@ -38,14 +38,6 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
             }
         };
 
-        if manifest.slug == "default" {
-            if let Some(media_list) = manifest.media.as_mut() {
-                for media in DEFAULT_RESOURCES {
-                    media_list.push((*media).into());
-                }
-            }
-        }
-
         let mut resource = LocalResource {
             slug: manifest.slug.clone(),
             scripts: Default::default(),
@@ -66,6 +58,15 @@ pub(crate) fn get_local_resources() -> Result<Vec<LocalResource>, String> {
                 };
                 unimplemented!();
                 //resource.scripts.insert(script_path.replace("res://", ""), script_text);
+            }
+        }
+
+        if manifest.slug == "default" {
+            if let Some(media_list) = manifest.media.as_mut() {
+                for media in DEFAULT_RESOURCES {
+                    let media: String = (*media).into();
+                    media_list.push(media);
+                }
             }
         }
 
