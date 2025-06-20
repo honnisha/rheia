@@ -77,6 +77,10 @@ impl WorldsManager {
         self.block_mesh_storage.as_ref()
     }
 
+    pub fn get_block_storage_lock(&self) -> &BlockStorageType {
+        &self.block_storage
+    }
+
     pub fn get_block_storage(&self) -> RwLockReadGuard<'_, parking_lot::RawRwLock, BlockStorage> {
         self.block_storage.read()
     }

@@ -8,9 +8,10 @@
 texture = ExtResource("1_voyhs")
 expand_margin_right = 95.0
 
-[node name="TabsContainer" type="TabsUIComponent" node_paths=PackedStringArray("tabs_holder", "tabs_content_holder")]
+[node name="TabsContainer" type="TabsUIComponent" node_paths=PackedStringArray("tabs_holder", "tabs_content_holder", "footer_holder")]
 tabs_holder = NodePath("SplitContainer/HSplitContainer/BoxContainer/PanelContainer/CategoriesHolder")
-tabs_content_holder = NodePath("SplitContainer/HSplitContainer/HSplitContainer")
+tabs_content_holder = NodePath("SplitContainer/HSplitContainer/HSplitContainer/SplitContainer/TabsContainer")
+footer_holder = NodePath("SplitContainer/HSplitContainer/HSplitContainer/SplitContainer/FooterContainer")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -53,6 +54,22 @@ layout_mode = 2
 [node name="HSplitContainer" type="HSplitContainer" parent="SplitContainer/HSplitContainer"]
 layout_mode = 2
 
-[node name="TabComponent" parent="SplitContainer/HSplitContainer/HSplitContainer" instance=ExtResource("2_otls6")]
-visible = false
+[node name="SplitContainer" type="SplitContainer" parent="SplitContainer/HSplitContainer/HSplitContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
+dragging_enabled = false
+vertical = true
+
+[node name="TabsContainer" type="VSplitContainer" parent="SplitContainer/HSplitContainer/HSplitContainer/SplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragging_enabled = false
+
+[node name="TabComponent" parent="SplitContainer/HSplitContainer/HSplitContainer/SplitContainer/TabsContainer" instance=ExtResource("2_otls6")]
+layout_mode = 2
+
+[node name="FooterContainer" type="VSplitContainer" parent="SplitContainer/HSplitContainer/HSplitContainer/SplitContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+dragging_enabled = false

@@ -30,33 +30,3 @@ layout_mode = 2
 
 [node name="BlockIcon2" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
 layout_mode = 2
-
-[node name="BlockIcon3" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon4" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon5" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon6" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon7" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon8" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon9" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon10" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon11" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon12" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2

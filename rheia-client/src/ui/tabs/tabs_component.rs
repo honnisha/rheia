@@ -35,7 +35,10 @@ pub struct TabsUIComponent {
     tabs_holder: Option<Gd<VBoxContainer>>,
 
     #[export]
-    tabs_content_holder: Option<Gd<HSplitContainer>>,
+    tabs_content_holder: Option<Gd<Control>>,
+
+    #[export]
+    footer_holder: Option<Gd<Control>>,
 
     tabs_buttons: HashMap<String, Gd<TabUIButton>>,
     tabs_content: HashMap<String, Gd<TabContentUIComponent>>,
@@ -46,6 +49,10 @@ pub struct TabsUIComponent {
 impl TabsUIComponent {
     pub fn create() -> Gd<Self> {
         load::<PackedScene>(TABS_COMPONENT_SCENE).instantiate_as::<Self>()
+    }
+
+    pub fn get_footer_holder_mut(&mut self) -> &mut Gd<Control> {
+        self.footer_holder.as_mut().expect("Footer holder is required for TabsUIComponent")
     }
 
     pub fn add_category(&mut self, tab_key: String, title: String) -> Gd<TabContentUIComponent> {

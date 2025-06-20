@@ -429,12 +429,12 @@ impl PlayerController {
     }
 
     pub fn set_blocks(&mut self, worlds_manager: &WorldsManager) {
-        let block_storage = worlds_manager.get_block_storage();
+        let block_storage_lock = worlds_manager.get_block_storage_lock();
 
         let block_mesh_storage = worlds_manager.get_block_mesh_storage().unwrap();
         self.block_menu
             .bind_mut()
-            .set_blocks(&*block_mesh_storage.bind(), &*block_storage);
+            .set_blocks(&*block_mesh_storage.bind(), block_storage_lock.clone());
 
         self.building_visualizer
             .bind_mut()
