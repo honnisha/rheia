@@ -523,7 +523,7 @@ impl INode3D for PlayerController {
 
         block_menu
             .signals()
-            .closed()
+            .menu_closed()
             .connect_other(&self.to_gd(), PlayerController::on_block_menu_closed);
         block_menu
             .signals()

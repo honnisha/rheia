@@ -127,14 +127,10 @@ impl BlockIcon {
 #[godot_api]
 impl IControl for BlockIcon {
     fn ready(&mut self) {
-        let gd = self.base().to_godot();
-        self.base_mut()
-            .connect("gui_input", &Callable::from_object_method(&gd, "on_gui_input"));
+        self.signals().gui_input().connect_self(BlockIcon::on_gui_input);
 
-        self.base_mut()
-            .connect("mouse_entered", &Callable::from_object_method(&gd, "on_mouse_entered"));
-        self.base_mut()
-            .connect("mouse_exited", &Callable::from_object_method(&gd, "on_mouse_exited"));
+        self.signals().mouse_entered().connect_self(BlockIcon::on_mouse_entered);
+        self.signals().mouse_exited().connect_self(BlockIcon::on_mouse_exited);
 
         self.toggle_selected(false);
     }

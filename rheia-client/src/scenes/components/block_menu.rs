@@ -40,14 +40,14 @@ pub struct BlockMenu {
 #[godot_api]
 impl BlockMenu {
     #[signal]
-    pub fn closed();
+    pub fn menu_closed();
 
     #[signal]
     pub fn block_clicked(block: Gd<BlockIconSelect>);
 
     #[func]
     fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
-        self.signals().closed().emit();
+        self.signals().menu_closed().emit();
         self.toggle(false);
         self.signals().block_clicked().emit(&block);
     }
@@ -78,7 +78,7 @@ impl BlockMenu {
 
     #[func]
     fn on_window_closed(&mut self) {
-        self.signals().closed().emit();
+        self.signals().menu_closed().emit();
         self.help_text.set_text("");
         self.window.bind_mut().toggle(false);
     }
@@ -155,7 +155,6 @@ impl BlockMenu {
                 if block_type.get_category() == category {
                     let icon = block_mesh_storage.get_icon(&block_id).unwrap();
                     let icon = icon.clone();
-                    // let mut icon = icon.duplicate().unwrap().cast::<BlockIcon>();
                     flow_container.add_child(&icon);
 
                     icon.signals()
@@ -188,7 +187,7 @@ impl INode for BlockMenu {
 
         window
             .signals()
-            .closed()
+            .window_closed()
             .connect_other(&self.to_gd().clone(), BlockMenu::on_window_closed);
 
         self.base_mut().add_child(&window);

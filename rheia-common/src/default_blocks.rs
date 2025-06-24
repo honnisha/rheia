@@ -1,6 +1,9 @@
 use crate::blocks::block_type::{BlockType, BlockTypeManifest};
 use lazy_static::lazy_static;
 
+/// Их необходимо хранить в общей библиотеки, т.к. их используют клиент и сервер
+/// Клиент загружает их по дефолту
+/// Сервер сохраняет id в соответствии со slug блоков и передает на клиент
 const DEFAULT_BLOCKS_YML: &str = r#"
 - slug: grass
   block_content: !texture
@@ -144,96 +147,134 @@ const DEFAULT_BLOCKS_YML: &str = r#"
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/bush_small.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_lupin.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_lupin2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_orchid.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_rose.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_white.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
     model: foliage://assets/resources/foliage/flower_white2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/flower_yellow.glb
+    model: foliage://assets/resources/foliage/flower_yellow.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/flower_yellow2.glb
+    model: foliage://assets/resources/foliage/flower_yellow2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/flower_yellow3.glb
+    model: foliage://assets/resources/foliage/flower_yellow3.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/grass1.glb
+    model: foliage://assets/resources/foliage/grass1.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/grass2.glb
+    model: foliage://assets/resources/foliage/grass2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/grass3.glb
+    model: foliage://assets/resources/foliage/grass3.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/grass4.glb
+    model: foliage://assets/resources/foliage/grass4.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/ground_moss1.glb
+    model: foliage://assets/resources/foliage/ground_moss1.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/ground_moss2.glb
+    model: foliage://assets/resources/foliage/ground_moss2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/ground_moss3.glb
+    model: foliage://assets/resources/foliage/ground_moss3.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/tall_grass1.glb
+    model: foliage://assets/resources/foliage/tall_grass1.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-   model: foliage://assets/resources/foliage/tall_grass2.glb
+    model: foliage://assets/resources/foliage/tall_grass2.glb
+    collider_type: sensor
+    icon_size: 1.4
   category: foliage
 "#;
 

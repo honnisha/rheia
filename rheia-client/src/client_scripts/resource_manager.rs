@@ -44,7 +44,7 @@ impl ResourceStorage {
         self.resources.get(slug)
     }
 
-    pub fn get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
+    pub fn _get_resource_mut(&mut self, slug: &String) -> Option<&mut ResourceInstance> {
         self.resources.get_mut(slug)
     }
 

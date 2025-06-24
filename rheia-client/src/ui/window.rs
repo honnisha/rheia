@@ -26,7 +26,7 @@ pub struct WindowUIComponent {
 #[godot_api]
 impl WindowUIComponent {
     #[signal]
-    pub fn closed();
+    pub fn window_closed();
 
     pub fn create(title: String, show_button_close: bool) -> Gd<Self> {
         let mut window = load::<PackedScene>(WINDOW_SCENE).instantiate_as::<Self>();
@@ -58,7 +58,7 @@ impl WindowUIComponent {
 
     #[func]
     fn on_close_button_pressed(&mut self) {
-        self.signals().closed().emit();
+        self.signals().window_closed().emit();
         self.toggle(false);
     }
 }
