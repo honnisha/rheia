@@ -66,10 +66,10 @@ impl ResourceStorage {
         };
 
         if !resource.has_media(&res_path) {
-            // log::info!(target: "resources", "All resource \"{}\" media list ({}):", res_slug, resource.get_media_count());
-            // for (media_slug, _) in resource.media.iter() {
-            //     log::info!(target: "resources", "- {}", media_slug);
-            // }
+            log::info!(target: "resources", "&4All resource \"{}\" media list ({}):", res_slug, resource.get_media_count());
+            for (media_slug, _) in resource.iter_media() {
+                log::info!(target: "resources", "&c- {}", media_slug);
+            }
             return Err(format!(
                 "resource \"{}\" doesn't contain media \"{}\"; total count: {}",
                 res_slug,

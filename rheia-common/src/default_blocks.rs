@@ -143,97 +143,97 @@ const DEFAULT_BLOCKS_YML: &str = r#"
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://bush_small.glb
+    model: foliage://assets/resources/foliage/bush_small.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_lupin.glb
+    model: foliage://assets/resources/foliage/flower_lupin.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_lupin2.glb
+    model: foliage://assets/resources/foliage/flower_lupin2.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_orchid.glb
+    model: foliage://assets/resources/foliage/flower_orchid.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_rose.glb
+    model: foliage://assets/resources/foliage/flower_rose.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_white.glb
+    model: foliage://assets/resources/foliage/flower_white.glb
   category: foliage
 -
   voxel_visibility: translucent
   block_content: !model_cube
-    model: foliage://flower_white2.glb
+    model: foliage://assets/resources/foliage/flower_white2.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://flower_yellow. glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/flower_yellow.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://flower_yellow2 .glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/flower_yellow2.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://flower_yellow3 .glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/flower_yellow3.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://grass1.glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/grass1.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://grass2.glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/grass2.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://grass3.glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/grass3.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://grass4.glb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/grass4.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://ground_moss1.g lb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/ground_moss1.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://ground_moss2.g lb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/ground_moss2.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://ground_moss3.g lb
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/ground_moss3.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://tall_grass1.gl b
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/tall_grass1.glb
   category: foliage
 -
   voxel_visibility: translucent
- block_content: !model_cub e
-   model: foliage://tall_grass2.gl b
+  block_content: !model_cube
+   model: foliage://assets/resources/foliage/tall_grass2.glb
   category: foliage
 "#;
 

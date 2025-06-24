@@ -1,7 +1,7 @@
 use ahash::HashMap;
 use common::utils::uppercase_first;
 use godot::{
-    classes::{control::LayoutPreset, Control, HSplitContainer, IControl, VBoxContainer},
+    classes::{Control, IControl, VBoxContainer, control::LayoutPreset},
     prelude::*,
 };
 
@@ -52,7 +52,9 @@ impl TabsUIComponent {
     }
 
     pub fn get_footer_holder_mut(&mut self) -> &mut Gd<Control> {
-        self.footer_holder.as_mut().expect("Footer holder is required for TabsUIComponent")
+        self.footer_holder
+            .as_mut()
+            .expect("Footer holder is required for TabsUIComponent")
     }
 
     pub fn add_category(&mut self, tab_key: String, title: String) -> Gd<TabContentUIComponent> {
@@ -77,7 +79,7 @@ impl TabsUIComponent {
         match self.active_tab.as_ref() {
             Some(active_tab) => {
                 tab_content.bind_mut().toggle(*active_tab == tab_key);
-            },
+            }
             None => self.set_active_tab(&tab_key),
         }
 

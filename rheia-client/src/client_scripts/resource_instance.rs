@@ -38,6 +38,10 @@ pub struct ResourceInstance {
 }
 
 impl ResourceInstance {
+    pub fn iter_media(&self) -> &HashMap<String, MediaResource> {
+        &self.media
+    }
+
     pub fn get_scripts_count(&self) -> usize {
         self.scripts.len()
     }
