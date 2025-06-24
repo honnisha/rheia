@@ -139,6 +139,102 @@ const DEFAULT_BLOCKS_YML: &str = r#"
 - block_content: !texture
     texture: default://assets/block/spruce_planks.png
   category: trees
+
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://bush_small.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_lupin.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_lupin2.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_orchid.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_rose.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_white.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+  block_content: !model_cube
+    model: foliage://flower_white2.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://flower_yellow. glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://flower_yellow2 .glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://flower_yellow3 .glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://grass1.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://grass2.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://grass3.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://grass4.glb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://ground_moss1.g lb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://ground_moss2.g lb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://ground_moss3.g lb
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://tall_grass1.gl b
+  category: foliage
+-
+  voxel_visibility: translucent
+ block_content: !model_cub e
+   model: foliage://tall_grass2.gl b
+  category: foliage
 "#;
 
 fn generate_default_blocks() -> Vec<BlockType> {

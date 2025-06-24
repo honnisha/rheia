@@ -38,6 +38,14 @@ pub struct ResourceInstance {
 }
 
 impl ResourceInstance {
+    pub fn get_scripts_count(&self) -> usize {
+        self.scripts.len()
+    }
+
+    pub fn get_media_count(&self) -> usize {
+        self.media.len()
+    }
+
     pub fn new(slug: String, is_network: bool) -> Self {
         Self {
             slug,
@@ -115,9 +123,6 @@ impl ResourceInstance {
     }
 
     pub fn has_media(&self, slug: &String) -> bool {
-        // for (media_slug, _) in self.media.iter() {
-        //     log::info!("{} media_slug:{}", self.slug, media_slug);
-        // }
         self.media.contains_key(slug)
     }
 
@@ -125,7 +130,7 @@ impl ResourceInstance {
         self.media.get(slug)
     }
 
-    pub fn _is_network(&self) -> bool {
+    pub fn is_network(&self) -> bool {
         self.is_network
     }
 }

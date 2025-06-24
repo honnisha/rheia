@@ -56,18 +56,28 @@ impl ResourceStorage {
         self.resources.len()
     }
 
-    pub fn has_media(&self, path: &String) -> bool {
+    pub fn has_media(&self, path: &String) -> Result<bool, String> {
         let Some((res_slug, res_path)) = split_resource_path(path) else {
-            return false;
+            return Err(format!("cannot split path \"{}\"", path));
         };
 
-        for (resource_path, resource) in self.resources.iter() {
-            // log::info!("resource_path:{} res_path:{}", resource_path, res_path);
-            if *resource_path == res_slug && resource.has_media(&res_path) {
-                return true;
-            }
+        let Some(resource) = self.resources.get(&res_slug) else {
+            return Err(format!("resource \"{}\" not found", res_slug));
+        };
+
+        if !resource.has_media(&res_path) {
+            // log::info!(target: "resources", "All resource \"{}\" media list ({}):", res_slug, resource.get_media_count());
+            // for (media_slug, _) in resource.media.iter() {
+            //     log::info!(target: "resources", "- {}", media_slug);
+            // }
+            return Err(format!(
+                "resource \"{}\" doesn't contain media \"{}\"; total count: {}",
+                res_slug,
+                res_path,
+                resource.get_media_count()
+            ));
         }
-        return false;
+        return Ok(true);
     }
 
     pub fn get_media(&self, path: &String) -> Option<&MediaResource> {
@@ -239,14 +249,13 @@ impl ResourceManager {
     fn load_archive<R: Read + Seek>(&mut self, reader: R) -> Result<u32, String> {
         let resources_scheme = self.resources_scheme.take().expect("resources_scheme is not set");
 
+        let mut resources: HashMap<String, ResourceInstance> = Default::default();
         for resource_scheme in resources_scheme.iter() {
             let resource = ResourceInstance::new(resource_scheme.slug.clone(), true);
-            self.get_resources_storage_mut().add_resource(resource);
+            resources.insert(resource_scheme.slug.clone(), resource);
         }
 
         let rhai_engine = self.rhai_engine.clone();
-
-        let mut resources_storage = self.get_resources_storage_mut();
 
         let mut count: u32 = 0;
         let mut zip = zip::ZipArchive::new(reader).unwrap();
@@ -256,14 +265,14 @@ impl ResourceManager {
 
             match ResourceManager::get_resource_type(&resources_scheme, &file_hash) {
                 ResourceType::Script { name, resource_slug } => {
-                    let resource = resources_storage.get_resource_mut(&resource_slug).unwrap();
+                    let resource = resources.get_mut(&resource_slug).unwrap();
 
                     let mut code = String::new();
                     archive_file.read_to_string(&mut code).unwrap();
                     resource.add_script(&mut rhai_engine.borrow_mut(), name, code)?;
                 }
                 ResourceType::Media { name, resource_slug } => {
-                    let resource = resources_storage.get_resource_mut(&resource_slug).unwrap();
+                    let resource = resources.get_mut(&resource_slug).unwrap();
 
                     let mut archive_file_data = Vec::new();
                     for i in archive_file.bytes() {
@@ -292,6 +301,16 @@ impl ResourceManager {
             count += 1;
         }
 
+        for (_slug, resource) in resources.drain() {
+            log::info!(
+                target: "resources",
+                "□ Resource &2\"{}\"&r loaded;&7 Media:{} Scripts:{}",
+                resource.get_slug(),
+                resource.get_media_count(),
+                resource.get_scripts_count(),
+            );
+            self.get_resources_storage_mut().add_resource(resource);
+        }
         Ok(count)
     }
 
@@ -300,7 +319,9 @@ impl ResourceManager {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
+        let mut resource_names: Vec<String> = Default::default();
         for mut local_resource in local_resources {
+
             let mut resource_instance = ResourceInstance::new(local_resource.slug.clone(), false);
 
             for (script_slug, script_code) in local_resource.scripts.drain() {
@@ -313,8 +334,17 @@ impl ResourceManager {
                 }
             }
 
+            resource_names.push(resource_instance.get_slug().clone());
+            log::info!(
+                target: "resources",
+                "□ Resource &2\"{}\"&r loaded;&7 Media:{} Scripts:{}",
+                resource_instance.get_slug(),
+                resource_instance.get_media_count(),
+                resource_instance.get_scripts_count(),
+            );
             self.get_resources_storage_mut().add_resource(resource_instance);
         }
+        log::info!(target: "resources", "Local resources loaded: &e{}", resource_names.join(", "));
         Ok(())
     }
 

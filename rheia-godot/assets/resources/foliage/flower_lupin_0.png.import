@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://dgppkp2mxs1xs"
+path="res://.godot/imported/flower_lupin_0.png-422825aa15c1c713a4774b0811527cf9.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "9348ab204089ea3115451c50e02481ad"
+}
+
+[deps]
+
+source_file="res://assets/resources/foliage/flower_lupin_0.png"
+dest_files=["res://.godot/imported/flower_lupin_0.png-422825aa15c1c713a4774b0811527cf9.ctex"]
+
+[params]
+
+compress/mode=3
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=5
+roughness/src_normal=""
+process/fix_alpha_border=false
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

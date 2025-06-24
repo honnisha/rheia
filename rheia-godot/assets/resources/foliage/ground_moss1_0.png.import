@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://ql5abfa1jeb2"
+path="res://.godot/imported/ground_moss1_0.png-e6be3747cb9097c7f0a604d4f6fa1a61.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "15b0c1f0251d23e21d37e55abebc0fdc"
+}
+
+[deps]
+
+source_file="res://assets/resources/foliage/ground_moss1_0.png"
+dest_files=["res://.godot/imported/ground_moss1_0.png-e6be3747cb9097c7f0a604d4f6fa1a61.ctex"]
+
+[params]
+
+compress/mode=3
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=5
+roughness/src_normal=""
+process/fix_alpha_border=false
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=0

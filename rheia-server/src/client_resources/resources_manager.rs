@@ -82,21 +82,28 @@ impl ResourceManager {
         return count;
     }
 
-    pub fn has_media(&self, path: &String) -> bool {
+    pub fn has_media(&self, path: &String) -> Result<bool, String> {
         if DEFAULT_RESOURCES.contains(&path.as_str()) {
-            return true;
+            return Ok(true);
         }
 
         let Some((res_slug, res_path)) = split_resource_path(path) else {
-            return false;
+            return Err(format!("cannot split path \"{}\"", path));
         };
 
-        for (resource_slug, resource) in self.resources.iter() {
-            if *resource_slug == res_slug && resource.has_media(&res_path) {
-                return true;
-            }
+        let Some(resource) = self.resources.get(&res_slug) else {
+            return Err(format!("resource \"{}\" not found", res_slug));
+        };
+
+        if !resource.has_media(&res_path) {
+            return Err(format!(
+                "resource \"{}\" doesn't contain media \"{}\"; total count: {}",
+                res_slug,
+                res_path,
+                resource.media.len()
+            ));
         }
-        return false;
+        return Ok(true);
     }
 
     pub fn rescan_resources(&mut self, path: PathBuf, server_settings: &mut ServerSettings) -> Result<(), String> {
@@ -163,7 +170,6 @@ impl ResourceManager {
 
     pub fn validate_blocks(&self, blocks: &Vec<BlockType>) -> Result<(), String> {
         for block_type in blocks.iter() {
-            let block_slug = block_type.get_slug().clone();
             match block_type.get_block_content() {
                 BlockContent::Texture {
                     texture,
@@ -171,34 +177,53 @@ impl ResourceManager {
                     side_overlay,
                     bottom_texture,
                 } => {
-                    if !self.has_media(texture) {
-                        return Err(format!("block \"{}\" &ctexture not found: {}", block_slug, texture));
-                    }
-                    if side_texture.is_some() && !self.has_media(&side_texture.as_ref().unwrap()) {
+                    if let Err(e) = self.has_media(texture) {
                         return Err(format!(
-                            "block \"{}\" &cside_texture not found: {}",
-                            block_slug,
-                            side_texture.as_ref().unwrap()
+                            "&cblock &4\"{}\" &ctexture not found: &4\"{}\" &7({})",
+                            block_type.get_slug(),
+                            texture,
+                            e,
                         ));
                     }
-                    if side_overlay.is_some() && !self.has_media(&side_overlay.as_ref().unwrap()) {
-                        return Err(format!(
-                            "block \"{}\" &cside_overlay not found: {}",
-                            block_slug,
-                            side_overlay.as_ref().unwrap()
-                        ));
+                    if side_texture.is_some() {
+                        if let Err(e) = self.has_media(&side_texture.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cside_texture not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                side_texture.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
                     }
-                    if bottom_texture.is_some() && !self.has_media(&bottom_texture.as_ref().unwrap()) {
-                        return Err(format!(
-                            "block \"{}\" &cbottom_texture not found: {}",
-                            block_slug,
-                            bottom_texture.as_ref().unwrap()
-                        ));
+                    if side_overlay.is_some() {
+                        if let Err(e) = self.has_media(&side_overlay.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cside_overlay not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                side_overlay.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
+                    }
+                    if bottom_texture.is_some() {
+                        if let Err(e) = self.has_media(&bottom_texture.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cbottom_texture not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                bottom_texture.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
                     }
                 }
                 BlockContent::ModelCube { model, .. } => {
-                    if !self.has_media(model) {
-                        return Err(format!("block \"{}\" &cmodel not found: {}", block_slug, model));
+                    if let Err(e) = self.has_media(model) {
+                        return Err(format!(
+                            "&cblock &4\"{}\" &cmodel not found: &4\"{}\" &7({})",
+                            block_type.get_slug(),
+                            model,
+                            e,
+                        ));
                     }
                 }
             }

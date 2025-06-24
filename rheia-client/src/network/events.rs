@@ -95,14 +95,16 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 let mut resource_manager = main.get_resource_manager_mut();
                 resource_manager.set_resource_scheme(list, archive_hash);
                 let (scripts_count, media_count) = resource_manager.get_resource_scheme_count();
-                log::info!(target: "network", "Network resources scheme (scripts:{}, media:{}, archive_hash:{})", scripts_count, media_count, archive_hash);
+                log::info!(target: "network", "Network resources scheme loaded &e(scripts:{}, media:{}, archive_hash:{})", scripts_count, media_count, archive_hash);
 
                 let has_saved = if ResourceManager::has_local_saved_resource(&archive_hash).unwrap() {
                     match resource_manager.load_local_archive(&archive_hash) {
                         Ok(count) => {
                             let mut resource_names: Vec<String> = Default::default();
-                            for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
-                                resource_names.push(resource_slug.clone());
+                            for (resource_slug, resource) in resource_manager.get_resources_storage().iter() {
+                                if resource.is_network() {
+                                    resource_names.push(resource_slug.clone());
+                                }
                             }
                             log::info!(target: "network", "Resources cache loaded: &e{}&r; media count:{}", resource_names.join(", "), count);
                         }
@@ -128,17 +130,19 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                         let path = ResourceManager::get_saved_resource_path(&archive_hash).unwrap();
                         match resource_manager.save_resource_to_local() {
                             Ok(_) => {
-                                log::info!(target: "network", "Resources saved locally: &6{}", path.display().to_string())
+                                log::info!(target: "network", "Resources archive saved locally: &6{}", path.display().to_string())
                             }
                             Err(e) => return Err(format!("Network resources local save error: {}", e)),
                         }
                         match resource_manager.load_local_archive(&archive_hash) {
-                            Ok(count) => {
+                            Ok(_count) => {
                                 let mut resource_names: Vec<String> = Default::default();
-                                for (resource_slug, _resource) in resource_manager.get_resources_storage().iter() {
-                                    resource_names.push(resource_slug.clone());
+                                for (resource_slug, resource) in resource_manager.get_resources_storage().iter() {
+                                    if resource.is_network() {
+                                        resource_names.push(resource_slug.clone());
+                                    }
                                 }
-                                log::info!(target: "network", "Resources loaded from network: {}; media count:{}", resource_names.join(", "), count);
+                                log::info!(target: "network", "Resources loaded from network: &e{}", resource_names.join(", "));
                             }
                             Err(e) => return Err(format!("Network resources cache load error: {}", e)),
                         }

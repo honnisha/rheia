@@ -24,7 +24,7 @@ pub struct ResourceInstance {
     autor: Option<String>,
     version: Option<String>,
     scripts: HashMap<String, String>,
-    media: HashMap<String, Vec<u8>>,
+    pub(crate) media: HashMap<String, Vec<u8>>,
 
     blocks: Vec<BlockType>,
 }

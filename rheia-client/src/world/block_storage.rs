@@ -88,41 +88,52 @@ impl BlockStorage {
                     side_overlay,
                     bottom_texture,
                 } => {
-                    if !resources_storage.has_media(texture) {
+                    if let Err(e) = resources_storage.has_media(texture) {
                         return Err(format!(
-                            "block \"{}\" &ctexture not found: \"{}\"",
+                            "&cblock &4\"{}\" &ctexture not found: &4\"{}\" &7({})",
                             block_type.get_slug(),
-                            texture
+                            texture,
+                            e,
                         ));
                     }
-                    if side_texture.is_some() && !resources_storage.has_media(&side_texture.as_ref().unwrap()) {
-                        return Err(format!(
-                            "block \"{}\" &cside_texture not found: \"{}\"",
-                            block_type.get_slug(),
-                            side_texture.as_ref().unwrap()
-                        ));
+                    if side_texture.is_some() {
+                        if let Err(e) = resources_storage.has_media(&side_texture.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cside_texture not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                side_texture.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
                     }
-                    if side_overlay.is_some() && !resources_storage.has_media(&side_overlay.as_ref().unwrap()) {
-                        return Err(format!(
-                            "block \"{}\" &cside_overlay not found: \"{}\"",
-                            block_type.get_slug(),
-                            side_overlay.as_ref().unwrap()
-                        ));
+                    if side_overlay.is_some() {
+                        if let Err(e) = resources_storage.has_media(&side_overlay.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cside_overlay not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                side_overlay.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
                     }
-                    if bottom_texture.is_some() && !resources_storage.has_media(&bottom_texture.as_ref().unwrap()) {
-                        return Err(format!(
-                            "block \"{}\" &cbottom_texture not found: \"{}\"",
-                            block_type.get_slug(),
-                            bottom_texture.as_ref().unwrap()
-                        ));
+                    if bottom_texture.is_some() {
+                        if let Err(e) = resources_storage.has_media(&bottom_texture.as_ref().unwrap()) {
+                            return Err(format!(
+                                "&cblock &4\"{}\" &cbottom_texture not found: &4\"{}\" &7({})",
+                                block_type.get_slug(),
+                                bottom_texture.as_ref().unwrap(),
+                                e,
+                            ));
+                        }
                     }
                 }
                 BlockContent::ModelCube { model, .. } => {
-                    if !resources_storage.has_media(model) {
+                    if let Err(e) = resources_storage.has_media(model) {
                         return Err(format!(
-                            "block \"{}\" &cmodel not found: \"{}\"",
+                            "&cblock &4\"{}\" &cmodel not found: &4\"{}\" &7({})",
                             block_type.get_slug(),
-                            model
+                            model,
+                            e,
                         ));
                     }
                 }
