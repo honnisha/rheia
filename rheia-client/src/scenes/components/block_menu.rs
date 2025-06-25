@@ -47,9 +47,9 @@ impl BlockMenu {
 
     #[func]
     fn on_icon_clicked(&mut self, block: Gd<BlockIconSelect>) {
+        self.signals().block_clicked().emit(&block);
         self.signals().menu_closed().emit();
         self.toggle(false);
-        self.signals().block_clicked().emit(&block);
     }
 
     #[func]
@@ -80,7 +80,7 @@ impl BlockMenu {
     fn on_window_closed(&mut self) {
         self.signals().menu_closed().emit();
         self.help_text.set_text("");
-        self.window.bind_mut().toggle(false);
+        self.toggle(false);
     }
 }
 
@@ -119,9 +119,9 @@ impl BlockMenu {
     pub fn toggle(&mut self, state: bool) {
         self.window.bind_mut().toggle(state);
 
-        for (_block_id, icon) in self.icons.iter_mut() {
-            icon.bind_mut().toggle_selected(false);
-        }
+        // for (_block_id, icon) in self.icons.iter_mut() {
+        //     icon.bind_mut().toggle_selected(false);
+        // }
     }
 
     pub fn set_blocks(&mut self, block_mesh_storage: &BlockMeshStorage, block_storage_lock: BlockStorageType) {

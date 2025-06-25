@@ -66,9 +66,12 @@ impl WindowUIComponent {
 #[godot_api]
 impl IControl for WindowUIComponent {
     fn ready(&mut self) {
-        let gd = self.base().to_godot();
+        let gd = self.to_gd().clone();
         if let Some(close_button) = self.close_button.as_mut() {
-            close_button.connect("pressed", &Callable::from_object_method(&gd, "on_close_button_pressed"));
+            close_button
+                .signals()
+                .pressed()
+                .connect_other(&gd, WindowUIComponent::on_close_button_pressed);
             close_button.set_visible(self.show_button_close);
         }
     }
