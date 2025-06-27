@@ -1,0 +1,37 @@
+[gd_scene load_steps=4 format=3 uid="uid://3rpcpymnj3ao"]
+
+[ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_07pga"]
+[ext_resource type="Texture2D" uid="uid://b6u20mrpcebke" path="res://assets/gui/textures/window/window_c.png" id="1_ltqky"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_enrm3"]
+texture = ExtResource("1_ltqky")
+texture_margin_left = 5.0
+texture_margin_top = 5.0
+texture_margin_right = 5.0
+texture_margin_bottom = 5.0
+
+[node name="ItemDecription" type="ItemDescription" node_paths=PackedStringArray("text")]
+text = NodePath("MarginContainer/RichTextLabel")
+offset_right = 210.0
+offset_bottom = 49.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_enrm3")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 5
+
+[node name="RichTextLabel" type="RichTextLabel" parent="MarginContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+mouse_filter = 2
+theme = ExtResource("1_07pga")
+bbcode_enabled = true
+text = "[font_size=12][color=gray]Test
+asd
+asd[/color][/font_size]"
+fit_content = true

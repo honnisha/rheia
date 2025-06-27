@@ -1,12 +1,16 @@
+use crate::ui::item_decription::ItemDescription;
 use common::chunks::chunk_data::BlockIndexType;
 use godot::{
-    classes::{Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, TextureRect},
+    classes::{
+        Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, InputEventMouseMotion, TextureRect,
+    },
     global::MouseButton,
     meta::AsObjectArg,
     prelude::*,
 };
 
 const ICON_SCENE: &str = "res://scenes/components/block_icon.tscn";
+const ICON_DESC_OFFSET: Vector2 = Vector2::new(25.0, 10.0);
 
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
 #[class(no_init)]
@@ -42,12 +46,20 @@ pub struct BlockIcon {
 
     #[export]
     camera: Option<Gd<Camera3D>>,
+
+    hover_text: Option<String>,
+
+    item_description: Option<Gd<ItemDescription>>,
 }
 
 #[godot_api]
 impl BlockIcon {
     pub fn create() -> Gd<Self> {
         load::<PackedScene>(ICON_SCENE).instantiate_as::<Self>()
+    }
+
+    pub fn set_hover_text(&mut self, hover_text: Option<String>) {
+        self.hover_text = hover_text;
     }
 
     #[func]
@@ -66,16 +78,34 @@ impl BlockIcon {
 
     #[func]
     fn on_mouse_entered(&mut self) {
+        if let Some(hover_text) = self.hover_text.as_ref() {
+            let mut item_description = ItemDescription::create();
+            item_description.bind_mut().set_description(&hover_text);
+
+            let mouse_position = self.base().get_viewport().unwrap().get_mouse_position();
+            item_description.set_global_position(mouse_position + ICON_DESC_OFFSET);
+
+            let mut root = self.base().get_tree().unwrap().get_root().unwrap();
+            root.add_child(&item_description);
+
+            self.item_description = Some(item_description);
+        }
+
         self.toggle_selected(true);
         let Some(block_id) = self.block_id.as_ref() else {
             return;
         };
+
         let icon = Gd::<BlockIconSelect>::from_init_fn(|_base| BlockIconSelect::create(block_id.clone()));
         self.signals().icon_mouse_entered().emit(&icon);
     }
 
     #[func]
     fn on_mouse_exited(&mut self) {
+        if let Some(mut item_description) = self.item_description.take() {
+            item_description.queue_free();
+        }
+
         self.toggle_selected(false);
         let Some(block_id) = self.block_id.as_ref() else {
             return;
@@ -133,5 +163,12 @@ impl IControl for BlockIcon {
         self.signals().mouse_exited().connect_self(BlockIcon::on_mouse_exited);
 
         self.toggle_selected(false);
+    }
+
+    fn process(&mut self, _delta: f64) {
+        let mouse_position = self.base().get_viewport().unwrap().get_mouse_position();
+        if let Some(item_description) = self.item_description.as_mut() {
+            item_description.set_global_position(mouse_position + ICON_DESC_OFFSET);
+        }
     }
 }
