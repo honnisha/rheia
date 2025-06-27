@@ -39,14 +39,16 @@ const DEFAULT_BLOCKS_YML: &str = r#"
 - block_content: !texture
     texture: default://assets/block/iron_block.png
 
-- block_content: !texture
+- slug: sandstone
+  block_content: !texture
     texture: default://assets/block/sandstone_top.png
     side_texture: default://assets/block/sandstone.png
     bottom_texture: default://assets/block/sandstone_bottom.png
 - block_content: !texture
     texture: default://assets/block/chiseled_sandstone.png
 
-- block_content: !texture
+- slug: podzol
+  block_content: !texture
     texture: default://assets/block/podzol_top.png
     side_texture: default://assets/block/podzol_side.png
 
@@ -77,7 +79,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
 - block_content: !texture
     texture: default://assets/block/mossy_cobblestone.png
 
-- block_content: !texture
+- slug: acacia_log
+  block_content: !texture
     texture: default://assets/block/acacia_log_top.png
     side_texture: default://assets/block/acacia_log.png
   category: trees
@@ -88,7 +91,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/acacia_planks.png
   category: trees
 
-- block_content: !texture
+- slug: birch_log
+  block_content: !texture
     texture: default://assets/block/birch_log_top.png
     side_texture: default://assets/block/birch_log.png
   category: trees
@@ -99,7 +103,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/birch_planks.png
   category: trees
 
-- block_content: !texture
+- slug: dark_oak
+  block_content: !texture
     texture: default://assets/block/dark_oak_log_top.png
     side_texture: default://assets/block/dark_oak_log.png
   category: trees
@@ -110,7 +115,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/dark_oak_planks.png
   category: trees
 
-- block_content: !texture
+- slug: jungle_log
+  block_content: !texture
     texture: default://assets/block/jungle_log_top.png
     side_texture: default://assets/block/jungle_log.png
   category: trees
@@ -121,7 +127,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/jungle_planks.png
   category: trees
 
-- block_content: !texture
+- slug: oak_log
+  block_content: !texture
     texture: default://assets/block/oak_log_top.png
     side_texture: default://assets/block/oak_log.png
   category: trees
@@ -132,7 +139,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     texture: default://assets/block/oak_planks.png
   category: trees
 
-- block_content: !texture
+- slug: spruce_log
+  block_content: !texture
     texture: default://assets/block/spruce_log_top.png
     side_texture: default://assets/block/spruce_log.png
   category: trees

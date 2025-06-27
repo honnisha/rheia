@@ -87,6 +87,7 @@ impl BlockStorage {
                     side_texture,
                     side_overlay,
                     bottom_texture,
+                    ..
                 } => {
                     if let Err(e) = resources_storage.has_media(texture) {
                         return Err(format!(

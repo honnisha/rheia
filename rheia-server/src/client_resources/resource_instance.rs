@@ -189,6 +189,7 @@ impl ResourceInstance {
                     side_texture,
                     side_overlay,
                     bottom_texture,
+                    ..
                 } => {
                     *texture = self.local_to_global_path(&texture);
                     if let Some(texture) = side_texture {

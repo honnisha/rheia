@@ -5,6 +5,7 @@ use crate::{
         chunk_data::{BlockDataInfo, ChunkData, ChunkSectionData},
         chunk_position::ChunkPosition,
     },
+    default_blocks_ids::BlockID,
 };
 use bracket_lib::random::RandomNumberGenerator;
 use bracket_noise::prelude::*;
@@ -71,20 +72,17 @@ impl WorldGenerator {
                 let z_map = (z as f32 + (chunk_position.z as f32 * CHUNK_SIZE as f32)) / 150.0;
                 let height = self.noise.get_noise(x_map, z_map) * 40_f32 + 20_f32;
 
-                //godot_print!("x{} z:{} height:{}", x, z, height);
                 for y in 0_u8..(CHUNK_SIZE as u8) {
                     let pos = ChunkBlockPosition::new(x, y, z);
 
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
                     if height > y_global {
-                        section_data.insert(&pos, BlockDataInfo::create(1, None));
-                        // GrassBlock
+                        section_data.insert(&pos, BlockDataInfo::create(BlockID::Grass.id(), None));
                     }
 
                     if x == 0 && y_global as f32 == 24.0 && z == 0 {
-                        section_data.insert(&pos, BlockDataInfo::create(1, None));
-                        // GrassBlock
+                        section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
                     }
                 }
             }

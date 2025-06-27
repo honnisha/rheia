@@ -14,6 +14,8 @@ use crate::utils::settings::GameSettings;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
+use common::blocks::block_info::generate_block_id_map;
+use common::chunks::chunk_data::BlockIndexType;
 use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
@@ -21,6 +23,7 @@ use godot::classes::{Engine, FileAccess, Input};
 use godot::prelude::*;
 use network::messages::{ClientMessages, NetworkMessageType};
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 pub type FloatType = f32;
@@ -198,6 +201,14 @@ impl MainScene {
         log::info!(target: "main", "Regenerate debug world");
 
         let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
+
+        {
+            let wm = wm.bind_mut();
+            let mut block_storage = wm.get_block_storage_mut();
+            let mut block_id_map: BTreeMap<BlockIndexType, String> = Default::default();
+            let _ = generate_block_id_map(&mut block_id_map, block_storage.iter_values());
+            block_storage.set_block_id_map(block_id_map);
+        }
 
         let rm = self.resource_manager.borrow();
         let resources_storage = rm.get_resources_storage();

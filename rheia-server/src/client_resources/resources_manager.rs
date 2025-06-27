@@ -176,6 +176,7 @@ impl ResourceManager {
                     side_texture,
                     side_overlay,
                     bottom_texture,
+                    ..
                 } => {
                     if let Err(e) = self.has_media(texture) {
                         return Err(format!(

@@ -1,6 +1,6 @@
 # Rheia
 
-Rheia is a RPG game inspired by Minecraft RPG Servers and Hytale game written in Rust.\
+Rheia is a RPG game inspired by Minecraft RPG Servers and Hytale game, written in Rust.\
 Aimed at wide possibilities for server-side extensibility and customization.
 
 - [rheia-godot](https://github.com/honnisha/rheia/tree/master/rheia-godot) - Godot 4 project.

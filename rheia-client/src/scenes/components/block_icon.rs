@@ -1,9 +1,7 @@
 use crate::ui::item_decription::ItemDescription;
 use common::chunks::chunk_data::BlockIndexType;
 use godot::{
-    classes::{
-        Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, InputEventMouseMotion, TextureRect,
-    },
+    classes::{Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, TextureRect},
     global::MouseButton,
     meta::AsObjectArg,
     prelude::*,

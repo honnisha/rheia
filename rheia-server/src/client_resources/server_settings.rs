@@ -2,7 +2,7 @@ use super::resources_manager::ResourceManager;
 use crate::{launch_settings::LaunchSettings, network::runtime_plugin::RuntimePlugin};
 use bevy::prelude::{Res, ResMut, Resource};
 use common::{
-    blocks::{block_info::generate_block_id, block_type::BlockType},
+    blocks::{block_info::generate_block_id_map, block_type::BlockType},
     chunks::chunk_data::BlockIndexType,
     default_blocks::DEFAULT_BLOCKS,
 };
@@ -48,17 +48,15 @@ impl ServerSettings {
     }
 
     fn load(&mut self, path: PathBuf, _resource_manager: &ResourceManager) -> Result<(), String> {
-        log::info!(target: "server_settings", "Start loading server settings &e{}", path.display());
+        log::info!(target: "settings", "Start loading server settings &e{}", path.display());
 
         if !path.exists() {
-            // Create settings with default blocks
             let default_manifest = ServerSettingsManifest { block_id_map: None };
 
             let file = File::create(path.clone()).expect("File must exists");
             serde_yaml::to_writer(file, &default_manifest).unwrap();
 
-            log::info!(target: "server_settings", "Settings file is not exists; Default file was created");
-            return Ok(());
+            log::info!(target: "settings", "Settings file is not exists; Default file was created");
         }
 
         let manifest = match std::fs::read_to_string(path.clone()) {
@@ -73,7 +71,7 @@ impl ServerSettings {
             Ok(m) => m,
             Err(e) => {
                 return Err(format!(
-                    "Settings file &e{}&r yaml parse error: &c{}",
+                    "&cfile &4{}&c yaml parse error: &c{}",
                     path.display(),
                     e
                 ));
@@ -84,24 +82,12 @@ impl ServerSettings {
             Some(m) => m,
             None => Default::default(),
         };
-
-        for block_type in self.blocks.iter() {
-            let mut existed = false;
-            for (_block_id, block_slug) in block_id_map.iter() {
-                if block_slug == block_type.get_slug() {
-                    existed = true;
-                }
-            }
-
-            let mut last_id: BlockIndexType = 0;
-            for (block_id, _block_slug) in block_id_map.iter() {
-                last_id = *block_id.max(&last_id);
-            }
-
-            if !existed {
-                let block_id = generate_block_id(&block_type, last_id);
-                block_id_map.insert(block_id, block_type.get_slug().clone());
-            }
+        if let Err(e) = generate_block_id_map(&mut block_id_map, self.blocks.iter()) {
+            return Err(format!(
+                "&cfile &4{}&c block_id_map error: {}",
+                path.display(),
+                e
+            ));
         }
 
         self.block_id_map = Some(block_id_map.clone());
@@ -113,7 +99,7 @@ impl ServerSettings {
         serde_yaml::to_writer(file, &manifest).unwrap();
 
         self.loaded = true;
-        log::info!(target: "server_settings", "Server settings loaded successfully; &e{} blocks", self.get_blocks_count());
+        log::info!(target: "settings", "Server settings loaded successfully; &e{} blocks", self.get_blocks_count());
         Ok(())
     }
 
@@ -139,11 +125,12 @@ pub(crate) fn rescan_server_settings(
         return;
     }
 
-    let mut path = launch_settings.get_resources_path();
+    let mut path = launch_settings.get_server_data_path();
     path.push("settings.yml");
 
     if let Err(e) = server_settings.load(path, &*resource_manager) {
-        log::error!(target: "server_settings", "Error loading server settings: {e}");
+        log::error!(target: "settings", "&cError loading server settings:");
+        log::error!(target: "settings", "{}", e);
         RuntimePlugin::stop();
     };
 }

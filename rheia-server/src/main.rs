@@ -37,7 +37,7 @@ fn main() {
     log::set_max_level(log_level.clone());
     info!(target: "main", "Log level using: {}", log_level);
 
-    info!(target: "main", "Rheia Server version {}", VERSION);
+    info!(target: "main", "Rheia Server version &d{}", VERSION);
 
     let mut app = App::new();
     app.insert_resource(server_settings);
@@ -45,8 +45,8 @@ fn main() {
         TimePlugin::default(),
         TaskPoolPlugin::default(),
         ScheduleRunnerPlugin::default(),
-        ConsolePlugin::default(),
         RuntimePlugin::default(),
+        ConsolePlugin::default(),
         ResourcesPlugin::default(),
         WorldsHandlerPlugin::default(),
     ));

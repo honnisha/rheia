@@ -27,6 +27,9 @@ impl Default for ColliderType {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct ColorScheme {}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum BlockContent {
     Texture {
@@ -34,6 +37,8 @@ pub enum BlockContent {
         side_texture: Option<String>,
         side_overlay: Option<String>,
         bottom_texture: Option<String>,
+
+        colors_scheme: Option<Vec<ColorScheme>>,
     },
     ModelCube {
         model: String,
@@ -49,12 +54,7 @@ pub enum BlockContent {
 impl BlockContent {
     pub fn is_texture(&self) -> bool {
         match self {
-            BlockContent::Texture {
-                texture: _,
-                side_texture: _,
-                side_overlay: _,
-                bottom_texture: _,
-            } => true,
+            BlockContent::Texture { .. } => true,
             _ => false,
         }
     }
@@ -65,6 +65,7 @@ impl BlockContent {
             side_texture: None,
             side_overlay: None,
             bottom_texture: None,
+            colors_scheme: None,
         }
     }
 
@@ -88,6 +89,7 @@ impl BlockContent {
                 Some(t) => Some(t.into()),
                 None => None,
             },
+            colors_scheme: None,
         }
     }
 }

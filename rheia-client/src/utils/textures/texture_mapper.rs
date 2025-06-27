@@ -56,8 +56,8 @@ impl TextureMapper {
             BlockContent::Texture {
                 texture,
                 side_texture,
-                side_overlay: _,
                 bottom_texture,
+                ..
             } => {
                 match side_index {
                     // Topside
