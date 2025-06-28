@@ -1,6 +1,6 @@
 use common::blocks::block_type::{BlockContent, BlockType};
 use common::chunks::chunk_data::BlockIndexType;
-use common::default_blocks::DEFAULT_BLOCKS;
+use common::default_blocks::generate_default_blocks;
 use std::collections::BTreeMap;
 
 use crate::client_scripts::resource_manager::ResourceStorage;
@@ -16,7 +16,13 @@ impl Default for BlockStorage {
             blocks: Default::default(),
             block_id_map: Default::default(),
         };
-        for block_type in DEFAULT_BLOCKS.iter() {
+
+        let default_blocks = match generate_default_blocks() {
+            Ok(m) => m,
+            Err(e) => panic!("{}", e),
+        };
+
+        for block_type in default_blocks.iter() {
             block_storage
                 .blocks
                 .insert(block_type.get_slug().clone(), block_type.clone());
