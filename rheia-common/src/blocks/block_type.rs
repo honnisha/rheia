@@ -26,6 +26,8 @@ impl Default for ColliderType {
     }
 }
 
+pub type BlockColor = [u8; 3];
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum BlockContent {
@@ -35,7 +37,8 @@ pub enum BlockContent {
         side_overlay: Option<String>,
         bottom_texture: Option<String>,
 
-        colors_scheme: Option<Vec<[f32; 3]>>,
+        // Colors applied to texture and side_overlay
+        colors_scheme: Option<Vec<BlockColor>>,
     },
     ModelCube {
         model: String,

@@ -6,3 +6,4 @@ pub mod instance_scope;
 pub mod events_args;
 pub mod events;
 pub mod local_loader;
+pub mod texture_image;

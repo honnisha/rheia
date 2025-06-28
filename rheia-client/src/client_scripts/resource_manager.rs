@@ -23,6 +23,7 @@ use super::local_loader::get_local_resources;
 use super::modules::main_api;
 use super::resource_instance::MediaResource;
 use super::resource_instance::ResourceInstance;
+use super::texture_image::TextureImage;
 
 pub struct ResourceStorage {
     resources: HashMap<String, ResourceInstance>,
@@ -40,6 +41,22 @@ impl Default for ResourceStorage {
 }
 
 impl ResourceStorage {
+    pub fn generate_image(&self, texture_path: &String) -> Result<TextureImage, String> {
+        let Some(media_data) = self.get_media(texture_path) else {
+            return Err("not found inside resources".to_string());
+        };
+        let texture_2d = match media_data {
+            MediaResource::Texture(t) => t,
+            _ => return Err("images only support png media".to_string()),
+        };
+        let image_buffer = texture_2d.get_image().unwrap().save_png_to_buffer();
+        let image = match TextureImage::create(image_buffer) {
+            Ok(i) => i,
+            Err(e) => return Err(e.to_string()),
+        };
+        Ok(image)
+    }
+
     pub fn _get_resource(&self, slug: &String) -> Option<&ResourceInstance> {
         self.resources.get(slug)
     }
@@ -321,7 +338,6 @@ impl ResourceManager {
         };
         let mut resource_names: Vec<String> = Default::default();
         for mut local_resource in local_resources {
-
             let mut resource_instance = ResourceInstance::new(local_resource.slug.clone(), false);
 
             for (script_slug, script_code) in local_resource.scripts.drain() {
