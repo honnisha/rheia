@@ -4,7 +4,7 @@ use bevy::prelude::{Res, ResMut, Resource};
 use common::{
     blocks::{block_info::generate_block_id_map, block_type::BlockType},
     chunks::chunk_data::BlockIndexType,
-    default_blocks::DEFAULT_BLOCKS,
+    default_blocks::generate_default_blocks,
 };
 use network::messages::ServerMessages;
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub struct ServerSettingsManifest {
     block_id_map: Option<BTreeMap<BlockIndexType, String>>,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct ServerSettings {
     blocks: Vec<BlockType>,
     loaded: bool,
@@ -23,22 +23,21 @@ pub struct ServerSettings {
     block_id_map: Option<BTreeMap<BlockIndexType, String>>,
 }
 
-impl Default for ServerSettings {
-    fn default() -> Self {
-        let mut server_settings = Self {
-            blocks: Default::default(),
-            loaded: false,
-            block_id_map: Default::default(),
-        };
-
-        for block_type in DEFAULT_BLOCKS.iter() {
-            server_settings.blocks.push(block_type.clone());
-        }
-        server_settings
-    }
-}
-
 impl ServerSettings {
+    pub(crate) fn setup_blocks(&mut self) -> Result<(), String> {
+        assert_eq!(self.blocks.len(), 0, "bloks must be empty");
+        self.blocks.clear();
+
+        let default_blocks = match generate_default_blocks() {
+            Ok(m) => m,
+            Err(e) => return Err(e),
+        };
+        for block_type in default_blocks.iter() {
+            self.blocks.push(block_type.clone());
+        }
+        Ok(())
+    }
+
     pub fn get_network_settings(&self) -> ServerMessages {
         assert!(self.loaded, "server settings is not loaded");
         ServerMessages::Settings {
@@ -70,11 +69,7 @@ impl ServerSettings {
         let manifest_info = match manifest_result {
             Ok(m) => m,
             Err(e) => {
-                return Err(format!(
-                    "&cfile &4{}&c yaml parse error: &c{}",
-                    path.display(),
-                    e
-                ));
+                return Err(format!("&cfile &4{}&c yaml parse error: &c{}", path.display(), e));
             }
         };
 
@@ -82,12 +77,9 @@ impl ServerSettings {
             Some(m) => m,
             None => Default::default(),
         };
+
         if let Err(e) = generate_block_id_map(&mut block_id_map, self.blocks.iter()) {
-            return Err(format!(
-                "&cfile &4{}&c block_id_map error: {}",
-                path.display(),
-                e
-            ));
+            return Err(format!("&cfile &4{}&c block_id_map error: {}", path.display(), e));
         }
 
         self.block_id_map = Some(block_id_map.clone());
@@ -113,6 +105,21 @@ impl ServerSettings {
 
     pub fn get_blocks_count(&self) -> usize {
         self.blocks.len()
+    }
+}
+
+pub(crate) fn setup_default_blocks(
+    mut server_settings: ResMut<ServerSettings>,
+) {
+    if RuntimePlugin::is_stopped() {
+        return;
+    }
+
+    if let Err(e) = server_settings.setup_blocks() {
+        log::error!(target: "settings", "&cSetup default blocks error:");
+        log::error!(target: "settings", "{}", e);
+        RuntimePlugin::stop();
+        return;
     }
 }
 

@@ -1,5 +1,4 @@
 use crate::blocks::block_type::{BlockType, BlockTypeManifest};
-use lazy_static::lazy_static;
 
 /// Их необходимо хранить в общей библиотеки, т.к. их используют клиент и сервер
 /// Клиент загружает их по дефолту
@@ -11,6 +10,8 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     side_texture: default://assets/block/grass_block_side.png
     side_overlay: default://assets/block/grass_block_side_overlay.png
     bottom_texture: default://assets/block/dirt.png
+    colors_scheme:
+      - [76, 187, 23]
 
 - block_content: !texture
     texture: default://assets/block/stone.png
@@ -286,15 +287,15 @@ const DEFAULT_BLOCKS_YML: &str = r#"
   category: foliage
 "#;
 
-fn generate_default_blocks() -> Vec<BlockType> {
-    let m: Vec<BlockTypeManifest> = serde_yaml::from_str(DEFAULT_BLOCKS_YML).unwrap();
+pub fn generate_default_blocks() -> Result<Vec<BlockType>, String> {
+    let m: Result<Vec<BlockTypeManifest>, serde_yaml::Error> = serde_yaml::from_str(DEFAULT_BLOCKS_YML);
 
+    let m = match m {
+        Ok(m) => m,
+        Err(e) => return Err(format!("&cyaml parsing error: {}", e)),
+    };
     // println!("{}", serde_yaml::to_string(&m).unwrap());
 
     let m: Vec<BlockType> = m.iter().map(|m| m.to_block()).collect();
-    m
-}
-
-lazy_static! {
-    pub static ref DEFAULT_BLOCKS: Vec<BlockType> = generate_default_blocks();
+    Ok(m)
 }

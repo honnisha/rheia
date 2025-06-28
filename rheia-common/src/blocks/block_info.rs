@@ -83,6 +83,7 @@ pub fn generate_block_id_map<'a>(
             }
         }
 
+        // Get last id
         let mut last_id: BlockIndexType = 0;
         for (block_id, _block_slug) in block_id_map.iter() {
             last_id = *block_id.max(&last_id);
