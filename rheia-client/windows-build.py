@@ -3,7 +3,7 @@ import shutil
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("-v", "--version", required=True)
+parser.add_argument("-v", "--version")
 parser.add_argument("-p", "--path")
 parser.add_argument("-z", "--zip", type=bool, default=False)
 
@@ -11,9 +11,18 @@ parser.add_argument("-z", "--zip", type=bool, default=False)
 def generate():
     args = parser.parse_args()
 
+    version = args.version
+    if version is None:
+        import toml  # pylint: disable=import-outside-toplevel
+        with open("./rheia-client/Cargo.toml", "r") as config:
+            config_data = toml.load(config)
+            version = config_data["package"]["version"]
+
+    print(f"Client version: {version}")
+
     path = args.path
     if path is None:
-        path = f'{os.path.expanduser("~")}/Dropbox/Rheia/windows-build-{args.version}'
+        path = f'{os.path.expanduser("~")}/Dropbox/Rheia/windows-build-{version}'
 
     if os.path.exists(path):
         print(f'Path \"{path}\" already exists')

@@ -1,6 +1,6 @@
 use common::blocks::block_type::BlockColor;
 use godot::builtin::PackedByteArray;
-use image::{DynamicImage, GenericImage, GenericImageView, ImageBuffer, ImageFormat, Pixel, Rgba, RgbaImage};
+use image::{DynamicImage, GenericImageView, ImageBuffer, ImageFormat, Pixel, Rgba, RgbaImage};
 use std::io::Cursor;
 
 pub struct TextureImage {
