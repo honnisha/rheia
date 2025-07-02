@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=11 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://boobsdrukew6t" path="res://scenes/console.tscn" id="1_rga66"]
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
@@ -16,7 +16,6 @@ sky = SubResource("Sky_7db6b")
 ambient_light_source = 2
 ambient_light_color = Color(0.556953, 0.556953, 0.556953, 1)
 reflected_light_source = 1
-ssr_enabled = true
 ssao_enabled = true
 sdfgi_min_cell_size = 0.01
 sdfgi_cascade0_distance = 0.64
@@ -26,6 +25,8 @@ volumetric_fog_detail_spread = 1.46409
 volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_rt2n2"]
 
 [node name="MainScene" type="MainScene" node_paths=PackedStringArray("worlds_manager")]
 worlds_manager = NodePath("WorldsManager")
@@ -60,3 +61,8 @@ visible = false
 
 [node name="TabsContainer" parent="Window" instance=ExtResource("6_c16ls")]
 layout_mode = 1
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20.4406, 0)
+visible = false
+mesh = SubResource("BoxMesh_rt2n2")

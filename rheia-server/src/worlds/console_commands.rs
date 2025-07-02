@@ -1,15 +1,13 @@
-use bevy_ecs::world::World;
-use bracket_lib::random::RandomNumberGenerator;
-use common::world_generator::default::WorldGeneratorSettings;
-
 use crate::client_resources::server_settings::ServerSettings;
-use crate::console::command::{Arg, Command, CommandMatch};
-use crate::console::commands_executer::CommandError;
 use crate::console::console_sender::ConsoleSenderType;
 use crate::entities::entity::{Position, Rotation};
 use crate::launch_settings::LaunchSettings;
 use crate::network::client_network::ClientNetwork;
 use crate::network::events::on_player_move::move_player;
+use bevy_ecs::world::World;
+use bracket_lib::random::RandomNumberGenerator;
+use common::commands::command::{Arg, Command, CommandMatch};
+use common::world_generator::default::WorldGeneratorSettings;
 
 use super::worlds_manager::WorldsManager;
 
@@ -28,7 +26,7 @@ pub(crate) fn command_world(
     world: &mut World,
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
-) -> Result<(), CommandError> {
+) -> Result<(), String> {
     let launch_settings = world.get_resource::<LaunchSettings>().unwrap();
     let world_storage_settings = launch_settings.get_world_storage_settings();
 
@@ -104,7 +102,7 @@ pub(crate) fn command_teleport(
     world: &mut World,
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
-) -> Result<(), CommandError> {
+) -> Result<(), String> {
     let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
     let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
     let z = args.get_arg::<f32>(&"z".to_owned())?.clone();

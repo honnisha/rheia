@@ -1,9 +1,9 @@
-use std::str::FromStr;
-use std::slice::Iter;
-
 use ahash::HashMap;
+use regex::Regex;
+use std::slice::Iter;
+use std::str::FromStr;
 
-use super::commands_executer::CommandError;
+pub const REGEX_COMMAND: &str = r####"([\d\w$&+,:;=?@#|'<>.^*()%!-]*)|"([\d\w$&+,:;=?@#|'<>.^*()%!\- ]*)""####;
 
 #[derive(Clone, Debug)]
 pub struct Command {
@@ -23,6 +23,11 @@ impl Command {
         }
     }
 
+    pub fn parse_command(command: &String) -> Vec<String> {
+        let re = Regex::new(REGEX_COMMAND).unwrap();
+        re.find_iter(&command).map(|e| e.as_str().to_string()).collect()
+    }
+
     pub fn get_name(&self) -> &String {
         &self.name
     }
@@ -40,7 +45,7 @@ impl Command {
     /// "world"  "create"    "test"      "123"
     /// ^command ^subcommand ^arg        ^arg optional
     ///  name     name        world name  seed
-    pub fn eval(&self, command_sequence: &[String]) -> Result<CommandMatch, CommandError> {
+    pub fn eval(&self, command_sequence: &[String]) -> Result<CommandMatch, String> {
         let mut args: HashMap<String, String> = Default::default();
 
         let mut subcommand: Option<Box<CommandMatch>> = None;
@@ -58,7 +63,7 @@ impl Command {
 
         // println!("subcommand:{:?} self.subcommand_required:{}", subcommand, self.subcommand_required);
         if subcommand.is_none() && self.subcommand_required {
-            return Err(CommandError(format!("subcommand for \"{}\" is required", self.name)));
+            return Err(format!("subcommand for \"{}\" is required", self.name));
         }
 
         let mut i = 0;
@@ -77,7 +82,7 @@ impl Command {
                 }
                 None => {
                     if arg.required {
-                        return Err(CommandError(format!("argument \"{}\" is required", arg.name)));
+                        return Err(format!("argument \"{}\" is required", arg.name));
                     }
                 }
             }
@@ -160,13 +165,13 @@ impl CommandMatch {
         Self { name, subcommand, args }
     }
 
-    pub fn get_arg<T: FromStr>(&self, arg_name: &String) -> Result<T, CommandError> {
+    pub fn get_arg<T: FromStr>(&self, arg_name: &String) -> Result<T, String> {
         match self.args.get(arg_name) {
             Some(a) => match a.parse::<T>() {
                 Ok(v) => Ok(v),
-                Err(_e) => Err(CommandError(format!("parameter {} converting error", self.name))),
+                Err(_e) => Err(format!("parameter {} converting error", self.name)),
             },
-            None => Err(CommandError("parameter has not been provided".to_string())),
+            None => Err("parameter has not been provided".to_string()),
         }
     }
 
@@ -181,9 +186,7 @@ impl CommandMatch {
 
 #[cfg(test)]
 mod tests {
-    use crate::console::{command::Arg, commands_executer::CommandsHandler};
-
-    use super::Command;
+    use super::{Arg, Command};
 
     fn world_command() -> Command {
         Command::new("world".to_string())
@@ -201,7 +204,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world create test 123".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.eval(&command_sequence[1..]);
 
         assert_eq!(result.is_ok(), true, "error: {}", result.err().unwrap());
@@ -222,7 +225,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world test".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.eval(&command_sequence[1..]);
 
         assert_eq!(result.is_err(), true);
@@ -237,7 +240,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.eval(&command_sequence[1..]);
 
         assert_eq!(result.is_err(), true);
@@ -252,7 +255,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world ".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -265,7 +268,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world c".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -278,7 +281,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world create te".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -292,7 +295,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world create ".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -306,7 +309,7 @@ mod tests {
         let command = world_command();
 
         let cmd = "world list ".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_none(), true);
@@ -325,7 +328,7 @@ mod tests {
         let command = tp_command();
 
         let cmd = "tp ".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -336,10 +339,10 @@ mod tests {
 
     #[test]
     fn test_parse_command() {
-        let command_sequence = CommandsHandler::parse_command(&"tp ".to_string());
+        let command_sequence = Command::parse_command(&"tp ".to_string());
         assert_eq!(command_sequence, vec!["tp", ""]);
 
-        let command_sequence = CommandsHandler::parse_command(&"world create te".to_string());
+        let command_sequence = Command::parse_command(&"world create te".to_string());
         assert_eq!(command_sequence, vec!["world", "create", "te"]);
     }
 
@@ -348,7 +351,7 @@ mod tests {
         let command = tp_command();
 
         let cmd = "tp".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
@@ -361,7 +364,7 @@ mod tests {
         let command = tp_command();
 
         let cmd = "tp 0".to_string();
-        let command_sequence = CommandsHandler::parse_command(&cmd);
+        let command_sequence = Command::parse_command(&cmd);
         let result = command.get_current(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
