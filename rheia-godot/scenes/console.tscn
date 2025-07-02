@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://boobsdrukew6t"]
+[gd_scene load_steps=14 format=3 uid="uid://boobsdrukew6t"]
 
 [ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_ocmc3"]
 [ext_resource type="Texture2D" uid="uid://c2ujts6nvss0c" path="res://assets/gui/textures/console/text_background.png" id="2_xrfbl"]
@@ -13,9 +13,17 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dlnae"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p2vo5"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0ctgx"]
+content_margin_left = 7.0
 
-[node name="ConsoleContainer" type="Console"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fm8yv"]
+content_margin_left = 7.0
+
+[node name="ConsoleContainer" type="Console" node_paths=PackedStringArray("console_text", "console_input", "console_button", "console_sugestions")]
+console_text = NodePath("MarginContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText")
+console_input = NodePath("MarginContainer/VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput")
+console_button = NodePath("MarginContainer/VBoxContainer/HBoxContainer2/ConsoleButton")
+console_sugestions = NodePath("MarginContainer/VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -74,18 +82,17 @@ autowrap_mode = 2
 selection_enabled = true
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 23)
 layout_mode = 2
 size_flags_vertical = 8
-theme_override_constants/separation = 5
 
 [node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
-custom_minimum_size = Vector2(1, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("7_4or0o")
+expand_mode = 1
 
 [node name="ConsoleInput" type="LineEdit" parent="MarginContainer/VBoxContainer/HBoxContainer2/TextureRect"]
-custom_minimum_size = Vector2(1, 1)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -94,15 +101,19 @@ grow_horizontal = 2
 size_flags_horizontal = 3
 theme_override_fonts/font = ExtResource("3_wkh3b")
 theme_override_font_sizes/font_size = 12
-theme_override_styles/focus = SubResource("StyleBoxEmpty_p2vo5")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_0ctgx")
+theme_override_styles/normal = SubResource("StyleBoxEmpty_fm8yv")
+text = "test"
+keep_editing_on_text_submit = true
 context_menu_enabled = false
+emoji_menu_enabled = false
 deselect_on_focus_loss_enabled = false
 flat = true
 caret_blink = true
 caret_force_displayed = true
 
 [node name="ConsoleButton" type="TextureButton" parent="MarginContainer/VBoxContainer/HBoxContainer2"]
-custom_minimum_size = Vector2(1, 1)
+custom_minimum_size = Vector2(100, 0)
 layout_direction = 1
 layout_mode = 2
 focus_mode = 0
@@ -110,6 +121,8 @@ action_mode = 0
 texture_normal = ExtResource("8_dv6jn")
 texture_pressed = ExtResource("9_toiqs")
 texture_hover = ExtResource("10_ryaqt")
+ignore_texture_size = true
+stretch_mode = 0
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 100)

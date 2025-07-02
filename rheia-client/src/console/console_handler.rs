@@ -2,6 +2,8 @@ use chrono::Local;
 use common::utils::colors::parse_to_console_godot;
 use flume::{Drain, bounded, unbounded};
 use flume::{Receiver, Sender};
+use godot::classes::{InputEvent, InputEventKey};
+use godot::global::Key;
 use godot::{
     classes::{IMarginContainer, Input, LineEdit, MarginContainer, RichTextLabel, TextureButton, input::MouseMode},
     prelude::*,
@@ -12,19 +14,23 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-const TEXT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer/ConsoleBackground/MarginContainer/ConsoleText";
-const INPUT_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/TextureRect/ConsoleInput";
-const BUTTON_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer2/ConsoleButton";
-const SUGESTIOINS_PATH: &str = "MarginContainer/VBoxContainer/HBoxContainer3/MarginContainer/ConsoleSugestioins";
-
 #[derive(GodotClass)]
 #[class(base=MarginContainer)]
 pub struct Console {
     base: Base<MarginContainer>,
+
+    #[export]
     console_text: Option<Gd<RichTextLabel>>,
+
+    #[export]
     console_input: Option<Gd<LineEdit>>,
+
+    #[export]
     console_button: Option<Gd<TextureButton>>,
+
+    #[export]
     console_sugestions: Option<Gd<RichTextLabel>>,
+
     commands_history: Vec<String>,
 }
 
@@ -63,15 +69,14 @@ impl Console {
 
     pub fn toggle(&mut self, state: bool) {
         CONSOLE_ACTIVE.store(state, Ordering::Relaxed);
-        let active = Console::is_active();
-        self.base_mut().set_visible(active);
+        self.base_mut().set_visible(state);
 
-        if active {
-            let i = self.console_input.as_mut().unwrap();
-            if !i.has_focus() {
-                i.grab_focus();
+        if state {
+            let console_input = self.console_input.as_mut().unwrap();
+            if !console_input.has_focus() {
+                console_input.grab_focus();
             }
-            i.clear();
+            console_input.clear();
 
             Input::singleton().set_mouse_mode(MouseMode::VISIBLE);
         } else {
@@ -80,39 +85,34 @@ impl Console {
     }
 
     fn scroll_to_bottom(&mut self) {
-        let c = self.console_text.as_mut().unwrap();
-        let lines = c.get_line_count();
-        c.scroll_to_line(lines - 1);
+        let console_text = self.console_text.as_mut().unwrap();
+        let lines = console_text.get_line_count();
+        console_text.scroll_to_line(lines - 1);
     }
 
-    fn submit_command(&mut self, command: String) {
+    #[func]
+    fn button_pressed(&mut self) {
+        self.submit_text();
+    }
+
+    fn submit_text(&mut self) {
+        let command = self.console_input.as_ref().unwrap().get_text().to_string();
+        if command.len() == 0 {
+            return;
+        }
+
+        self.scroll_to_bottom();
+
         if self.commands_history.contains(&command) {
             let index = self.commands_history.iter().position(|x| *x == command).unwrap();
             self.commands_history.remove(index);
         }
         self.commands_history.push(command.clone());
         CONSOLE_INPUT_CHANNEL.0.send(command).unwrap();
-    }
 
-    #[func]
-    fn button_pressed(&mut self) {
-        self.scroll_to_bottom();
-        let i = self.console_input.as_mut().unwrap();
-        let command = i.get_text().to_string();
-        i.clear();
-        self.submit_command(command);
-    }
-
-    //#[func]
-    //fn text_changed(&mut self, new_text: GString) {
-    //    godot_print!("text changed: {}", new_text);
-    //}
-
-    #[func]
-    fn text_submitted(&mut self, new_text: GString) {
-        self.scroll_to_bottom();
-        self.submit_command(new_text.to_string());
         self.console_input.as_mut().unwrap().clear();
+        // self.console_input.as_mut().unwrap().grab_focus();
+        self.console_input.as_mut().unwrap().call_deferred("grab_focus", &[]);
     }
 }
 
@@ -130,58 +130,40 @@ impl IMarginContainer for Console {
     }
 
     fn ready(&mut self) {
-        log::info!(target: "console", "Start loading console;");
-        match self.base().try_get_node_as::<RichTextLabel>(TEXT_PATH) {
-            Some(e) => self.console_text = Some(e),
-            _ => panic!("console_text element not found"),
-        };
-        match self.base().try_get_node_as::<LineEdit>(INPUT_PATH) {
-            Some(mut e) => {
-                e.connect(
-                    "text_submitted",
-                    &Callable::from_object_method(&self.base().to_godot(), "text_submitted"),
-                );
-                self.console_input = Some(e);
-            }
-            _ => panic!("console_input element not found"),
-        };
-        match self.base().try_get_node_as::<TextureButton>(BUTTON_PATH) {
-            Some(mut e) => {
-                e.connect(
-                    "pressed",
-                    &Callable::from_object_method(&self.base().to_godot(), "button_pressed"),
-                );
-                self.console_button = Some(e);
-            }
-            _ => panic!("console_button element not found"),
-        };
-        match self.base().try_get_node_as::<RichTextLabel>(SUGESTIOINS_PATH) {
-            Some(e) => self.console_sugestions = Some(e),
-            _ => panic!("console_sugestions element not found"),
-        };
+        let gd = self.to_gd().clone();
+        if let Some(console_button) = self.console_button.as_mut() {
+            console_button.signals().pressed().connect_other(&gd, Self::button_pressed);
+        }
         self.base_mut().set_visible(false);
-        log::info!(target: "console", "Console successfully loaded;");
     }
 
-    fn process(&mut self, _delta: f64) {
-        #[cfg(feature = "trace")]
-        let _span = tracy_client::span!("console_handler");
-
-        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
-            self.append_text(message);
-        }
-
+    fn input(&mut self, event: Gd<InputEvent>) {
         if !Console::is_active() {
             return;
+        }
+
+        if let Ok(event) = event.clone().try_cast::<InputEventKey>() {
+            if event.is_pressed() && event.get_keycode() == Key::ENTER {
+                self.submit_text();
+                return;
+            }
         }
 
         let input = Input::singleton();
         if input.is_action_just_pressed("ui_up") {
             godot_print!("up");
-        } else if input.is_action_just_pressed("ui_down") {
+        }
+        if input.is_action_just_pressed("ui_down") {
             godot_print!("down");
-        } else if input.is_action_just_pressed("ui_focus_next") {
+        }
+        if input.is_action_just_pressed("ui_focus_next") {
             godot_print!("tab");
+        }
+    }
+
+    fn process(&mut self, _delta: f64) {
+        for message in CONSOLE_OUTPUT_CHANNEL.1.drain() {
+            self.append_text(message);
         }
     }
 }
