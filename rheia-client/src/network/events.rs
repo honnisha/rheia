@@ -6,7 +6,6 @@ use network::entities::EntityNetworkComponent;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
 use crate::client_scripts::resource_manager::ResourceManager;
-use crate::console::console_handler::Console;
 use crate::scenes::main_menu::VERSION;
 use crate::scenes::main_scene::MainScene;
 use crate::utils::bridge::IntoGodotVector;
@@ -52,11 +51,6 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
     // Recieve errors from network thread
     for error in network.iter_errors() {
         return Err(error);
-    }
-
-    for command in Console::iter_console_input() {
-        let message = ClientMessages::ConsoleInput { command };
-        network.send_message(NetworkMessageType::ReliableOrdered, &message);
     }
 
     let mut chunks: Vec<ChunkPosition> = Default::default();

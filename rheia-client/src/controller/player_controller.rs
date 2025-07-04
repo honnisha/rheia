@@ -6,6 +6,7 @@ use super::enums::camera_mode::CameraMode;
 use super::look_at::LookAt;
 use super::player_action::{PlayerAction, PlayerActionType};
 use super::selected_item::{SelectedItem, SelectedItemGd};
+use crate::console::console_handler::Console;
 use crate::entities::entity::Entity;
 use crate::entities::enums::generic_animations::GenericAnimations;
 use crate::scenes::components::block_icon::BlockIconSelect;
@@ -259,7 +260,11 @@ impl PlayerController {
             panic!("get_movement available only with entity");
         };
         let controls = self.controls.bind();
-        let mut direction = *controls.get_movement_vector();
+        let mut direction = if Console::is_active() {
+            Vector3::ZERO
+        } else {
+            *controls.get_movement_vector()
+        };
 
         let mut movement = Vector3::ZERO;
 
@@ -300,7 +305,7 @@ impl PlayerController {
         }
 
         // Check physics ground check
-        if controls.is_jumping() && self.grounded_timer > -0.1 {
+        if controls.is_jumping() && self.grounded_timer > -0.1 && !Console::is_active() {
             entity.bind_mut().trigger_animation(GenericAnimations::Jump);
             self.vertical_movement = JUMP_SPEED;
         }
@@ -542,12 +547,12 @@ impl INode3D for PlayerController {
     fn process(&mut self, delta: f64) {
         self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
 
-        if self.controls.bind().is_toggle_block_selection() {
+        if self.controls.bind().is_toggle_block_selection() && !Console::is_active() {
             let is_active = self.block_menu.bind().is_active();
             self.block_menu.bind_mut().toggle(!is_active);
         }
 
-        if self.controls.bind().is_switch_camera_mode() {
+        if self.controls.bind().is_switch_camera_mode() && !Console::is_active() {
             let new_mode = match self.camera_mode {
                 CameraMode::FirstPerson => CameraMode::ThirdPerson,
                 CameraMode::ThirdPerson => CameraMode::FirstPerson,

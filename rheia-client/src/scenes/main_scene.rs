@@ -1,6 +1,6 @@
 use crate::LOG_LEVEL;
 use crate::client_scripts::resource_manager::ResourceManager;
-use crate::console::console_handler::Console;
+use crate::console::console_handler::{Console, GDCommandMatch};
 use crate::controller::entity_movement::EntityMovement;
 use crate::controller::enums::controller_actions::ControllerActions;
 use crate::controller::player_action::PlayerAction;
@@ -49,8 +49,6 @@ pub struct MainScene {
 
     #[init(val = OnReady::manual())]
     console: OnReady<Gd<Console>>,
-    #[export]
-    console_scene: Option<Gd<PackedScene>>,
 
     #[init(val = OnReady::manual())]
     text_screen: OnReady<Gd<TextScreen>>,
@@ -197,6 +195,43 @@ impl MainScene {
     }
 
     #[func]
+    fn on_client_command_sended(&mut self, command_match: Gd<GDCommandMatch>) {
+        let command_match = command_match.bind().command_match.clone();
+
+        if *command_match.get_name() == "exit" {
+            log::info!(target: "main", "&cClosing the game...");
+            if let Some(n) = self.network.as_ref() {
+                n.disconnect();
+            }
+            Engine::singleton()
+                .get_main_loop()
+                .expect("main loop is not found")
+                .cast::<SceneTree>()
+                .quit();
+            return;
+        }
+
+        if *command_match.get_name() == "disconnect" {
+            log::info!(target: "main", "&cDisconnecting from the server...");
+            if let Some(n) = self.network.as_ref() {
+                n.disconnect();
+            }
+            return;
+        }
+
+        log::info!(target: "main", "&cCommand &4\"{}\" &cis not handeled by client", command_match.get_name());
+    }
+
+    #[func]
+    fn on_network_command_sended(&mut self, command: GString) {
+        let network = self.get_network().unwrap();
+        let message = ClientMessages::ConsoleInput {
+            command: command.to_string(),
+        };
+        network.send_message(NetworkMessageType::ReliableOrdered, &message);
+    }
+
+    #[func]
     fn regenerate_debug_world(&mut self, _value: bool) {
         log::info!(target: "main", "Regenerate debug world");
 
@@ -270,6 +305,7 @@ impl MainScene {
 #[godot_api]
 impl INode for MainScene {
     fn ready(&mut self) {
+        let gd = self.to_gd().clone();
         log::set_max_level(LOG_LEVEL);
         log::info!(target: "main", "Start loading local resources");
         if let Err(e) = self.resource_manager.clone().borrow_mut().load_local_resources() {
@@ -291,7 +327,15 @@ impl INode for MainScene {
             self.base_mut().add_child(&debug_info);
 
             // Console
-            let console = self.console_scene.as_mut().unwrap().instantiate_as::<Console>();
+            let console = Console::create();
+            console
+                .signals()
+                .network_command_sended()
+                .connect_other(&gd, Self::on_network_command_sended);
+            console
+                .signals()
+                .client_command_sended()
+                .connect_other(&gd, Self::on_client_command_sended);
             self.console.init(console);
 
             let console = self.console.clone();

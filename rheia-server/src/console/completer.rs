@@ -1,55 +1,13 @@
-use std::{thread, time::Duration};
-
+use common::commands::complitions::{CompleteRequest, CompleteResponse};
 use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{
+    Changeset, Context, Result,
     completion::{Candidate, Completer},
     hint::Hinter,
     line_buffer::LineBuffer,
-    Changeset, Context, Result,
 };
-
-/// Requesting options for completing the console command
-#[derive(Clone)]
-pub struct CompleteRequest {
-    line: String,
-    pos: usize,
-}
-
-impl CompleteRequest {
-    pub fn get_line(&self) -> &String {
-        &self.line
-    }
-
-    pub fn get_pos(&self) -> &usize {
-        &self.pos
-    }
-}
-
-/// Responding to a request to retrieve console command options
-pub struct CompleteResponse {
-    // Original request
-    request: CompleteRequest,
-    completions: Vec<CustomCandidate>,
-}
-
-impl CompleteResponse {
-    pub(crate) fn new(request: CompleteRequest) -> Self {
-        Self {
-            request,
-            completions: Default::default(),
-        }
-    }
-
-    pub fn get_request(&self) -> &CompleteRequest {
-        &self.request
-    }
-
-    pub fn add_completion(&mut self, completion: String) {
-        let c = CustomCandidate::new(completion);
-        self.completions.push(c);
-    }
-}
+use std::{thread, time::Duration};
 
 lazy_static! {
     static ref CONSOLE_COMPLETE_REQUESTS: (Sender<CompleteRequest>, Receiver<CompleteRequest>) = flume::bounded(1);
@@ -78,20 +36,18 @@ impl Completer for CustomCompleter {
 
     fn complete(&self, line: &str, pos: usize, _ctx: &Context<'_>) -> Result<(usize, Vec<CustomCandidate>)> {
         // log::info!("CustomCompleter::complete line:\"{}\" pos:{}", line, pos);
-        let request = CompleteRequest {
-            line: line.to_string(),
-            pos,
-        };
+        let request = CompleteRequest::create(line.to_string(), pos);
         CustomCompleter::send_complete_request(request);
 
-        let reuslt;
+        let mut reuslt;
         'waiting: loop {
-            for response in CONSOLE_COMPLETE_RESPONSES.1.drain() {
-                reuslt = response.completions;
+            for mut response in CONSOLE_COMPLETE_RESPONSES.1.drain() {
+                reuslt = response.get_completions().clone();
                 break 'waiting;
             }
             thread::sleep(Duration::from_millis(1));
         }
+        let reuslt = reuslt.drain(..).map(|c| CustomCandidate::new(c)).collect::<Vec<_>>();
         Ok((pos, reuslt))
     }
 

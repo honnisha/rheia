@@ -4,19 +4,13 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct GameSettings {
     pub ip_port_direct_connect: Option<String>,
     pub username: Option<String>,
-}
 
-impl Default for GameSettings {
-    fn default() -> Self {
-        Self {
-            ip_port_direct_connect: None,
-            username: None,
-        }
-    }
+    #[serde(default)]
+    pub ssao: bool,
 }
 
 impl GameSettings {

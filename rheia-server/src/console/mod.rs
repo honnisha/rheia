@@ -1,15 +1,16 @@
-use bevy_app::{App, Plugin, Update, Startup};
+use bevy_app::{App, Plugin, Startup, Update};
 use bevy_ecs::{system::ResMut, world::World};
+use completer::CustomCompleter;
 
 use crate::network::runtime_plugin::RuntimePlugin;
 
-use self::{console_handler::ConsoleHandler, commands_executer::CommandsHandler, console_sender::Console, completer::{CustomCompleter, CompleteResponse}};
+use self::{commands_executer::CommandsHandler, console_handler::ConsoleHandler, console_sender::Console};
 
 pub mod commands_executer;
+pub mod completer;
 pub mod console_handler;
 pub mod console_sender;
 pub mod helper;
-pub mod completer;
 
 pub struct ConsolePlugin;
 
@@ -38,10 +39,10 @@ fn handler_console_input(world: &mut World) {
 
 fn handler_console_complete(world: &mut World) {
     for request in CustomCompleter::iter_complere_requests() {
-        let mut response = CompleteResponse::new(request);
         let sender = Console::default();
-        CommandsHandler::complete(world, Box::new(sender), &mut response);
-        CustomCompleter::send_complete_response(response);
+        if let Some(complete_response) = CommandsHandler::complete(world, Box::new(sender), &request) {
+            CustomCompleter::send_complete_response(complete_response);
+        }
     }
 }
 

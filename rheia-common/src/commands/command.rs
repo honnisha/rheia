@@ -63,7 +63,7 @@ impl Command {
 
         // println!("subcommand:{:?} self.subcommand_required:{}", subcommand, self.subcommand_required);
         if subcommand.is_none() && self.subcommand_required {
-            return Err(format!("subcommand for \"{}\" is required", self.name));
+            return Err(format!("&csubcommand for &4\"{}\" &cis required", self.name));
         }
 
         let mut i = 0;
@@ -82,7 +82,7 @@ impl Command {
                 }
                 None => {
                     if arg.required {
-                        return Err(format!("argument \"{}\" is required", arg.name));
+                        return Err(format!("&cargument &4\"{}\" &cis required", arg.name));
                     }
                 }
             }
@@ -169,9 +169,9 @@ impl CommandMatch {
         match self.args.get(arg_name) {
             Some(a) => match a.parse::<T>() {
                 Ok(v) => Ok(v),
-                Err(_e) => Err(format!("parameter {} converting error", self.name)),
+                Err(_e) => Err(format!("&cparameter &4{} &cconverting error", self.name)),
             },
-            None => Err("parameter has not been provided".to_string()),
+            None => Err("&cparameter has not been provided".to_string()),
         }
     }
 

@@ -7,7 +7,7 @@ use crate::utils::bridge::IntoNetworkVector;
 
 /// Used to transmit motion data
 #[derive(Clone, Copy, Debug, PartialEq, GodotClass)]
-#[class(init)]
+#[class(no_init)]
 pub struct EntityMovement {
     position: Vector3,
     rotation: Rotation,

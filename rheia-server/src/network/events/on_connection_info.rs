@@ -46,9 +46,9 @@ pub fn on_connection_info(
         let client_info = event.client.get_client_info().unwrap();
         log::info!(
             target: "network",
-            "Connected ip:&e{}&r login:&a{}&r id:&e{}&r version:&e{}&r",
-            event.client.get_client_ip(),
+            "Connected &a{} &7ip:&e{} &7id:&e{}&r &7version:&e{}",
             client_info.get_login(),
+            event.client.get_client_ip(),
             event.client.get_client_id(),
             client_info.get_version(),
         );
