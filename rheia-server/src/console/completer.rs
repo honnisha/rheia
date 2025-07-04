@@ -1,4 +1,4 @@
-use common::commands::complitions::{CompleteRequest, CompleteResponse};
+use common::commands::complitions::{CompleteRequest, CompleteResponse, Completion};
 use flume::{Drain, Receiver, Sender};
 use lazy_static::lazy_static;
 use rustyline::{
@@ -39,15 +39,18 @@ impl Completer for CustomCompleter {
         let request = CompleteRequest::create(line.to_string(), pos);
         CustomCompleter::send_complete_request(request);
 
-        let mut reuslt;
+        let mut reuslt: Vec<Completion>;
         'waiting: loop {
-            for mut response in CONSOLE_COMPLETE_RESPONSES.1.drain() {
+            for response in CONSOLE_COMPLETE_RESPONSES.1.drain() {
                 reuslt = response.get_completions().clone();
                 break 'waiting;
             }
             thread::sleep(Duration::from_millis(1));
         }
-        let reuslt = reuslt.drain(..).map(|c| CustomCandidate::new(c)).collect::<Vec<_>>();
+        let reuslt = reuslt
+            .drain(..)
+            .map(|c| CustomCandidate::new(c.get_completion().clone()))
+            .collect::<Vec<_>>();
         Ok((pos, reuslt))
     }
 

@@ -19,7 +19,7 @@ use common::chunks::chunk_data::BlockIndexType;
 use common::world_generator::default::WorldGeneratorSettings;
 use godot::classes::file_access::ModeFlags;
 use godot::classes::input::MouseMode;
-use godot::classes::{Engine, FileAccess, Input};
+use godot::classes::{Engine, FileAccess, Input, WorldEnvironment};
 use godot::prelude::*;
 use network::messages::{ClientMessages, NetworkMessageType};
 use std::cell::RefCell;
@@ -75,6 +75,9 @@ pub struct MainScene {
     debug_world_settings: GString,
 
     game_settings: Option<Rc<RefCell<GameSettings>>>,
+
+    #[export]
+    worlde_environment: Option<Gd<WorldEnvironment>>,
 }
 
 impl MainScene {
@@ -195,10 +198,10 @@ impl MainScene {
     }
 
     #[func]
-    fn on_client_command_sended(&mut self, command_match: Gd<GDCommandMatch>) {
-        let command_match = command_match.bind().command_match.clone();
+    fn on_client_command_sended(&mut self, command: Gd<GDCommandMatch>) {
+        let command = command.bind().command_match.clone();
 
-        if *command_match.get_name() == "exit" {
+        if *command.get_name() == "exit" {
             log::info!(target: "main", "&cClosing the game...");
             if let Some(n) = self.network.as_ref() {
                 n.disconnect();
@@ -211,7 +214,7 @@ impl MainScene {
             return;
         }
 
-        if *command_match.get_name() == "disconnect" {
+        if *command.get_name() == "disconnect" {
             log::info!(target: "main", "&cDisconnecting from the server...");
             if let Some(n) = self.network.as_ref() {
                 n.disconnect();
@@ -219,7 +222,40 @@ impl MainScene {
             return;
         }
 
-        log::info!(target: "main", "&cCommand &4\"{}\" &cis not handeled by client", command_match.get_name());
+        if *command.get_name() == "setting" {
+            let game_settings = self.game_settings.as_ref().unwrap();
+            let mut settings = game_settings.borrow_mut();
+
+            let setting_type = match command.get_arg::<String, _>("name") {
+                Ok(c) => c,
+                Err(e) => {
+                    log::error!(target: "main", "&cSetting type error: {}", e);
+                    return;
+                }
+            };
+            match setting_type.as_str() {
+                "ssao" => {
+                    let value = match command.get_arg::<bool, _>("value") {
+                        Ok(c) => c,
+                        Err(e) => {
+                            log::error!(target: "main", "&cSetting value error: {}", e);
+                            return;
+                        }
+                    };
+                    settings.ssao = value;
+                    let worlde_environment = self.worlde_environment.as_mut().unwrap();
+                    let mut environment = worlde_environment.get_environment().unwrap();
+                    environment.set_ssao_enabled(settings.ssao);
+                    log::info!(target: "main", "&aSetting SSAO changed to &2{}", settings.ssao);
+                    return;
+                }
+                _ => {
+                    log::error!(target: "main", "&cSetting type \"{}\" not found", setting_type.as_str());
+                    return;
+                }
+            }
+        }
+        log::info!(target: "main", "&cCommand &4\"{}\" &cis not handeled by client", command.get_name());
     }
 
     #[func]
@@ -355,6 +391,15 @@ impl INode for MainScene {
 
             self.connect_to_server();
         }
+
+        if let Some(game_settings) = self.game_settings.as_ref() {
+            let settings = game_settings.borrow();
+            if let Some(worlde_environment) = self.worlde_environment.as_mut() {
+                let mut environment = worlde_environment.get_environment().unwrap();
+                environment.set_ssao_enabled(settings.ssao);
+            }
+        }
+
 
         let mut wm = self.worlds_manager.clone();
         if let Some(worlds_manager) = wm.as_mut() {

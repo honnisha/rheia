@@ -52,3 +52,13 @@ pub fn uppercase_first(s: &String) -> String {
         Some(f) => f.to_uppercase().chain(c).collect(),
     }
 }
+
+pub fn string_remove_range(s: &str, start: usize, stop: usize) -> String {
+    let mut rslt = "".to_string();
+    for (i, c) in s.chars().enumerate() {
+        if start > i || stop < i + 1 {
+            rslt.push(c);
+        }
+    }
+    rslt
+}

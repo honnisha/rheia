@@ -92,7 +92,8 @@ impl Command {
         return Ok(CommandMatch::new(self.name.clone(), subcommand, args));
     }
 
-    pub fn get_current(&self, command_sequence: &[String]) -> Option<(&Command, Option<&Arg>)> {
+    // Get current cubcommand
+    pub fn get_current_subcommand(&self, command_sequence: &[String]) -> Option<(&Command, Option<&Arg>)> {
         // println!("GET_CURRENT name:{} command_sequence:{:?}", self.name, command_sequence);
 
         if command_sequence.len() > 0 {
@@ -100,7 +101,7 @@ impl Command {
                 if c.name != command_sequence[0] {
                     continue;
                 }
-                return c.get_current(&command_sequence[1..]);
+                return c.get_current_subcommand(&command_sequence[1..]);
             }
         }
 
@@ -130,25 +131,41 @@ impl Command {
 }
 
 #[derive(Clone, Debug)]
+pub enum ArgType {
+    Choices(Vec<String>),
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct Arg {
     name: String,
     required: bool,
+    arg_type: Option<ArgType>,
 }
 
 impl Arg {
     pub fn new(name: String) -> Self {
         Self {
             name: name,
-            required: false,
+            ..Default::default()
         }
     }
 
-    pub fn _get_name(&self) -> &String {
+    pub fn get_name(&self) -> &String {
         &self.name
+    }
+
+    pub fn get_arg_type(&self) -> Option<&ArgType> {
+        self.arg_type.as_ref()
     }
 
     pub fn required(mut self, required: bool) -> Self {
         self.required = required;
+        self
+    }
+
+    pub fn choices<S: Into<String>>(mut self, mut choices: Vec<S>) -> Self {
+        let c: Vec<String> = choices.drain(..).map(|m| m.into()).collect();
+        self.arg_type = Some(ArgType::Choices(c));
         self
     }
 }
@@ -165,8 +182,9 @@ impl CommandMatch {
         Self { name, subcommand, args }
     }
 
-    pub fn get_arg<T: FromStr>(&self, arg_name: &String) -> Result<T, String> {
-        match self.args.get(arg_name) {
+    pub fn get_arg<T: FromStr, S: Into<String>>(&self, arg_name: S) -> Result<T, String> {
+        let key: String = arg_name.into();
+        match self.args.get(&key) {
             Some(a) => match a.parse::<T>() {
                 Ok(v) => Ok(v),
                 Err(_e) => Err(format!("&cparameter &4{} &cconverting error", self.name)),
@@ -231,7 +249,7 @@ mod tests {
         assert_eq!(result.is_err(), true);
         assert_eq!(
             result.err().unwrap().to_string(),
-            "subcommand for \"world\" is required".to_string()
+            "&csubcommand for &4\"world\" &cis required".to_string()
         );
     }
 
@@ -246,7 +264,7 @@ mod tests {
         assert_eq!(result.is_err(), true);
         assert_eq!(
             result.err().unwrap().to_string(),
-            "subcommand for \"world\" is required".to_string()
+            "&csubcommand for &4\"world\" &cis required".to_string()
         );
     }
 
@@ -256,7 +274,7 @@ mod tests {
 
         let cmd = "world ".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "world".to_string());
@@ -269,7 +287,7 @@ mod tests {
 
         let cmd = "world c".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "world".to_string());
@@ -282,7 +300,7 @@ mod tests {
 
         let cmd = "world create te".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "create".to_string());
@@ -296,7 +314,7 @@ mod tests {
 
         let cmd = "world create ".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "create".to_string());
@@ -310,7 +328,7 @@ mod tests {
 
         let cmd = "world list ".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_none(), true);
     }
@@ -329,7 +347,7 @@ mod tests {
 
         let cmd = "tp ".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "tp".to_string());
@@ -352,7 +370,7 @@ mod tests {
 
         let cmd = "tp".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "tp".to_string());
@@ -365,7 +383,7 @@ mod tests {
 
         let cmd = "tp 0".to_string();
         let command_sequence = Command::parse_command(&cmd);
-        let result = command.get_current(&command_sequence[1..]);
+        let result = command.get_current_subcommand(&command_sequence[1..]);
 
         assert_eq!(result.is_some(), true, "Command must be found");
         assert_eq!(result.as_ref().unwrap().0.name, "tp".to_string());

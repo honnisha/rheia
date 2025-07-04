@@ -1,6 +1,6 @@
 use chrono::Local;
 use common::commands::command::{Arg, Command, CommandMatch};
-use common::commands::complitions::{CompleteRequest, CompleteResponse};
+use common::commands::complitions::{CompleteRequest, CompleteResponse, apply_complete};
 use common::utils::colors::parse_to_console_godot;
 use flume::unbounded;
 use flume::{Receiver, Sender};
@@ -27,8 +27,9 @@ fn get_commands() -> Vec<Command> {
     let c = Command::new("disconnect".to_string());
     commands.push(c);
 
+    let setting_choices = vec!["ssao"];
     let c = Command::new("setting".to_string())
-        .arg(Arg::new("name".to_owned()).required(true))
+        .arg(Arg::new("name".to_owned()).required(true).choices(setting_choices))
         .arg(Arg::new("value".to_owned()).required(true));
     commands.push(c);
 
@@ -119,7 +120,7 @@ impl Console {
 
     pub fn send_message(message: String) {
         let date = Local::now();
-        let m = format!("{}: {}", date.format("%H:%M:%S.%3f"), message);
+        let m = format!("&f{}: {}", date.format("%H:%M:%S.%3f"), message);
 
         let godot_msg = parse_to_console_godot(&m);
         godot_print_rich!("{}", godot_msg);
@@ -168,6 +169,8 @@ impl Console {
     }
 
     fn submit_text(&mut self) {
+        self.clear_completions();
+
         let command = self.console_input.as_ref().unwrap().get_text().to_string();
         if command.len() == 0 {
             return;
@@ -195,7 +198,7 @@ impl Console {
 
         let request = CompleteRequest::create(line.clone(), pos);
         let complete_response = CompleteResponse::complete(&request, self.commands.iter());
-        if let Some(complete_response) = complete_response {
+        if complete_response.get_completions().len() > 0 {
             self.selected_complition = Some(0);
             self.complitions = Some(complete_response);
             self.update_completions_display();
@@ -212,9 +215,15 @@ impl Console {
         let mut i = 0;
         for complition in complitions.get_completions() {
             let r = if *selected == i {
-                format!("[bgcolor=#393838][b]{}[/b][/bgcolor]", complition)
+                format!(
+                    "[bgcolor=#393838][b]{}[/b][/bgcolor]",
+                    parse_to_console_godot(&complition.get_display())
+                )
             } else {
-                format!("[bgcolor=#393838]{}[/bgcolor]", complition)
+                format!(
+                    "[bgcolor=#393838]{}[/bgcolor]",
+                    parse_to_console_godot(&complition.get_display())
+                )
             };
             res.push(r);
             i += 1;
@@ -264,18 +273,16 @@ impl Console {
         let selected = self.selected_complition.take().unwrap();
 
         let complitions = self.complitions.as_ref().unwrap();
-        let mut input = complitions.get_request().get_line().clone();
+        let complition = complitions.get_completions().get(selected as usize).unwrap();
 
-        let comp = complitions.get_completions().get(selected as usize).unwrap();
+        let (new_input, caret_column) = apply_complete(&complitions, &complition);
 
-        input.insert_str(complitions.get_request().get_pos().clone(), comp);
-        input = format!("{} ", input);
+        // Set text
+        self.console_input.as_mut().unwrap().set_text(&new_input);
 
-        self.console_input.as_mut().unwrap().set_text(&input);
-        self.console_input
-            .as_mut()
-            .unwrap()
-            .set_caret_column((complitions.get_request().get_pos() + comp.len() + 1) as i32);
+        // Set cursor position
+        self.console_input.as_mut().unwrap().set_caret_column(caret_column);
+
         self.clear_completions();
     }
 

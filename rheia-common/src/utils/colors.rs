@@ -81,7 +81,7 @@ impl Color {
 
     pub fn to_godot_tag(&self) -> Cow<'static, str> {
         match *self {
-            Color::Reset => "[/color][color=white]".into(),
+            Color::Reset => "[/color]".into(),
             Color::Black => "[color=black]".into(),
             Color::DarkBlue => "[color=dark_blue]".into(),
             Color::DarkGreen => "[color=dark_green]".into(),

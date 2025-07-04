@@ -54,13 +54,13 @@ pub(crate) fn command_world(
                 }
             }
             "create" => {
-                let slug = world_subcommand.get_arg::<String>(&"slug".to_owned())?;
+                let slug = world_subcommand.get_arg::<String, _>("slug")?;
                 if slug.len() == 0 {
                     sender.send_console_message(format!("Name of the world cannot be empty"));
                     return Ok(());
                 }
 
-                let seed = match world_subcommand.get_arg::<u64>(&"slug".to_owned()) {
+                let seed = match world_subcommand.get_arg::<u64, _>("slug") {
                     Ok(s) => s,
                     Err(_) => {
                         let mut rng = RandomNumberGenerator::new();
@@ -103,9 +103,9 @@ pub(crate) fn command_teleport(
     sender: Box<dyn ConsoleSenderType>,
     args: CommandMatch,
 ) -> Result<(), String> {
-    let x = args.get_arg::<f32>(&"x".to_owned())?.clone();
-    let y = args.get_arg::<f32>(&"y".to_owned())?.clone();
-    let z = args.get_arg::<f32>(&"z".to_owned())?.clone();
+    let x = args.get_arg::<f32, _>("x")?.clone();
+    let y = args.get_arg::<f32, _>("y")?.clone();
+    let z = args.get_arg::<f32, _>("z")?.clone();
 
     let worlds_manager = world.resource::<WorldsManager>();
 

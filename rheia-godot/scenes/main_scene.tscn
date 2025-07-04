@@ -27,12 +27,13 @@ volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_rt2n2"]
 
-[node name="MainScene" type="MainScene" node_paths=PackedStringArray("worlds_manager")]
+[node name="MainScene" type="MainScene" node_paths=PackedStringArray("worlds_manager", "worlde_environment")]
 worlds_manager = NodePath("WorldsManager")
 text_screen_scene = ExtResource("2_773ro")
 debug_info_scene = ExtResource("3_qwjw3")
 debug_render_distance = 16
 debug_world_settings = "res://assets/world_settings.json"
+worlde_environment = NodePath("WorldEnvironment")
 
 [node name="WorldsManager" type="WorldsManager" parent="."]
 terrain_material = ExtResource("5_tt6yv")

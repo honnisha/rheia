@@ -88,7 +88,7 @@ impl CommandsHandler {
         world: &mut World,
         _sender: Box<dyn ConsoleSenderType>,
         request: &CompleteRequest,
-    ) -> Option<CompleteResponse> {
+    ) -> CompleteResponse {
         let handlers = world.resource::<CommandsHandler>();
 
         let commands: Vec<Command> = handlers.commands.iter().map(|m| m.command_parser.clone()).collect();

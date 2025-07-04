@@ -40,7 +40,8 @@ fn handler_console_input(world: &mut World) {
 fn handler_console_complete(world: &mut World) {
     for request in CustomCompleter::iter_complere_requests() {
         let sender = Console::default();
-        if let Some(complete_response) = CommandsHandler::complete(world, Box::new(sender), &request) {
+        let complete_response = CommandsHandler::complete(world, Box::new(sender), &request);
+        if complete_response.get_completions().len() > 0 {
             CustomCompleter::send_complete_response(complete_response);
         }
     }
