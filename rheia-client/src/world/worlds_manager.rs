@@ -190,17 +190,25 @@ impl INode for WorldsManager {
     fn ready(&mut self) {}
 
     fn physics_process(&mut self, delta: f64) {
+        #[cfg(feature = "trace")]
+        let _span = tracy_client::span!("worlds_manager");
+
+        let now = std::time::Instant::now();
+
         if self.get_world().is_some() {
             let mut world = self.get_world_mut().unwrap().clone();
             world.bind_mut().physics_process(delta);
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "worlds_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }
 
     fn process(&mut self, delta: f64) {
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("worlds_manager");
-
-        let now = std::time::Instant::now();
 
         if self.get_world().is_some() {
             let mut world = self.get_world_mut().unwrap().clone();
@@ -220,11 +228,6 @@ impl INode for WorldsManager {
             if let Some(resource_manager) = self.resource_manager.as_ref() {
                 world.bind_mut().custom_process(delta, &*resource_manager.borrow());
             }
-        }
-
-        let elapsed = now.elapsed();
-        if elapsed >= std::time::Duration::from_secs_f32(0.1) {
-            log::info!(target: "worlds_manager", "worlds_manager lag: {:.2?}", elapsed);
         }
     }
 }

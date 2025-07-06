@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://lohprdv6sylq"]
+[gd_scene load_steps=2 format=3 uid="uid://lohprdv6sylq"]
 
 [ext_resource type="Theme" uid="uid://b02sh2g6s5sq0" path="res://assets/gui/default_theme.tres" id="1_56tml"]
-[ext_resource type="PackedScene" uid="uid://y4kca7bo7tc" path="res://scenes/components/block_icon.tscn" id="2_8xgbd"]
 
 [node name="TabComponent" type="TabContentUIComponent"]
 anchors_preset = 15
@@ -24,9 +23,3 @@ theme = ExtResource("1_56tml")
 layout_mode = 2
 size_flags_horizontal = 3
 theme = ExtResource("1_56tml")
-
-[node name="BlockIcon" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2
-
-[node name="BlockIcon2" parent="ScrollContainer/IconsGrid" instance=ExtResource("2_8xgbd")]
-layout_mode = 2

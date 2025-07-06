@@ -198,6 +198,4 @@ impl INode3D for GenericSkin {
         let generic = self.generic.clone();
         self.base_mut().add_child(&generic);
     }
-
-    fn process(&mut self, _delta: f64) {}
 }

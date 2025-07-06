@@ -243,10 +243,25 @@ impl MainScene {
                         }
                     };
                     settings.ssao = value;
+                    settings.save().unwrap();
                     let worlde_environment = self.worlde_environment.as_mut().unwrap();
                     let mut environment = worlde_environment.get_environment().unwrap();
                     environment.set_ssao_enabled(settings.ssao);
                     log::info!(target: "main", "&aSetting SSAO changed to &2{}", settings.ssao);
+                    return;
+                }
+                "fps" => {
+                    let value = match command.get_arg::<u16, _>("value") {
+                        Ok(c) => c,
+                        Err(e) => {
+                            log::error!(target: "main", "&cSetting value error: {}", e);
+                            return;
+                        }
+                    };
+                    settings.fps = value;
+                    Engine::singleton().set_max_fps(settings.fps as i32);
+                    settings.save().unwrap();
+                    log::info!(target: "main", "&aSetting FPS changed to &2{}", settings.fps);
                     return;
                 }
                 _ => {
@@ -398,6 +413,7 @@ impl INode for MainScene {
                 let mut environment = worlde_environment.get_environment().unwrap();
                 environment.set_ssao_enabled(settings.ssao);
             }
+            Engine::singleton().set_max_fps(settings.fps as i32);
         }
 
 
@@ -440,8 +456,8 @@ impl INode for MainScene {
         }
 
         let elapsed = now.elapsed();
-        if elapsed >= std::time::Duration::from_secs_f32(0.1) {
-            log::info!(target: "main", "main_scene lag: {:.2?}", elapsed);
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "main", "&7process lag: {:.2?}", elapsed);
         }
     }
 

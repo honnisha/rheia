@@ -27,7 +27,7 @@ fn get_commands() -> Vec<Command> {
     let c = Command::new("disconnect".to_string());
     commands.push(c);
 
-    let setting_choices = vec!["ssao"];
+    let setting_choices = vec!["ssao", "fps"];
     let c = Command::new("setting".to_string())
         .arg(Arg::new("name".to_owned()).required(true).choices(setting_choices))
         .arg(Arg::new("value".to_owned()).required(true));

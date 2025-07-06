@@ -28,10 +28,3 @@ impl ItemDescription {
         }
     }
 }
-
-#[godot_api]
-impl IPanelContainer for ItemDescription {
-    fn ready(&mut self) {}
-
-    fn process(&mut self, _delta: f64) {}
-}

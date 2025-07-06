@@ -19,8 +19,6 @@ pub fn generate_chunks(
     chunks_distance: i32,
     settings: WorldGeneratorSettings,
 ) {
-    let now = std::time::Instant::now();
-
     let world_generator = WorldGenerator::create(None, settings).unwrap();
 
     let mut chunks: HashMap<ChunkPosition, Option<ChunkData>> = Default::default();
@@ -39,6 +37,4 @@ pub fn generate_chunks(
     for (chunk_pos, data) in chunks {
         world.bind_mut().recieve_chunk(chunk_pos, data.unwrap());
     }
-
-    log::info!(target: "world_generator", "Chunks generated (executed:{:.2?})", now.elapsed());
 }

@@ -11,6 +11,9 @@ pub struct GameSettings {
 
     #[serde(default)]
     pub ssao: bool,
+
+    #[serde(default)]
+    pub fps: u16,
 }
 
 impl GameSettings {

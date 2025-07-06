@@ -84,6 +84,10 @@ impl BlockMenu {
     }
 
     pub fn set_blocks(&mut self, block_mesh_storage: &BlockMeshStorage, block_storage_lock: BlockStorageType) {
+        if self.icons.len() > 0 {
+            panic!("block_menu set_blocks already called! Is suppose to be one time job!");
+        }
+
         self.block_storage_lock = Some(block_storage_lock.clone());
 
         let block_storage = block_storage_lock.read();
@@ -112,8 +116,7 @@ impl BlockMenu {
             for (block_slug, block_type) in block_storage.iter() {
                 let block_id = block_storage.get_block_id(block_slug).unwrap();
                 if block_type.get_category() == category {
-                    let icon = block_mesh_storage.get_icon(&block_id).unwrap();
-                    let mut icon = icon.clone();
+                    let mut icon = block_mesh_storage.generate_icon(&block_id).unwrap();
                     flow_container.add_child(&icon);
 
                     icon.signals()

@@ -202,9 +202,4 @@ impl IControl for MainMenu {
 
         self.read_settings();
     }
-
-    fn process(&mut self, _delta: f64) {
-        #[cfg(feature = "trace")]
-        let _span = tracy_client::span!("main_menu");
-    }
 }

@@ -18,6 +18,8 @@ pub struct CameraController {
     camera: Gd<Camera3D>,
     controls: Gd<Controls>,
     cross: Gd<Sprite2D>,
+
+    _stored_rotation: Option<Rotation>,
 }
 
 impl CameraController {
@@ -29,6 +31,7 @@ impl CameraController {
             camera: Camera3D::new_alloc(),
             controls,
             cross,
+            _stored_rotation: Default::default(),
         }
     }
 
@@ -109,7 +112,14 @@ impl INode3D for CameraController {
         };
 
         let rotation = Rotation::new(cam_rot.x, cam_rot.y);
-        self.rotate(rotation);
-        self.signals().on_camera_rotation().emit(rotation.yaw, rotation.pitch);
+        let rotate_changed = match self._stored_rotation.as_ref() {
+            Some(r) => *r != rotation,
+            None => true,
+        };
+        if rotate_changed {
+            self.rotate(rotation);
+            self.signals().on_camera_rotation().emit(rotation.yaw, rotation.pitch);
+            self._stored_rotation = Some(rotation);
+        }
     }
 }

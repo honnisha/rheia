@@ -348,6 +348,8 @@ impl PlayerController {
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("player_controller");
 
+        let now = std::time::Instant::now();
+
         // Set lock if chunk is in loading
         self.collider.set_enabled(chunk_loaded);
 
@@ -402,6 +404,11 @@ impl PlayerController {
         ));
 
         self.update_cache_movement();
+
+        let elapsed = now.elapsed();
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "player_controller", "&7custom_process lag: {:.2?}", elapsed);
+        }
     }
 
     fn update_cache_movement(&mut self) {
@@ -545,6 +552,11 @@ impl INode3D for PlayerController {
     }
 
     fn process(&mut self, delta: f64) {
+        #[cfg(feature = "trace")]
+        let _span = tracy_client::span!("player_controller");
+
+        let now = std::time::Instant::now();
+
         self.ui_lock = (self.ui_lock - delta as f32).max(0.0);
 
         if self.controls.bind().is_toggle_block_selection() && !Console::is_active() {
@@ -585,6 +597,11 @@ impl INode3D for PlayerController {
         }
         if selected_item_updated {
             self.set_selected_item(self.selected_item.clone());
+        }
+
+        let elapsed = now.elapsed();
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "player_controller", "&7process lag: {:.2?}", elapsed);
         }
     }
 }

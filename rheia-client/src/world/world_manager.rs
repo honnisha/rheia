@@ -117,14 +117,16 @@ impl WorldManager {
         self.physics.step(delta as f32);
 
         let elapsed = now.elapsed();
-        if elapsed >= std::time::Duration::from_secs_f32(0.1) {
-            log::info!("physics_process lag: {:.2?}", elapsed);
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "world_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }
 
     pub fn custom_process(&mut self, _delta: f64, resource_manager: &ResourceManager) {
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("world_manager");
+
+        let now = std::time::Instant::now();
 
         let mut map = self.chunk_map.bind_mut();
         map.send_chunks_to_load(
@@ -139,6 +141,12 @@ impl WorldManager {
         let bs = self.block_storage.read();
         let tm = self.texture_mapper.read();
         map.update_chunks_geometry(&self.physics, &bs, &tm);
+
+
+        let elapsed = now.elapsed();
+        if elapsed >= crate::WARNING_TIME {
+            log::info!(target: "world_manager", "&7custom_process lag: {:.2?}", elapsed);
+        }
     }
 }
 

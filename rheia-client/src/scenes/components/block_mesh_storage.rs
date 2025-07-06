@@ -119,7 +119,7 @@ impl BlockMeshStorage {
         Gd::<Self>::from_init_fn(|_base| storage)
     }
 
-    pub fn get_icon(&self, block_id: &BlockIndexType) -> Option<Gd<BlockIcon>> {
+    pub fn generate_icon(&self, block_id: &BlockIndexType) -> Option<Gd<BlockIcon>> {
         let Some((_mesh, camera_size)) = self.meshes.get(block_id) else {
             return None;
         };

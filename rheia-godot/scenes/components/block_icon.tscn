@@ -26,7 +26,8 @@ albedo_texture = ExtResource("3_gdlbd")
 [sub_resource type="BoxMesh" id="BoxMesh_axew6"]
 material = SubResource("StandardMaterial3D_t0443")
 
-[node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("block_anchor", "outline_texture", "backgroud_color", "camera")]
+[node name="BlockIcon" type="BlockIcon" node_paths=PackedStringArray("viewport_container", "block_anchor", "outline_texture", "backgroud_color", "camera")]
+viewport_container = NodePath("SubViewportContainer")
 block_anchor = NodePath("SubViewportContainer/SubViewport/Anchor")
 outline_texture = NodePath("Outline")
 backgroud_color = NodePath("ColorRect")
