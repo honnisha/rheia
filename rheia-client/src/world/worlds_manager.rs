@@ -201,8 +201,9 @@ impl INode for WorldsManager {
         }
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "worlds_manager", "&7physics_process lag: {:.2?}", elapsed);
+            log::warn!(target: "worlds_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }
 

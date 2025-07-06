@@ -349,12 +349,18 @@ impl PlayerController {
         let _span = tracy_client::span!("player_controller");
 
         let now = std::time::Instant::now();
+        let mut move_shape_elapsed: std::time::Duration = std::time::Duration::ZERO;
+        let mut detect_is_grounded_elapsed: std::time::Duration = std::time::Duration::ZERO;
+        let mut vision_elapsed: std::time::Duration = std::time::Duration::ZERO;
 
         // Set lock if chunk is in loading
         self.collider.set_enabled(chunk_loaded);
 
         if chunk_loaded {
+            let detect_is_grounded_now = std::time::Instant::now();
             self.detect_is_grounded(delta);
+            detect_is_grounded_elapsed = detect_is_grounded_now.elapsed();
+
             let movement = self.get_movement(delta);
 
             let mut filter = QueryFilter::default();
@@ -364,13 +370,18 @@ impl PlayerController {
 
             filter.exclude_collider(&self.collider);
 
+            let move_shape_now = std::time::Instant::now();
             let translation =
                 self.character_controller
                     .move_shape(&self.collider, filter, delta, movement.to_network());
+            move_shape_elapsed = move_shape_now.elapsed();
+
             self.collider.set_position(self.collider.get_position() + translation);
 
+            let vision_now = std::time::Instant::now();
             let hit = self.update_vision();
             self.signals().look_at_update().emit(hit.as_ref());
+            vision_elapsed = vision_now.elapsed();
 
             let action_type = if self.controls.bind().is_main_action() {
                 Some(PlayerActionType::Main)
@@ -389,7 +400,7 @@ impl PlayerController {
                     let selected_item = Gd::<SelectedItemGd>::from_init_fn(|_base| {
                         SelectedItemGd::create(self.get_selected_item().clone())
                     });
-                    self.signals().on_player_action().emit(&action, &selected_item);
+                    self.signals().player_action().emit(&action, &selected_item);
                 }
             }
         }
@@ -406,8 +417,13 @@ impl PlayerController {
         self.update_cache_movement();
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "player_controller", "&7custom_process lag: {:.2?}", elapsed);
+            log::warn!(
+                target: "player_controller",
+                "&7custom_process lag:{:.2?} move_shape:{:.2?} detect_is_grounded:{:.2?} vision:{:.2?}",
+                elapsed, move_shape_elapsed, detect_is_grounded_elapsed, vision_elapsed,
+            );
         }
     }
 
@@ -435,7 +451,7 @@ impl PlayerController {
                 entity.bind_mut().handle_movement(movement);
             }
 
-            self.signals().on_player_move().emit(&new_movement, new_chunk);
+            self.signals().player_move().emit(&new_movement, new_chunk);
             self.cache_movement = Some(new_movement);
         }
     }
@@ -460,10 +476,10 @@ impl PlayerController {
     pub fn look_at_update(new_look: Option<Gd<LookAt>>);
 
     #[signal]
-    pub fn on_player_move(new_movement: Gd<EntityMovement>, new_chunk: bool);
+    pub fn player_move(new_movement: Gd<EntityMovement>, new_chunk: bool);
 
     #[signal]
-    pub fn on_player_action(action: Gd<PlayerAction>, item: Gd<SelectedItemGd>);
+    pub fn player_action(action: Gd<PlayerAction>, item: Gd<SelectedItemGd>);
 
     #[func]
     fn on_block_selected(&mut self, block: Gd<BlockIconSelect>) {
@@ -600,8 +616,9 @@ impl INode3D for PlayerController {
         }
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "player_controller", "&7process lag: {:.2?}", elapsed);
+            log::warn!(target: "player_controller", "&7process lag: {:.2?}", elapsed);
         }
     }
 }

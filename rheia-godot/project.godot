@@ -19,8 +19,9 @@ boot_splash/image="res://assets/godot_logo.png"
 
 [display]
 
-window/stretch/mode="viewport"
-window/stretch/aspect="expand"
+window/size/viewport_width=1280
+window/size/viewport_height=800
+window/stretch/aspect="ignore"
 window/vsync/vsync_mode=0
 
 [importer_defaults]

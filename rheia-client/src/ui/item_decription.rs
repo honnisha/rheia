@@ -1,5 +1,5 @@
 use godot::{
-    classes::{IPanelContainer, PanelContainer, RichTextLabel},
+    classes::{PanelContainer, RichTextLabel},
     prelude::*,
 };
 

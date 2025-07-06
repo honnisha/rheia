@@ -182,8 +182,9 @@ impl INode3D for Entity {
         }
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "entity", "&7process lag: {:.2?}", elapsed);
+            log::warn!(target: "entity", "&7process lag: {:.2?}", elapsed);
         }
     }
 }

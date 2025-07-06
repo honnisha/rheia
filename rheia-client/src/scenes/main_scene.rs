@@ -173,12 +173,12 @@ impl MainScene {
         if let Some(mut player_controller) = created_controller {
             player_controller
                 .signals()
-                .on_player_move()
+                .player_move()
                 .connect_other(&self.to_gd(), MainScene::handler_player_move);
 
             player_controller
                 .signals()
-                .on_player_action()
+                .player_action()
                 .connect_other(&self.to_gd(), MainScene::handler_player_action);
 
             player_controller.bind_mut().set_blocks(&*worlds_manager);
@@ -456,8 +456,9 @@ impl INode for MainScene {
         }
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "main", "&7process lag: {:.2?}", elapsed);
+            log::warn!(target: "main", "&7process lag: {:.2?}", elapsed);
         }
     }
 

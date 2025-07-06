@@ -117,8 +117,9 @@ impl WorldManager {
         self.physics.step(delta as f32);
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "world_manager", "&7physics_process lag: {:.2?}", elapsed);
+            log::warn!(target: "world_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }
 
@@ -144,8 +145,9 @@ impl WorldManager {
 
 
         let elapsed = now.elapsed();
+        #[cfg(debug_assertions)]
         if elapsed >= crate::WARNING_TIME {
-            log::info!(target: "world_manager", "&7custom_process lag: {:.2?}", elapsed);
+            log::warn!(target: "world_manager", "&7custom_process lag: {:.2?}", elapsed);
         }
     }
 }
