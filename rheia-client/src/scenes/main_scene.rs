@@ -1,4 +1,3 @@
-use crate::LOG_LEVEL;
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::console::console_handler::{Console, GDCommandMatch};
 use crate::controller::entity_movement::EntityMovement;
@@ -14,6 +13,7 @@ use crate::utils::settings::GameSettings;
 use crate::utils::world_generator::generate_chunks;
 use crate::world::physics::PhysicsType;
 use crate::world::worlds_manager::WorldsManager;
+use crate::{LOG_LEVEL, MAX_THREADS};
 use common::blocks::block_info::generate_block_id_map;
 use common::chunks::chunk_data::BlockIndexType;
 use common::world_generator::default::WorldGeneratorSettings;
@@ -71,7 +71,7 @@ pub struct MainScene {
     #[export]
     debug_render_distance: i32,
 
-    #[export(file = "*.json")]
+    #[export(file = "*")]
     debug_world_settings: GString,
 
     game_settings: Option<Rc<RefCell<GameSettings>>>,
@@ -82,6 +82,11 @@ pub struct MainScene {
 
 impl MainScene {
     pub fn create(ip_port: String, login: String, game_settings: Rc<RefCell<GameSettings>>) -> Gd<Self> {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(MAX_THREADS)
+            .build_global()
+            .unwrap();
+
         let mut scene = load::<PackedScene>(MAIN_SCENE_PATH).instantiate_as::<Self>();
         scene.bind_mut().ip_port = Some(ip_port);
         scene.bind_mut().login = Some(login);
@@ -286,6 +291,21 @@ impl MainScene {
     fn regenerate_debug_world(&mut self, _value: bool) {
         log::info!(target: "main", "Regenerate debug world");
 
+        let Some(settings_file) = FileAccess::open(&self.debug_world_settings.to_string(), ModeFlags::READ) else {
+            log::error!(
+                "World settings file {} not found",
+                self.debug_world_settings.to_string()
+            );
+            return;
+        };
+        let settings: WorldGeneratorSettings = match serde_yaml::from_str(&settings_file.get_as_text().to_string()) {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("World settings yaml error: {}", e);
+                return;
+            }
+        };
+
         let wm = self.worlds_manager.as_mut().expect("worlds_manager is not init");
 
         {
@@ -305,15 +325,6 @@ impl MainScene {
         }
 
         let mut world = wm.bind_mut().create_world(String::from("TestWorld"));
-
-        let settings_file = FileAccess::open(&self.debug_world_settings.to_string(), ModeFlags::READ).unwrap();
-        let settings_value: serde_json::Value = serde_json::from_str(&settings_file.get_as_text().to_string()).unwrap();
-
-        let settings: WorldGeneratorSettings = match serde_json::from_value(settings_value) {
-            Ok(s) => s,
-            Err(e) => panic!("Settings json error: {}", e),
-        };
-
         generate_chunks(&mut world, 0, 0, self.debug_render_distance, settings);
     }
 
@@ -369,6 +380,7 @@ impl INode for MainScene {
             if let Err(e) = log::set_logger(&CONSOLE_LOGGER) {
                 log::error!(target: "main", "log::set_logger error: {}", e)
             }
+            self.regenerate_debug_world(false);
         } else {
             // Debug
             let debug_info = self.debug_info_scene.as_mut().unwrap().instantiate_as::<DebugInfo>();
@@ -415,7 +427,6 @@ impl INode for MainScene {
             }
             Engine::singleton().set_max_fps(settings.fps as i32);
         }
-
 
         let mut wm = self.worlds_manager.clone();
         if let Some(worlds_manager) = wm.as_mut() {

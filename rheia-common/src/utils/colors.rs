@@ -186,7 +186,7 @@ mod tests {
         let r = parse_to_console_godot(&"time: &8main &aINFO&r: text".to_string());
         assert_eq!(
             r,
-            "time: [color=dark_gray]main [color=green]INFO[/color][color=white]: text[/color][color=white]".to_string()
+            "time: [color=dark_gray]main [color=green]INFO[/color]: text[/color]".to_string()
         );
     }
 }

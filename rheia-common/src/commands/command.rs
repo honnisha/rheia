@@ -233,7 +233,7 @@ mod tests {
         let s = subcommand.as_ref().unwrap();
         assert_eq!(s.get_name(), "create");
 
-        let slug = s.get_arg::<String>(&"slug".to_owned());
+        let slug = s.get_arg::<String, _>(&"slug".to_owned());
         assert_eq!(slug.is_ok(), true, "error: {}", slug.err().unwrap());
         assert_eq!(slug.as_ref().unwrap(), &"test".to_string());
     }

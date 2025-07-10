@@ -16,6 +16,7 @@ struct Rheia;
 
 pub const LOG_LEVEL: log::LevelFilter = log::LevelFilter::Info;
 pub const WARNING_TIME: std::time::Duration = std::time::Duration::from_millis(10);
+pub const MAX_THREADS: usize = 12;
 
 #[gdextension]
 unsafe impl ExtensionLibrary for Rheia {}
