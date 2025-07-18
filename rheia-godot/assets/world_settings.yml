@@ -1,20 +1,22 @@
-surface_fractal_octaves: 2
-surface_fractal_gain: 2.0
-surface_fractal_lacunarity: 1.1
-surface_frequency: 0.04
-surface_noise_multiplier: 10.0
+river_noise: !noise
+  fractal_octaves: 2
+  fractal_gain: 2.0
+  fractal_lacunarity: 1.1
+  frequency: 0.04
+  multiplier: 10.0
 
-river_fractal_type: fbm
-river_fractal_octaves: 4
-river_fractal_gain: 1.0
-river_fractal_lacunarity: 1.0
-river_frequency: 0.005
-river_threshold: 0.1
+river_noise: !noise
+  fractal_type: fbm
+  fractal_octaves: 4
+  fractal_gain: 1.0
+  fractal_lacunarity: 1.0
+  frequency: 0.005
+  miltiplier: 4.0
 
-stream_fractal_type: rigid_multi
-stream_fractal_octaves: 4
-stream_fractal_gain: 0.5
-stream_fractal_lacunarity: 0.05
-stream_frequency: 0.01
-stream_threshold: 0.1
-stream_miltiplier: 3.0
+stream_noise: !noise
+  fractal_type: rigid_multi
+  fractal_octaves: 4
+  fractal_gain: 0.52
+  fractal_lacunarity: 0.05
+  frequency: 0.008
+  miltiplier: 3.0

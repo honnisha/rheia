@@ -5984,6 +5984,9 @@ dependencies = [
 name = "rheia-map-preview"
 version = "0.1.0"
 dependencies = [
+ "bracket-lib",
+ "bracket-noise",
+ "bracket-random",
  "common",
  "eframe",
  "egui",

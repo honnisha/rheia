@@ -14,3 +14,8 @@ serde_yaml = "0.9"
 egui = "0.32"
 eframe = "0.32"
 egui_extras = "0.32"
+
+# Noise world gen
+bracket-lib = "0.8.7"
+bracket-noise = "0.8.7"
+bracket-random = "0.8.7"

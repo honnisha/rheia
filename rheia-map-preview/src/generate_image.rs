@@ -10,9 +10,15 @@ use common::{
 use image::{ImageBuffer, Rgb};
 
 
-pub fn generate_image() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-    let settings: WorldGeneratorSettings = serde_yaml::from_str("").unwrap();
-    let generator = WorldGenerator::create(None, settings).unwrap();
+pub fn generate_map_image(seed: u64) -> Result<ImageBuffer<Rgb<u8>, Vec<u8>>, String> {
+    let settings: WorldGeneratorSettings = match serde_yaml::from_str("") {
+        Ok(g) => g,
+        Err(e) => return Err(e.to_string()),
+    };
+    let generator = match WorldGenerator::create(Some(seed), settings) {
+        Ok(g) => g,
+        Err(e) => return Err(e),
+    };
 
     let mut imgbuf = ImageBuffer::new(IMAGE_SIZE, IMAGE_SIZE);
     imgbuf.put_pixel(0, 0, Rgb([0_u8, 0_u8, 0_u8]));
@@ -24,7 +30,7 @@ pub fn generate_image() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
             generate_chunk(&chunk_data, &chunk_position, &mut imgbuf);
         }
     }
-    imgbuf
+    Ok(imgbuf)
 }
 
 fn generate_chunk(chunk_data: &ChunkData, chunk_position: &ChunkPosition, imgbuf: &mut ImageBuffer<Rgb<u8>, Vec<u8>>) {

@@ -48,7 +48,7 @@ use super::traits::IWorldGenerator;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-enum CFractalType {
+pub enum CFractalType {
     Fbm,
     Billow,
     RigidMulti,
@@ -61,7 +61,7 @@ impl Default for CFractalType {
 }
 
 impl CFractalType {
-    fn orig(&self) -> FractalType {
+    pub fn orig(&self) -> FractalType {
         match *self {
             CFractalType::Fbm => FractalType::FBM,
             CFractalType::Billow => FractalType::Billow,
@@ -72,51 +72,69 @@ impl CFractalType {
 
 #[serde_inline_default]
 #[derive(Default, Serialize, Deserialize)]
-pub struct WorldGeneratorSettings {
-    #[serde_inline_default(2)]
-    surface_fractal_octaves: i32,
+pub struct Noise {
+    #[serde_inline_default(CFractalType::Fbm)]
+    pub fractal_type: CFractalType,
+    #[serde_inline_default(4)]
+    pub fractal_octaves: i32,
+    #[serde_inline_default(0.5)]
+    pub fractal_gain: f32,
     #[serde_inline_default(2.0)]
-    surface_fractal_gain: f32,
-    #[serde_inline_default(1.1)]
-    surface_fractal_lacunarity: f32,
-    #[serde_inline_default(0.05)]
-    surface_frequency: f32,
+    pub fractal_lacunarity: f32,
+    #[serde_inline_default(0.03)]
+    pub frequency: f32,
+    #[serde_inline_default(1.0)]
+    pub miltiplier: f32,
+}
+
+pub struct GeneratedNoise {
+    noise: FastNoise,
+    miltiplier: f32,
+}
+
+impl GeneratedNoise {
+    pub fn get_noise(&self, x: f32, y: f32) -> f32 {
+        (self.noise.get_noise(x, y) * self.miltiplier).max(0.0).min(1.0)
+    }
+}
+
+impl Noise {
+    pub fn generate(&self, seed: u64) -> GeneratedNoise {
+        let mut noise = FastNoise::seeded(seed);
+        noise.set_noise_type(NoiseType::PerlinFractal);
+        noise.set_fractal_type(self.fractal_type.orig());
+        noise.set_fractal_octaves(self.fractal_octaves);
+        noise.set_fractal_gain(self.fractal_gain);
+        noise.set_fractal_lacunarity(self.fractal_lacunarity);
+        noise.set_frequency(self.frequency);
+        GeneratedNoise { noise, miltiplier: self.miltiplier.clone() }
+    }
+}
+
+#[serde_inline_default]
+#[derive(Default, Serialize, Deserialize)]
+pub struct WorldGeneratorSettings {
+    surface_noise: Noise,
     #[serde_inline_default(10.0)]
     surface_noise_multiplier: f32,
 
-    #[serde_inline_default(CFractalType::Fbm)]
-    river_fractal_type: CFractalType,
-    #[serde_inline_default(4)]
-    river_fractal_octaves: i32,
-    #[serde_inline_default(0.5)]
-    river_fractal_gain: f32,
-    #[serde_inline_default(2.0)]
-    river_fractal_lacunarity: f32,
-    #[serde_inline_default(0.03)]
-    river_frequency: f32,
-    #[serde_inline_default(0.3)]
+    river_noise: Noise,
+    #[serde_inline_default(0.1)]
     river_threshold: f32,
+    #[serde_inline_default(3.0)]
+    river_miltiplier: f32,
 
-    #[serde_inline_default(CFractalType::Fbm)]
-    stream_fractal_type: CFractalType,
-    #[serde_inline_default(4)]
-    stream_fractal_octaves: i32,
-    #[serde_inline_default(0.5)]
-    stream_fractal_gain: f32,
-    #[serde_inline_default(2.0)]
-    stream_fractal_lacunarity: f32,
-    #[serde_inline_default(0.03)]
-    stream_frequency: f32,
-    #[serde_inline_default(0.3)]
+    stream_noise: Noise,
+    #[serde_inline_default(0.1)]
     stream_threshold: f32,
     #[serde_inline_default(3.0)]
     stream_miltiplier: f32,
 }
 
 pub struct WorldGenerator {
-    surface_noise: FastNoise,
-    river_noise: FastNoise,
-    stream_noise: FastNoise,
+    surface_noise: GeneratedNoise,
+    river_noise: GeneratedNoise,
+    stream_noise: GeneratedNoise,
     settings: WorldGeneratorSettings,
 }
 
@@ -132,34 +150,10 @@ impl IWorldGenerator for WorldGenerator {
             }
         };
 
-        let mut surface_noise = FastNoise::seeded(seed);
-        surface_noise.set_noise_type(NoiseType::PerlinFractal);
-        surface_noise.set_fractal_type(FractalType::FBM);
-        surface_noise.set_fractal_octaves(settings.surface_fractal_octaves);
-        surface_noise.set_fractal_gain(settings.surface_fractal_gain);
-        surface_noise.set_fractal_lacunarity(settings.surface_fractal_lacunarity);
-        surface_noise.set_frequency(settings.surface_frequency);
-
-        let mut river_noise = FastNoise::seeded(seed);
-        river_noise.set_noise_type(NoiseType::PerlinFractal);
-        river_noise.set_fractal_type(settings.river_fractal_type.orig());
-        river_noise.set_fractal_octaves(settings.river_fractal_octaves);
-        river_noise.set_fractal_gain(settings.river_fractal_gain);
-        river_noise.set_fractal_lacunarity(settings.river_fractal_lacunarity);
-        river_noise.set_frequency(settings.river_frequency);
-
-        let mut stream_noise = FastNoise::seeded(seed);
-        stream_noise.set_noise_type(NoiseType::PerlinFractal);
-        stream_noise.set_fractal_type(settings.stream_fractal_type.orig());
-        stream_noise.set_fractal_octaves(settings.stream_fractal_octaves);
-        stream_noise.set_fractal_gain(settings.stream_fractal_gain);
-        stream_noise.set_fractal_lacunarity(settings.stream_fractal_lacunarity);
-        stream_noise.set_frequency(settings.stream_frequency);
-
         Ok(Self {
-            surface_noise,
-            river_noise,
-            stream_noise,
+            surface_noise: settings.surface_noise.generate(seed),
+            river_noise: settings.river_noise.generate(seed),
+            stream_noise: settings.stream_noise.generate(seed),
             settings: settings,
         })
     }
@@ -186,27 +180,61 @@ impl WorldGenerator {
                     self.surface_noise.get_noise(x_map, z_map) * self.settings.surface_noise_multiplier + 60_f32;
 
                 // Множитель для рек, превращающий их в реки
-                let river = self.river_noise.get_noise(x_map, z_map);
-                let river_mut = 1.0 + (river - self.settings.river_threshold).max(0.0);
+                let river_noise = self.river_noise.get_noise(x_map, z_map);
 
                 // Реки
-                let stream = self.stream_noise.get_noise(x_map, z_map);
-                let stream = (stream - self.settings.stream_threshold).max(0.0) * self.settings.stream_miltiplier * river_mut;
+                let stream_noise = (self.stream_noise.get_noise(x_map, z_map) - 1.0).abs();
+                let stream_mut = 1.0 + match stream_noise > self.settings.stream_threshold {
+                    true => stream_noise * self.settings.stream_miltiplier,
+                    false => 0.0,
+                };
 
                 for y in 0_u8..(CHUNK_SIZE as u8) {
                     let pos = ChunkBlockPosition::new(x, y, z);
 
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
-                    if height > y_global - stream {
+                    if height > y_global * stream_mut {
                         section_data.insert(&pos, BlockDataInfo::create(BlockID::Grass.id(), None));
-                    }
-                    if stream > 1.0 {
-                        section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
+
+                        if river_noise > self.settings.river_threshold {
+                            section_data.insert(&pos, BlockDataInfo::create(BlockID::Stone.id(), None));
+                        }
+
+                        if stream_noise > self.settings.stream_threshold {
+                            section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
+                        }
                     }
                 }
             }
         }
         return section_data;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{WorldGenerator, WorldGeneratorSettings};
+    use crate::world_generator::traits::IWorldGenerator;
+
+    #[test]
+    fn test_generation_stream() {
+        let settings: WorldGeneratorSettings = serde_yaml::from_str("").unwrap();
+        let generator = WorldGenerator::create(Some(40), settings).unwrap();
+
+        for y in 0..50 {
+            for x in 0..50 {
+                let n = generator.stream_noise.get_noise(x as f32 * 10.0, y as f32 * 10.0);
+                if n > 0.1 {
+                    print!("1 ");
+                } else {
+                    print!("0 ");
+                }
+            }
+            println!("");
+        }
+
+        let river = generator.stream_noise.get_noise(100.0, 100.0);
+        assert_eq!(river, 1.0);
     }
 }
