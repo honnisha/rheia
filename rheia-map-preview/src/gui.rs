@@ -83,23 +83,27 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("Seed:");
-            if ui.text_edit_singleline(&mut self.seed).changed() {
-                match self.seed.parse::<u64>() {
-                    Ok(val) => {
-                        self.seed_value = val;
-                        println!("Seed updated: {}", self.seed_value);
-                    },
-                    Err(e) => {
-                        println!("Seed paring error: {}", e);
-                    },
+            ui.horizontal(|ui| {
+                ui.label("Seed:");
+                if ui.text_edit_singleline(&mut self.seed).changed() {
+                    match self.seed.parse::<u64>() {
+                        Ok(val) => {
+                            self.seed_value = val;
+                            println!("Seed updated: {}", self.seed_value);
+                        },
+                        Err(e) => {
+                            println!("Seed paring error: {}", e);
+                        },
+                    }
                 }
-            }
-            if ui.button("Randomize seed").clicked() {
-                let mut rng = RandomNumberGenerator::new();
-                self.seed_value = rng.next_u64();
-                self.seed = self.seed_value.to_string();
-            }
+            });
+            ui.horizontal(|ui| {
+                if ui.button("Randomize seed").clicked() {
+                    let mut rng = RandomNumberGenerator::new();
+                    self.seed_value = rng.next_u64();
+                    self.seed = self.seed_value.to_string();
+                }
+            });
             ui.separator();
 
             if ui.button("Update map").clicked() {
@@ -115,22 +119,29 @@ impl eframe::App for MyApp {
             ui.label("Noise settings:");
             ui.add(egui::TextEdit::multiline(&mut self.noise_setting).desired_rows(INPUT_LINES));
 
-            if ui.button("Generate noise").clicked() {
-                self.generate_noise_image(&ctx);
-            }
-
-            if ui.button("Save noise").clicked() {
-                let noise_settings: Noise = match serde_yaml::from_str(&self.noise_setting) {
-                    Ok(s) => s,
-                    Err(e) => {
-                        println!("Noise settings error: {}", e);
-                        return;
-                    }
-                };
-                let image = generate_noise_image(NOISE_WIDTH, NOISE_HEIGHT, noise_settings, self.seed_value.clone());
-                image.save("noise.png").unwrap();
-                println!("noise.png saved");
-            }
+            ui.horizontal(|ui| {
+                if ui.button("Generate noise").clicked() {
+                    self.generate_noise_image(&ctx);
+                }
+                if ui.button("Randomize and generate").clicked() {
+                    let mut rng = RandomNumberGenerator::new();
+                    self.seed_value = rng.next_u64();
+                    self.seed = self.seed_value.to_string();
+                    self.generate_noise_image(&ctx);
+                }
+                if ui.button("Save noise").clicked() {
+                    let noise_settings: Noise = match serde_yaml::from_str(&self.noise_setting) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            println!("Noise settings error: {}", e);
+                            return;
+                        }
+                    };
+                    let image = generate_noise_image(NOISE_WIDTH, NOISE_HEIGHT, noise_settings, self.seed_value.clone());
+                    image.save("noise.png").unwrap();
+                    println!("noise.png saved");
+                }
+            });
 
             if let Some(texture) = &self.noise_texture {
                 let img = ui.image((texture.id(), texture.size_vec2()));

@@ -14,6 +14,8 @@ use serde_inline_default::serde_inline_default;
 
 use super::traits::IWorldGenerator;
 
+const GROUND_LEVEL: f32 = 60.0;
+
 // FRACTAL_TYPE
 // - FBM (Fractal Brownian Motion) — классический вариант, когда октавы просто складываются.
 //   Даёт мягкие, естественные шумы (например, ландшафты, облака).
@@ -85,16 +87,24 @@ pub struct Noise {
     pub frequency: f32,
     #[serde_inline_default(1.0)]
     pub miltiplier: f32,
+    #[serde_inline_default(None)]
+    pub powf: Option<f32>,
 }
 
 pub struct GeneratedNoise {
     noise: FastNoise,
     miltiplier: f32,
+    powf: Option<f32>,
 }
 
 impl GeneratedNoise {
     pub fn get_noise(&self, x: f32, y: f32) -> f32 {
-        (self.noise.get_noise(x, y) * self.miltiplier).max(0.0).min(1.0)
+        let mut r = (self.noise.get_noise(x, y) * self.miltiplier).max(0.0).min(1.0);
+        r = match self.powf {
+            Some(p) => r.powf(p),
+            None => r,
+        };
+        r
     }
 }
 
@@ -107,7 +117,11 @@ impl Noise {
         noise.set_fractal_gain(self.fractal_gain);
         noise.set_fractal_lacunarity(self.fractal_lacunarity);
         noise.set_frequency(self.frequency);
-        GeneratedNoise { noise, miltiplier: self.miltiplier.clone() }
+        GeneratedNoise {
+            noise,
+            miltiplier: self.miltiplier.clone(),
+            powf: self.powf,
+        }
     }
 }
 
@@ -116,19 +130,18 @@ impl Noise {
 pub struct WorldGeneratorSettings {
     surface_noise: Noise,
     #[serde_inline_default(10.0)]
-    surface_noise_multiplier: f32,
+    surface_multiplier: f32,
 
     river_noise: Noise,
-    #[serde_inline_default(0.1)]
-    river_threshold: f32,
-    #[serde_inline_default(3.0)]
-    river_miltiplier: f32,
+    #[serde_inline_default(10.0)]
+    river_multiplier: f32,
 
     stream_noise: Noise,
-    #[serde_inline_default(0.1)]
-    stream_threshold: f32,
-    #[serde_inline_default(3.0)]
-    stream_miltiplier: f32,
+    #[serde_inline_default(10.0)]
+    stream_multiplier: f32,
+
+    #[serde_inline_default(5.0)]
+    sand_threshold: f32,
 }
 
 pub struct WorldGenerator {
@@ -177,31 +190,24 @@ impl WorldGenerator {
                 let x_map = x as f32 + (chunk_position.x as f32 * CHUNK_SIZE as f32);
                 let z_map = z as f32 + (chunk_position.z as f32 * CHUNK_SIZE as f32);
                 let height =
-                    self.surface_noise.get_noise(x_map, z_map) * self.settings.surface_noise_multiplier + 60_f32;
+                    self.surface_noise.get_noise(x_map, z_map) * self.settings.surface_multiplier + GROUND_LEVEL;
 
                 // Множитель для рек, превращающий их в реки
                 let river_noise = self.river_noise.get_noise(x_map, z_map);
 
                 // Реки
-                let stream_noise = (self.stream_noise.get_noise(x_map, z_map) - 1.0).abs();
-                let stream_mut = 1.0 + match stream_noise > self.settings.stream_threshold {
-                    true => stream_noise * self.settings.stream_miltiplier,
-                    false => 0.0,
-                };
+                let stream_noise = self.stream_noise.get_noise(x_map, z_map);
+                let stream = (stream_noise * (1.0 + river_noise)) * self.settings.stream_multiplier;
 
                 for y in 0_u8..(CHUNK_SIZE as u8) {
                     let pos = ChunkBlockPosition::new(x, y, z);
 
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
-                    if height > y_global * stream_mut {
+                    if y_global < height - stream {
                         section_data.insert(&pos, BlockDataInfo::create(BlockID::Grass.id(), None));
 
-                        if river_noise > self.settings.river_threshold {
-                            section_data.insert(&pos, BlockDataInfo::create(BlockID::Stone.id(), None));
-                        }
-
-                        if stream_noise > self.settings.stream_threshold {
+                        if stream > self.settings.sand_threshold {
                             section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
                         }
                     }
@@ -209,32 +215,5 @@ impl WorldGenerator {
             }
         }
         return section_data;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{WorldGenerator, WorldGeneratorSettings};
-    use crate::world_generator::traits::IWorldGenerator;
-
-    #[test]
-    fn test_generation_stream() {
-        let settings: WorldGeneratorSettings = serde_yaml::from_str("").unwrap();
-        let generator = WorldGenerator::create(Some(40), settings).unwrap();
-
-        for y in 0..50 {
-            for x in 0..50 {
-                let n = generator.stream_noise.get_noise(x as f32 * 10.0, y as f32 * 10.0);
-                if n > 0.1 {
-                    print!("1 ");
-                } else {
-                    print!("0 ");
-                }
-            }
-            println!("");
-        }
-
-        let river = generator.stream_noise.get_noise(100.0, 100.0);
-        assert_eq!(river, 1.0);
     }
 }

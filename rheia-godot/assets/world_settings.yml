@@ -1,9 +1,10 @@
-river_noise: !noise
+surface_noise: !noise
   fractal_octaves: 2
   fractal_gain: 2.0
   fractal_lacunarity: 1.1
   frequency: 0.04
   multiplier: 10.0
+surface_multiplier: 3.0
 
 river_noise: !noise
   fractal_type: fbm
@@ -12,11 +13,15 @@ river_noise: !noise
   fractal_lacunarity: 1.0
   frequency: 0.005
   miltiplier: 4.0
+river_multiplier: 1.0
 
 stream_noise: !noise
   fractal_type: rigid_multi
-  fractal_octaves: 4
-  fractal_gain: 0.52
+  fractal_octaves: 3
+  fractal_gain: 0.46
   fractal_lacunarity: 0.05
   frequency: 0.008
-  miltiplier: 3.0
+  miltiplier: 2.6
+  powf: 4.0
+stream_multiplier: 12.5
+sand_threshold: 3.0
