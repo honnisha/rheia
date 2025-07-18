@@ -17,8 +17,8 @@ use crate::world::worlds_manager::WorldsManager;
 use common::blocks::block_info::BlockFace;
 use common::chunks::chunk_data::BlockDataInfo;
 use common::chunks::rotation::Rotation;
-use godot::classes::Input;
 use godot::classes::input::MouseMode;
+use godot::classes::Input;
 use godot::global::{deg_to_rad, lerp_angle};
 use godot::prelude::*;
 use network::entities::EntityNetworkComponent;
@@ -418,7 +418,7 @@ impl PlayerController {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME {
+        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
             log::warn!(
                 target: "player_controller",
                 "&7custom_process lag:{:.2?} move_shape:{:.2?} detect_is_grounded:{:.2?} vision:{:.2?}",
@@ -617,7 +617,7 @@ impl INode3D for PlayerController {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME {
+        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
             log::warn!(target: "player_controller", "&7process lag: {:.2?}", elapsed);
         }
     }

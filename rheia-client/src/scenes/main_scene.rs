@@ -468,7 +468,7 @@ impl INode for MainScene {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME {
+        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
             log::warn!(target: "main", "&7process lag: {:.2?}", elapsed);
         }
     }

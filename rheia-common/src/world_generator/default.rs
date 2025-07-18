@@ -109,6 +109,8 @@ pub struct WorldGeneratorSettings {
     stream_frequency: f32,
     #[serde_inline_default(0.3)]
     stream_threshold: f32,
+    #[serde_inline_default(3.0)]
+    stream_miltiplier: f32,
 }
 
 pub struct WorldGenerator {
@@ -183,54 +185,28 @@ impl WorldGenerator {
                 let height =
                     self.surface_noise.get_noise(x_map, z_map) * self.settings.surface_noise_multiplier + 60_f32;
 
+                // Множитель для рек, превращающий их в реки
+                let river = self.river_noise.get_noise(x_map, z_map);
+                let river_mut = 1.0 + (river - self.settings.river_threshold).max(0.0);
+
+                // Реки
+                let stream = self.stream_noise.get_noise(x_map, z_map);
+                let stream = (stream - self.settings.stream_threshold).max(0.0) * self.settings.stream_miltiplier * river_mut;
+
                 for y in 0_u8..(CHUNK_SIZE as u8) {
                     let pos = ChunkBlockPosition::new(x, y, z);
 
                     let y_global = y as f32 + (vertical_index as f32 * CHUNK_SIZE as f32);
 
-                    if height > y_global {
+                    if height > y_global - stream {
                         section_data.insert(&pos, BlockDataInfo::create(BlockID::Grass.id(), None));
-
-                        let river = self.river_noise.get_noise(x_map, z_map);
-                        if river > self.settings.river_threshold {
-                            section_data.insert(&pos, BlockDataInfo::create(BlockID::Stone.id(), None));
-                        }
-
-                        let stream = self.stream_noise.get_noise(x_map, z_map);
-                        if stream > self.settings.stream_threshold {
-                            section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
-                        }
+                    }
+                    if stream > 1.0 {
+                        section_data.insert(&pos, BlockDataInfo::create(BlockID::Sand.id(), None));
                     }
                 }
             }
         }
         return section_data;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{WorldGenerator, WorldGeneratorSettings};
-    use crate::world_generator::traits::IWorldGenerator;
-
-    #[test]
-    fn test_generation_stream() {
-        let settings: WorldGeneratorSettings = serde_yaml::from_str("").unwrap();
-        let generator = WorldGenerator::create(Some(40), settings).unwrap();
-
-        for y in 0..50 {
-            for x in 0..50 {
-                let n = generator.stream_noise.get_noise(x as f32 * 10.0, y as f32 * 10.0);
-                if n > 0.1 {
-                    print!("1 ");
-                } else {
-                    print!("0 ");
-                }
-            }
-            println!("");
-        }
-
-        let river = generator.stream_noise.get_noise(100.0, 100.0);
-        assert_eq!(river, 1.0);
     }
 }

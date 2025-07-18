@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+common = { path = "../rheia-common" }
+
+image = "0.25"
+
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+
+egui = "0.32"
+eframe = "0.32"
+egui_extras = "0.32"

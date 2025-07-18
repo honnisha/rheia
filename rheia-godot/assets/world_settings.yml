@@ -17,3 +17,4 @@ stream_fractal_gain: 0.5
 stream_fractal_lacunarity: 0.05
 stream_frequency: 0.01
 stream_threshold: 0.1
+stream_miltiplier: 3.0

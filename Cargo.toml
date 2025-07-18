@@ -5,6 +5,7 @@ members = [
     "rheia-common",
     "rheia-physics",
     "rheia-network",
-    "rheia-network/examples/connection", "rheia-map-preview",
+    "rheia-network/examples/connection",
+    "rheia-map-preview",
 ]
 resolver = "2"
