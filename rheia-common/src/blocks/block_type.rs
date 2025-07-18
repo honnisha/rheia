@@ -107,6 +107,9 @@ pub struct BlockTypeManifest {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub category: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub map_color: Option<BlockColor>,
 }
 
 impl BlockTypeManifest {
@@ -117,7 +120,8 @@ impl BlockTypeManifest {
         };
         let mut b = BlockType::new(self.block_content.clone())
             .category(category)
-            .visibility(self.voxel_visibility.clone());
+            .visibility(self.voxel_visibility.clone())
+            .map_color(self.map_color.clone());
         if let Some(slug) = self.slug.as_ref() {
             b = b.set_slug(slug.clone());
         }
@@ -135,6 +139,8 @@ pub struct BlockType {
     block_content: BlockContent,
 
     category: String,
+
+    map_color: Option<BlockColor>,
 }
 
 impl BlockType {
@@ -169,7 +175,17 @@ impl BlockType {
             voxel_visibility: VoxelVisibility::default(),
             block_content,
             category: BlockType::default_category(),
+            map_color: None,
         }
+    }
+
+    pub fn map_color(mut self, map_color: Option<BlockColor>) -> Self {
+        self.map_color = map_color;
+        self
+    }
+
+    pub fn get_map_color(&self) -> Option<&BlockColor> {
+        self.map_color.as_ref()
     }
 
     pub fn set_slug<S: Into<String>>(mut self, slug: S) -> Self {

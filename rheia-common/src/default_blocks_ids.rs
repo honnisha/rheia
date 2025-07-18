@@ -1,7 +1,11 @@
+use strum_macros::EnumIter;
+use strum::IntoEnumIterator;
+
 use crate::chunks::chunk_data::BlockIndexType;
 
 pub static CUSTOM_BLOCK_ID_START: BlockIndexType = 1000;
 
+#[derive(EnumIter)]
 pub enum BlockID {
     Grass,
     Stone,
@@ -139,6 +143,15 @@ impl BlockID {
             BlockID::TallGrass1 => 64,
             BlockID::TallGrass2 => 65,
         }
+    }
+
+    pub fn from_id(id: &BlockIndexType) -> Option<Self> {
+        for block in Self::iter() {
+            if block.id() == *id {
+                return Some(block);
+            }
+        }
+        None
     }
 
     pub fn from_string(slug: &str) -> Option<Self> {

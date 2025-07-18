@@ -12,6 +12,7 @@ const DEFAULT_BLOCKS_YML: &str = r#"
     bottom_texture: default://assets/block/dirt.png
     colors_scheme:
       - [76, 187, 23]
+  map_color: [76, 187, 23]
 
 - block_content: !texture
     texture: default://assets/block/stone.png
