@@ -19,29 +19,36 @@ fn image_buffer_to_color_image(image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> ColorIm
 
 impl MyApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // let image = image::open("my_image.png").unwrap().to_rgb8();
-        let image = generate_image();
+        let mut app = Self { texture: None };
+        app.generate_image(&cc.egui_ctx);
+        app
+    }
 
-        // Convert
+    pub fn generate_image(&mut self, ctx: &egui::Context) {
+        self.texture = None;
+        println!("Start generate image");
+        let image = generate_image();
         let color_image = image_buffer_to_color_image(&image);
 
-        // Upload as texture
-        let texture = cc
-            .egui_ctx
-            .load_texture("my-image", color_image, egui::TextureOptions::default());
-
-        Self { texture: Some(texture) }
+        let texture = ctx.load_texture("my-image", color_image, egui::TextureOptions::default());
+        self.texture = Some(texture);
+        println!("Generation complete!");
     }
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
+                self.generate_image(&ctx);
+            }
+
             if let Some(texture) = &self.texture {
                 ui.image((texture.id(), texture.size_vec2()));
             }
 
             if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+                println!("Closing window");
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
         });

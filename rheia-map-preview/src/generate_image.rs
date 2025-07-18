@@ -14,7 +14,7 @@ use image::{ImageBuffer, Rgb};
 
 pub fn generate_image() -> ImageBuffer<Rgb<u8>, Vec<u8>> {
     let settings: WorldGeneratorSettings = serde_yaml::from_str("").unwrap();
-    let generator = WorldGenerator::create(Some(40), settings).unwrap();
+    let generator = WorldGenerator::create(None, settings).unwrap();
 
     let mut imgbuf = ImageBuffer::new(IMAGE_SIZE, IMAGE_SIZE);
     imgbuf.put_pixel(0, 0, Rgb([0_u8, 0_u8, 0_u8]));
