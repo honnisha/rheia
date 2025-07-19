@@ -8,7 +8,7 @@ use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 use crate::client_scripts::resource_manager::ResourceManager;
 use crate::scenes::main_menu::VERSION;
 use crate::scenes::main_scene::MainScene;
-use crate::utils::bridge::IntoGodotVector;
+use crate::utils::bridge::{IntoChunkPositionVector, IntoGodotVector};
 use crate::world::world_manager::WorldManager;
 use crate::world::worlds_manager::WorldsManager;
 
@@ -234,10 +234,16 @@ pub fn handle_network_events(main: &mut MainScene) -> Result<NetworkInfo, String
                 sections,
             } => {
                 let mut worlds_manager = main.get_worlds_manager_mut();
+
+                let center = match worlds_manager.get_player_controller() {
+                    Some(c) => c.bind().get_position().to_chunk_position(),
+                    None => ChunkPosition::zero(),
+                };
+
                 let Some(world) = get_world_mut(&mut worlds_manager, world_slug) else {
                     continue;
                 };
-                world.bind_mut().recieve_chunk(chunk_position, sections);
+                world.bind_mut().recieve_chunk(center, chunk_position, sections);
                 chunks.push(chunk_position);
             }
             ServerMessages::UnloadChunks { chunks, world_slug } => {

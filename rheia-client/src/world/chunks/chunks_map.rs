@@ -9,13 +9,13 @@ use crate::{
 };
 use ahash::{AHashMap, HashSet};
 use common::{
-    CHUNK_SIZE, VERTICAL_SECTIONS,
     blocks::block_type::BlockContent,
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_data::{BlockDataInfo, ChunkData},
         chunk_position::ChunkPosition,
     },
+    CHUNK_SIZE, VERTICAL_SECTIONS,
 };
 use godot::prelude::*;
 use parking_lot::RwLock;
@@ -30,7 +30,7 @@ use super::{
     mesh::mesh_generator::generate_chunk_geometry,
     near_chunk_data::NearChunksData,
 };
-use flume::{Receiver, Sender, unbounded};
+use flume::{unbounded, Receiver, Sender};
 
 pub type ChunkLock = Arc<RwLock<ChunkColumn>>;
 pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
@@ -44,7 +44,7 @@ pub struct ChunkMap {
     // Hash map with chunk columns
     chunks: ChunksType,
 
-    sended_chunks: Rc<RefCell<HashSet<ChunkPosition>>>,
+    sended_chunks: Rc<RefCell<Vec<ChunkPosition>>>,
     chunks_to_spawn: (Sender<ChunkLock>, Receiver<ChunkLock>),
 
     chunks_to_update: Rc<RefCell<HashSet<(ChunkPosition, usize)>>>,
@@ -86,7 +86,7 @@ impl ChunkMap {
     }
 
     /// Create chunk column and send it to render queue
-    pub fn create_chunk_column(&mut self, chunk_position: ChunkPosition, sections: ChunkData) {
+    pub fn create_chunk_column(&mut self, center: ChunkPosition, chunk_position: ChunkPosition, sections: ChunkData) {
         if self.chunks.contains_key(&chunk_position) {
             log::error!(
                 target: "chunk_map",
@@ -99,7 +99,17 @@ impl ChunkMap {
         let chunk_column = ChunkColumn::create(chunk_position, sections);
         self.chunks
             .insert(chunk_position.clone(), Arc::new(RwLock::new(chunk_column)));
-        self.sended_chunks.borrow_mut().insert(chunk_position);
+
+        if self.sended_chunks.borrow().contains(&chunk_position) {
+            panic!("sended_chunks already have chunk");
+        }
+        self.sended_chunks.borrow_mut().push(chunk_position);
+
+        self.sended_chunks.borrow_mut().sort_by(|a, b| {
+            a.get_distance(&center)
+                .partial_cmp(&b.get_distance(&center))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     /// Send new recieved chunks to load (render)
@@ -224,7 +234,11 @@ impl ChunkMap {
                 BlockContent::Texture { .. } => {
                     self.send_to_update_chunk_mesh(&position);
                 }
-                BlockContent::ModelCube { model, icon_size: _, collider_type } => {
+                BlockContent::ModelCube {
+                    model,
+                    icon_size: _,
+                    collider_type,
+                } => {
                     let chunk_column = self
                         .get_chunk(&position.get_chunk_position())
                         .expect("chunk from chunks_to_update is not found");

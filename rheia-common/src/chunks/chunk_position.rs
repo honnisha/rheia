@@ -15,6 +15,10 @@ impl ChunkPosition {
     pub fn get_distance(&self, target: &ChunkPosition) -> f32 {
         ((target.x as f32 - self.x as f32).powf(2.0) + (target.z as f32 - self.z as f32).powf(2.0)).sqrt()
     }
+
+    pub fn zero() -> Self {
+        Self { x: 0, z: 0 }
+    }
 }
 
 impl PartialEq for ChunkPosition {

@@ -87,8 +87,8 @@ impl WorldManager {
     }
 
     /// Recieve chunk data from network
-    pub fn recieve_chunk(&mut self, chunk_position: ChunkPosition, data: ChunkData) {
-        self.chunk_map.bind_mut().create_chunk_column(chunk_position, data);
+    pub fn recieve_chunk(&mut self, center: ChunkPosition, chunk_position: ChunkPosition, data: ChunkData) {
+        self.chunk_map.bind_mut().create_chunk_column(center, chunk_position, data);
     }
 
     /// Recieve chunk unloaded from network

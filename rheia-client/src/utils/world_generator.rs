@@ -34,7 +34,8 @@ pub fn generate_chunks(
         *data = Some(sections);
     });
 
+    let center = ChunkPosition::zero();
     for (chunk_pos, data) in chunks {
-        world.bind_mut().recieve_chunk(chunk_pos, data.unwrap());
+        world.bind_mut().recieve_chunk(center, chunk_pos, data.unwrap());
     }
 }
