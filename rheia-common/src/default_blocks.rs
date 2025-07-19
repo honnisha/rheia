@@ -14,6 +14,10 @@ const DEFAULT_BLOCKS_YML: &str = r#"
       - [76, 187, 23]
   map_color: [76, 187, 23]
 
+- slug: water
+  block_content: !texture
+    texture: default://assets/block/water_overlay.png
+
 - block_content: !texture
     texture: default://assets/block/stone.png
 - block_content: !texture

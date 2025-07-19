@@ -1,16 +1,16 @@
 use common::utils::calculate_hash;
 use common::utils::split_resource_path;
 use network::messages::ResurceScheme;
-use parking_lot::RwLock;
 use parking_lot::lock_api::RwLockReadGuard;
 use parking_lot::lock_api::RwLockWriteGuard;
+use parking_lot::RwLock;
+use rhai::exported_module;
 use rhai::Dynamic;
 use rhai::Engine;
-use rhai::exported_module;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fs::File;
 use std::fs::create_dir_all;
+use std::fs::File;
 use std::io::Read;
 use std::io::Seek;
 use std::path::PathBuf;
@@ -43,7 +43,7 @@ impl Default for ResourceStorage {
 impl ResourceStorage {
     pub fn generate_image(&self, texture_path: &String) -> Result<TextureImage, String> {
         let Some(media_data) = self.get_media(texture_path) else {
-            return Err("not found inside resources".to_string());
+            return Err(format!("texture \"{}\" not found inside resources", texture_path));
         };
         let texture_2d = match media_data {
             MediaResource::Texture(t) => t,

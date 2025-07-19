@@ -1,9 +1,12 @@
 use bracket_lib::random::RandomNumberGenerator;
-use common::world_generator::default::Noise;
+use common::world_generator::noise::Noise;
 use egui::{ColorImage, TextureHandle};
 use image::{ImageBuffer, Rgb};
 
-use crate::{generate_image::generate_map_image, noise::{generate_noise_image, get_noise}};
+use crate::{
+    generate_image::generate_map_image,
+    noise::{generate_noise_image, get_noise},
+};
 
 const NOISE_WIDTH: u32 = 600;
 const NOISE_HEIGHT: u32 = 600;
@@ -17,6 +20,7 @@ pub struct MyApp {
     texture: Option<TextureHandle>,
     noise_texture: Option<TextureHandle>,
     noise_setting: String,
+    noise_second_setting: String,
 }
 
 fn image_buffer_to_color_image(image: &ImageBuffer<Rgb<u8>, Vec<u8>>) -> ColorImage {
@@ -38,6 +42,7 @@ impl MyApp {
         app.seed = app.seed_value.to_string();
 
         app.noise_setting = serde_yaml::to_string(&Noise::default()).unwrap();
+        app.noise_second_setting = "-".to_string();
 
         app
     }
@@ -50,7 +55,7 @@ impl MyApp {
             Err(e) => {
                 println!("Generation map error: {}", e);
                 return;
-            },
+            }
         };
         let color_image = image_buffer_to_color_image(&image);
 
@@ -69,9 +74,19 @@ impl MyApp {
                 return;
             }
         };
+        let noise_second_settings: Option<Noise> = match serde_yaml::from_str(&self.noise_second_setting) {
+            Ok(s) => Some(s),
+            Err(_) => None,
+        };
 
         println!("Start generate noise image");
-        let image = generate_noise_image(NOISE_WIDTH, NOISE_HEIGHT, noise_settings, self.seed_value.clone());
+        let image = generate_noise_image(
+            NOISE_WIDTH,
+            NOISE_HEIGHT,
+            noise_settings,
+            noise_second_settings,
+            self.seed_value.clone(),
+        );
         let color_image = image_buffer_to_color_image(&image);
 
         let texture = ctx.load_texture("noise-image", color_image, egui::TextureOptions::default());
@@ -90,10 +105,10 @@ impl eframe::App for MyApp {
                         Ok(val) => {
                             self.seed_value = val;
                             println!("Seed updated: {}", self.seed_value);
-                        },
+                        }
                         Err(e) => {
                             println!("Seed paring error: {}", e);
-                        },
+                        }
                     }
                 }
             });
@@ -117,7 +132,10 @@ impl eframe::App for MyApp {
             ui.separator();
 
             ui.label("Noise settings:");
-            ui.add(egui::TextEdit::multiline(&mut self.noise_setting).desired_rows(INPUT_LINES));
+            ui.horizontal(|ui| {
+                ui.add(egui::TextEdit::multiline(&mut self.noise_setting).desired_rows(INPUT_LINES));
+                ui.add(egui::TextEdit::multiline(&mut self.noise_second_setting).desired_rows(INPUT_LINES));
+            });
 
             ui.horizontal(|ui| {
                 if ui.button("Generate noise").clicked() {
@@ -137,7 +155,17 @@ impl eframe::App for MyApp {
                             return;
                         }
                     };
-                    let image = generate_noise_image(NOISE_WIDTH, NOISE_HEIGHT, noise_settings, self.seed_value.clone());
+                    let noise_second_settings: Option<Noise> = match serde_yaml::from_str(&self.noise_second_setting) {
+                        Ok(s) => Some(s),
+                        Err(_) => None,
+                    };
+                    let image = generate_noise_image(
+                        NOISE_WIDTH,
+                        NOISE_HEIGHT,
+                        noise_settings,
+                        noise_second_settings,
+                        self.seed_value.clone(),
+                    );
                     image.save("noise.png").unwrap();
                     println!("noise.png saved");
                 }
@@ -152,7 +180,6 @@ impl eframe::App for MyApp {
                         let rel_x = (pointer_pos.x - rect.left()) as i32;
                         let rel_y = (pointer_pos.y - rect.top()) as i32;
 
-
                         let noise_settings: Noise = match serde_yaml::from_str(&self.noise_setting) {
                             Ok(s) => s,
                             Err(e) => {
@@ -160,8 +187,21 @@ impl eframe::App for MyApp {
                                 return;
                             }
                         };
+                        let noise_second_settings: Option<Noise> =
+                            match serde_yaml::from_str(&self.noise_second_setting) {
+                                Ok(s) => Some(s),
+                                Err(_) => None,
+                            };
 
-                        let value = get_noise(NOISE_WIDTH, NOISE_HEIGHT, noise_settings, self.seed_value.clone(), &rel_x, &rel_y);
+                        let value = get_noise(
+                            NOISE_WIDTH,
+                            NOISE_HEIGHT,
+                            noise_settings,
+                            noise_second_settings,
+                            self.seed_value.clone(),
+                            &rel_x,
+                            &rel_y,
+                        );
                         ui.label(format!("Position: x:{} y:{} value:{:.2}", rel_x, rel_y, value));
                     }
                 }

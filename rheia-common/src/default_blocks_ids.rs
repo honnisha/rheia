@@ -72,6 +72,7 @@ pub enum BlockID {
     GroundMoss3,
     TallGrass1,
     TallGrass2,
+    Water,
 }
 
 impl BlockID {
@@ -142,6 +143,7 @@ impl BlockID {
             BlockID::GroundMoss3 => 63,
             BlockID::TallGrass1 => 64,
             BlockID::TallGrass2 => 65,
+            BlockID::Water => 66,
         }
     }
 
@@ -221,6 +223,7 @@ impl BlockID {
             "ground_moss3" => BlockID::GroundMoss3,
             "tall_grass1" => BlockID::TallGrass1,
             "tall_grass2" => BlockID::TallGrass2,
+            "water" => BlockID::Water,
             _ => return None,
         };
         Some(id)

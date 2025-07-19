@@ -5,6 +5,8 @@ pub const DEFAULT_RESOURCES: &'static [&'static str] = &[
 	"default://assets/block/grass_block_side.png",
 	"default://assets/block/grass_block_side_overlay.png",
 
+    "default://assets/block/water_overlay.png",
+
 	"default://assets/block/stone.png",
 	"default://assets/block/smooth_stone.png",
     "default://assets/block/stone_bricks.png",
