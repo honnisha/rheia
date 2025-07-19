@@ -1,5 +1,6 @@
 pub mod block_mesh;
 pub mod colors;
+pub mod spiral_iterator;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 

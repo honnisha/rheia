@@ -1,21 +1,16 @@
 use ahash::AHashMap;
 use bevy::prelude::Entity;
 use common::{
-    VERTICAL_SECTIONS, WorldStorageManager,
     chunks::{
         block_position::{BlockPosition, BlockPositionTrait},
         chunk_data::BlockDataInfo,
         chunk_position::ChunkPosition,
-    },
-    utils::vec_remove_item,
-    world_generator::{
+    }, utils::{spiral_iterator::SpiralIterator, vec_remove_item}, world_generator::{
         default::{WorldGenerator, WorldGeneratorSettings},
         traits::IWorldGenerator,
-    },
-    worlds_storage::taits::IWorldStorage,
+    }, worlds_storage::taits::IWorldStorage, WorldStorageManager, VERTICAL_SECTIONS
 };
 use parking_lot::{Mutex, RwLock, RwLockReadGuard};
-use spiral::ManhattanIterator;
 use std::{sync::Arc, time::Duration};
 
 use crate::{
@@ -101,9 +96,9 @@ impl ChunkMap {
 
     /// Create player in the world
     pub fn start_chunks_render(&mut self, entity: Entity, to: &ChunkPosition, chunks_distance: u16) {
-        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
+        let iter = SpiralIterator::new(to.x as i64, to.z as i64, chunks_distance as i64);
         for (x, z) in iter {
-            let chunk_pos = ChunkPosition::new(x as i64, z as i64);
+            let chunk_pos = ChunkPosition::new(x, z);
             self.chunks_load_state.insert_ticket(chunk_pos, entity.clone());
 
             // Update despawn timer
