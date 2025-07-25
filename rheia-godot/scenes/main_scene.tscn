@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://c5l1r11gi0tet"]
+[gd_scene load_steps=8 format=3 uid="uid://c5l1r11gi0tet"]
 
 [ext_resource type="PackedScene" uid="uid://ha34myf86so5" path="res://scenes/text_screen.tscn" id="2_773ro"]
 [ext_resource type="PackedScene" uid="uid://dubrdqpgortj7" path="res://scenes/debug_info.tscn" id="3_qwjw3"]
@@ -20,6 +20,9 @@ sdfgi_max_distance = 10.24
 volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_7ykc4"]
+size = Vector2(400, 400)
 
 [node name="MainScene" type="MainScene" node_paths=PackedStringArray("worlds_manager", "worlde_environment")]
 worlds_manager = NodePath("WorldsManager")
@@ -48,3 +51,9 @@ anchor_left = 0.25
 anchor_top = 0.88
 anchor_right = 0.75
 anchor_bottom = 0.98
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 67.884, 17.3874)
+visible = false
+mesh = SubResource("PlaneMesh_7ykc4")
+surface_material_override/0 = ExtResource("5_tt6yv")

@@ -183,7 +183,7 @@ impl INode3D for Entity {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
+        if elapsed >= crate::WARNING_TIME {
             log::warn!(target: "entity", "&7process lag: {:.2?}", elapsed);
         }
     }

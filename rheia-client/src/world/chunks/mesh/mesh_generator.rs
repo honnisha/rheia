@@ -107,6 +107,8 @@ pub fn generate_chunk_geometry(
         for quad in group.into_iter() {
             let i = face.quad_mesh_indices(verts.len() as i32);
             indices.extend(i);
+
+            // Collider
             collider_indices.push([i[0] as u32, i[1] as u32, i[2] as u32]);
             collider_indices.push([i[3] as u32, i[4] as u32, i[5] as u32]);
 

@@ -1,26 +1,26 @@
 use std::borrow::BorrowMut;
 
+use super::{mesh::mesh_generator::Geometry, objects_container::ObjectsContainer};
+use crate::{
+    utils::bridge::{GodotPositionConverter, IntoNetworkVector},
+    world::physics::{PhysicsProxy, PhysicsType},
+};
 use common::{
-    CHUNK_SIZE, CHUNK_SIZE_BOUNDARY, blocks::chunk_collider_info::ChunkColliderInfo,
-    chunks::chunk_position::ChunkPosition,
+    blocks::chunk_collider_info::ChunkColliderInfo, chunks::chunk_position::ChunkPosition, CHUNK_SIZE,
+    CHUNK_SIZE_BOUNDARY,
 };
 use godot::{
     classes::{Material, MeshInstance3D},
     prelude::*,
 };
 use ndshape::{ConstShape, ConstShape3u32};
-use physics::{
-    PhysicsCollider,
-    physics::{IPhysicsCollider, IPhysicsColliderBuilder},
-};
-
-use crate::{
-    utils::bridge::{GodotPositionConverter, IntoNetworkVector},
-    world::physics::{PhysicsProxy, PhysicsType},
-};
 use physics::PhysicsColliderBuilder;
+use physics::{
+    physics::{IPhysicsCollider, IPhysicsColliderBuilder},
+    PhysicsCollider,
+};
 
-use super::{mesh::mesh_generator::Geometry, objects_container::ObjectsContainer};
+const TRANSPARENCY_SPEED: f32 = 5.0;
 
 //pub type ChunkShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
 pub type ChunkBordersShape = ConstShape3u32<CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY, CHUNK_SIZE_BOUNDARY>;
@@ -45,13 +45,16 @@ pub struct ChunkSection {
 
     collider: Option<PhysicsCollider>,
     colider_builder: Option<PhysicsColliderBuilder>,
+
+    set_geometry_first_time: bool,
+    transparancy: f32,
 }
 
 impl ChunkSection {
     pub fn create(base: Base<Node3D>, material: Gd<Material>, y: u8, chunk_position: ChunkPosition) -> Self {
         let mut mesh = MeshInstance3D::new_alloc();
         mesh.set_name(&format!("ChunkMesh {}", y));
-        mesh.set_material_overlay(&material);
+        mesh.set_material_override(&material);
 
         // Disable while its empty
         mesh.set_process(false);
@@ -67,6 +70,8 @@ impl ChunkSection {
             colider_builder: None,
 
             objects_container: ObjectsContainer::new_alloc(),
+            set_geometry_first_time: false,
+            transparancy: 1.0,
         }
     }
 
@@ -99,12 +104,19 @@ impl ChunkSection {
         let c = geometry.mesh_ist.get_surface_count();
 
         // Set active only for sections that conatains vertices
-        mesh.set_process(c > 0);
+        let has_mesh = c > 0;
+        mesh.set_process(has_mesh);
 
         mesh.set_mesh(&geometry.mesh_ist);
 
         self.need_update_geometry = true;
         self.colider_builder = geometry.collider_builder;
+
+        if has_mesh && !self.set_geometry_first_time {
+            self.set_geometry_first_time = true;
+            self.transparancy = 1.0;
+            mesh.set_transparency(self.transparancy);
+        }
     }
 
     pub fn is_geometry_update_needed(&self) -> bool {
@@ -156,5 +168,13 @@ impl INode3D for ChunkSection {
 
         let objects_container = self.objects_container.clone();
         self.base_mut().add_child(&objects_container);
+    }
+
+    fn process(&mut self, delta: f64) {
+        if self.transparancy > 0.0 {
+            let obj = self.mesh.borrow_mut();
+            self.transparancy -= TRANSPARENCY_SPEED * delta as f32;
+            obj.set_transparency(self.transparancy);
+        }
     }
 }

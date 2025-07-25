@@ -17,6 +17,7 @@ const DEFAULT_BLOCKS_YML: &str = r#"
 - slug: water
   block_content: !texture
     texture: default://assets/block/water_overlay.png
+  voxel_visibility: translucent
 
 - block_content: !texture
     texture: default://assets/block/stone.png

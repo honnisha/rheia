@@ -202,7 +202,7 @@ impl INode for WorldsManager {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
+        if elapsed >= crate::WARNING_TIME {
             log::warn!(target: "worlds_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }

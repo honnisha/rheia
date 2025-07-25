@@ -418,7 +418,7 @@ impl PlayerController {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
+        if elapsed >= crate::WARNING_TIME {
             log::warn!(
                 target: "player_controller",
                 "&7custom_process lag:{:.2?} move_shape:{:.2?} detect_is_grounded:{:.2?} vision:{:.2?}",
@@ -617,7 +617,7 @@ impl INode3D for PlayerController {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
+        if elapsed >= crate::WARNING_TIME {
             log::warn!(target: "player_controller", "&7process lag: {:.2?}", elapsed);
         }
     }

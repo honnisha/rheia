@@ -8,7 +8,11 @@ use crate::{
     client_scripts::resource_manager::{ResourceManager, ResourceStorage},
     entities::entities_manager::EntitiesManager,
 };
-use common::chunks::{block_position::BlockPosition, chunk_data::{BlockDataInfo, ChunkData}, chunk_position::ChunkPosition};
+use common::chunks::{
+    block_position::BlockPosition,
+    chunk_data::{BlockDataInfo, ChunkData},
+    chunk_position::ChunkPosition,
+};
 use godot::{classes::Material, prelude::*};
 
 /// Godot world
@@ -88,7 +92,9 @@ impl WorldManager {
 
     /// Recieve chunk data from network
     pub fn recieve_chunk(&mut self, center: ChunkPosition, chunk_position: ChunkPosition, data: ChunkData) {
-        self.chunk_map.bind_mut().create_chunk_column(center, chunk_position, data);
+        self.chunk_map
+            .bind_mut()
+            .create_chunk_column(center, chunk_position, data);
     }
 
     /// Recieve chunk unloaded from network
@@ -118,7 +124,7 @@ impl WorldManager {
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
+        if elapsed >= crate::WARNING_TIME {
             log::warn!(target: "world_manager", "&7physics_process lag: {:.2?}", elapsed);
         }
     }
@@ -130,6 +136,8 @@ impl WorldManager {
         let now = std::time::Instant::now();
 
         let mut map = self.chunk_map.bind_mut();
+
+        let to_load_now = std::time::Instant::now();
         map.send_chunks_to_load(
             self.material.instance_id(),
             self.texture_mapper.clone(),
@@ -137,17 +145,22 @@ impl WorldManager {
             &self.physics,
             resource_manager,
         );
-        map.spawn_loaded_chunks(&self.physics);
+        let to_load_elapsed = to_load_now.elapsed();
 
+        let spawn_now = std::time::Instant::now();
+        map.spawn_loaded_chunks(&self.physics);
+        let spawn_elapsed = spawn_now.elapsed();
+
+        let geometry_now = std::time::Instant::now();
         let bs = self.block_storage.read();
         let tm = self.texture_mapper.read();
         map.update_chunks_geometry(&self.physics, &bs, &tm);
-
+        let geometry_elapsed = geometry_now.elapsed();
 
         let elapsed = now.elapsed();
         #[cfg(debug_assertions)]
-        if elapsed >= crate::WARNING_TIME && !godot::classes::Engine::singleton().is_editor_hint() {
-            log::warn!(target: "world_manager", "&7custom_process lag: {:.2?}", elapsed);
+        if elapsed >= crate::WARNING_TIME {
+            log::warn!(target: "world_manager", "&7custom_process lag:{:.2?} geometry:{:.2?} spawn:{:.2?} to_load:{:.2?}", elapsed, geometry_elapsed, spawn_elapsed, to_load_elapsed);
         }
     }
 }

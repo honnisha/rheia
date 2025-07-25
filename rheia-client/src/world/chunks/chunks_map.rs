@@ -32,6 +32,8 @@ use super::{
 };
 use flume::{unbounded, Receiver, Sender};
 
+const MAX_CHUNKS_SPAWN_PER_FRAME: i32 = 6;
+
 pub type ChunkLock = Arc<RwLock<ChunkColumn>>;
 pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
 
@@ -153,19 +155,33 @@ impl ChunkMap {
     /// Retrieving loaded chunks to add them to the root node
     pub fn spawn_loaded_chunks(&mut self, physics: &PhysicsProxy) {
         let mut base = self.base_mut().clone();
-        for l in self.chunks_to_spawn.1.drain() {
-            let chunk_column = l.read();
 
-            let mut chunk_base = chunk_column.get_base();
-            base.add_child(&chunk_base);
-            chunk_column.set_loaded();
+        // for l in self.chunks_to_spawn.1.drain() {
 
-            let mut c = chunk_base.bind_mut();
+        let mut i = 0;
+        loop {
+            if i > MAX_CHUNKS_SPAWN_PER_FRAME {
+                break;
+            }
+            // Take only one chunk
+            if let Ok(l) = self.chunks_to_spawn.1.try_recv() {
+                let chunk_column = l.read();
 
-            for section in c.sections.iter_mut() {
-                if section.bind().is_geometry_update_needed() {
-                    section.bind_mut().update_geometry(physics);
+                let mut chunk_base = chunk_column.get_base();
+                base.add_child(&chunk_base);
+                chunk_column.set_loaded();
+
+                let mut c = chunk_base.bind_mut();
+
+                for section in c.sections.iter_mut() {
+                    if section.bind().is_geometry_update_needed() {
+                        section.bind_mut().update_geometry(physics);
+                    }
                 }
+
+                i += 1;
+            } else {
+                break;
             }
         }
     }
