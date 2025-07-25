@@ -115,6 +115,11 @@ impl WorldManager {
     }
 
     pub fn physics_process(&mut self, delta: f64) {
+        // Skip physics in tools mode
+        if godot::classes::Engine::singleton().is_editor_hint() {
+            return;
+        }
+
         #[cfg(feature = "trace")]
         let _span = tracy_client::span!("physics_step");
 

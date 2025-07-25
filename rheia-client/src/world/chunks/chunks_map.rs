@@ -33,6 +33,7 @@ use super::{
 use flume::{unbounded, Receiver, Sender};
 
 const MAX_CHUNKS_SPAWN_PER_FRAME: i32 = 6;
+const LIMIT_CHUNK_LOADING_AT_A_TIME: u32 = 16;
 
 pub type ChunkLock = Arc<RwLock<ChunkColumn>>;
 pub type ChunksType = AHashMap<ChunkPosition, ChunkLock>;
@@ -50,6 +51,8 @@ pub struct ChunkMap {
     chunks_to_spawn: (Sender<ChunkLock>, Receiver<ChunkLock>),
 
     chunks_to_update: Rc<RefCell<HashSet<(ChunkPosition, usize)>>>,
+
+    loading_chunks: RefCell<u32>,
 }
 
 #[godot_api]
@@ -66,6 +69,7 @@ impl ChunkMap {
             sended_chunks: Default::default(),
             chunks_to_spawn: unbounded(),
             chunks_to_update: Default::default(),
+            loading_chunks: Default::default(),
         }
     }
 
@@ -125,7 +129,15 @@ impl ChunkMap {
         physics: &PhysicsProxy,
         resource_manager: &ResourceManager,
     ) {
+        if *self.loading_chunks.borrow() > LIMIT_CHUNK_LOADING_AT_A_TIME {
+            return;
+        }
+
         self.sended_chunks.borrow_mut().retain(|chunk_position| {
+            if *self.loading_chunks.borrow() > LIMIT_CHUNK_LOADING_AT_A_TIME {
+                return true;
+            }
+
             let near_chunks_data = NearChunksData::new(&self.chunks, &chunk_position);
 
             // Load only if all chunks around are loaded
@@ -148,6 +160,7 @@ impl ChunkMap {
                 physics.clone(),
                 resource_manager,
             );
+            *self.loading_chunks.borrow_mut() += 1;
             return false;
         });
     }
@@ -178,6 +191,7 @@ impl ChunkMap {
                         section.bind_mut().update_geometry(physics);
                     }
                 }
+                *self.loading_chunks.borrow_mut() -= 1;
 
                 i += 1;
             } else {
