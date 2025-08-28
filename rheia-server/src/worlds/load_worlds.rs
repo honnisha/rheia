@@ -41,7 +41,7 @@ pub(crate) fn load_worlds(
         );
         match world {
             Ok(_) => {
-                log::info!(target: "worlds", "Default world &a\"{}\"&r was created", default_world);
+                log::info!(target: "worlds", "&dDefault world &5\"{}\"&d was created", default_world);
             }
             Err(e) => {
                 log::error!(target: "worlds", "Error with creating &e\"{}\"&r world", default_world);

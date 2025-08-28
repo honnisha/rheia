@@ -152,7 +152,7 @@ impl ChunkMap {
         let mut new: Vec<ChunkPosition> = Default::default();
 
         // Add new tickets
-        let iter = ManhattanIterator::new(to.x as i32, to.z as i32, chunks_distance as i32);
+        let iter = SpiralIterator::new(to.x, to.z, chunks_distance as i64);
         for (x, z) in iter {
             let chunk = ChunkPosition::new(x as i64, z as i64);
 

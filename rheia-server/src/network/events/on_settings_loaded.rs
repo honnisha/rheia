@@ -47,7 +47,7 @@ pub fn on_settings_loaded(
         commands.queue(SpawnPlayer::create(
             default_world,
             event.client.clone(),
-            Position::new(0.0, 30.0, 0.0),
+            Position::new(0.0, 80.0, 0.0),
             Rotation::new(0.0, 0.0),
             components,
         ));

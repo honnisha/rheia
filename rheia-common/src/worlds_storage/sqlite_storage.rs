@@ -170,11 +170,19 @@ impl IWorldStorage for SQLiteStorage {
 
         let mut folder_path = settings.get_data_path().clone();
         folder_path.push("worlds");
+        if let Err(e) = std::fs::create_dir_all(folder_path.clone()) {
+            return Err(format!(
+                "&ccreate directory &4\"{}\"&r error: &c{}",
+                folder_path.as_os_str().to_str().unwrap(),
+                e
+            ));
+        }
+
         let paths = match read_dir(folder_path.clone()) {
             Ok(p) => p,
             Err(e) => {
                 return Err(format!(
-                    "read directory &e\"{}\"&r error: &c{}",
+                    "&cread directory &4\"{}\"&r error: &c{}",
                     folder_path.as_os_str().to_str().unwrap(),
                     e
                 ));
@@ -189,11 +197,11 @@ impl IWorldStorage for SQLiteStorage {
             }
             let db = match Connection::open(path) {
                 Ok(c) => c,
-                Err(e) => return Err(format!("Database creation error: &c{}", e)),
+                Err(e) => return Err(format!("&cdatabase creation error: {}", e)),
             };
             let seed: String = match db.query_row(SQL_READ_SEED, [], |row| row.get(0)) {
                 Ok(s) => s,
-                Err(e) => return Err(format!("World &e\"{}\"&r error seed read: &c{}", path, e)),
+                Err(e) => return Err(format!("&cworld &4\"{}\"&r error seed read: &c{}", path, e)),
             };
             worlds.push(WorldInfo {
                 slug: filename.replace(".db", ""),
