@@ -22,7 +22,7 @@ impl TabUIButton {
         result.set_text(title);
         result.bind_mut().tab_key = tab_key;
 
-        let gd = result.bind().base().to_godot();
+        let gd = result.bind().to_gd();
         result.connect("pressed", &Callable::from_object_method(&gd, "on_pressed"));
 
         result

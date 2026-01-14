@@ -11,6 +11,10 @@ trace = []
 common = { path = "../rheia-common" }
 network = { path = "../rheia-network" }
 
+bevy = { version = "0.17", default-features = false }
+bevy_app = "0.17"
+bevy_ecs = "0.17"
+
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 env_logger = "0.11"
@@ -30,10 +34,6 @@ ahash = "0.8"
 dashmap = "6.1"
 parking_lot = "0.12"
 flume = "0.11"
-
-bevy = { version = "0.16", default-features = false }
-bevy_app = "0.16"
-bevy_ecs = "0.16"
 
 # Single thread links
 send_wrapper = "0.6"

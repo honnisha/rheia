@@ -66,11 +66,11 @@ impl WorldManager {
         }
     }
 
-    pub fn _get_entities_manager(&self) -> GdRef<EntitiesManager> {
+    pub fn _get_entities_manager(&self) -> GdRef<'_, EntitiesManager> {
         self.entities_manager.bind()
     }
 
-    pub fn get_entities_manager_mut(&mut self) -> GdMut<EntitiesManager> {
+    pub fn get_entities_manager_mut(&mut self) -> GdMut<'_, EntitiesManager> {
         self.entities_manager.bind_mut()
     }
 
@@ -86,7 +86,7 @@ impl WorldManager {
         self.chunk_map.bind().get_chunks_count()
     }
 
-    pub fn get_chunk_map(&self) -> GdRef<ChunkMap> {
+    pub fn get_chunk_map(&self) -> GdRef<'_, ChunkMap> {
         self.chunk_map.bind()
     }
 

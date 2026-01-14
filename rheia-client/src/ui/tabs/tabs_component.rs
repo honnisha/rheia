@@ -58,8 +58,6 @@ impl TabsUIComponent {
     }
 
     pub fn add_category(&mut self, tab_key: String, title: String) -> Gd<TabContentUIComponent> {
-        let gd = self.base().to_godot();
-
         let tabs_content_holder = self.tabs_content_holder.as_mut().unwrap();
         let mut tab_content = TabContentUIComponent::create();
         tabs_content_holder.add_child(&tab_content);
@@ -74,7 +72,7 @@ impl TabsUIComponent {
         tabs_holder.add_child(&tab_button);
         self.tabs_buttons.insert(tab_key.clone(), tab_button.clone());
 
-        tab_button.connect("tab_pressed", &Callable::from_object_method(&gd, "on_tab_pressed"));
+        tab_button.connect("tab_pressed", &Callable::from_object_method(&self.to_gd(), "on_tab_pressed"));
 
         match self.active_tab.as_ref() {
             Some(active_tab) => {

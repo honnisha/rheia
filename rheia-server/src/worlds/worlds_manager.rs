@@ -95,14 +95,14 @@ impl WorldsManager {
         &self.worlds
     }
 
-    pub fn get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<WorldManager>> {
+    pub fn get_world_manager(&self, key: &String) -> Option<RwLockReadGuard<'_, WorldManager>> {
         match self.worlds.get(key) {
             Some(w) => Some(w.read()),
             None => None,
         }
     }
 
-    pub fn get_world_manager_mut(&self, key: &String) -> Option<RwLockWriteGuard<WorldManager>> {
+    pub fn get_world_manager_mut(&self, key: &String) -> Option<RwLockWriteGuard<'_, WorldManager>> {
         match self.worlds.get(key) {
             Some(w) => Some(w.write()),
             None => return None,

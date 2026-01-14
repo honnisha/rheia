@@ -35,19 +35,19 @@ pub struct RenetServerNetwork {
 }
 
 impl RenetServerNetwork {
-    pub fn get_server(&self) -> RwLockReadGuard<RenetServer> {
+    pub fn get_server(&self) -> RwLockReadGuard<'_, RenetServer> {
         self.server.as_ref().read().expect("poisoned")
     }
 
-    fn get_server_mut(&self) -> RwLockWriteGuard<RenetServer> {
+    fn get_server_mut(&self) -> RwLockWriteGuard<'_, RenetServer> {
         self.server.as_ref().write().expect("poisoned")
     }
 
-    pub fn get_transport(&self) -> RwLockReadGuard<NetcodeServerTransport> {
+    pub fn get_transport(&self) -> RwLockReadGuard<'_, NetcodeServerTransport> {
         self.transport.as_ref().read().expect("poisoned")
     }
 
-    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeServerTransport> {
+    fn get_transport_mut(&self) -> RwLockWriteGuard<'_, NetcodeServerTransport> {
         self.transport.as_ref().write().expect("poisoned")
     }
 

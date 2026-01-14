@@ -3,10 +3,7 @@ use common::chunks::chunk_data::BlockIndexType;
 use godot::{
     classes::{
         Camera3D, ColorRect, Control, IControl, InputEvent, InputEventMouseButton, SubViewportContainer, TextureRect,
-    },
-    global::MouseButton,
-    meta::AsObjectArg,
-    prelude::*,
+    }, global::MouseButton, meta::AsArg, prelude::*
 };
 
 const ICON_SCENE: &str = "res://scenes/components/block_icon.tscn";
@@ -178,7 +175,7 @@ impl BlockIcon {
         }
     }
 
-    pub fn add_component(&mut self, node: impl AsObjectArg<Node>) {
+    pub fn add_component(&mut self, node: impl AsArg<Option<Gd<Node>>>) {
         if let Some(block_anchor) = self.block_anchor.as_mut() {
             block_anchor.add_child(node);
         };

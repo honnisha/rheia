@@ -36,15 +36,15 @@ pub struct RenetClientNetwork {
 }
 
 impl RenetClientNetwork {
-    fn get_client_mut(&self) -> RwLockWriteGuard<RenetClient> {
+    fn get_client_mut(&self) -> RwLockWriteGuard<'_, RenetClient> {
         self.client.write()
     }
 
-    fn get_transport(&self) -> RwLockReadGuard<NetcodeClientTransport> {
+    fn get_transport(&self) -> RwLockReadGuard<'_, NetcodeClientTransport> {
         self.transport.read()
     }
 
-    fn get_transport_mut(&self) -> RwLockWriteGuard<NetcodeClientTransport> {
+    fn get_transport_mut(&self) -> RwLockWriteGuard<'_, NetcodeClientTransport> {
         self.transport.write()
     }
 
@@ -159,11 +159,11 @@ impl IClientNetwork for RenetClientNetwork {
         return true;
     }
 
-    fn iter_server_messages(&self) -> Drain<ServerMessages> {
+    fn iter_server_messages(&self) -> Drain<'_, ServerMessages> {
         self.network_decoder_out.1.drain()
     }
 
-    fn iter_errors(&self) -> Drain<String> {
+    fn iter_errors(&self) -> Drain<'_, String> {
         self.network_errors_out.1.drain()
     }
 
@@ -186,7 +186,7 @@ impl IClientNetwork for RenetClientNetwork {
         }
     }
 
-    fn get_network_info(&self) -> RwLockReadGuard<NetworkInfo> {
+    fn get_network_info(&self) -> RwLockReadGuard<'_, NetworkInfo> {
         self.network_info.read()
     }
 }

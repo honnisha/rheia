@@ -14,11 +14,11 @@ impl IClientNetwork for TokioClient {
         todo!()
     }
 
-    fn iter_server_messages(&self) -> flume::Drain<ServerMessages> {
+    fn iter_server_messages(&self) -> flume::Drain<'_, ServerMessages> {
         todo!()
     }
 
-    fn iter_errors(&self) -> flume::Drain<String> {
+    fn iter_errors(&self) -> flume::Drain<'_, String> {
         todo!()
     }
 
@@ -34,7 +34,7 @@ impl IClientNetwork for TokioClient {
         todo!()
     }
 
-    fn get_network_info(&self) -> parking_lot::RwLockReadGuard<NetworkInfo> {
+    fn get_network_info(&self) -> parking_lot::RwLockReadGuard<'_, NetworkInfo> {
         todo!()
     }
 }

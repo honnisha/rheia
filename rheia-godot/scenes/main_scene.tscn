@@ -15,8 +15,6 @@ ambient_light_color = Color(0.556953, 0.556953, 0.556953, 1)
 reflected_light_source = 1
 ssao_enabled = true
 sdfgi_min_cell_size = 0.01
-sdfgi_cascade0_distance = 0.64
-sdfgi_max_distance = 10.24
 volumetric_fog_sky_affect = 0.0
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_cqqg4"]

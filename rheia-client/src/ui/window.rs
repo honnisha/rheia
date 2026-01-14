@@ -1,7 +1,5 @@
 use godot::{
-    classes::{Button, Control, IControl, Input, RichTextLabel, input::MouseMode},
-    meta::AsObjectArg,
-    prelude::*,
+    classes::{input::MouseMode, Button, Control, IControl, Input, RichTextLabel}, meta::AsArg, prelude::*
 };
 
 const WINDOW_SCENE: &str = "res://scenes/ui/window.tscn";
@@ -52,7 +50,7 @@ impl WindowUIComponent {
         self.base().is_visible()
     }
 
-    pub fn add_component(&mut self, node: impl AsObjectArg<Node>) {
+    pub fn add_component(&mut self, node: impl AsArg<Option<Gd<Node>>>) {
         self.content_holder.as_mut().unwrap().add_child(node);
     }
 

@@ -37,7 +37,7 @@ impl Command {
         self
     }
 
-    pub fn commands(&self) -> Iter<Command> {
+    pub fn commands(&self) -> Iter<'_, Command> {
         self.commands.iter()
     }
 

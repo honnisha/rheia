@@ -40,7 +40,7 @@ impl RapierPhysicsContainer {
         .ok()
     }
 
-    pub fn get_rigid_body(&self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockReadGuard<RigidBody>> {
+    pub fn get_rigid_body(&self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockReadGuard<'_, RigidBody>> {
         RwLockReadGuard::try_map(self.rigid_body_set.read(), |p| match p.get(*rigid_handle) {
             Some(c) => Some(c),
             None => None,
@@ -48,7 +48,7 @@ impl RapierPhysicsContainer {
         .ok()
     }
 
-    pub fn get_rigid_body_mut(&mut self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockWriteGuard<RigidBody>> {
+    pub fn get_rigid_body_mut(&mut self, rigid_handle: &RigidBodyHandle) -> Option<MappedRwLockWriteGuard<'_, RigidBody>> {
         RwLockWriteGuard::try_map(self.rigid_body_set.write(), |p| match p.get_mut(*rigid_handle) {
             Some(c) => Some(c),
             None => None,

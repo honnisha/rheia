@@ -1,6 +1,6 @@
 use common::chunks::chunk_position::ChunkPosition;
 use godot::classes::{Engine, RenderingServer};
-use godot::obj::Gd;
+use godot::obj::{Gd, Singleton};
 use network::client::{IClientNetwork, NetworkInfo};
 use network::entities::EntityNetworkComponent;
 use network::messages::{ClientMessages, NetworkMessageType, ServerMessages};

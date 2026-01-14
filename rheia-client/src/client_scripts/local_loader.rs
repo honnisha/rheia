@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use common::{ default_resources::DEFAULT_RESOURCES};
 use godot::{
-    classes::{DirAccess, FileAccess, Resource, ResourceLoader, file_access::ModeFlags},
-    obj::Gd,
+    classes::{file_access::ModeFlags, DirAccess, FileAccess, Resource, ResourceLoader},
+    obj::{Gd, Singleton},
 };
 use serde::{Deserialize, Serialize};
 

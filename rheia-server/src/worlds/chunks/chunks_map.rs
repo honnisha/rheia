@@ -56,7 +56,7 @@ impl ChunkMap {
         }
     }
 
-    pub fn drain_loaded_chunks(&self) -> flume::Drain<ChunkPosition> {
+    pub fn drain_loaded_chunks(&self) -> flume::Drain<'_, ChunkPosition> {
         self.loaded_chunks.1.drain()
     }
 
