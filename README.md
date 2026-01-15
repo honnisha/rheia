@@ -1,5 +1,9 @@
 # Rheia
 
+Renamed and moved to [**In-Its-Brilliance**](https://github.com/In-Its-Brilliance)
+
+---
+
 Rheia is a RPG game inspired by Minecraft RPG Servers and Hytale game, written in Rust.\
 Aimed at wide possibilities for server-side extensibility and customization.
 
